@@ -142,6 +142,8 @@
 
     <script type="module">
         import Engine from '../script/engine/CoreEngine.js';
+        window.Engine = Engine;
+        window.__engineTestApi = { Engine };
 
         const consoleDiv = document.getElementById('console');
         const btnLogin = document.getElementById('btnLogin');
@@ -258,14 +260,19 @@
                 }
             }
 
+            const learnedSkills = Array.isArray(data.skills)
+                ? data.skills
+                : (Array.isArray(data.skills?.learned) ? data.skills.learned : []);
+
             // Generate Skill Buttons if needed
-            if (data.skills && skillButtonsContainer.children.length <= 1) { // Check if already generated
+            if (learnedSkills.length > 0 && skillButtonsContainer.children.length <= 1) { // Check if already generated
                 skillButtonsContainer.innerHTML = ''; // Clear default
-                data.skills.forEach(skillId => {
+                learnedSkills.forEach(skillId => {
                     const skillConfig = Engine.data.getSkillConfig(skillId);
                     if (skillConfig) {
                         const btn = document.createElement('button');
-                        btn.textContent = `${skillConfig.name} (${skillConfig.cost} AP)`;
+                        const apCost = Number(skillConfig?.costs?.ap ?? skillConfig?.cost ?? 0);
+                        btn.textContent = `${skillConfig.name} (${apCost} AP)`;
                         btn.onclick = () => {
                             const targetId = targetSelect.value;
                             const bodyPart = partSelect.value;
@@ -323,8 +330,9 @@
                         
                         let partsText = [];
                         for (const [partName, partData] of Object.entries(enemy.bodyParts)) {
-                            // partData has armor, maxArmor. No hp/maxHp for parts anymore.
-                            partsText.push(`${partName}: ${partData.armor}/${partData.maxArmor}`);
+                            const current = (partData.current !== undefined) ? partData.current : (partData.armor || 0);
+                            const max = (partData.max !== undefined) ? partData.max : (partData.maxArmor || 0);
+                            partsText.push(`${partName}: ${current}/${max}`);
                         }
                         partsInfo.textContent = 'Armor: ' + partsText.join(' | ');
                         li.appendChild(partsInfo);
@@ -451,7 +459,9 @@
 
         // Global handler for removing skills (since we inject HTML)
         window.removeSkill = (index) => {
-            Engine.input.removeSkillFromQueue(index);
+            if (!Array.isArray(Engine.playerSkillQueue)) return;
+            Engine.playerSkillQueue.splice(index, 1);
+            Engine.emitBattleUpdate();
         };
 
         Engine.eventBus.on('TICK', (dt) => {
@@ -478,6 +488,23 @@
         };
 
         btnCommitTurn.onclick = () => {
+            if (Engine.timeline && Engine.timeline.phase !== 'READY') {
+                const planningDraftBySkill = {};
+                (Engine.playerSkillQueue || []).forEach((action) => {
+                    if (!action || !action.skillId) return;
+                    const side = action.targetId === Engine.data.playerData.id ? 'self' : 'enemy';
+                    const part = action.bodyPart || 'global';
+                    planningDraftBySkill[action.skillId] = {
+                        skillId: action.skillId,
+                        targetId: action.targetId,
+                        bodyPart: action.bodyPart,
+                        placedSlots: [`${side}:${part}:0`],
+                        selectionResult: action.bodyPart ? { selectedParts: [action.bodyPart] } : { selectedParts: [] }
+                    };
+                });
+                Engine.input.commitPlanning({ planningDraftBySkill });
+            }
+
             Engine.input.commitTurn();
         };
 

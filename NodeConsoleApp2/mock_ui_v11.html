@@ -366,16 +366,13 @@
   window.DATA_CONFIG_URL = '../assets/data/config.json';
 </script>
 <script type="module">
-        import { CoreEngine } from '../script/engine/CoreEngine.js';
+        import engine from '../script/engine/CoreEngine.js';
         import { UI_BattleRow } from '../script/ui/UI_BattleRow.js';
         import { UI_SystemModal } from '../script/ui/UI_SystemModal.js';
         import UI_SkillPanel from '../script/ui/UI_SkillPanel.js';
         import UI_TurnPanel from '../script/ui/UI_TurnPanel.js';
         import { UI_TimelineBlock } from '../script/ui/UI_TimelineBlock.js';
         import { UI_AttentionGuide } from '../script/ui/UI_AttentionGuide.js';
-
-        // Initialize Engine
-        const engine = new CoreEngine();
         
         // Expose to window for debugging
         window.GameEngine = engine;

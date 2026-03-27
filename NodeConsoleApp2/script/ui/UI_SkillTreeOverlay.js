@@ -9,6 +9,7 @@ export class UI_SkillTreeOverlay {
 	constructor() {
 		this.engine = null;
 		this.view = null;
+		this._lastFocus = null;
 		this.dom = {
 			backdrop: null,
 			panel: null,
@@ -64,6 +65,7 @@ export class UI_SkillTreeOverlay {
 
 	show(payload = {}) {
 		if (!this.dom.backdrop || !this.dom.body) return;
+		this._lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
 		if (!this.view) {
 			this.view = new UI_SkillTreeModal();
@@ -77,8 +79,11 @@ export class UI_SkillTreeOverlay {
 		});
 
 		this.dom.backdrop.classList.add('visible');
+		this.dom.backdrop.hidden = false;
+		this.dom.backdrop.inert = false;
 		this.dom.backdrop.setAttribute('aria-hidden', 'false');
 		document.addEventListener('keydown', this._onKeyDown);
+		if (this.dom.closeBtn) this.dom.closeBtn.focus();
 
 		// Optional focus skill
 		if (payload && payload.focusSkillId) {
@@ -88,7 +93,19 @@ export class UI_SkillTreeOverlay {
 
 	hide() {
 		if (!this.dom.backdrop) return;
+		if (this.dom.backdrop.contains(document.activeElement)) {
+			const fallback = this._lastFocus && document.contains(this._lastFocus)
+				? this._lastFocus
+				: document.getElementById('btnOpenSkillTree')
+					|| document.getElementById('btnExecute')
+					|| document.body;
+			if (fallback && typeof fallback.focus === 'function') {
+				fallback.focus();
+			}
+		}
 		this.dom.backdrop.classList.remove('visible');
+		this.dom.backdrop.hidden = true;
+		this.dom.backdrop.inert = true;
 		this.dom.backdrop.setAttribute('aria-hidden', 'true');
 		document.removeEventListener('keydown', this._onKeyDown);
 	}

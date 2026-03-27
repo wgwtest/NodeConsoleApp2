@@ -540,7 +540,9 @@ export class UI_SkillTreeModal {
 		if (this.engine?.eventBus) {
 			this.engine.eventBus.emit('DATA_UPDATE', { type: 'PLAYER_SKILLS', data: skillsObj });
 		}
-		if (this.engine?.data && typeof this.engine.data.saveGame === 'function') {
+		if (typeof this.engine?.saveGame === 'function') {
+			this.engine.saveGame();
+		} else if (this.engine?.data && typeof this.engine.data.saveGame === 'function') {
 			this.engine.data.saveGame();
 		}
 
@@ -574,7 +576,9 @@ export class UI_SkillTreeModal {
 		if (this.engine?.eventBus) {
 			this.engine.eventBus.emit('DATA_UPDATE', { type: 'PLAYER_SKILLS', data: skillsObj });
 		}
-		if (this.engine?.data && typeof this.engine.data.saveGame === 'function') {
+		if (typeof this.engine?.saveGame === 'function') {
+			this.engine.saveGame();
+		} else if (this.engine?.data && typeof this.engine.data.saveGame === 'function') {
 			this.engine.data.saveGame();
 		}
 

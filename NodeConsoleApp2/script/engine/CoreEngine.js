@@ -5,6 +5,7 @@ import DataManager from './DataManagerV2.js';
 import { BuffRegistry, BuffManager, BuffSystem } from './buff/index.js';
 import TurnPlanner from './TurnPlanner.js';
 import TimelineManager from './TimelineManager.js';
+import EnemyActionPlanner from './EnemyActionPlanner.js';
 
 class CoreEngine {
     constructor() {
@@ -15,6 +16,9 @@ class CoreEngine {
 
 		this.buffRegistry = new BuffRegistry();
 		this.buffSystem = new BuffSystem(this.eventBus, this.buffRegistry);
+        this.enemyPlanner = new EnemyActionPlanner({
+            getSkillConfig: (skillId) => this.data.getSkillConfig(skillId)
+        });
 
         this.turnPlanner = new TurnPlanner({
             getSlotLayout: () => this._getBattleSlotLayout(),
@@ -52,6 +56,7 @@ class CoreEngine {
         this.battlePhase = 'IDLE'; // IDLE, PLANNING, EXECUTION
 
         this._bindTimelineEvents();
+        this._bindBuffBridgeEvents();
 
         this._battleSlotLayout = null;
 
@@ -64,9 +69,7 @@ class CoreEngine {
         for (const id of ids) {
             const cfg = this.data.getSkillConfig(id);
             if (!cfg) continue;
-            // Current stage: treat cost as stable during PLANNING.
-            // Future: apply buff-adjusted modifiers here once, at PLANNING_ENTER.
-            out[id] = Number(cfg.cost) || 0;
+            out[id] = this._getSkillApCostStrict(cfg, id, this.data.playerData);
         }
         return out;
     }
@@ -79,19 +82,32 @@ class CoreEngine {
         for (const id of ids) {
             const cfg = this.data.getSkillConfig(id);
             if (!cfg) continue;
-            out[id] = this._getSkillApCostStrict(cfg, id);
+            out[id] = this._getSkillApCostStrict(cfg, id, this.data.playerData);
         }
         return out;
     }
 
-    _getSkillApCostStrict(skillConfig, skillIdForLog = null) {
-        const ap = Number(skillConfig?.costs?.ap);
-        if (!Number.isFinite(ap) || ap < 0) {
+    _getPlanningApCostModifier(actor) {
+        return Number(actor?._planningApCostFlatDelta ?? 0) || 0;
+    }
+
+    _getSkillApCostStrict(skillConfig, skillIdForLog = null, actor = null) {
+        const baseAp = Number(skillConfig?.costs?.ap);
+        if (!Number.isFinite(baseAp) || baseAp < 0) {
             const name = skillConfig?.name ? ` (${skillConfig.name})` : '';
             const id = skillIdForLog || skillConfig?.id || 'unknown';
             throw new Error(`[CoreEngine] Invalid skill AP cost: skillId=${id}${name}. Expected skill.costs.ap number.`);
         }
-        return ap;
+        return Math.max(0, baseAp + this._getPlanningApCostModifier(actor));
+    }
+
+    _getEffectiveActorSpeed(actor, skillConfig = null) {
+        const baseSpeed = Number(actor?.speed ?? actor?.stats?.speed ?? 0) || 0;
+        const buffedSpeed = actor?.buffs?.getEffectiveStat
+            ? actor.buffs.getEffectiveStat('speed', baseSpeed)
+            : baseSpeed;
+        const skillSpeed = Number(skillConfig?.speed ?? 0) || 0;
+        return (Number(buffedSpeed) || 0) + skillSpeed;
     }
 
     _enterPlanningBudgetSnapshot() {
@@ -130,6 +146,14 @@ class CoreEngine {
 
             this.eventBus.emit('BATTLE_LOG', { text: `Timeline execute failed: ${message}` });
             this.emitBattleUpdate();
+        });
+    }
+
+    _bindBuffBridgeEvents() {
+        if (!this.eventBus || typeof this.eventBus.on !== 'function') return;
+
+        this.eventBus.on('BUFF_ATTACK_REQUEST', (payload = {}) => {
+            this._handleBuffAttackRequest(payload);
         });
     }
 
@@ -177,6 +201,130 @@ class CoreEngine {
             const aSide = isSelf ? 'self' : 'enemy';
             return aSide === side && a.bodyPart === bodyPart;
         }).length;
+    }
+
+    _resetTurnFlags() {
+        if (this.data?.playerData) {
+            this.data.playerData._skipTurn = false;
+            this.data.playerData._planningApCostFlatDelta = 0;
+        }
+
+        const enemies = this.data?.currentLevelData?.enemies;
+        if (!Array.isArray(enemies)) return;
+        enemies.forEach(enemy => {
+            enemy._skipTurn = false;
+            enemy._planningApCostFlatDelta = 0;
+        });
+    }
+
+    _isPlayerEntity(entity) {
+        return !!entity && !!this.data?.playerData && entity.id === this.data.playerData.id;
+    }
+
+    _getEntityById(entityId) {
+        if (!entityId) return null;
+        if (this.data?.playerData?.id === entityId) return this.data.playerData;
+        const enemies = this.data?.currentLevelData?.enemies;
+        return Array.isArray(enemies) ? (enemies.find(enemy => enemy.id === entityId) || null) : null;
+    }
+
+    _getPlayerRuntimeBodyParts() {
+        return this.data?.dataConfig?.runtime?.playerBattleState?.bodyParts || this.data?.playerData?.bodyParts || null;
+    }
+
+    _getEntityBodyParts(entity) {
+        if (!entity) return null;
+        if (this._isPlayerEntity(entity)) return this._getPlayerRuntimeBodyParts();
+        return entity.bodyParts || null;
+    }
+
+    _getEntityCurrentHp(entity) {
+        if (!entity) return 0;
+        if (typeof entity.hp === 'number') return entity.hp;
+        return Number(entity?.stats?.hp ?? 0) || 0;
+    }
+
+    _setEntityCurrentHp(entity, hp) {
+        if (!entity) return;
+        const maxHp = this._getEntityMaxHp(entity);
+        const clamped = Math.max(0, Math.min(maxHp, Number(hp) || 0));
+        if (typeof entity.hp === 'number') entity.hp = clamped;
+        if (entity.stats && typeof entity.stats === 'object' && typeof entity.stats.hp === 'number') {
+            entity.stats.hp = clamped;
+        }
+    }
+
+    _getEntityMaxHp(entity) {
+        if (!entity) return 0;
+        if (typeof entity.maxHp === 'number') return entity.maxHp;
+        return Number(entity?.stats?.maxHp ?? entity?.stats?.hp ?? 0) || 0;
+    }
+
+    _getEntityCurrentAp(entity) {
+        return Number(entity?.stats?.ap ?? entity?.ap ?? 0) || 0;
+    }
+
+    _setEntityCurrentAp(entity, ap) {
+        if (!entity) return;
+        const value = Math.max(0, Number(ap) || 0);
+        if (entity.stats && typeof entity.stats === 'object' && typeof entity.stats.ap === 'number') {
+            entity.stats.ap = value;
+        } else {
+            entity.ap = value;
+        }
+    }
+
+    _skillRequiresBodyPart(skillConfig) {
+        const scope = skillConfig?.target?.scope;
+        return scope === 'SCOPE_PART' || scope === 'SCOPE_MULTI_PARTS';
+    }
+
+    _validateSkillTargetSelection({ skillConfig, sourceId, targetId, bodyPart }) {
+        const target = this._getEntityById(targetId);
+        if (!target) return { ok: false, reason: `Invalid target: ${targetId}` };
+
+        const subject = skillConfig?.target?.subject;
+        if (subject === 'SUBJECT_SELF' && sourceId !== targetId) {
+            return { ok: false, reason: `Skill ${skillConfig?.name || skillConfig?.id} must target self.` };
+        }
+        if (subject === 'SUBJECT_ENEMY' && sourceId === targetId) {
+            return { ok: false, reason: `Skill ${skillConfig?.name || skillConfig?.id} must target enemy.` };
+        }
+
+        if (this._skillRequiresBodyPart(skillConfig)) {
+            if (!bodyPart) {
+                return { ok: false, reason: `Skill ${skillConfig?.name || skillConfig?.id} requires a target body part.` };
+            }
+
+            const bodyParts = this._getEntityBodyParts(target);
+            if (!bodyParts || !bodyParts[bodyPart]) {
+                return { ok: false, reason: `Invalid body part '${bodyPart}' for target.` };
+            }
+        }
+
+        return { ok: true, target };
+    }
+
+    _getDefaultBodyPart(target, preferredPart = null) {
+        const bodyParts = this._getEntityBodyParts(target);
+        if (!bodyParts || typeof bodyParts !== 'object') return null;
+        if (preferredPart && bodyParts[preferredPart]) return preferredPart;
+
+        const candidates = Object.entries(bodyParts)
+            .filter(([, part]) => Number(part?.max ?? 0) > 0 || Number(part?.current ?? 0) > 0);
+        if (candidates.length === 0) return Object.keys(bodyParts)[0] || null;
+
+        candidates.sort((a, b) => {
+            const armorA = Number(a[1]?.current ?? 0) || 0;
+            const armorB = Number(b[1]?.current ?? 0) || 0;
+            if (armorA !== armorB) return armorA - armorB;
+
+            const weakA = Number(a[1]?.weakness ?? 1) || 1;
+            const weakB = Number(b[1]?.weakness ?? 1) || 1;
+            return weakB - weakA;
+        });
+
+        return candidates[0][0];
     }
 
     learnSkill(skillId) {
@@ -362,6 +510,7 @@ class CoreEngine {
             tempStatModifiers: {},
             bodyParts: this.initializePlayerBodyParts(this.data.playerData)
         };
+        this.data.playerData.bodyParts = runtime.playerBattleState.bodyParts;
 
         const playerWithRuntime = {
             ...this.data.playerData,
@@ -374,12 +523,15 @@ class CoreEngine {
         });
 
 		// Ensure BuffManager exists for enemies
-		if (this.data.currentLevelData && Array.isArray(this.data.currentLevelData.enemies)) {
+            if (this.data.currentLevelData && Array.isArray(this.data.currentLevelData.enemies)) {
 			for (const enemy of this.data.currentLevelData.enemies) {
 				if (!enemy.buffs) {
 					enemy.buffs = new BuffManager(enemy, this.buffRegistry, this.eventBus);
 					this.buffSystem.registerManager(enemy.buffs);
 				}
+                if (enemy.stats && typeof enemy.stats === 'object') {
+                    enemy.stats.ap = Number(enemy.stats.maxAp ?? enemy.stats.ap ?? 0) || 0;
+                }
 			}
 		}
 
@@ -458,6 +610,15 @@ class CoreEngine {
 			this.data.playerData.buffs = new BuffManager(this.data.playerData, this.buffRegistry, this.eventBus);
 			this.buffSystem.registerManager(this.data.playerData.buffs);
 		}
+
+        if (this.data.currentLevelData && Array.isArray(this.data.currentLevelData.enemies)) {
+            for (const enemy of this.data.currentLevelData.enemies) {
+                if (!enemy.buffs) {
+                    enemy.buffs = new BuffManager(enemy, this.buffRegistry, this.eventBus);
+                    this.buffSystem.registerManager(enemy.buffs);
+                }
+            }
+        }
         
         // 恢复队列
         this.playerSkillQueue = runtime.queues ? (runtime.queues.player || []) : [];
@@ -470,6 +631,9 @@ class CoreEngine {
             ...this.data.playerData,
             bodyParts: (runtime.playerBattleState) ? runtime.playerBattleState.bodyParts : {}
         };
+        if (runtime.playerBattleState?.bodyParts) {
+            this.data.playerData.bodyParts = runtime.playerBattleState.bodyParts;
+        }
 
         this.eventBus.emit('BATTLE_START', { 
             player: playerWithRuntime, 
@@ -534,16 +698,17 @@ class CoreEngine {
         if (this.fsm.currentState === 'BATTLE_LOOP') {
             this.saveBattleState();
         } else {
+            if (!this.data.dataConfig.runtime) this.data.dataConfig.runtime = {};
             // 如果不在战斗中，清除战斗运行时数据
-            if (this.data.dataConfig.runtime) {
-                delete this.data.dataConfig.runtime.levelData;
-                delete this.data.dataConfig.runtime.turn;
-                delete this.data.dataConfig.runtime.phase;
-                delete this.data.dataConfig.runtime.initialState;
-                delete this.data.dataConfig.runtime.history;
-                delete this.data.dataConfig.runtime.queues;
-                delete this.data.dataConfig.runtime.playerTempState;
-            }
+            this.data.dataConfig.runtime.currentScene = this.fsm.currentState || 'MAIN_MENU';
+            this.data.dataConfig.runtime.battleState = null;
+            delete this.data.dataConfig.runtime.levelData;
+            delete this.data.dataConfig.runtime.turn;
+            delete this.data.dataConfig.runtime.phase;
+            delete this.data.dataConfig.runtime.initialState;
+            delete this.data.dataConfig.runtime.history;
+            delete this.data.dataConfig.runtime.queues;
+            delete this.data.dataConfig.runtime.playerTempState;
             this.data.currentLevelData = null;
         }
         
@@ -602,10 +767,21 @@ class CoreEngine {
             this.eventBus.emit('DATA_UPDATE', this.data.playerData);
         }
 
+        if (this.data.currentLevelData?.enemies) {
+            this.data.currentLevelData.enemies.forEach(enemy => {
+                if (enemy.stats && typeof enemy.stats === 'object') {
+                    enemy.stats.ap = Number(enemy.stats.maxAp ?? enemy.stats.ap ?? 0) || 0;
+                }
+            });
+        }
+
+        this._resetTurnFlags();
+        this.eventBus.emit('TURN_START', { turn: this.currentTurn });
+        this.checkBattleStatus();
+        if (this.fsm.currentState !== 'BATTLE_LOOP') return;
+
         // Planning-enter snapshot: initialize AP budget FSM once per planning phase.
         this._enterPlanningBudgetSnapshot();
-
-        this.eventBus.emit('TURN_START', { turn: this.currentTurn });
         this.emitBattleUpdate();
         this.eventBus.emit('BATTLE_LOG', { text: `Turn ${this.currentTurn} started. Please configure skills.` });
     }
@@ -621,46 +797,18 @@ class CoreEngine {
             return;
         }
 
-        // 验证目标身体部位
-        // 攻击和辅助技能需要身体部位，除非它们是全局/AOE
-        const requiresBodyPart = (skillConfig.type === 'DAMAGE' || skillConfig.type === 'HEAL' || skillConfig.type === 'BUFF') && skillConfig.targetType !== 'GLOBAL' && skillConfig.targetType !== 'AOE';
-
-        if (requiresBodyPart) {
-            if (!bodyPart) {
-                this.eventBus.emit('BATTLE_LOG', { text: `Skill ${skillConfig.name} requires a target body part.` });
-                return;
-            }
-
-            // 查找目标
-            let target = null;
-            if (targetId === this.data.playerData.id) {
-                target = this.data.playerData;
-            } else if (this.data.currentLevelData && this.data.currentLevelData.enemies) {
-                target = this.data.currentLevelData.enemies.find(e => e.id === targetId);
-            }
-
-            if (!target) {
-                this.eventBus.emit('BATTLE_LOG', { text: `Invalid target: ${targetId}` });
-                return;
-            }
-
-            // 检查目标是否存在身体部位
-            let isValidPart = false;
-            if (target.bodyParts) {
-                // 具有明确身体部位的敌人
-                if (target.bodyParts[bodyPart]) isValidPart = true;
-            } else if (target.equipment && target.equipment.armor) {
-                // 玩家（使用护甲槽作为身体部位）
-                if (target.equipment.armor.hasOwnProperty(bodyPart)) isValidPart = true;
-            }
-
-            if (!isValidPart) {
-                this.eventBus.emit('BATTLE_LOG', { text: `Invalid body part '${bodyPart}' for target.` });
-                return;
-            }
+        const validation = this._validateSkillTargetSelection({
+            skillConfig,
+            sourceId: player.id,
+            targetId,
+            bodyPart
+        });
+        if (!validation.ok) {
+            this.eventBus.emit('BATTLE_LOG', { text: validation.reason });
+            return;
         }
 
-        const cost = this._getSkillApCostStrict(skillConfig, skillId);
+        const cost = this._getSkillApCostStrict(skillConfig, skillId, player);
 
         // Slot capacity validation (core mechanic)
         const isSelfTarget = (targetId === this.data.playerData.id);
@@ -685,7 +833,7 @@ class CoreEngine {
             targetId,
             bodyPart,
             cost,
-            speed: (player.stats.speed || 10) + (skillConfig.speed || 0)
+            speed: this._getEffectiveActorSpeed(player, skillConfig)
         };
         this.playerSkillQueue.push(skillAction);
         
@@ -703,15 +851,19 @@ class CoreEngine {
             return;
         }
 
-        // reuse old validations (target/body part)
-        const requiresBodyPart = (skillConfig.type === 'DAMAGE' || skillConfig.type === 'HEAL' || skillConfig.type === 'BUFF') && skillConfig.targetType !== 'GLOBAL' && skillConfig.targetType !== 'AOE';
-        if (requiresBodyPart && !bodyPart) {
-            this.eventBus.emit('BATTLE_LOG', { text: `Skill ${skillConfig.name} requires a target body part.` });
+        const validation = this._validateSkillTargetSelection({
+            skillConfig,
+            sourceId: this.data.playerData.id,
+            targetId,
+            bodyPart
+        });
+        if (!validation.ok) {
+            this.eventBus.emit('BATTLE_LOG', { text: validation.reason });
             return;
         }
 
-        const cost = this._getSkillApCostStrict(skillConfig, skillId);
-        const speed = (this.data.playerData.stats.speed || 10) + (skillConfig.speed || 0);
+        const cost = this._getSkillApCostStrict(skillConfig, skillId, this.data.playerData);
+        const speed = this._getEffectiveActorSpeed(this.data.playerData, skillConfig);
 
         const res = this.turnPlanner.assign({
             slotKey,
@@ -796,24 +948,7 @@ class CoreEngine {
 
         // Build timeline immediately so UI can preview the round order after planning commit.
         // This keeps "提交规划" (commit) decoupled from "执行" (playback).
-        this.enemySkillQueue = [];
-        if (this.data.currentLevelData && this.data.currentLevelData.enemies) {
-            this.data.currentLevelData.enemies.forEach(enemy => {
-                if (enemy.hp > 0) {
-                    const skillId = (enemy.skills && enemy.skills.length > 0) ? enemy.skills[0] : 'skill_bite';
-                    const skillConfig = this.data.getSkillConfig(skillId);
-                    const speed = (enemy.speed || 10) + (skillConfig ? skillConfig.speed : 0);
-                    this.enemySkillQueue.push({
-                        source: 'ENEMY',
-                        sourceId: enemy.id,
-                        skillId: skillId,
-                        targetId: this.data.playerData.id,
-                        cost: 0,
-                        speed: speed
-                    });
-                }
-            });
-        }
+        this.enemySkillQueue = this._buildEnemyPlans();
 
         const loadRes = this.timeline.loadRoundActions({
             roundId: this.currentTurn,
@@ -942,7 +1077,13 @@ class CoreEngine {
         const actionOrder = this.timeline.currentIndex + 1;
 
         let result = null;
-        if (entry.side === 'self' || action.source === 'PLAYER') {
+        const actor = this._getEntityById(action.sourceId) || (entry.side === 'self' ? this.data.playerData : null);
+        if (actor?._skipTurn) {
+            actor._skipTurn = false;
+            const actorName = actor?.name || actor?.id || action.source || 'actor';
+            result = { skipped: true, reason: 'skipTurn' };
+            this.eventBus.emit('BATTLE_LOG', { text: `${actorName} skipped the action due to control.` });
+        } else if (entry.side === 'self' || action.source === 'PLAYER') {
             result = this.executePlayerSkill(action);
         } else {
             result = this.executeEnemySkill(action);
@@ -960,239 +1101,447 @@ class CoreEngine {
         return result;
     }
 
-    executePlayerSkill(action) {
-        const player = this.data.playerData;
-        const skillConfig = this.data.getSkillConfig(action.skillId);
-        
-        if (!skillConfig) return null;
+    _buildEnemyPlans() {
+        const out = [];
+        const enemies = this.data?.currentLevelData?.enemies;
+        if (!Array.isArray(enemies)) return out;
 
-        // 扣除 AP（实际扣除）
-        player.stats.ap -= action.cost;
-        this.eventBus.emit('DATA_UPDATE', player);
+        const playerRuntimeBodyParts = this._getPlayerRuntimeBodyParts();
+        enemies.forEach(enemy => {
+            if (this._getEntityCurrentHp(enemy) <= 0) return;
+            const planned = this.enemyPlanner.planTurn({
+                enemy,
+                player: this.data.playerData,
+                playerBodyParts: playerRuntimeBodyParts
+            });
+            if (planned) out.push(planned);
+        });
+        return out;
+    }
 
-        if (skillConfig.type === 'HEAL') {
-            const healAmount = skillConfig.value;
-            player.stats.hp += healAmount;
-            if (player.stats.hp > player.stats.maxHp) player.stats.hp = player.stats.maxHp;
-            
-            const log = `Player used ${skillConfig.name} healed ${healAmount} HP!`;
-            this.eventBus.emit('BATTLE_LOG', { text: log });
-            this.emitBattleUpdate();
-            return { isHit: true, heal: healAmount, targetHpRemaining: player.stats.hp };
+    _resolveActionTarget({ actor, actionTarget, skillConfig, defaultTarget, defaultBodyPart }) {
+        const binding = actionTarget?.binding || {};
+        if (binding.mode !== 'explicit') {
+            return {
+                target: defaultTarget,
+                bodyPart: defaultBodyPart
+            };
         }
 
-        const damage = skillConfig.value;
-        let targetName = action.targetId;
-        let result = { isHit: false, damage: 0 };
-        
-        if (this.data.currentLevelData && this.data.currentLevelData.enemies) {
-            const enemy = this.data.currentLevelData.enemies.find(e => e.id === action.targetId);
-            if (enemy) {
-                if (enemy.hp <= 0) {
-                    this.eventBus.emit('BATTLE_LOG', { text: `Target ${enemy.id} is dead, skill failed.` });
-                    return { isHit: false, reason: 'dead' };
-                }
+        const spec = actionTarget?.spec || {};
+        const subject = spec.subject || skillConfig?.target?.subject;
+        let target = defaultTarget;
+        if (subject === 'SUBJECT_SELF') target = actor;
+        else if (subject === 'SUBJECT_ENEMY') target = defaultTarget;
 
-                // Combat Context (Buff pipeline)
-				const context = {
-					attacker: player,
-					target: enemy,
-					skillId: action.skillId,
-					bodyPart: action.bodyPart,
-					rawDamage: damage,
-					damageDealt: 0,
-					damageTaken: 0,
-					tempModifiers: Object.create(null)
-				};
-				this.eventBus.emit('BATTLE_ATTACK_PRE', context);
+        const scope = spec.scope || skillConfig?.target?.scope;
+        let bodyPart = null;
+        if (scope === 'SCOPE_PART' || scope === 'SCOPE_MULTI_PARTS') {
+            const selectedParts = Array.isArray(spec?.selection?.selectedParts) ? spec.selection.selectedParts : [];
+            bodyPart = selectedParts[0] || defaultBodyPart || this._getDefaultBodyPart(target, null);
+        }
 
-                // New Damage Logic: Armor -> HP
-                let actualDamage = context.rawDamage;
-                let armorDamage = 0;
-                let targetPart = action.bodyPart || 'chest'; // Default to chest
-                
-                if (enemy.bodyParts && enemy.bodyParts[targetPart]) {
-                    const part = enemy.bodyParts[targetPart];
-                    
-                    // Apply weakness
-                    if (part.weakness) {
-                        actualDamage = Math.floor(actualDamage * part.weakness);
-                    }
+        return { target, bodyPart };
+    }
 
-                    // Apply armor mitigation mult from buffs (破甲等写入 tempModifiers)
-					let armorMitMult = 1.0;
-					const tmp = context.tempModifiers && context.tempModifiers.armorMitigationMult;
-					if (Array.isArray(tmp) && tmp.length > 0) {
-						for (const m of tmp) {
-							if (m.type === 'percent_current') {
-								armorMitMult *= (1 + m.value);
-							} else if (m.type === 'flat') {
-								armorMitMult += m.value;
-							}
-						}
-					}
+    _computeEffectAmount(effect, { actor, target, bodyPart }) {
+        const amount = Number(effect?.amount ?? 0) || 0;
+        const amountType = effect?.amountType || 'ABS';
+        const targetParts = this._getEntityBodyParts(target);
+        const part = bodyPart && targetParts ? targetParts[bodyPart] : null;
+        const actorStats = actor?.stats || {};
 
-                    // Reduce Armor first (current)
-                    if (part.current > 0) {
-                        // armorMitMult > 1 => armor更“软”，等效为放大对护甲的穿透
-						const mitigated = Math.ceil(actualDamage * armorMitMult);
-						if (part.current >= mitigated) {
-							part.current -= mitigated;
-							armorDamage = mitigated;
-                            actualDamage = 0;
-                        } else {
-							armorDamage = part.current;
-							actualDamage = Math.max(0, mitigated - part.current);
-                            part.current = 0;
-                            part.status = 'BROKEN';
-                        }
-                    }
-                }
+        if (amountType === 'ABS') return amount;
+        if (amountType === 'SCALING') {
+            const statKey = effect?.scaling?.stat;
+            const multiplier = Number(effect?.scaling?.multiplier ?? 0) || 0;
+            return (Number(actorStats?.[statKey] ?? actor?.[statKey] ?? 0) || 0) * multiplier;
+        }
 
-                // TakeDamagePre hooks (e.g. shield / damage taken mult)
-				context.damageTaken = actualDamage;
-				this.eventBus.emit('BATTLE_TAKE_DAMAGE_PRE', context);
-				if (context.damageTakenMult) {
-					context.damageTaken = Math.floor(context.damageTaken * context.damageTakenMult);
-				}
-				if (context.shieldPool) {
-					const absorbed = Math.min(context.shieldPool, context.damageTaken);
-					context.damageTaken -= absorbed;
-					context.shieldPool -= absorbed;
-				}
+        let base = 0;
+        if (effect?.effectType === 'DMG_ARMOR' || effect?.effectType === 'ARMOR_ADD') {
+            base = Number(part?.current ?? part?.max ?? 0) || 0;
+            if (amountType === 'PCT_MAX') base = Number(part?.max ?? 0) || 0;
+        } else {
+            base = this._getEntityCurrentHp(target);
+            if (amountType === 'PCT_MAX') base = this._getEntityMaxHp(target);
+        }
 
-                // Remaining damage goes to HP
-                actualDamage = context.damageTaken;
-                if (actualDamage > 0) {
-                    enemy.hp -= actualDamage;
-                    if (enemy.hp < 0) enemy.hp = 0;
-                }
+        return base * (amount / 100);
+    }
 
-				context.damageDealt = actualDamage;
-				this.eventBus.emit('BATTLE_ATTACK_POST', context);
+    _applyArmorDelta(target, bodyPart, delta) {
+        const targetParts = this._getEntityBodyParts(target);
+        if (!targetParts) return { bodyPart: null, armorDelta: 0 };
 
-                targetName = `${enemy.id} (HP: ${enemy.hp})`;
-                result = { 
-                    isHit: true, 
-                    damage: actualDamage, 
-                    armorDamage: armorDamage,
-                    targetHpRemaining: enemy.hp,
-                    targetPart: targetPart
-                };
+        const resolvedPart = this._getDefaultBodyPart(target, bodyPart);
+        if (!resolvedPart || !targetParts[resolvedPart]) return { bodyPart: null, armorDelta: 0 };
+
+        const part = targetParts[resolvedPart];
+        const max = Number(part.max ?? 0) || 0;
+        const current = Number(part.current ?? 0) || 0;
+        const next = Math.max(0, Math.min(max, current + delta));
+        part.current = next;
+        part.status = next <= 0 ? 'BROKEN' : 'NORMAL';
+        return {
+            bodyPart: resolvedPart,
+            armorDelta: next - current
+        };
+    }
+
+    _applyHpDelta(target, delta) {
+        const current = this._getEntityCurrentHp(target);
+        this._setEntityCurrentHp(target, current + delta);
+        return this._getEntityCurrentHp(target);
+    }
+
+    _collectArmorMitigationMultiplier(tempModifiers) {
+        let armorMitMult = 1.0;
+        const entries = tempModifiers?.armorMitigationMult;
+        if (!Array.isArray(entries)) return armorMitMult;
+
+        for (const item of entries) {
+            if (item.type === 'percent_current') {
+                armorMitMult *= (1 + item.value);
+            } else if (item.type === 'flat') {
+                armorMitMult += item.value;
+            }
+        }
+        return armorMitMult;
+    }
+
+    _applyBattleDamage({ attacker, target, skillId, bodyPart, rawDamage, isReactionAttack = false, reactionMeta = null }) {
+        const context = {
+            attacker,
+            target,
+            skillId,
+            bodyPart,
+            rawDamage,
+            isReactionAttack,
+            reactionMeta,
+            damageDealt: 0,
+            damageTaken: 0,
+            tempModifiers: Object.create(null)
+        };
+        this.eventBus.emit('BATTLE_ATTACK_PRE', context);
+
+        let actualDamage = Number(context.rawDamage ?? rawDamage ?? 0) || 0;
+        let armorDamage = 0;
+        const targetPart = this._getDefaultBodyPart(target, bodyPart);
+        const targetParts = this._getEntityBodyParts(target);
+        const part = targetPart && targetParts ? targetParts[targetPart] : null;
+
+        if (part?.weakness) {
+            actualDamage = Math.floor(actualDamage * part.weakness);
+        }
+
+        context.damageTaken = actualDamage;
+        this.eventBus.emit('BATTLE_TAKE_DAMAGE_PRE', context);
+
+        if (part && !context.preventArmorDamage && Number(part.current ?? 0) > 0) {
+            const armorMitMult = this._collectArmorMitigationMultiplier(context.tempModifiers);
+            const mitigated = Math.ceil(actualDamage * armorMitMult);
+            if (part.current >= mitigated) {
+                part.current -= mitigated;
+                armorDamage = mitigated;
+                actualDamage = 0;
+            } else {
+                armorDamage = part.current;
+                actualDamage = Math.max(0, mitigated - part.current);
+                part.current = 0;
+                part.status = 'BROKEN';
             }
         }
 
-        const log = `Player used ${skillConfig.name} attacked ${targetName} for ${result.damage} HP damage (Armor: ${result.armorDamage})!`;
-        this.eventBus.emit('BATTLE_LOG', { text: log });
+        context.damageTaken = actualDamage;
+        if (context.damageTakenMult) {
+            context.damageTaken = Math.floor(context.damageTaken * context.damageTakenMult);
+        }
+        if (context.shieldPool) {
+            const absorbed = Math.min(context.shieldPool, context.damageTaken);
+            context.damageTaken -= absorbed;
+            context.shieldPool -= absorbed;
+        }
+        if (context.preventHpDamage) {
+            context.damageTaken = 0;
+        }
+
+        actualDamage = context.damageTaken;
+        if (actualDamage > 0) {
+            this._applyHpDelta(target, -actualDamage);
+        }
+
+        context.damageDealt = actualDamage;
+        context.armorDamage = armorDamage;
+        context.targetPart = targetPart;
+        context.targetHpRemaining = this._getEntityCurrentHp(target);
+        this.eventBus.emit('BATTLE_TAKE_DAMAGE', context);
+        this.eventBus.emit('BATTLE_ATTACK_POST', context);
+        this.eventBus.emit('BATTLE_DEFEND_POST', context);
+
+        return {
+            isHit: true,
+            damage: actualDamage,
+            armorDamage,
+            targetHpRemaining: this._getEntityCurrentHp(target),
+            targetPart
+        };
+    }
+
+    _removeBuffsBySkillEffect(target, effect) {
+        if (!target?.buffs) return { removed: 0 };
+        const amount = Number(effect?.amount ?? 0) || 0;
+        if (amount >= 100) {
+            return { removed: target.buffs.removeByType('debuff', 'skill_effect_remove') };
+        }
+        return { removed: 0 };
+    }
+
+    _applySkillBuffRefs({ actor, defaultTarget, skillConfig }) {
+        const applied = [];
+        const refs = skillConfig?.buffRefs || {};
+        const applyRows = Array.isArray(refs.apply) ? refs.apply : [];
+        const removeRows = Array.isArray(refs.remove) ? refs.remove : [];
+
+        for (const row of applyRows) {
+            const target = row?.target === 'self' ? actor : defaultTarget;
+            if (!target?.buffs || !row?.buffId) continue;
+            const chance = Number(row?.chance ?? 1);
+            if (Number.isFinite(chance) && chance < 1 && Math.random() > chance) continue;
+            target.buffs.add(row.buffId, {
+                duration: row.duration,
+                params: row.params
+            });
+            applied.push({ kind: 'apply', buffId: row.buffId, targetId: target.id });
+        }
+
+        for (const row of removeRows) {
+            const target = row?.target === 'self' ? actor : defaultTarget;
+            if (!target?.buffs || !row?.buffId) continue;
+            if (target.buffs.remove(row.buffId, 'skill_ref_remove')) {
+                applied.push({ kind: 'remove', buffId: row.buffId, targetId: target.id });
+            }
+        }
+
+        return applied;
+    }
+
+    _handleBuffAttackRequest(payload = {}) {
+        if (this.fsm.currentState !== 'BATTLE_LOOP') return;
+
+        const attacker = payload.source || payload.attacker || null;
+        const target = payload.target || null;
+        if (!attacker || !target) return;
+        if (attacker === target) return;
+        if (this._getEntityCurrentHp(attacker) <= 0 || this._getEntityCurrentHp(target) <= 0) return;
+
+        const incomingContext = payload.context || {};
+        const rawBaseDamage = Number(
+            payload.damage
+            ?? incomingContext.rawDamage
+            ?? incomingContext.damageTaken
+            ?? incomingContext.damageDealt
+            ?? 0
+        ) || 0;
+        const multiplier = Number(payload.multiplier ?? 1) || 1;
+        const resolvedDamage = Math.max(1, Math.round(rawBaseDamage * multiplier));
+        const preferredPart = payload.bodyPart || incomingContext.bodyPart || incomingContext.targetPart || null;
+
+        const outcome = this._applyBattleDamage({
+            attacker,
+            target,
+            skillId: payload.skillId || payload.buffId || 'buff_attack',
+            bodyPart: preferredPart,
+            rawDamage: resolvedDamage,
+            isReactionAttack: true,
+            reactionMeta: {
+                buffId: payload.buffId || null,
+                reason: payload.reason || 'BUFF_ATTACK'
+            }
+        });
+
+        const attackerName = attacker?.name || attacker?.id || 'Unknown';
+        const targetName = target?.name || target?.id || 'Unknown';
+        const buffLabel = payload.buffName || payload.buffId || 'buff attack';
+        this.eventBus.emit('BATTLE_LOG', {
+            text: `${attackerName} triggered ${buffLabel} and dealt ${Math.round(outcome.damage || 0)} HP to ${targetName}.`
+        });
+
+        if (this.data?.playerData) {
+            this.eventBus.emit('DATA_UPDATE', this.data.playerData);
+        }
+        this.emitBattleUpdate();
+        this.checkBattleStatus();
+    }
+
+    _executeSkillActions({ actor, action, skillConfig }) {
+        const defaultTarget = this._getEntityById(action.targetId);
+        if (!defaultTarget && skillConfig?.target?.subject !== 'SUBJECT_SELF') {
+            return { ok: false, reason: `Target ${action.targetId} not found.` };
+        }
+
+        const actionContext = {
+            actor,
+            source: actor,
+            target: defaultTarget,
+            actionType: 'SKILL',
+            skillId: skillConfig.id,
+            bodyPart: action.bodyPart,
+            cancelled: false,
+            cancelReason: null,
+            skipTurn: false
+        };
+        this.eventBus.emit('BATTLE_ACTION_PRE', actionContext);
+        if (actionContext.cancelled || actionContext.skipTurn) {
+            if (actionContext.skipTurn && actor) actor._skipTurn = false;
+            return {
+                ok: true,
+                skipped: true,
+                logs: [`${skillConfig.name} was cancelled${actionContext.cancelReason ? ` (${actionContext.cancelReason})` : ''}.`],
+                actions: [],
+                buffResults: []
+            };
+        }
+
+        const logs = [];
+        const results = [];
+        const actions = Array.isArray(skillConfig?.actions) ? skillConfig.actions : [];
+
+        for (const actionDef of actions) {
+            const resolved = this._resolveActionTarget({
+                actor,
+                actionTarget: actionDef?.target,
+                skillConfig,
+                defaultTarget,
+                defaultBodyPart: action.bodyPart
+            });
+            const target = resolved.target;
+            if (!target) continue;
+
+            const effect = actionDef?.effect || {};
+            const bodyPart = effect?.partOverride?.parts?.[0] || resolved.bodyPart;
+            const repeat = Math.max(1, Number(effect?.repeat?.count ?? 1) || 1);
+
+            for (let i = 0; i < repeat; i++) {
+                switch (effect.effectType) {
+                case 'DMG_HP': {
+                    const rawDamage = this._computeEffectAmount(effect, { actor, target, bodyPart });
+                    const bypassArmor = target === actor && !bodyPart;
+                    const outcome = bypassArmor
+                        ? {
+                            isHit: true,
+                            damage: rawDamage,
+                            armorDamage: 0,
+                            targetHpRemaining: this._applyHpDelta(target, -rawDamage)
+                        }
+                        : this._applyBattleDamage({ attacker: actor, target, skillId: skillConfig.id, bodyPart, rawDamage });
+                    results.push(outcome);
+                    logs.push(`${skillConfig.name} dealt ${Math.round(outcome.damage || 0)} HP to ${target.name || target.id}.`);
+                    break;
+                }
+                case 'DMG_ARMOR': {
+                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart });
+                    const outcome = this._applyArmorDelta(target, bodyPart, -amount);
+                    results.push({
+                        isHit: true,
+                        damage: 0,
+                        armorDamage: Math.abs(outcome.armorDelta),
+                        targetPart: outcome.bodyPart,
+                        targetHpRemaining: this._getEntityCurrentHp(target)
+                    });
+                    logs.push(`${skillConfig.name} damaged ${target.name || target.id}'s armor on ${outcome.bodyPart || 'unknown'} by ${Math.round(Math.abs(outcome.armorDelta || 0))}.`);
+                    break;
+                }
+                case 'HEAL': {
+                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart });
+                    const currentHp = this._applyHpDelta(target, amount);
+                    results.push({ isHit: true, heal: amount, targetHpRemaining: currentHp });
+                    logs.push(`${skillConfig.name} healed ${target.name || target.id} for ${Math.round(amount)} HP.`);
+                    break;
+                }
+                case 'ARMOR_ADD': {
+                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart });
+                    const outcome = this._applyArmorDelta(target, bodyPart, amount);
+                    results.push({ isHit: true, armorGain: outcome.armorDelta, targetPart: outcome.bodyPart });
+                    logs.push(`${skillConfig.name} restored ${Math.round(outcome.armorDelta || 0)} armor on ${target.name || target.id}${outcome.bodyPart ? `:${outcome.bodyPart}` : ''}.`);
+                    break;
+                }
+                case 'AP_GAIN': {
+                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart });
+                    const currentAp = this._getEntityCurrentAp(target);
+                    this._setEntityCurrentAp(target, currentAp + amount);
+                    results.push({ isHit: true, apGain: amount, targetAp: this._getEntityCurrentAp(target) });
+                    logs.push(`${skillConfig.name} granted ${Math.round(amount)} AP to ${target.name || target.id}.`);
+                    break;
+                }
+                case 'BUFF_REMOVE': {
+                    const outcome = this._removeBuffsBySkillEffect(target, effect);
+                    results.push({ isHit: true, removedBuffs: outcome.removed });
+                    logs.push(`${skillConfig.name} removed ${outcome.removed} buffs from ${target.name || target.id}.`);
+                    break;
+                }
+                default:
+                    logs.push(`${skillConfig.name} has unsupported effectType ${effect.effectType}.`);
+                    break;
+                }
+            }
+        }
+
+        const buffResults = this._applySkillBuffRefs({ actor, defaultTarget, skillConfig });
+        buffResults.forEach(item => {
+            logs.push(`${skillConfig.name} ${item.kind === 'apply' ? 'applied' : 'removed'} ${item.buffId} on ${item.targetId}.`);
+        });
+
+        return {
+            ok: true,
+            logs,
+            actions: results,
+            buffResults
+        };
+    }
+
+    executePlayerSkill(action) {
+        const player = this.data.playerData;
+        const skillConfig = this.data.getSkillConfig(action.skillId);
+        if (!skillConfig) return null;
+
+        const result = this._executeSkillActions({ actor: player, action, skillConfig });
+        if (!result?.ok) {
+            this.eventBus.emit('BATTLE_LOG', { text: result?.reason || `Player failed to use ${action.skillId}.` });
+            return result;
+        }
+
+        if (!result.skipped) {
+            this._setEntityCurrentAp(player, this._getEntityCurrentAp(player) - (Number(action.cost) || 0));
+        }
+
+        result.logs.forEach(text => this.eventBus.emit('BATTLE_LOG', { text: `Player: ${text}` }));
+        this.eventBus.emit('DATA_UPDATE', player);
         this.emitBattleUpdate();
         return result;
     }
 
     executeEnemySkill(action) {
-        const player = this.data.playerData;
-        if (player.stats.hp <= 0) return { isHit: false, reason: 'dead' };
-
+        const enemy = this._getEntityById(action.sourceId);
         const skillConfig = this.data.getSkillConfig(action.skillId);
-        const baseDamage = skillConfig ? skillConfig.value : 10;
-        const skillName = skillConfig ? skillConfig.name : action.skillId;
+        if (!enemy || !skillConfig) return null;
+        if (this._getEntityCurrentHp(this.data.playerData) <= 0) return { isHit: false, reason: 'dead' };
 
-        // Resolve attacker
-		const enemy = (this.data.currentLevelData && this.data.currentLevelData.enemies)
-			? this.data.currentLevelData.enemies.find(e => e.id === action.sourceId)
-			: null;
-
-		// Combat Context (Buff pipeline)
-		const context = {
-			attacker: enemy,
-			target: player,
-			skillId: action.skillId,
-			bodyPart: action.bodyPart,
-			rawDamage: baseDamage,
-			damageDealt: 0,
-			damageTaken: 0,
-			tempModifiers: Object.create(null)
-		};
-		this.eventBus.emit('BATTLE_ATTACK_PRE', context);
-
-        // New Damage Logic for Player
-        let actualDamage = context.rawDamage;
-        let armorDamage = 0;
-        let targetPart = action.bodyPart || 'chest'; // Default to chest
-        
-        // Access player battle state for body parts
-        const runtime = this.data.dataConfig.runtime;
-        const playerBattleState = runtime ? runtime.playerBattleState : null;
-
-        if (playerBattleState && playerBattleState.bodyParts && playerBattleState.bodyParts[targetPart]) {
-            const part = playerBattleState.bodyParts[targetPart];
-            
-            // Apply weakness
-            if (part.weakness) {
-                actualDamage = Math.floor(actualDamage * part.weakness);
-            }
-
-            // Apply armor mitigation mult from buffs
-			let armorMitMult = 1.0;
-			const tmp = context.tempModifiers && context.tempModifiers.armorMitigationMult;
-			if (Array.isArray(tmp) && tmp.length > 0) {
-				for (const m of tmp) {
-					if (m.type === 'percent_current') {
-						armorMitMult *= (1 + m.value);
-					} else if (m.type === 'flat') {
-						armorMitMult += m.value;
-					}
-				}
-			}
-
-            // Reduce Armor first (current)
-            if (part.current > 0) {
-                const mitigated = Math.ceil(actualDamage * armorMitMult);
-                if (part.current >= mitigated) {
-                    part.current -= mitigated;
-                    armorDamage = mitigated;
-                    actualDamage = 0;
-                } else {
-                    armorDamage = part.current;
-                    actualDamage = Math.max(0, mitigated - part.current);
-                    part.current = 0;
-                    part.status = 'BROKEN';
-                }
-            }
+        const result = this._executeSkillActions({ actor: enemy, action, skillConfig });
+        if (!result?.ok) {
+            this.eventBus.emit('BATTLE_LOG', { text: result?.reason || `${enemy.id} failed to use ${action.skillId}.` });
+            return result;
         }
 
-        // TakeDamagePre hooks (e.g. shield / damage taken mult)
-		context.damageTaken = actualDamage;
-		this.eventBus.emit('BATTLE_TAKE_DAMAGE_PRE', context);
-		if (context.damageTakenMult) {
-			context.damageTaken = Math.floor(context.damageTaken * context.damageTakenMult);
-		}
-		if (context.shieldPool) {
-			const absorbed = Math.min(context.shieldPool, context.damageTaken);
-			context.damageTaken -= absorbed;
-			context.shieldPool -= absorbed;
-		}
-
-		actualDamage = context.damageTaken;
-        if (actualDamage > 0) {
-            player.stats.hp -= actualDamage;
-            if (player.stats.hp < 0) player.stats.hp = 0;
+        if (!result.skipped) {
+            const enemyCost = this._getSkillApCostStrict(skillConfig, action.skillId, enemy);
+            this._setEntityCurrentAp(enemy, this._getEntityCurrentAp(enemy) - enemyCost);
         }
 
-		context.damageDealt = actualDamage;
-		this.eventBus.emit('BATTLE_ATTACK_POST', context);
-        
-        this.eventBus.emit('DATA_UPDATE', player);
-        
-        const log = `${action.sourceId} used ${skillName} attacked Player for ${actualDamage} HP damage (Armor: ${armorDamage})!`;
-        this.eventBus.emit('BATTLE_LOG', { text: log });
+        result.logs.forEach(text => this.eventBus.emit('BATTLE_LOG', { text: `${enemy.name || enemy.id}: ${text}` }));
+        this.eventBus.emit('DATA_UPDATE', this.data.playerData);
         this.emitBattleUpdate();
-
-        return { 
-            isHit: true, 
-            damage: actualDamage, 
-            armorDamage: armorDamage,
-            targetHpRemaining: player.stats.hp 
-        };
+        return result;
     }
 
     checkBattleStatus() {
@@ -1221,6 +1570,8 @@ class CoreEngine {
         
         //  DataManager ???
         if (this.data.dataConfig.runtime) {
+            this.data.dataConfig.runtime.currentScene = 'MAIN_MENU';
+            this.data.dataConfig.runtime.battleState = null;
             delete this.data.dataConfig.runtime.levelData;
             delete this.data.dataConfig.runtime.turn;
             delete this.data.dataConfig.runtime.phase;
@@ -1248,6 +1599,7 @@ class CoreEngine {
         this.enemySkillQueue = [];
         this.timeline.reset();
         this._syncPlannerToRuntime();
+        this._enterPlanningBudgetSnapshot();
 
         this.eventBus.emit('BATTLE_LOG', { text: 'Turn planning and timeline cleared.' });
         this.emitBattleUpdate();
@@ -1257,8 +1609,13 @@ class CoreEngine {
         if (this.fsm.currentState === 'BATTLE_LOOP') {
             if (!this.data.dataConfig.runtime) this.data.dataConfig.runtime = {};
             const runtime = this.data.dataConfig.runtime;
+            runtime.currentScene = 'BATTLE_LOOP';
             runtime.turn = this.currentTurn;
             runtime.phase = this.battlePhase;
+            runtime.battleState = {
+                active: true,
+                timelinePhase: this.timeline ? this.timeline.phase : 'IDLE'
+            };
             
             // 保存队列
             if (!runtime.queues) runtime.queues = {};

@@ -7,18 +7,29 @@ export default class BuffSystem {
 
 		this._actionLibrary = {
 			damage: (ctx, effect) => this._act_damage(ctx, effect),
+			DAMAGE_HP: (ctx, effect) => this._act_damage(ctx, effect),
 			heal: (ctx, effect) => this._act_heal(ctx, effect),
+			HEAL_HP: (ctx, effect) => this._act_heal(ctx, effect),
+			HEAL_ARMOR: (ctx, effect) => this._act_healArmor(ctx, effect),
 			applyBuff: (ctx, effect) => this._act_applyBuff(ctx, effect),
+			APPLY_BUFF: (ctx, effect) => this._act_applyBuff(ctx, effect),
 			skipTurn: (ctx, effect) => this._act_skipTurn(ctx, effect),
+			SKIP_TURN: (ctx, effect) => this._act_skipTurn(ctx, effect),
 			modifyAP: (ctx, effect) => this._act_modifyAP(ctx, effect),
+			MODIFY_AP: (ctx, effect) => this._act_modifyAP(ctx, effect),
 			absorbDamage: (ctx, effect) => this._act_absorbDamage(ctx, effect),
 			modifyDamageTaken: (ctx, effect) => this._act_modifyDamageTaken(ctx, effect),
 			setDamageTaken: (ctx, effect) => this._act_setDamageTaken(ctx, effect),
 			attack: (ctx, effect) => this._act_attack(ctx, effect),
+			ATTACK: (ctx, effect) => this._act_attack(ctx, effect),
 			absorbToHeal: (ctx, effect) => this._act_absorbToHeal(ctx, effect),
 			revive: (ctx, effect) => this._act_revive(ctx, effect),
 			REMOVE_SELF: (ctx, effect) => this._act_removeSelf(ctx, effect),
-			MODIFY_STAT_TEMP: (ctx, effect) => this._act_modifyStatTemp(ctx, effect)
+			MODIFY_STAT_TEMP: (ctx, effect) => this._act_modifyStatTemp(ctx, effect),
+			PREVENT_DAMAGE_HP: (ctx, effect) => this._act_preventDamageHp(ctx, effect),
+			PREVENT_DAMAGE_ARMOR: (ctx, effect) => this._act_preventDamageArmor(ctx, effect),
+			AP_COST_ADD: (ctx, effect) => this._act_modifyApCost(ctx, effect, 1),
+			AP_COST_REDUCE: (ctx, effect) => this._act_modifyApCost(ctx, effect, -1)
 		};
 	}
 
@@ -141,8 +152,9 @@ export default class BuffSystem {
 
 			for (const effect of effects) {
 				if (!effect || effect.trigger !== triggerName) continue;
+				const normalizedEffect = this._normalizeEffect(effect);
 
-				const actionKey = effect.action;
+				const actionKey = normalizedEffect.action;
 				const fn = this._actionLibrary[actionKey];
 				if (!fn) {
 					this.eventBus?.emit?.('BUFF:WARN', { ownerId: manager.ownerId, buffId: b.id, reason: 'action_not_supported', action: actionKey, trigger: triggerName });
@@ -150,12 +162,23 @@ export default class BuffSystem {
 				}
 
 				try {
-					fn({ manager, buff: b, context }, effect);
+					fn({ manager, buff: b, context }, normalizedEffect);
 				} catch (err) {
 					this.eventBus?.emit?.('BUFF:ERROR', { ownerId: manager.ownerId, buffId: b.id, trigger: triggerName, action: actionKey, error: String(err?.message || err) });
 				}
 			}
 		}
+	}
+
+	_normalizeEffect(effect) {
+		const payload = (effect && effect.payload && typeof effect.payload === 'object') ? effect.payload : {};
+		return {
+			...effect,
+			value: Object.prototype.hasOwnProperty.call(payload, 'value') ? payload.value : effect.value,
+			valueType: payload.valueType ?? effect.valueType,
+			reason: payload.reason ?? effect.reason,
+			params: effect.params ?? payload.params ?? payload
+		};
 	}
 
 	_resolveTarget({ manager, context }, effectTarget) {
@@ -189,7 +212,6 @@ export default class BuffSystem {
 		};
 
 		try {
-			// eslint-disable-next-line no-new-func
 			const fn = new Function('s', `with (s) { return (${v}); }`);
 			const out = fn(scope);
 			return Number.isFinite(out) ? out : 0;
@@ -241,6 +263,9 @@ export default class BuffSystem {
 	_act_skipTurn(ctx) {
 		// 用 context 打标，交由 FSM/战斗回合处理
 		ctx.context.skipTurn = true;
+		if (ctx.manager?.owner) {
+			ctx.manager.owner._skipTurn = true;
+		}
 	}
 
 	_act_modifyAP(ctx, effect) {
@@ -260,6 +285,38 @@ export default class BuffSystem {
 		ctx.context.shieldPool = (ctx.context.shieldPool || 0) + amount;
 	}
 
+	_pickArmorPart(target, preferredPart = null) {
+		if (!target?.bodyParts || typeof target.bodyParts !== 'object') return null;
+		if (preferredPart && target.bodyParts[preferredPart]) return preferredPart;
+
+		const damaged = Object.entries(target.bodyParts)
+			.filter(([, part]) => Number(part?.max ?? 0) > 0)
+			.sort((a, b) => {
+				const dmgA = (Number(a[1]?.max ?? 0) || 0) - (Number(a[1]?.current ?? 0) || 0);
+				const dmgB = (Number(b[1]?.max ?? 0) || 0) - (Number(b[1]?.current ?? 0) || 0);
+				return dmgB - dmgA;
+			});
+
+		return damaged.length > 0 ? damaged[0][0] : null;
+	}
+
+	_act_healArmor(ctx, effect) {
+		const target = this._resolveTarget(ctx, effect.target);
+		if (!target?.bodyParts) return;
+		const amount = this._resolveValue(ctx, effect);
+		if (!Number.isFinite(amount) || amount <= 0) return;
+
+		const preferredPart = effect?.params?.part || ctx.context?.bodyPart || ctx.context?.targetPart || null;
+		const partKey = this._pickArmorPart(target, preferredPart);
+		if (!partKey || !target.bodyParts[partKey]) return;
+
+		const part = target.bodyParts[partKey];
+		const max = Number(part.max ?? 0) || 0;
+		const current = Number(part.current ?? 0) || 0;
+		part.current = Math.min(max, current + amount);
+		part.status = part.current > 0 ? 'NORMAL' : (part.status || 'NORMAL');
+	}
+
 	_act_modifyDamageTaken(ctx, effect) {
 		// 最小实现：写入 context.damageTakenMult
 		const mult = effect.value;
@@ -267,8 +324,28 @@ export default class BuffSystem {
 		ctx.context.damageTakenMult = (ctx.context.damageTakenMult || 1) * mult;
 	}
 
-	_act_attack() {
-		// 反击等需要 CombatSystem 执行实际攻击，当前先占位。
+	_act_attack(ctx, effect) {
+		if (ctx?.context?.isReactionAttack) return;
+
+		const source = ctx?.manager?.owner;
+		const target = this._resolveTarget(ctx, effect.target);
+		if (!source || !target || source === target) return;
+
+		const explicitDamage = this._resolveValue(ctx, effect);
+		const params = effect?.params || {};
+		const multiplier = Number(params.multiplier ?? effect?.multiplier ?? 1) || 1;
+
+		this.eventBus?.emit?.('BUFF_ATTACK_REQUEST', {
+			source,
+			target,
+			bodyPart: params.part || ctx?.context?.bodyPart || ctx?.context?.targetPart || null,
+			damage: Number.isFinite(explicitDamage) && explicitDamage > 0 ? explicitDamage : undefined,
+			multiplier,
+			buffId: ctx?.buff?.id || null,
+			buffName: ctx?.buff?.definition?.name || ctx?.buff?.id || null,
+			reason: 'BUFF_ATTACK',
+			context: ctx?.context || {}
+		});
 	}
 
 	_act_absorbToHeal() {
@@ -299,5 +376,22 @@ export default class BuffSystem {
 
 		ctx.context.tempModifiers[p.stat] = ctx.context.tempModifiers[p.stat] || [];
 		ctx.context.tempModifiers[p.stat].push({ value: num, type: p.type || 'flat' });
+	}
+
+	_act_preventDamageHp(ctx) {
+		ctx.context.preventHpDamage = true;
+	}
+
+	_act_preventDamageArmor(ctx) {
+		ctx.context.preventArmorDamage = true;
+	}
+
+	_act_modifyApCost(ctx, effect, direction) {
+		const target = this._resolveTarget(ctx, effect.target);
+		if (!target) return;
+		const amount = this._resolveValue(ctx, effect);
+		if (!Number.isFinite(amount) || amount === 0) return;
+		const delta = amount * direction;
+		target._planningApCostFlatDelta = (Number(target._planningApCostFlatDelta ?? 0) || 0) + delta;
 	}
 }

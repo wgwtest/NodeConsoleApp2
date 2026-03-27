@@ -609,11 +609,17 @@ export default class UI_SkillPanel {
         if (nextSlots.length === 0) {
             delete this.planningDraftBySkill[id];
         } else {
+            const selectedParts = nextSlots
+                .map(slot => this.engine?.turnPlanner?.parseSlotKey?.(slot)?.part)
+                .filter(Boolean);
             this.planningDraftBySkill[id] = {
                 skillId: id,
                 placedSlots: nextSlots,
                 targetId: finalTargetId,
-                bodyPart: part
+                bodyPart: part,
+                selectionResult: {
+                    selectedParts
+                }
             };
         }
 
@@ -629,7 +635,12 @@ export default class UI_SkillPanel {
                     skillId: id,
                     placedSlots: prevSlots,
                     targetId: prev?.targetId ?? finalTargetId,
-                    bodyPart: prev?.bodyPart ?? part
+                    bodyPart: prev?.bodyPart ?? part,
+                    selectionResult: prev?.selectionResult ?? {
+                        selectedParts: prevSlots
+                            .map(slot => this.engine?.turnPlanner?.parseSlotKey?.(slot)?.part)
+                            .filter(Boolean)
+                    }
                 };
             }
             this._recalcPlanningApBudget();
@@ -903,7 +914,14 @@ export default class UI_SkillPanel {
         const isFriendly = targetInfo.subject === 'SUBJECT_SELF';
         const targetZoneClass = isFriendly ? 'self-zone' : 'enemy-zone';
         const isGlobal = targetInfo.scope === 'SCOPE_ENTITY';
-        const fixedPart = targetInfo.selection && targetInfo.selection.part ? targetInfo.selection.part : null;
+        const selection = targetInfo.selection || {};
+        const candidateParts = Array.isArray(selection.candidateParts) ? selection.candidateParts : [];
+        const selectedParts = Array.isArray(selection.selectedParts) ? selection.selectedParts : [];
+        const allowedParts = selectedParts.length > 0
+            ? new Set(selectedParts)
+            : (candidateParts.length > 0 ? new Set(candidateParts) : null);
+        const fixedPart = selection.part
+            || (allowedParts && allowedParts.size === 1 ? Array.from(allowedParts)[0] : null);
 
         const rows = this.matrixContainer.querySelectorAll('.matrix-row');
         rows.forEach(row => {
@@ -916,6 +934,7 @@ export default class UI_SkillPanel {
                 // If Part Skill -> Skip Global Row
                 if (rowPart === 'global') return;
                 if (fixedPart && rowPart !== fixedPart) return;
+                if (allowedParts && !allowedParts.has(rowPart)) return;
             }
 
             // Check if row is disabled (Missing Part)
@@ -985,7 +1004,7 @@ export default class UI_SkillPanel {
         const scope = skill.target.scope;
         const selection = skill.target.selection || {};
 
-        if (!subject || (scope !== 'SCOPE_ENTITY' && scope !== 'SCOPE_PART')) {
+        if (!subject || (scope !== 'SCOPE_ENTITY' && scope !== 'SCOPE_PART' && scope !== 'SCOPE_MULTI_PARTS')) {
             console.error('[UI_SkillPanel] Invalid skill target config: invalid subject/scope.', skill);
             return null;
         }
@@ -995,14 +1014,24 @@ export default class UI_SkillPanel {
             return null;
         }
 
-        return { subject, scope, selection };
+        return {
+            subject,
+            scope,
+            selection: {
+                ...selection,
+                candidateParts: Array.isArray(selection.candidateParts) ? selection.candidateParts : [],
+                selectedParts: Array.isArray(selection.selectedParts) ? selection.selectedParts : []
+            }
+        };
     }
 
     formatTargetLabel(skill) {
         const target = this.getSkillTarget(skill);
         if (!target) return 'INVALID_TARGET';
         const subject = target.subject === 'SUBJECT_SELF' ? 'SELF' : 'ENEMY';
-        const scope = target.scope === 'SCOPE_ENTITY' ? 'ENTITY' : 'PART';
+        const scope = target.scope === 'SCOPE_ENTITY'
+            ? 'ENTITY'
+            : (target.scope === 'SCOPE_MULTI_PARTS' ? 'MULTI_PARTS' : 'PART');
         return `${subject}_${scope}`;
     }
 
@@ -1012,10 +1041,16 @@ export default class UI_SkillPanel {
         const subject = target.subject === 'SUBJECT_SELF' ? '自身' : '敌方';
         const scopeMap = {
             SCOPE_ENTITY: '本体',
-            SCOPE_PART: '部位'
+            SCOPE_PART: '部位',
+            SCOPE_MULTI_PARTS: '多部位'
         };
         const selectionMode = target.selection && target.selection.mode ? target.selection.mode : '';
-        const part = target.selection && target.selection.part ? `（${target.selection.part}）` : '';
+        const parts = Array.isArray(target.selection?.selectedParts) && target.selection.selectedParts.length > 0
+            ? target.selection.selectedParts
+            : (Array.isArray(target.selection?.candidateParts) ? target.selection.candidateParts : []);
+        const part = target.selection && target.selection.part
+            ? `（${target.selection.part}）`
+            : (parts.length > 0 ? `（${parts.join(', ')}）` : '');
         return `${subject} · ${scopeMap[target.scope] || target.scope} ${selectionMode}${part}`.trim();
     }
 

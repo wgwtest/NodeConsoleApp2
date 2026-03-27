@@ -284,6 +284,8 @@ export class UI_SystemModal {
         console.log('[UI_SystemModal] Showing modal');
         if (this.dom.backdrop) {
             this.dom.backdrop.classList.add('visible');
+            this.dom.backdrop.hidden = false;
+            this.dom.backdrop.setAttribute('aria-hidden', 'false');
         }
     }
 
@@ -294,6 +296,8 @@ export class UI_SystemModal {
         console.log('[UI_SystemModal] Hiding modal');
         if (this.dom.backdrop) {
             this.dom.backdrop.classList.remove('visible');
+            this.dom.backdrop.hidden = true;
+            this.dom.backdrop.setAttribute('aria-hidden', 'true');
         }
         this.currentView = null;
     }

@@ -276,10 +276,15 @@ export default class TurnPlanner {
 					sourceId: this._getPlayerId ? this._getPlayerId() : null,
 					skillId,
 					targetId: draft?.targetId,
-					bodyPart: draft?.bodyPart,
+					bodyPart: v.parsed.part,
 					cost,
 					speed,
-					selectionResult: draft?.selectionResult,
+					selectionResult: {
+						...(draft?.selectionResult || {}),
+						selectedParts: Array.isArray(draft?.selectionResult?.selectedParts)
+							? [...draft.selectionResult.selectedParts]
+							: [v.parsed.part]
+					},
 					meta: { side: v.parsed.side, part: v.parsed.part, slotIndex: v.parsed.index }
 				};
 

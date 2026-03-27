@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Codex Regression Runner</title>
+  <style>
+    body { font-family: sans-serif; padding: 24px; }
+    .pass { color: #0a7a0a; }
+    .fail { color: #b00020; }
+    pre { white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Codex Regression Runner</h1>
+  <div id="summary"></div>
+  <pre id="log"></pre>
+
+  <script type="module">
+    import TurnPlanner from '../script/engine/TurnPlanner.js';
+    import UI_SkillPanel from '../script/ui/UI_SkillPanel.js';
+    import { UI_SkillTreeModal } from '../script/ui/UI_SkillTreeModal.js';
+
+    const summaryEl = document.getElementById('summary');
+    const logEl = document.getElementById('log');
+    const lines = [];
+
+    function log(text) {
+      lines.push(text);
+      logEl.textContent = lines.join('\n');
+      console.log(text);
+    }
+
+    function assert(condition, message) {
+      if (!condition) throw new Error(message);
+    }
+
+    function createEventBus() {
+      return {
+        on() {},
+        emit() {}
+      };
+    }
+
+    function setupSkillPanelDom() {
+      document.body.insertAdjacentHTML('beforeend', `
+        <section class="skill-panel">
+          <div class="skill-sort-bar"></div>
+          <div class="skill-grid-view"></div>
+          <div class="action-matrix-container">
+            <div class="matrix-row" data-row-part="head">
+              <div class="enemy-zone">
+                <button class="slot-placeholder" data-part="head" data-target-type="enemy" data-slot-index="0"></button>
+              </div>
+            </div>
+            <div class="matrix-row" data-row-part="chest">
+              <div class="enemy-zone">
+                <button class="slot-placeholder" data-part="chest" data-target-type="enemy" data-slot-index="0"></button>
+              </div>
+            </div>
+            <div class="matrix-row" data-row-part="abdomen">
+              <div class="enemy-zone">
+                <button class="slot-placeholder" data-part="abdomen" data-target-type="enemy" data-slot-index="0"></button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <aside class="skill-detail-column">
+          <div id="detailName"></div>
+          <div id="detailMeta"></div>
+          <div id="detailEffect"></div>
+          <div id="detailTarget"></div>
+          <div id="detailCosts"></div>
+          <div id="detailSpeed"></div>
+          <div id="detailBuffs"></div>
+          <div id="detailTip"></div>
+          <div id="detailTags"></div>
+          <div id="apMeter"><div id="apMeterSlots"></div><div id="apMeterValue"></div></div>
+        </aside>
+      `);
+    }
+
+    async function testMockUiUsesSingletonEngine() {
+      const html = await fetch('../mock_ui_v11.html').then(r => r.text());
+      assert(!/new\s+CoreEngine\s*\(/.test(html), 'mock_ui_v11.html 仍在直接 new CoreEngine()');
+      assert(/import\s+engine\s+from\s+['"]\.\.\/script\/engine\/CoreEngine\.js['"]/.test(html), 'mock_ui_v11.html 未改为导入默认 engine 单例');
+    }
+
+    async function testCoreEngineBattleSaveSyncContract() {
+      const source = await fetch('../script/engine/CoreEngine.js').then(r => r.text());
+      assert(/runtime\.currentScene\s*=\s*'BATTLE_LOOP'/.test(source), 'saveBattleState 未同步 runtime.currentScene = BATTLE_LOOP');
+      assert(/runtime\.battleState\s*=\s*\{/.test(source), 'saveBattleState 未同步 runtime.battleState');
+    }
+
+    function testTurnPlannerUsesSlotPartForMultiSelect() {
+      const planner = new TurnPlanner({
+        getSlotLayout: () => ({
+          slotCounts: {
+            head: { enemy: 1, self: 1 },
+            chest: { enemy: 1, self: 1 }
+          }
+        }),
+        getPlayerId: () => 'player_1',
+        getSkillConfig: () => ({
+          id: 'skill_multi',
+          target: {
+            selection: {
+              selectCount: 4
+            }
+          }
+        }),
+        getCurrentAp: () => 10,
+        getUsedAp: () => 0
+      });
+
+      planner.enterPlanning({
+        availableAp: 10,
+        effectiveApCostBySkill: { skill_multi: 1 }
+      });
+
+      const result = planner.planMany({
+        planningDraftBySkill: {
+          skill_multi: {
+            skillId: 'skill_multi',
+            targetId: 'enemy_1',
+            bodyPart: 'chest',
+            cost: 1,
+            speed: 0,
+            placedSlots: ['enemy:head:0', 'enemy:chest:0'],
+            selectionResult: { selectedParts: ['head', 'chest'] }
+          }
+        }
+      });
+
+      assert(result.ok, 'TurnPlanner.planMany 返回失败');
+      const actions = planner.getPlannedActions();
+      assert(actions.length === 2, 'TurnPlanner 未生成 2 个动作');
+      assert(actions[0].bodyPart === 'head', `第 1 个动作 bodyPart 错误: ${actions[0].bodyPart}`);
+      assert(actions[1].bodyPart === 'chest', `第 2 个动作 bodyPart 错误: ${actions[1].bodyPart}`);
+    }
+
+    function testSkillPanelAcceptsMultiPartScope() {
+      setupSkillPanelDom();
+      const panel = new UI_SkillPanel({
+        eventBus: createEventBus(),
+        data: {
+          playerData: { stats: { ap: 10, maxAp: 10 } }
+        },
+        playerSkillQueue: [],
+        turnPlanner: {
+          getApBudgetState() {
+            return {
+              phase: 'AP_BUDGET_READY',
+              availableAp: 10,
+              plannedCost: 0,
+              remaining: 10,
+              ok: true
+            };
+          }
+        }
+      });
+
+      const target = panel.getSkillTarget({
+        id: 'skill_multi',
+        target: {
+          subject: 'SUBJECT_ENEMY',
+          scope: 'SCOPE_MULTI_PARTS',
+          selection: {
+            mode: 'multiple',
+            candidateParts: ['head', 'chest'],
+            selectedParts: [],
+            selectCount: 2
+          }
+        }
+      });
+
+      assert(target, 'UI_SkillPanel.getSkillTarget 未接受 SCOPE_MULTI_PARTS');
+    }
+
+    function testSkillPanelHighlightsCandidatePartsOnly() {
+      document.body.innerHTML = '<div id="summary"></div><pre id="log"></pre>';
+      setupSkillPanelDom();
+      const panel = new UI_SkillPanel({
+        eventBus: createEventBus(),
+        data: {
+          playerData: { stats: { ap: 10, maxAp: 10 } }
+        },
+        playerSkillQueue: [],
+        turnPlanner: {
+          getApBudgetState() {
+            return {
+              phase: 'AP_BUDGET_READY',
+              availableAp: 10,
+              plannedCost: 0,
+              remaining: 10,
+              ok: true
+            };
+          }
+        }
+      });
+
+      panel.selectedSkill = {
+        id: 'skill_head_only',
+        target: {
+          subject: 'SUBJECT_ENEMY',
+          scope: 'SCOPE_PART',
+          selection: {
+            mode: 'single',
+            candidateParts: ['head'],
+            selectedParts: [],
+            selectCount: 1
+          }
+        }
+      };
+
+      panel.highlightValidSlots();
+
+      const headHighlighted = document.querySelectorAll('.matrix-row[data-row-part="head"] .highlight-valid').length;
+      const chestHighlighted = document.querySelectorAll('.matrix-row[data-row-part="chest"] .highlight-valid').length;
+      const abdomenHighlighted = document.querySelectorAll('.matrix-row[data-row-part="abdomen"] .highlight-valid').length;
+
+      assert(headHighlighted > 0, 'head 行未被高亮');
+      assert(chestHighlighted === 0, 'candidateParts 未限制 chest 高亮');
+      assert(abdomenHighlighted === 0, 'candidateParts 未限制 abdomen 高亮');
+    }
+
+    function testSkillTreeCommitUsesEngineSavePath() {
+      const modal = new UI_SkillTreeModal();
+      let engineSaveCalls = 0;
+      let dataSaveCalls = 0;
+      modal.engine = {
+        saveGame() {
+          engineSaveCalls += 1;
+        },
+        data: {
+          playerData: {
+            skills: {
+              learned: [],
+              skillPoints: 5
+            }
+          },
+          saveGame() {
+            dataSaveCalls += 1;
+          }
+        },
+        eventBus: createEventBus()
+      };
+      modal._skillsMap = {
+        skill_a: {
+          id: 'skill_a',
+          unlock: { cost: { kp: 2 } }
+        }
+      };
+      modal._skillsList = [modal._skillsMap.skill_a];
+      modal._sessionSnapshot = {
+        skillPoints: 5,
+        learned: [],
+        selectedSkillId: 'skill_a'
+      };
+      modal._stagedLearned = new Set(['skill_a']);
+      modal._handleClose = () => {};
+
+      modal._handleCommitAndClose();
+
+      assert(engineSaveCalls === 1, `engine.saveGame 调用次数错误: ${engineSaveCalls}`);
+      assert(dataSaveCalls === 0, `不应直接调用 engine.data.saveGame: ${dataSaveCalls}`);
+    }
+
+    const tests = [
+      ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
+      ['CoreEngine 战斗保存同步 currentScene/battleState', testCoreEngineBattleSaveSyncContract],
+      ['TurnPlanner 多选动作使用各自槽位部位', testTurnPlannerUsesSlotPartForMultiSelect],
+      ['UI_SkillPanel 接受 SCOPE_MULTI_PARTS', testSkillPanelAcceptsMultiPartScope],
+      ['UI_SkillPanel 仅高亮 candidateParts', testSkillPanelHighlightsCandidatePartsOnly],
+      ['UI_SkillTreeModal 走 engine.saveGame 保存路径', testSkillTreeCommitUsesEngineSavePath]
+    ];
+
+    let passed = 0;
+    let failed = 0;
+    for (const [name, fn] of tests) {
+      try {
+        await fn();
+        passed += 1;
+        log(`PASS ${name}`);
+      } catch (error) {
+        failed += 1;
+        log(`FAIL ${name}: ${error.message}`);
+      }
+    }
+
+    summaryEl.innerHTML = `
+      <p class="${failed === 0 ? 'pass' : 'fail'}">
+        通过 ${passed} / ${tests.length}，失败 ${failed}
+      </p>
+    `;
+  </script>
+</body>
+</html>

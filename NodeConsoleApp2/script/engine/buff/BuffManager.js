@@ -27,7 +27,7 @@ export default class BuffManager {
 	}
 
 	add(buffId, options = {}) {
-		const def = this.registry.getDefinition(buffId);
+		const def = this.registry.getDefinition(buffId, options);
 		if (!def) {
 			this.eventBus?.emit?.('BUFF:WARN', { ownerId: this.ownerId, buffId, reason: 'definition_not_found' });
 			return null;
@@ -108,20 +108,28 @@ export default class BuffManager {
 			const mods = b.definition?.statModifiers;
 			if (!mods) continue;
 
-			for (const [stat, m] of Object.entries(mods)) {
+			const entries = Array.isArray(mods)
+				? mods
+					.filter(Boolean)
+					.map(m => [m.stat, m])
+					.filter(entry => !!entry[0])
+				: Object.entries(mods);
+
+			for (const [stat, m] of entries) {
 				if (!totals[stat]) {
 					totals[stat] = { flat: 0, percent: 0, overwrite: undefined };
 				}
 
-				const type = m.type;
-				const value = m.value;
+				const type = m?.type;
+				const value = Number(m?.value);
+				if (!Number.isFinite(value) && type !== 'overwrite') continue;
 
 				if (type === 'flat') {
 					totals[stat].flat += (value * b.stacks);
 				} else if (type === 'percent' || type === 'percent_base') {
 					totals[stat].percent += (value * b.stacks);
 				} else if (type === 'overwrite') {
-					totals[stat].overwrite = value;
+					totals[stat].overwrite = m?.value;
 				} else {
 					this.eventBus?.emit?.('BUFF:WARN', {
 						ownerId: this.ownerId,

@@ -13,10 +13,29 @@ class DataManager {
         this.gameConfig = {}; // To store static configs like items, skills
         this._currentLevelConfig = null; // Runtime cache for current level static config
        this._dataSourcesVersion = null;
+        this._enemySkillAliases = {
+            skill_bite: 'skill_heavy_swing',
+            skill_throw_stone: 'skill_skull_cracker',
+            skill_smash: 'skill_hold_the_line',
+            skill_warcry: 'skill_fortify',
+            skill_heavy_smash: 'skill_execute',
+            skill_rage: 'skill_1770396871360',
+            skill_cleave: 'skill_earthquake',
+            skill_ankle_bite: 'skill_artery_slice_copy_1769789197982',
+            skill_escape: 'skill_shockwave_copy_1770041956468',
+            skill_shield_bash: 'skill_skull_cracker',
+            skill_bone_repair: 'skill_block'
+        };
     }
 
     get dataSourcesVersion() {
         return this._dataSourcesVersion;
+    }
+
+    _unwrapBuffDefinitions(rawBuffs) {
+        if (!rawBuffs || typeof rawBuffs !== 'object') return {};
+        if (rawBuffs.buffs && typeof rawBuffs.buffs === 'object') return rawBuffs.buffs;
+        return rawBuffs;
     }
 
     _normalizeSkills(skills, playerTemplate) {
@@ -161,21 +180,44 @@ class DataManager {
 
     async loadConfigs() {
         try {
+            const normalizeUrl = (input, base = null) => {
+                if (!input || typeof input !== 'string') return input;
+                if (/^https?:\/\//i.test(input)) return input;
+                if (input.startsWith('/')) return input;
+                if (base) {
+                    try {
+                        return new URL(input, base).toString();
+                    } catch {
+                        // fall through
+                    }
+                }
+                if (input.startsWith('./')) return `/${input.slice(2)}`;
+                if (input.startsWith('../')) return input;
+                return input;
+            };
+
             // Try to fetch JSON files via data sources config
             // Note: This requires the app to be served via HTTP/HTTPS. 
             // If running from file://, this will likely fail and fall back to mock data.
             const configUrl = (typeof window !== 'undefined' && window.DATA_CONFIG_URL)
                 ? window.DATA_CONFIG_URL
-                : '../assets/data/config.json';
+                : '/assets/data/config.json';
 
-            const configResponse = await fetch(configUrl);
+            const normalizedConfigUrl = normalizeUrl(configUrl, (typeof window !== 'undefined' && window.location)
+                ? window.location.href
+                : null);
+
+            const configResponse = await fetch(normalizedConfigUrl);
             if (!configResponse.ok) {
-                throw new Error(`HTTP error ${configResponse.status} loading ${configUrl}`);
+                throw new Error(`HTTP error ${configResponse.status} loading ${normalizedConfigUrl}`);
             }
 
             const dataSources = await configResponse.json();
             this._dataSourcesVersion = dataSources && typeof dataSources.version === 'string' ? dataSources.version : null;
-            const basePath = dataSources.basePath || '';
+            const originBase = (typeof window !== 'undefined' && window.location)
+                ? `${window.location.origin}/`
+                : null;
+            const basePath = normalizeUrl(dataSources.basePath || '', originBase) || '';
             const sources = dataSources.sources || {};
 
             const fetchConfig = async (sourceKey) => {
@@ -183,7 +225,12 @@ class DataManager {
                 if (!filename) {
                     throw new Error(`Missing source path for ${sourceKey}`);
                 }
-                const url = basePath ? `${basePath}${filename}` : filename;
+                const normalizedFile = normalizeUrl(filename, null);
+                const url = basePath
+                    ? (normalizedFile.startsWith('http') || normalizedFile.startsWith('/')
+                        ? normalizedFile
+                        : `${basePath}${normalizedFile}`)
+                    : normalizedFile;
                 const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error(`HTTP error ${response.status} loading ${url}`);
@@ -225,7 +272,12 @@ class DataManager {
                 throw new Error('Missing skills source path (sources.skills or sources.skillsByTree[skillTreeId]).');
             }
 
-            const skillsUrl = basePath ? `${basePath}${skillsPath}` : skillsPath;
+            const normalizedSkillsPath = normalizeUrl(skillsPath, null);
+            const skillsUrl = basePath
+                ? (normalizedSkillsPath.startsWith('http') || normalizedSkillsPath.startsWith('/')
+                    ? normalizedSkillsPath
+                    : `${basePath}${normalizedSkillsPath}`)
+                : normalizedSkillsPath;
             const skillsResp = await fetch(skillsUrl);
             if (!skillsResp.ok) {
                 throw new Error(`HTTP error ${skillsResp.status} loading ${skillsUrl}`);
@@ -254,7 +306,8 @@ class DataManager {
                 enemies,
                 levels,
                 player,
-                buffs,
+                buffs: this._unwrapBuffDefinitions(buffs),
+                buffMeta: (buffs && typeof buffs === 'object') ? (buffs.meta || null) : null,
                 slotLayouts
             };
 
@@ -273,7 +326,22 @@ class DataManager {
     }
 
     getSkillConfig(skillId) {
-        return this.gameConfig.skills ? this.gameConfig.skills[skillId] : null;
+        if (!this.gameConfig.skills) return null;
+
+        const direct = this.gameConfig.skills[skillId];
+        if (direct) return direct;
+
+        const aliasId = this._enemySkillAliases[skillId];
+        if (!aliasId) return null;
+
+        const aliased = this.gameConfig.skills[aliasId];
+        if (!aliased) return null;
+
+        return {
+            ...aliased,
+            id: skillId,
+            runtimeAliasOf: aliasId
+        };
     }
 
     // Instantiate a level from config, creating runtime enemy instances
@@ -302,6 +370,11 @@ class DataManager {
                     enemyInstance.hp = template.stats.hp;
                     enemyInstance.maxHp = template.stats.maxHp;
                     enemyInstance.speed = template.stats.speed;
+                    if (enemyInstance.stats && typeof enemyInstance.stats === 'object') {
+                        const baseAp = Number(enemyInstance.stats.ap ?? 0) || 0;
+                        enemyInstance.stats.ap = baseAp;
+                        enemyInstance.stats.maxAp = Number(enemyInstance.stats.maxAp ?? baseAp) || baseAp;
+                    }
                     
                     // Initialize Body Parts Runtime State
                     if (enemyInstance.bodyParts) {
@@ -329,8 +402,8 @@ class DataManager {
     }
 
     /**
-     * 获取所有关卡列表
-     * @returns {Array} 关卡对象数组
+     * 禄帽脠隆脣霉脫脨鹿脴驴篓脕脨卤铆
+     * @returns {Array} 鹿脴驴篓露脭脧贸脢媒脳茅
      */
     getLevels() {
         if (!this.gameConfig || !this.gameConfig.levels) {
