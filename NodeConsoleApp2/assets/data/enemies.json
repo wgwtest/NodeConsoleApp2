@@ -108,5 +108,85 @@
       "leg": { "max": 30, "current": 30, "weakness": 1.0 }
     },
     "skills": ["skill_shield_bash", "skill_bone_repair"]
+  },
+  "enemy_acceptance_guard": {
+    "id": "enemy_acceptance_guard",
+    "name": "验收守卫",
+    "race": "construct",
+    "class": "defender",
+    "stats": {
+      "hp": 90,
+      "maxHp": 90,
+      "speed": 6,
+      "ap": 3
+    },
+    "bodyParts": {
+      "head": { "max": 12, "current": 12, "weakness": 1.2 },
+      "chest": { "max": 24, "current": 24, "weakness": 1.0 },
+      "abdomen": { "max": 14, "current": 14, "weakness": 1.0 },
+      "arm": { "max": 10, "current": 10, "weakness": 1.0 },
+      "leg": { "max": 10, "current": 10, "weakness": 1.0 }
+    },
+    "skills": ["skill_bite", "skill_block", "skill_heal"]
+  },
+  "enemy_acceptance_repair": {
+    "id": "enemy_acceptance_repair",
+    "name": "验收修理守卫",
+    "race": "construct",
+    "class": "defender",
+    "stats": {
+      "hp": 90,
+      "maxHp": 90,
+      "speed": 6,
+      "ap": 3
+    },
+    "bodyParts": {
+      "head": { "max": 12, "current": 12, "weakness": 1.2 },
+      "chest": { "max": 24, "current": 4, "weakness": 1.0 },
+      "abdomen": { "max": 14, "current": 14, "weakness": 1.0 },
+      "arm": { "max": 10, "current": 10, "weakness": 1.0 },
+      "leg": { "max": 10, "current": 10, "weakness": 1.0 }
+    },
+    "skills": ["skill_bite", "skill_block"]
+  },
+  "enemy_acceptance_heal": {
+    "id": "enemy_acceptance_heal",
+    "name": "验收医护守卫",
+    "race": "construct",
+    "class": "support",
+    "stats": {
+      "hp": 18,
+      "maxHp": 90,
+      "speed": 6,
+      "ap": 3
+    },
+    "bodyParts": {
+      "head": { "max": 12, "current": 12, "weakness": 1.2 },
+      "chest": { "max": 24, "current": 24, "weakness": 1.0 },
+      "abdomen": { "max": 14, "current": 14, "weakness": 1.0 },
+      "arm": { "max": 10, "current": 10, "weakness": 1.0 },
+      "leg": { "max": 10, "current": 10, "weakness": 1.0 }
+    },
+    "skills": ["skill_bite", "skill_heal"]
+  },
+  "enemy_acceptance_head_tapper": {
+    "id": "enemy_acceptance_head_tapper",
+    "name": "验收轻击守卫",
+    "race": "construct",
+    "class": "tester",
+    "stats": {
+      "hp": 90,
+      "maxHp": 90,
+      "speed": 6,
+      "ap": 3
+    },
+    "bodyParts": {
+      "head": { "max": 12, "current": 12, "weakness": 1.2 },
+      "chest": { "max": 24, "current": 24, "weakness": 1.0 },
+      "abdomen": { "max": 14, "current": 14, "weakness": 1.0 },
+      "arm": { "max": 10, "current": 10, "weakness": 1.0 },
+      "leg": { "max": 10, "current": 10, "weakness": 1.0 }
+    },
+    "skills": ["skill_demo_enemy_head_tap"]
   }
 }

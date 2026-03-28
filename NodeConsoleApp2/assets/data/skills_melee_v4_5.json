@@ -3394,6 +3394,242 @@
       "tagMeta": {},
       "unlock": {},
       "requirements": {}
+    },
+    {
+      "id": "skill_demo_hp_guard",
+      "name": "HP免伤演示",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 8,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771481936095",
+            "target": "self",
+            "chance": 1,
+            "duration": 1,
+            "params": {}
+          }
+        ],
+        "remove": []
+      },
+      "actions": [],
+      "editorMeta": {
+        "x": 1110,
+        "y": 314
+      },
+      "description": "为自身附加 1 回合 HP 免伤，用于人工验收。",
+      "tags": ["BUFF_APPLY", "DEFENSE", "DEMO"],
+      "tagMeta": {},
+      "unlock": {},
+      "requirements": {}
+    },
+    {
+      "id": "skill_demo_armor_guard",
+      "name": "护甲免伤演示",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 8,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771481773827",
+            "target": "self",
+            "chance": 1,
+            "duration": 1,
+            "params": {
+              "buffDuration": 1,
+              "stackNum": 1
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [],
+      "editorMeta": {
+        "x": 1170,
+        "y": 314
+      },
+      "description": "为自身附加 1 回合护甲免伤，用于人工验收。",
+      "tags": ["BUFF_APPLY", "DEFENSE", "DEMO"],
+      "tagMeta": {},
+      "unlock": {},
+      "requirements": {}
+    },
+    {
+      "id": "skill_demo_on_hit_armor",
+      "name": "受击获甲演示",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 8,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771485041778",
+            "target": "self",
+            "chance": 1,
+            "duration": 2,
+            "params": {
+              "healArmorVal": 5
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [],
+      "editorMeta": {
+        "x": 1230,
+        "y": 314
+      },
+      "description": "为自身附加受击获甲效果，用于人工验收。",
+      "tags": ["BUFF_APPLY", "DEFENSE", "DEMO"],
+      "tagMeta": {},
+      "unlock": {},
+      "requirements": {}
+    },
+    {
+      "id": "skill_demo_enemy_head_tap",
+      "name": "验收轻击",
+      "rarity": "Common",
+      "description": "固定攻击头部护甲 4 点，用于护甲类 Buff 人工验收。",
+      "prerequisites": [],
+      "unlock": {},
+      "editorMeta": {
+        "x": 1290,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done"
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "tags": ["DMG_ARMOR", "ABS", "INSTANT", "ONE_SHOT", "DEMO"],
+      "tagMeta": {},
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amount": 4,
+            "amountType": "ABS",
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_demo_wait",
+      "name": "等待",
+      "rarity": "Common",
+      "description": "不产生效果，仅用于把回合交给敌人，方便人工验收敌人行为。",
+      "prerequisites": [],
+      "unlock": {},
+      "editorMeta": {
+        "x": 1350,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done"
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 0,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "tags": ["DEMO", "UTILITY", "WAIT"],
+      "tagMeta": {},
+      "actions": []
     }
   ]
 }

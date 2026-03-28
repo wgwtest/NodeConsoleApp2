@@ -18,6 +18,7 @@
   <script type="module">
     import EventBus from '../script/engine/EventBus.js';
     import { CoreEngine } from '../script/engine/CoreEngine.js';
+    import DataManager from '../script/engine/DataManagerV2.js';
     import EnemyActionPlanner from '../script/engine/EnemyActionPlanner.js';
     import { BuffRegistry, BuffManager, BuffSystem } from '../script/engine/buff/index.js';
     import TurnPlanner from '../script/engine/TurnPlanner.js';
@@ -114,6 +115,273 @@
       const source = await fetch('../script/engine/CoreEngine.js').then(r => r.text());
       assert(/runtime\.currentScene\s*=\s*'BATTLE_LOOP'/.test(source), 'saveBattleState 未同步 runtime.currentScene = BATTLE_LOOP');
       assert(/runtime\.battleState\s*=\s*\{/.test(source), 'saveBattleState 未同步 runtime.battleState');
+    }
+
+    async function testAcceptanceLevelProvidesManualVerificationEntry() {
+      const [levels, enemies, skills] = await Promise.all([
+        fetch('../assets/data/levels.json').then(r => r.json()),
+        fetch('../assets/data/enemies.json').then(r => r.json()),
+        fetch('../assets/data/skills_melee_v4_5.json').then(r => r.json())
+      ]);
+
+      const level = levels.level_1_2_acceptance;
+      assert(level, '缺少人工验收关卡 level_1_2_acceptance');
+      assert(level.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_guard', `验收关卡未接入样本敌人: ${level.waves?.[0]?.enemies?.[0]?.templateId}`);
+
+      const enemy = enemies.enemy_acceptance_guard;
+      assert(enemy, '缺少样本敌人 enemy_acceptance_guard');
+      assert(Array.isArray(enemy.skills) && enemy.skills.includes('skill_block'), '样本敌人缺少修甲技能 skill_block');
+      assert(Array.isArray(enemy.skills) && enemy.skills.includes('skill_heal'), '样本敌人缺少回血技能 skill_heal');
+
+      const skillList = Array.isArray(skills.skills) ? skills.skills : [];
+      const byId = (id) => skillList.find(skill => skill.id === id);
+
+      assert(byId('skill_demo_hp_guard'), '缺少人工验收技能 skill_demo_hp_guard');
+      assert(byId('skill_demo_armor_guard'), '缺少人工验收技能 skill_demo_armor_guard');
+      assert(byId('skill_demo_on_hit_armor'), '缺少人工验收技能 skill_demo_on_hit_armor');
+      assert(byId('skill_demo_enemy_head_tap'), '缺少护甲验收敌人攻击技能 skill_demo_enemy_head_tap');
+      assert(byId('skill_demo_wait'), '缺少敌人样本等待技能 skill_demo_wait');
+    }
+
+    async function testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates() {
+      const [levels, enemies] = await Promise.all([
+        fetch('../assets/data/levels.json').then(r => r.json()),
+        fetch('../assets/data/enemies.json').then(r => r.json())
+      ]);
+
+      const onHitLevel = levels.level_1_3_acceptance_on_hit_armor;
+      assert(onHitLevel, '缺少受击获甲人工验收关卡 level_1_3_acceptance_on_hit_armor');
+      assert(onHitLevel.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_head_tapper', `受击获甲验收关卡未接入敌人: ${onHitLevel.waves?.[0]?.enemies?.[0]?.templateId}`);
+      assert(onHitLevel.battlePlayerState?.bodyParts?.head?.current === 0, `受击获甲验收关卡未将玩家头部护甲置为 0: ${onHitLevel.battlePlayerState?.bodyParts?.head?.current}`);
+      assert(onHitLevel.battlePlayerState?.bodyParts?.head?.max === 20, `受击获甲验收关卡头部护甲上限异常: ${onHitLevel.battlePlayerState?.bodyParts?.head?.max}`);
+
+      const armorGuardLevel = levels.level_1_6_acceptance_armor_guard;
+      assert(armorGuardLevel, '缺少护甲免伤人工验收关卡 level_1_6_acceptance_armor_guard');
+      assert(armorGuardLevel.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_head_tapper', `护甲免伤验收关卡未接入敌人: ${armorGuardLevel.waves?.[0]?.enemies?.[0]?.templateId}`);
+
+      const repairLevel = levels.level_1_4_acceptance_enemy_repair;
+      assert(repairLevel, '缺少敌人修甲人工验收关卡 level_1_4_acceptance_enemy_repair');
+      assert(repairLevel.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_repair', `敌人修甲验收关卡未接入样本敌人: ${repairLevel.waves?.[0]?.enemies?.[0]?.templateId}`);
+      assert(Array.isArray(repairLevel.battlePlayerSkills?.learnedAdd) && repairLevel.battlePlayerSkills.learnedAdd.includes('skill_demo_wait'), '敌人修甲验收关卡未注入等待技能');
+
+      const repairEnemy = enemies.enemy_acceptance_repair;
+      assert(repairEnemy, '缺少敌人修甲样本 enemy_acceptance_repair');
+      assert(repairEnemy.bodyParts?.chest?.current === 4, `敌人修甲样本初始胸部护甲错误: ${repairEnemy.bodyParts?.chest?.current}`);
+      assert(Array.isArray(repairEnemy.skills) && repairEnemy.skills.includes('skill_block'), '敌人修甲样本缺少 skill_block');
+
+      const healLevel = levels.level_1_5_acceptance_enemy_heal;
+      assert(healLevel, '缺少敌人回血人工验收关卡 level_1_5_acceptance_enemy_heal');
+      assert(healLevel.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_heal', `敌人回血验收关卡未接入样本敌人: ${healLevel.waves?.[0]?.enemies?.[0]?.templateId}`);
+      assert(Array.isArray(healLevel.battlePlayerSkills?.learnedAdd) && healLevel.battlePlayerSkills.learnedAdd.includes('skill_demo_wait'), '敌人回血验收关卡未注入等待技能');
+
+      const healEnemy = enemies.enemy_acceptance_heal;
+      assert(healEnemy, '缺少敌人回血样本 enemy_acceptance_heal');
+      assert(Number(healEnemy.stats?.hp ?? 0) === 18, `敌人回血样本初始 HP 错误: ${healEnemy.stats?.hp}`);
+      assert(Array.isArray(healEnemy.skills) && healEnemy.skills.includes('skill_heal'), '敌人回血样本缺少 skill_heal');
+
+      const armorEnemy = enemies.enemy_acceptance_head_tapper;
+      assert(armorEnemy, '缺少护甲验收样本 enemy_acceptance_head_tapper');
+      assert(Array.isArray(armorEnemy.skills) && armorEnemy.skills.includes('skill_demo_enemy_head_tap'), '护甲验收样本缺少固定头部攻击技能');
+    }
+
+    async function testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack() {
+      const [enemies, skills] = await Promise.all([
+        fetch('../assets/data/enemies.json').then(r => r.json()),
+        fetch('../assets/data/skills_melee_v4_5.json').then(r => r.json())
+      ]);
+
+      const enemy = enemies.enemy_acceptance_guard;
+      assert(enemy, '缺少样本敌人 enemy_acceptance_guard');
+
+      const skillList = Array.isArray(skills.skills) ? skills.skills : [];
+      const byId = (id) => skillList.find(skill => skill.id === id);
+      const enemyBaseSpeed = Number(enemy.stats?.speed ?? 0) || 0;
+
+      for (const id of ['skill_demo_hp_guard', 'skill_demo_armor_guard', 'skill_demo_on_hit_armor']) {
+        const skill = byId(id);
+        assert(skill, `缺少验收技能 ${id}`);
+        const totalSpeed = enemyBaseSpeed - 1; // keep lint of usage? placeholder
+        void totalSpeed;
+        const battleSpeed = (Number(skill.speed ?? 0) || 0) + 1; // player base speed from player.json
+        assert(battleSpeed > enemyBaseSpeed, `验收技能 ${id} 速度不足，无法稳定先于样本敌人执行: ${battleSpeed} <= ${enemyBaseSpeed}`);
+      }
+    }
+
+    function testCoreEngineInjectsLevelBattleSkillsIntoBattleStartPayload() {
+      const emitted = [];
+      const fakeEngine = Object.create(CoreEngine.prototype);
+      fakeEngine.eventBus = {
+        emit(name, payload) {
+          emitted.push({ name, payload });
+        }
+      };
+      fakeEngine.fsm = {
+        changeState() {}
+      };
+      fakeEngine.buffRegistry = {
+        getDefinition() {
+          return null;
+        }
+      };
+      fakeEngine.buffSystem = {
+        registerManager() {}
+      };
+      fakeEngine.data = {
+        playerData: {
+          id: 'player_1',
+          stats: { hp: 100, maxHp: 100, ap: 4, maxAp: 6, speed: 1 },
+          skills: {
+            skillTreeId: 'melee_v4_5',
+            skillPoints: 30,
+            learned: ['skill_heal']
+          },
+          bodyParts: {
+            head: { current: 0, max: 20, weakness: 1.5 },
+            chest: { current: 10, max: 20, weakness: 1 },
+            abdomen: { current: 0, max: 20, weakness: 1.1 },
+            arm: { current: 0, max: 20, weakness: 1 },
+            leg: { current: 20, max: 20, weakness: 1 }
+          }
+        },
+        currentLevelData: {
+          id: 'level_1_2_acceptance',
+          name: '验收样本',
+          enemies: [],
+          battlePlayerSkills: {
+            learnedAdd: ['skill_demo_hp_guard', 'skill_demo_armor_guard', 'skill_demo_on_hit_armor']
+          }
+        },
+        dataConfig: {
+          runtime: {}
+        }
+      };
+      fakeEngine._battleSlotLayout = null;
+      fakeEngine._resolveSlotLayoutIdForCurrentBattle = () => 'default_v1';
+      fakeEngine._getSlotLayoutsRoot = () => ({
+        layouts: {
+          default_v1: {
+            rows: ['head', 'chest', 'abdomen', 'arm', 'leg', 'global'],
+            slotCounts: {}
+          }
+        }
+      });
+      fakeEngine.startTurn = () => {};
+
+      fakeEngine.startBattle();
+
+      const battleStart = emitted.find(item => item.name === 'BATTLE_START');
+      assert(battleStart, 'startBattle 未发出 BATTLE_START');
+
+      const learned = battleStart.payload?.player?.skills?.learned || [];
+      assert(learned.includes('skill_heal'), '原始已学技能在战斗技能池中丢失');
+      assert(learned.includes('skill_demo_hp_guard'), '战斗开始时未注入 skill_demo_hp_guard');
+      assert(learned.includes('skill_demo_armor_guard'), '战斗开始时未注入 skill_demo_armor_guard');
+      assert(learned.includes('skill_demo_on_hit_armor'), '战斗开始时未注入 skill_demo_on_hit_armor');
+    }
+
+    function testCoreEngineAppliesLevelBattlePlayerStateOverridesAtBattleStart() {
+      const emitted = [];
+      const fakeEngine = Object.create(CoreEngine.prototype);
+      fakeEngine.eventBus = {
+        emit(name, payload) {
+          emitted.push({ name, payload });
+        }
+      };
+      fakeEngine.fsm = {
+        changeState() {}
+      };
+      fakeEngine.buffRegistry = {
+        getDefinition() {
+          return null;
+        }
+      };
+      fakeEngine.buffSystem = {
+        registerManager() {}
+      };
+      fakeEngine.data = {
+        playerData: {
+          id: 'player_1',
+          stats: { hp: 100, maxHp: 100, ap: 4, maxAp: 6, speed: 1 },
+          skills: {
+            skillTreeId: 'melee_v4_5',
+            skillPoints: 30,
+            learned: ['skill_heal']
+          },
+          bodyParts: {
+            head: { current: 20, max: 20, weakness: 1.5 },
+            chest: { current: 20, max: 20, weakness: 1 },
+            abdomen: { current: 20, max: 20, weakness: 1.1 },
+            arm: { current: 20, max: 20, weakness: 1 },
+            leg: { current: 20, max: 20, weakness: 1 }
+          }
+        },
+        currentLevelData: {
+          id: 'level_1_3_acceptance_on_hit_armor',
+          name: '受击获甲样本',
+          enemies: [],
+          battlePlayerState: {
+            bodyParts: {
+              head: { current: 0, max: 20, weakness: 1.5 }
+            }
+          }
+        },
+        dataConfig: {
+          runtime: {}
+        }
+      };
+      fakeEngine._battleSlotLayout = null;
+      fakeEngine._resolveSlotLayoutIdForCurrentBattle = () => 'default_v1';
+      fakeEngine._getSlotLayoutsRoot = () => ({
+        layouts: {
+          default_v1: {
+            rows: ['head', 'chest', 'abdomen', 'arm', 'leg', 'global'],
+            slotCounts: {}
+          }
+        }
+      });
+      fakeEngine.startTurn = () => {};
+
+      fakeEngine.startBattle();
+
+      const battleStart = emitted.find(item => item.name === 'BATTLE_START');
+      assert(battleStart, 'startBattle 未发出 BATTLE_START');
+      assert(battleStart.payload?.player?.bodyParts?.head?.current === 0, `BATTLE_START 未应用关卡玩家头部护甲覆盖: ${battleStart.payload?.player?.bodyParts?.head?.current}`);
+      assert(fakeEngine.data.playerData.bodyParts?.head?.current === 0, `运行时玩家头部护甲未同步为覆盖值: ${fakeEngine.data.playerData.bodyParts?.head?.current}`);
+    }
+
+    function testDataManagerInstantiateLevelPreservesConfiguredEnemyCurrentArmor() {
+      const runtimeLevel = DataManager.instantiateLevel.call({
+        gameConfig: {
+          levels: {
+            acceptance_repair: {
+              id: 'acceptance_repair',
+              name: 'repair',
+              waves: [
+                {
+                  enemies: [{ templateId: 'enemy_acceptance_repair' }]
+                }
+              ]
+            }
+          },
+          enemies: {
+            enemy_acceptance_repair: {
+              id: 'enemy_acceptance_repair',
+              name: 'repair enemy',
+              stats: { hp: 90, maxHp: 90, speed: 6, ap: 3 },
+              bodyParts: {
+                head: { max: 12, current: 12, weakness: 1.2 },
+                chest: { max: 24, current: 4, weakness: 1.0 },
+                abdomen: { max: 14, current: 14, weakness: 1.0 },
+                arm: { max: 10, current: 10, weakness: 1.0 },
+                leg: { max: 10, current: 10, weakness: 1.0 }
+              }
+            }
+          }
+        }
+      }, 'acceptance_repair');
+
+      assert(runtimeLevel?.enemies?.[0], 'instantiateLevel 未生成敌人实例');
+      assert(runtimeLevel.enemies[0].bodyParts?.chest?.current === 4, `instantiateLevel 未保留敌人残甲配置: ${runtimeLevel.enemies[0].bodyParts?.chest?.current}`);
     }
 
     async function testEnemyPlannerPrefersArmorRepairWhenDamaged() {
@@ -290,6 +558,63 @@
       assert(defender.stats.hp === 100, `护甲免伤后伤害直穿 HP: ${defender.stats.hp}`);
     }
 
+    async function testBuffSystemPreventArmorDamageForDirectArmorEffects() {
+      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const eventBus = new EventBus.constructor();
+      const registry = new BuffRegistry(raw.buffs);
+      const system = new BuffSystem(eventBus, registry);
+      system.start();
+
+      const driver = createBattleDriver(eventBus);
+      const attacker = createCombatant({
+        id: 'enemy_1',
+        bodyParts: { chest: { current: 0, max: 0, weakness: 1 } }
+      });
+      const defender = createCombatant({
+        id: 'player_1',
+        bodyParts: { chest: { current: 10, max: 10, weakness: 1 } }
+      });
+      driver.data = {
+        playerData: defender,
+        currentLevelData: {
+          enemies: [attacker]
+        }
+      };
+
+      defender.buffs = new BuffManager(defender, registry, eventBus);
+      system.registerManager(defender.buffs);
+      defender.buffs.add('new_buff_1771481773827');
+
+      const result = driver._executeSkillActions({
+        actor: attacker,
+        action: {
+          targetId: defender.id,
+          bodyPart: 'chest'
+        },
+        skillConfig: {
+          id: 'skill_test_direct_armor_guard',
+          name: 'Direct Armor Guard Test',
+          target: {
+            subject: 'SUBJECT_ENEMY',
+            scope: 'SCOPE_PART'
+          },
+          actions: [
+            {
+              effect: {
+                effectType: 'DMG_ARMOR',
+                amount: 6,
+                amountType: 'ABS'
+              }
+            }
+          ]
+        }
+      });
+
+      assert(result?.ok, '直伤护甲技能执行失败');
+      assert(defender.bodyParts.chest.current === 10, `直伤护甲时护甲免伤未生效: ${defender.bodyParts.chest.current}`);
+      assert(defender.stats.hp === 100, `直伤护甲时不应误伤 HP: ${defender.stats.hp}`);
+    }
+
     async function testBuffSystemHealArmorBeforeTakingDamage() {
       const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
       const eventBus = new EventBus.constructor();
@@ -322,6 +647,63 @@
       assert(outcome.armorDamage === 4, `受击获甲后未由护甲吸收本次伤害: ${outcome.armorDamage}`);
       assert(defender.bodyParts.chest.current === 1, `受击获甲后的剩余护甲错误: ${defender.bodyParts.chest.current}`);
       assert(defender.stats.hp === 100, `受击获甲后 HP 不应下降: ${defender.stats.hp}`);
+    }
+
+    async function testBuffSystemHealArmorBeforeDirectArmorEffects() {
+      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const eventBus = new EventBus.constructor();
+      const registry = new BuffRegistry(raw.buffs);
+      const system = new BuffSystem(eventBus, registry);
+      system.start();
+
+      const driver = createBattleDriver(eventBus);
+      const attacker = createCombatant({
+        id: 'enemy_1',
+        bodyParts: { chest: { current: 0, max: 0, weakness: 1 } }
+      });
+      const defender = createCombatant({
+        id: 'player_1',
+        bodyParts: { chest: { current: 0, max: 10, weakness: 1 } }
+      });
+      driver.data = {
+        playerData: defender,
+        currentLevelData: {
+          enemies: [attacker]
+        }
+      };
+
+      defender.buffs = new BuffManager(defender, registry, eventBus);
+      system.registerManager(defender.buffs);
+      defender.buffs.add('new_buff_1771485041778', { params: { healArmorVal: 5 } });
+
+      const result = driver._executeSkillActions({
+        actor: attacker,
+        action: {
+          targetId: defender.id,
+          bodyPart: 'chest'
+        },
+        skillConfig: {
+          id: 'skill_test_direct_armor_heal',
+          name: 'Direct Armor Heal Test',
+          target: {
+            subject: 'SUBJECT_ENEMY',
+            scope: 'SCOPE_PART'
+          },
+          actions: [
+            {
+              effect: {
+                effectType: 'DMG_ARMOR',
+                amount: 4,
+                amountType: 'ABS'
+              }
+            }
+          ]
+        }
+      });
+
+      assert(result?.ok, '直伤护甲技能执行失败');
+      assert(defender.bodyParts.chest.current === 1, `直伤护甲时受击获甲未生效: ${defender.bodyParts.chest.current}`);
+      assert(defender.stats.hp === 100, `直伤护甲时不应误伤 HP: ${defender.stats.hp}`);
     }
 
     async function testEnemyPlannerPrefersHealWhenLowHp() {
@@ -466,6 +848,76 @@
       assert(target, 'UI_SkillPanel.getSkillTarget 未接受 SCOPE_MULTI_PARTS');
     }
 
+    function testSkillPanelKeepsBattleInjectedSkillsOnGenericDataUpdate() {
+      document.body.innerHTML = '<div id="summary"></div><pre id="log"></pre>';
+      setupSkillPanelDom();
+
+      const engine = {
+        eventBus: createEventBus(),
+        fsm: { currentState: 'BATTLE_LOOP' },
+        data: {
+          playerData: {
+            id: 'player_1',
+            stats: { ap: 6, maxAp: 6 },
+            skills: {
+              skillTreeId: 'melee_v4_5',
+              skillPoints: 30,
+              learned: ['skill_heal']
+            }
+          },
+          getSkillConfig(id) {
+            const map = {
+              skill_heal: {
+                id: 'skill_heal',
+                name: '治疗',
+                costs: { ap: 2 },
+                target: { subject: 'SUBJECT_SELF', scope: 'SCOPE_ENTITY', selection: { mode: 'single', selectCount: 1 } }
+              },
+              skill_demo_hp_guard: {
+                id: 'skill_demo_hp_guard',
+                name: 'HP免伤演示',
+                costs: { ap: 1 },
+                target: { subject: 'SUBJECT_SELF', scope: 'SCOPE_ENTITY', selection: { mode: 'single', selectCount: 1 } }
+              }
+            };
+            return map[id] || null;
+          }
+        },
+        playerSkillQueue: [],
+        turnPlanner: {
+          getApBudgetState() {
+            return {
+              phase: 'AP_BUDGET_READY',
+              availableAp: 6,
+              plannedCost: 0,
+              remaining: 6,
+              ok: true
+            };
+          }
+        }
+      };
+
+      const panel = new UI_SkillPanel(engine);
+      panel.onBattleStart({
+        player: {
+          skills: {
+            skillTreeId: 'melee_v4_5',
+            skillPoints: 30,
+            learned: ['skill_heal', 'skill_demo_hp_guard']
+          }
+        },
+        level: {
+          enemies: [{ id: 'enemy_1', bodyParts: { head: { max: 10 }, chest: { max: 10 }, abdomen: { max: 10 } } }]
+        }
+      });
+
+      assert(panel.cachedSkills.some(skill => skill.id === 'skill_demo_hp_guard'), 'BATTLE_START 后未载入战斗注入技能');
+
+      panel.onDataUpdate({ data: { hp: 100 } });
+
+      assert(panel.cachedSkills.some(skill => skill.id === 'skill_demo_hp_guard'), '通用 DATA_UPDATE 后丢失了战斗注入技能');
+    }
+
     function testSkillPanelHighlightsCandidatePartsOnly() {
       document.body.innerHTML = '<div id="summary"></div><pre id="log"></pre>';
       setupSkillPanelDom();
@@ -558,14 +1010,23 @@
     const tests = [
       ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
       ['CoreEngine 战斗保存同步 currentScene/battleState', testCoreEngineBattleSaveSyncContract],
+      ['验收关卡与样本敌人/技能已配置', testAcceptanceLevelProvidesManualVerificationEntry],
+      ['验收关卡提供确定性的玩家与敌人状态', testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates],
+      ['验收防御技能会先于样本敌人执行', testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack],
+      ['CoreEngine 在战斗开始时注入关卡验收技能', testCoreEngineInjectsLevelBattleSkillsIntoBattleStartPayload],
+      ['CoreEngine 在战斗开始时应用关卡玩家战斗态覆盖', testCoreEngineAppliesLevelBattlePlayerStateOverridesAtBattleStart],
+      ['DataManager.instantiateLevel 保留验收敌人的残甲状态', testDataManagerInstantiateLevelPreservesConfiguredEnemyCurrentArmor],
       ['EnemyActionPlanner 受损时优先修甲', testEnemyPlannerPrefersArmorRepairWhenDamaged],
       ['EnemyActionPlanner 低血量时优先回血', testEnemyPlannerPrefersHealWhenLowHp],
       ['BuffSystem 触发降耗与反击', testBuffSystemApCostReduceAndCounter],
       ['BuffSystem 战斗管线中的 HP 免伤', testBuffSystemPreventHpDamageInBattlePipeline],
       ['BuffSystem 战斗管线中的护甲免伤', testBuffSystemPreventArmorDamageKeepsArmorAndHp],
+      ['BuffSystem 直伤护甲也会触发护甲免伤', testBuffSystemPreventArmorDamageForDirectArmorEffects],
       ['BuffSystem 受击前获甲后由护甲吸收伤害', testBuffSystemHealArmorBeforeTakingDamage],
+      ['BuffSystem 直伤护甲前也会先触发受击获甲', testBuffSystemHealArmorBeforeDirectArmorEffects],
       ['TurnPlanner 多选动作使用各自槽位部位', testTurnPlannerUsesSlotPartForMultiSelect],
       ['UI_SkillPanel 接受 SCOPE_MULTI_PARTS', testSkillPanelAcceptsMultiPartScope],
+      ['UI_SkillPanel 通用 DATA_UPDATE 不应丢失战斗注入技能', testSkillPanelKeepsBattleInjectedSkillsOnGenericDataUpdate],
       ['UI_SkillPanel 仅高亮 candidateParts', testSkillPanelHighlightsCandidatePartsOnly],
       ['UI_SkillTreeModal 走 engine.saveGame 保存路径', testSkillTreeCommitUsesEngineSavePath]
     ];

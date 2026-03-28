@@ -110,6 +110,47 @@ class CoreEngine {
         return (Number(buffedSpeed) || 0) + skillSpeed;
     }
 
+    _buildBattlePlayerSkills() {
+        const base = this.data?.playerData?.skills;
+        const learnedBase = Array.isArray(base?.learned) ? base.learned : [];
+        const battleSkills = this.data?.currentLevelData?.battlePlayerSkills;
+        const learnedAdd = Array.isArray(battleSkills?.learnedAdd) ? battleSkills.learnedAdd : [];
+
+        if (learnedAdd.length === 0) {
+            return base;
+        }
+
+        const mergedLearned = Array.from(new Set([...learnedBase, ...learnedAdd]));
+        return {
+            ...(base && typeof base === 'object' ? base : {}),
+            learned: mergedLearned
+        };
+    }
+
+    _buildBattlePlayerState() {
+        const runtimeState = {
+            buffs: [],
+            tempStatModifiers: {},
+            bodyParts: this.initializePlayerBodyParts(this.data.playerData)
+        };
+        const levelState = this.data?.currentLevelData?.battlePlayerState;
+        if (!levelState || typeof levelState !== 'object') {
+            return runtimeState;
+        }
+
+        if (levelState.bodyParts && typeof levelState.bodyParts === 'object') {
+            for (const [partKey, override] of Object.entries(levelState.bodyParts)) {
+                if (!override || typeof override !== 'object') continue;
+                runtimeState.bodyParts[partKey] = {
+                    ...(runtimeState.bodyParts[partKey] || {}),
+                    ...JSON.parse(JSON.stringify(override))
+                };
+            }
+        }
+
+        return runtimeState;
+    }
+
     _enterPlanningBudgetSnapshot() {
         const availableAp = Number(this.data?.playerData?.stats?.ap ?? 0) || 0;
       // Important: UI may present skills not strictly limited to `player.skills.learned`
@@ -505,15 +546,12 @@ class CoreEngine {
         this._battleSlotLayout = runtime.battleRules.slotLayout;
 
         // 4. 玩家临时状态
-        runtime.playerBattleState = {
-            buffs: [],
-            tempStatModifiers: {},
-            bodyParts: this.initializePlayerBodyParts(this.data.playerData)
-        };
+        runtime.playerBattleState = this._buildBattlePlayerState();
         this.data.playerData.bodyParts = runtime.playerBattleState.bodyParts;
 
         const playerWithRuntime = {
             ...this.data.playerData,
+            skills: this._buildBattlePlayerSkills(),
             bodyParts: runtime.playerBattleState.bodyParts
         };
 
@@ -1293,6 +1331,61 @@ class CoreEngine {
         };
     }
 
+    _applyArmorOnlyDamage({ attacker, target, skillId, bodyPart, rawArmorDamage, isReactionAttack = false, reactionMeta = null }) {
+        const context = {
+            attacker,
+            target,
+            skillId,
+            bodyPart,
+            rawDamage: rawArmorDamage,
+            rawArmorDamage,
+            armorOnly: true,
+            isReactionAttack,
+            reactionMeta,
+            damageDealt: 0,
+            damageTaken: 0,
+            tempModifiers: Object.create(null)
+        };
+        this.eventBus.emit('BATTLE_ATTACK_PRE', context);
+
+        let pendingArmorDamage = Math.max(0, Number(context.rawArmorDamage ?? rawArmorDamage ?? 0) || 0);
+        const targetPart = this._getDefaultBodyPart(target, bodyPart);
+        const targetParts = this._getEntityBodyParts(target);
+        const part = targetPart && targetParts ? targetParts[targetPart] : null;
+
+        context.damageTaken = pendingArmorDamage;
+        this.eventBus.emit('BATTLE_TAKE_DAMAGE_PRE', context);
+
+        pendingArmorDamage = Math.max(0, Number(context.damageTaken ?? pendingArmorDamage) || 0);
+        let armorDamage = 0;
+        if (part && Number(part.current ?? 0) > 0) {
+            const currentArmor = Number(part.current ?? 0) || 0;
+            const damageToArmor = Math.min(currentArmor, pendingArmorDamage);
+            if (!context.preventArmorDamage) {
+                part.current = Math.max(0, currentArmor - damageToArmor);
+                armorDamage = damageToArmor;
+                part.status = part.current <= 0 ? 'BROKEN' : 'NORMAL';
+            }
+        }
+
+        context.damageTaken = 0;
+        context.damageDealt = 0;
+        context.armorDamage = armorDamage;
+        context.targetPart = targetPart;
+        context.targetHpRemaining = this._getEntityCurrentHp(target);
+        this.eventBus.emit('BATTLE_TAKE_DAMAGE', context);
+        this.eventBus.emit('BATTLE_ATTACK_POST', context);
+        this.eventBus.emit('BATTLE_DEFEND_POST', context);
+
+        return {
+            isHit: true,
+            damage: 0,
+            armorDamage,
+            targetHpRemaining: this._getEntityCurrentHp(target),
+            targetPart
+        };
+    }
+
     _removeBuffsBySkillEffect(target, effect) {
         if (!target?.buffs) return { removed: 0 };
         const amount = Number(effect?.amount ?? 0) || 0;
@@ -1446,15 +1539,21 @@ class CoreEngine {
                 }
                 case 'DMG_ARMOR': {
                     const amount = this._computeEffectAmount(effect, { actor, target, bodyPart });
-                    const outcome = this._applyArmorDelta(target, bodyPart, -amount);
+                    const outcome = this._applyArmorOnlyDamage({
+                        attacker: actor,
+                        target,
+                        skillId: skillConfig.id,
+                        bodyPart,
+                        rawArmorDamage: amount
+                    });
                     results.push({
                         isHit: true,
                         damage: 0,
-                        armorDamage: Math.abs(outcome.armorDelta),
-                        targetPart: outcome.bodyPart,
+                        armorDamage: Math.abs(outcome.armorDamage || 0),
+                        targetPart: outcome.targetPart,
                         targetHpRemaining: this._getEntityCurrentHp(target)
                     });
-                    logs.push(`${skillConfig.name} damaged ${target.name || target.id}'s armor on ${outcome.bodyPart || 'unknown'} by ${Math.round(Math.abs(outcome.armorDelta || 0))}.`);
+                    logs.push(`${skillConfig.name} damaged ${target.name || target.id}'s armor on ${outcome.targetPart || 'unknown'} by ${Math.round(Math.abs(outcome.armorDamage || 0))}.`);
                     break;
                 }
                 case 'HEAL': {

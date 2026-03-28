@@ -356,6 +356,15 @@ class DataManager {
             enemies: []
         };
 
+        if (levelConfig.description) runtimeLevel.description = levelConfig.description;
+        if (levelConfig.battleRules) runtimeLevel.battleRules = JSON.parse(JSON.stringify(levelConfig.battleRules));
+        if (levelConfig.battlePlayerSkills) {
+            runtimeLevel.battlePlayerSkills = JSON.parse(JSON.stringify(levelConfig.battlePlayerSkills));
+        }
+        if (levelConfig.battlePlayerState) {
+            runtimeLevel.battlePlayerState = JSON.parse(JSON.stringify(levelConfig.battlePlayerState));
+        }
+
         // Instantiate enemies from the first wave (simple support for now)
         if (levelConfig.waves && levelConfig.waves.length > 0) {
             const wave = levelConfig.waves[0];
@@ -380,12 +389,12 @@ class DataManager {
                     if (enemyInstance.bodyParts) {
                         for (let partKey in enemyInstance.bodyParts) {
                             const partData = enemyInstance.bodyParts[partKey];
-                            // Initialize current from max (Data Design V2)
                             const maxVal = (partData.max !== undefined) ? partData.max : (partData.maxArmor || 0);
-                            
+                            const configuredCurrent = (partData.current !== undefined) ? partData.current : maxVal;
+
                             partData.max = maxVal;
-                            partData.current = maxVal;
-                            partData.status = 'NORMAL';
+                            partData.current = Math.max(0, Math.min(maxVal, configuredCurrent));
+                            partData.status = partData.status || 'NORMAL';
                         }
                     }
                     

@@ -403,8 +403,9 @@ export class UI_SystemModal {
             levels.forEach(lvl => {
                 const card = document.createElement('div');
                 card.className = 'level-card';
+                const levelDesc = lvl.description || lvl.desc || 'No description';
                 // 假设 lvl 对象结构符合 UI 需求
-                card.innerHTML = `<h4>${lvl.name || lvl.id}</h4><p>${lvl.desc || 'No description'}</p>`;
+                card.innerHTML = `<h4>${lvl.name || lvl.id}</h4><p>${levelDesc}</p>`;
                 card.onclick = () => {
                     console.log(`[UI_SystemModal] Level card clicked: ${lvl.id}`);
                     if (this.engine.input && this.engine.input.selectLevel) {

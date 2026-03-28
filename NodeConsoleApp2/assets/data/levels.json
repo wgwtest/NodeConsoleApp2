@@ -18,5 +18,137 @@
       "exp": 100,
       "gold": 50
     }
+  },
+  "level_1_2_acceptance": {
+    "id": "level_1_2_acceptance",
+    "name": "人工验收样本",
+    "description": "用于人工验收 HP免伤与护甲免伤，敌人为标准验收守卫。",
+    "background": "bg_forest_01",
+    "battleRules": {
+      "slotLayoutId": "default_v1"
+    },
+    "battlePlayerSkills": {
+      "learnedAdd": [
+        "skill_demo_hp_guard",
+        "skill_demo_armor_guard",
+        "skill_demo_on_hit_armor"
+      ]
+    },
+    "waves": [
+      {
+        "enemies": [
+          { "templateId": "enemy_acceptance_guard", "position": 1 }
+        ]
+      }
+    ],
+    "rewards": {
+      "exp": 0,
+      "gold": 0
+    }
+  },
+  "level_1_3_acceptance_on_hit_armor": {
+    "id": "level_1_3_acceptance_on_hit_armor",
+    "name": "受击获甲验收样本",
+    "description": "用于人工验收受击获甲，开战时玩家头部护甲为 0，便于观察先补甲再承伤。",
+    "background": "bg_forest_01",
+    "battleRules": {
+      "slotLayoutId": "default_v1"
+    },
+    "battlePlayerSkills": {
+      "learnedAdd": [
+        "skill_demo_on_hit_armor"
+      ]
+    },
+    "battlePlayerState": {
+      "bodyParts": {
+        "head": { "current": 0, "max": 20, "weakness": 1.5 }
+      }
+    },
+    "waves": [
+      {
+        "enemies": [
+          { "templateId": "enemy_acceptance_head_tapper", "position": 1 }
+        ]
+      }
+    ],
+    "rewards": {
+      "exp": 0,
+      "gold": 0
+    }
+  },
+  "level_1_4_acceptance_enemy_repair": {
+    "id": "level_1_4_acceptance_enemy_repair",
+    "name": "敌人修甲验收样本",
+    "description": "用于人工验收敌人受损后优先修甲，敌人胸部护甲开战即破损。",
+    "background": "bg_forest_01",
+    "battleRules": {
+      "slotLayoutId": "default_v1"
+    },
+    "battlePlayerSkills": {
+      "learnedAdd": [
+        "skill_demo_wait"
+      ]
+    },
+    "waves": [
+      {
+        "enemies": [
+          { "templateId": "enemy_acceptance_repair", "position": 1 }
+        ]
+      }
+    ],
+    "rewards": {
+      "exp": 0,
+      "gold": 0
+    }
+  },
+  "level_1_5_acceptance_enemy_heal": {
+    "id": "level_1_5_acceptance_enemy_heal",
+    "name": "敌人回血验收样本",
+    "description": "用于人工验收敌人低血量时优先回血，敌人开战即处于低血线。",
+    "background": "bg_forest_01",
+    "battleRules": {
+      "slotLayoutId": "default_v1"
+    },
+    "battlePlayerSkills": {
+      "learnedAdd": [
+        "skill_demo_wait"
+      ]
+    },
+    "waves": [
+      {
+        "enemies": [
+          { "templateId": "enemy_acceptance_heal", "position": 1 }
+        ]
+      }
+    ],
+    "rewards": {
+      "exp": 0,
+      "gold": 0
+    }
+  },
+  "level_1_6_acceptance_armor_guard": {
+    "id": "level_1_6_acceptance_armor_guard",
+    "name": "护甲免伤验收样本",
+    "description": "用于人工验收护甲免伤，敌人固定攻击头部护甲，便于观察护甲是否保持不变。",
+    "background": "bg_forest_01",
+    "battleRules": {
+      "slotLayoutId": "default_v1"
+    },
+    "battlePlayerSkills": {
+      "learnedAdd": [
+        "skill_demo_armor_guard"
+      ]
+    },
+    "waves": [
+      {
+        "enemies": [
+          { "templateId": "enemy_acceptance_head_tapper", "position": 1 }
+        ]
+      }
+    ],
+    "rewards": {
+      "exp": 0,
+      "gold": 0
+    }
   }
 }

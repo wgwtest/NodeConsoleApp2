@@ -496,6 +496,15 @@ export default class UI_SkillPanel {
         const type = payload && typeof payload === 'object' ? payload.type : null;
         if (type && type !== 'PLAYER_SKILLS') return;
 
+        // Generic DATA_UPDATE events during battle are usually HP/AP/body-part refreshes.
+        // Rebuilding the skill pool from global playerData here would drop any level-scoped
+        // battle skill injection that was already provided by BATTLE_START payload.
+        if (!type && this.engine?.fsm?.currentState === 'BATTLE_LOOP') {
+            this.updateSkillAvailability();
+            this.renderApMeter();
+            return;
+        }
+
         const player = this.engine?.data?.playerData;
         if (!player || !player.skills) return;
 
