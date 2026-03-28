@@ -139,7 +139,10 @@ export default class BuffSystem {
 		for (const m of this._managers) {
 			const owner = m.owner;
 			if (owner && ((attacker && owner === attacker) || (target && owner === target))) {
-				this._processManager(m, triggerName, { ...context });
+				// Battle hooks intentionally share one mutable context object.
+				// PREVENT_DAMAGE_* / shield / temp modifier effects need to write
+				// back into the live damage pipeline rather than an isolated copy.
+				this._processManager(m, triggerName, context);
 			}
 		}
 	}

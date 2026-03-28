@@ -16,6 +16,10 @@
   <pre id="log"></pre>
 
   <script type="module">
+    import EventBus from '../script/engine/EventBus.js';
+    import { CoreEngine } from '../script/engine/CoreEngine.js';
+    import EnemyActionPlanner from '../script/engine/EnemyActionPlanner.js';
+    import { BuffRegistry, BuffManager, BuffSystem } from '../script/engine/buff/index.js';
     import TurnPlanner from '../script/engine/TurnPlanner.js';
     import UI_SkillPanel from '../script/ui/UI_SkillPanel.js';
     import { UI_SkillTreeModal } from '../script/ui/UI_SkillTreeModal.js';
@@ -38,6 +42,27 @@
       return {
         on() {},
         emit() {}
+      };
+    }
+
+    function createBattleDriver(eventBus) {
+      const driver = Object.create(CoreEngine.prototype);
+      driver.eventBus = eventBus;
+      return driver;
+    }
+
+    function createCombatant({
+      id,
+      hp = 100,
+      maxHp = 100,
+      ap = 3,
+      speed = 5,
+      bodyParts = {}
+    }) {
+      return {
+        id,
+        stats: { hp, maxHp, ap, speed },
+        bodyParts: JSON.parse(JSON.stringify(bodyParts))
       };
     }
 
@@ -89,6 +114,271 @@
       const source = await fetch('../script/engine/CoreEngine.js').then(r => r.text());
       assert(/runtime\.currentScene\s*=\s*'BATTLE_LOOP'/.test(source), 'saveBattleState 未同步 runtime.currentScene = BATTLE_LOOP');
       assert(/runtime\.battleState\s*=\s*\{/.test(source), 'saveBattleState 未同步 runtime.battleState');
+    }
+
+    async function testEnemyPlannerPrefersArmorRepairWhenDamaged() {
+      const skills = {
+        skill_bite: {
+          id: 'skill_bite',
+          target: {
+            subject: 'SUBJECT_ENEMY',
+            scope: 'SCOPE_PART',
+            selection: { candidateParts: ['head', 'chest', 'abdomen', 'arm', 'leg'] }
+          },
+          actions: [{ effect: { effectType: 'DMG_ARMOR', amount: 10 } }],
+          costs: { ap: 1 },
+          speed: 0
+        },
+        skill_block: {
+          id: 'skill_block',
+          target: {
+            subject: 'SUBJECT_SELF',
+            scope: 'SCOPE_PART',
+            selection: { candidateParts: ['head', 'chest', 'abdomen', 'arm', 'leg'] }
+          },
+          actions: [{ effect: { effectType: 'ARMOR_ADD', amount: 10 } }],
+          costs: { ap: 1 },
+          speed: 5
+        }
+      };
+
+      const planner = new EnemyActionPlanner({
+        getSkillConfig: (skillId) => skills[skillId]
+      });
+
+      const enemy = {
+        id: 'enemy_1',
+        stats: { hp: 100, maxHp: 100, speed: 5, ap: 3 },
+        bodyParts: {
+          head: { current: 20, max: 20, weakness: 1 },
+          chest: { current: 4, max: 40, weakness: 1 },
+          abdomen: { current: 20, max: 20, weakness: 1 },
+          arm: { current: 20, max: 20, weakness: 1 },
+          leg: { current: 20, max: 20, weakness: 1 }
+        },
+        skills: ['skill_bite', 'skill_block']
+      };
+
+      const player = {
+        id: 'player_1',
+        stats: { hp: 100, maxHp: 100 },
+        bodyParts: {
+          head: { current: 20, max: 20, weakness: 1.5 },
+          chest: { current: 5, max: 20, weakness: 1 },
+          abdomen: { current: 20, max: 20, weakness: 1 },
+          arm: { current: 20, max: 20, weakness: 1 },
+          leg: { current: 20, max: 20, weakness: 1 }
+        }
+      };
+
+      const plan = planner.planTurn({ enemy, player, playerBodyParts: player.bodyParts });
+      assert(plan, 'EnemyActionPlanner 未返回规划结果');
+      assert(plan.skillId === 'skill_block', `受伤敌人未优先修甲，实际选择: ${plan.skillId}`);
+      assert(plan.targetId === 'enemy_1', `修甲技能 targetId 错误: ${plan.targetId}`);
+      assert(plan.bodyPart === 'chest', `修甲技能未选择最破损部位: ${plan.bodyPart}`);
+    }
+
+    async function testBuffSystemApCostReduceAndCounter() {
+      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const eventBus = new EventBus.constructor();
+      const registry = new BuffRegistry(raw.buffs);
+      const system = new BuffSystem(eventBus, registry);
+      system.start();
+
+      const actor = {
+        id: 'player_1',
+        stats: { hp: 100, maxHp: 100, ap: 3 },
+        bodyParts: { chest: { current: 10, max: 10 } }
+      };
+      actor.buffs = new BuffManager(actor, registry, eventBus);
+      system.registerManager(actor.buffs);
+      actor.buffs.add('new_buff_1771485482007', { params: { apReduceVal: 1 } });
+
+      eventBus.emit('TURN_START', { turn: 1 });
+      assert(actor._planningApCostFlatDelta === -1, `AP 降耗 Buff 未生效: ${actor._planningApCostFlatDelta}`);
+
+      const defender = {
+        id: 'enemy_1',
+        stats: { hp: 100, maxHp: 100, ap: 3 },
+        bodyParts: { chest: { current: 10, max: 10 } }
+      };
+      defender.buffs = new BuffManager(defender, registry, eventBus);
+      system.registerManager(defender.buffs);
+      defender.buffs.add('buff_counter');
+
+      let counterPayload = null;
+      eventBus.on('BUFF_ATTACK_REQUEST', (payload) => {
+        counterPayload = payload;
+      });
+
+      eventBus.emit('BATTLE_DEFEND_POST', {
+        attacker: actor,
+        target: defender,
+        damageTaken: 5,
+        bodyPart: 'chest'
+      });
+
+      assert(counterPayload, '反击 Buff 未发出 BUFF_ATTACK_REQUEST');
+      assert(counterPayload.target === actor, '反击目标错误');
+      assert(counterPayload.source === defender, '反击来源错误');
+    }
+
+    async function testBuffSystemPreventHpDamageInBattlePipeline() {
+      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const eventBus = new EventBus.constructor();
+      const registry = new BuffRegistry(raw.buffs);
+      const system = new BuffSystem(eventBus, registry);
+      system.start();
+
+      const driver = createBattleDriver(eventBus);
+      const attacker = createCombatant({
+        id: 'enemy_1',
+        bodyParts: { chest: { current: 0, max: 0, weakness: 1 } }
+      });
+      const defender = createCombatant({
+        id: 'player_1',
+        bodyParts: { chest: { current: 0, max: 10, weakness: 1 } }
+      });
+
+      defender.buffs = new BuffManager(defender, registry, eventBus);
+      system.registerManager(defender.buffs);
+      defender.buffs.add('new_buff_1771481936095');
+
+      const outcome = driver._applyBattleDamage({
+        attacker,
+        target: defender,
+        skillId: 'skill_test_hp_guard',
+        bodyPart: 'chest',
+        rawDamage: 8
+      });
+
+      assert(outcome.damage === 0, `HP 免伤后仍造成 HP 伤害: ${outcome.damage}`);
+      assert(defender.stats.hp === 100, `HP 免伤后生命值仍下降: ${defender.stats.hp}`);
+    }
+
+    async function testBuffSystemPreventArmorDamageKeepsArmorAndHp() {
+      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const eventBus = new EventBus.constructor();
+      const registry = new BuffRegistry(raw.buffs);
+      const system = new BuffSystem(eventBus, registry);
+      system.start();
+
+      const driver = createBattleDriver(eventBus);
+      const attacker = createCombatant({
+        id: 'enemy_1',
+        bodyParts: { chest: { current: 0, max: 0, weakness: 1 } }
+      });
+      const defender = createCombatant({
+        id: 'player_1',
+        bodyParts: { chest: { current: 10, max: 10, weakness: 1 } }
+      });
+
+      defender.buffs = new BuffManager(defender, registry, eventBus);
+      system.registerManager(defender.buffs);
+      defender.buffs.add('new_buff_1771481773827');
+
+      const outcome = driver._applyBattleDamage({
+        attacker,
+        target: defender,
+        skillId: 'skill_test_armor_guard',
+        bodyPart: 'chest',
+        rawDamage: 6
+      });
+
+      assert(outcome.armorDamage === 0, `护甲免伤后仍扣除了护甲: ${outcome.armorDamage}`);
+      assert(defender.bodyParts.chest.current === 10, `护甲免伤后护甲值变化错误: ${defender.bodyParts.chest.current}`);
+      assert(defender.stats.hp === 100, `护甲免伤后伤害直穿 HP: ${defender.stats.hp}`);
+    }
+
+    async function testBuffSystemHealArmorBeforeTakingDamage() {
+      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const eventBus = new EventBus.constructor();
+      const registry = new BuffRegistry(raw.buffs);
+      const system = new BuffSystem(eventBus, registry);
+      system.start();
+
+      const driver = createBattleDriver(eventBus);
+      const attacker = createCombatant({
+        id: 'enemy_1',
+        bodyParts: { chest: { current: 0, max: 0, weakness: 1 } }
+      });
+      const defender = createCombatant({
+        id: 'player_1',
+        bodyParts: { chest: { current: 0, max: 10, weakness: 1 } }
+      });
+
+      defender.buffs = new BuffManager(defender, registry, eventBus);
+      system.registerManager(defender.buffs);
+      defender.buffs.add('new_buff_1771485041778', { params: { healArmorVal: 5 } });
+
+      const outcome = driver._applyBattleDamage({
+        attacker,
+        target: defender,
+        skillId: 'skill_test_armor_heal',
+        bodyPart: 'chest',
+        rawDamage: 4
+      });
+
+      assert(outcome.armorDamage === 4, `受击获甲后未由护甲吸收本次伤害: ${outcome.armorDamage}`);
+      assert(defender.bodyParts.chest.current === 1, `受击获甲后的剩余护甲错误: ${defender.bodyParts.chest.current}`);
+      assert(defender.stats.hp === 100, `受击获甲后 HP 不应下降: ${defender.stats.hp}`);
+    }
+
+    async function testEnemyPlannerPrefersHealWhenLowHp() {
+      const skills = {
+        skill_bite: {
+          id: 'skill_bite',
+          target: {
+            subject: 'SUBJECT_ENEMY',
+            scope: 'SCOPE_PART',
+            selection: { candidateParts: ['head', 'chest', 'abdomen'] }
+          },
+          actions: [{ effect: { effectType: 'DMG_HP', amount: 16 } }],
+          costs: { ap: 1 },
+          speed: 0
+        },
+        skill_recover: {
+          id: 'skill_recover',
+          target: {
+            subject: 'SUBJECT_SELF',
+            scope: 'SCOPE_ENTITY',
+            selection: {}
+          },
+          actions: [{ effect: { effectType: 'HEAL', amount: 20 } }],
+          costs: { ap: 1 },
+          speed: 2
+        }
+      };
+
+      const planner = new EnemyActionPlanner({
+        getSkillConfig: (skillId) => skills[skillId]
+      });
+
+      const enemy = {
+        id: 'enemy_1',
+        stats: { hp: 18, maxHp: 100, speed: 5, ap: 3 },
+        bodyParts: {
+          head: { current: 10, max: 10, weakness: 1 },
+          chest: { current: 20, max: 20, weakness: 1 },
+          abdomen: { current: 10, max: 10, weakness: 1 }
+        },
+        skills: ['skill_bite', 'skill_recover']
+      };
+
+      const player = {
+        id: 'player_1',
+        stats: { hp: 100, maxHp: 100 },
+        bodyParts: {
+          head: { current: 15, max: 15, weakness: 1.4 },
+          chest: { current: 20, max: 20, weakness: 1 },
+          abdomen: { current: 20, max: 20, weakness: 1 }
+        }
+      };
+
+      const plan = planner.planTurn({ enemy, player, playerBodyParts: player.bodyParts });
+      assert(plan, 'EnemyActionPlanner 未返回低血量规划结果');
+      assert(plan.skillId === 'skill_recover', `低血量敌人未优先回血，实际选择: ${plan.skillId}`);
+      assert(plan.targetId === 'enemy_1', `回血技能目标错误: ${plan.targetId}`);
     }
 
     function testTurnPlannerUsesSlotPartForMultiSelect() {
@@ -268,6 +558,12 @@
     const tests = [
       ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
       ['CoreEngine 战斗保存同步 currentScene/battleState', testCoreEngineBattleSaveSyncContract],
+      ['EnemyActionPlanner 受损时优先修甲', testEnemyPlannerPrefersArmorRepairWhenDamaged],
+      ['EnemyActionPlanner 低血量时优先回血', testEnemyPlannerPrefersHealWhenLowHp],
+      ['BuffSystem 触发降耗与反击', testBuffSystemApCostReduceAndCounter],
+      ['BuffSystem 战斗管线中的 HP 免伤', testBuffSystemPreventHpDamageInBattlePipeline],
+      ['BuffSystem 战斗管线中的护甲免伤', testBuffSystemPreventArmorDamageKeepsArmorAndHp],
+      ['BuffSystem 受击前获甲后由护甲吸收伤害', testBuffSystemHealArmorBeforeTakingDamage],
       ['TurnPlanner 多选动作使用各自槽位部位', testTurnPlannerUsesSlotPartForMultiSelect],
       ['UI_SkillPanel 接受 SCOPE_MULTI_PARTS', testSkillPanelAcceptsMultiPartScope],
       ['UI_SkillPanel 仅高亮 candidateParts', testSkillPanelHighlightsCandidatePartsOnly],

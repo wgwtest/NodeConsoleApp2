@@ -1238,18 +1238,23 @@ class CoreEngine {
         context.damageTaken = actualDamage;
         this.eventBus.emit('BATTLE_TAKE_DAMAGE_PRE', context);
 
-        if (part && !context.preventArmorDamage && Number(part.current ?? 0) > 0) {
+        if (part && Number(part.current ?? 0) > 0) {
             const armorMitMult = this._collectArmorMitigationMultiplier(context.tempModifiers);
             const mitigated = Math.ceil(actualDamage * armorMitMult);
-            if (part.current >= mitigated) {
-                part.current -= mitigated;
-                armorDamage = mitigated;
+            const currentArmor = Number(part.current ?? 0) || 0;
+            if (currentArmor >= mitigated) {
+                if (!context.preventArmorDamage) {
+                    part.current -= mitigated;
+                    armorDamage = mitigated;
+                }
                 actualDamage = 0;
             } else {
-                armorDamage = part.current;
-                actualDamage = Math.max(0, mitigated - part.current);
-                part.current = 0;
-                part.status = 'BROKEN';
+                actualDamage = Math.max(0, mitigated - currentArmor);
+                if (!context.preventArmorDamage) {
+                    armorDamage = currentArmor;
+                    part.current = 0;
+                    part.status = 'BROKEN';
+                }
             }
         }
 

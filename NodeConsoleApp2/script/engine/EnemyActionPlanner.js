@@ -77,6 +77,7 @@ export default class EnemyActionPlanner {
             score += summary.healHp * (1.6 - hpRatio);
             score += summary.addArmor * (1.4 - hpRatio);
             score += summary.buffRefsSelf * 18;
+            score += this._scoreSelfProtection(skill, enemy);
             if (hpRatio <= 0.45) score += 35;
         } else {
             score += summary.damageHp * 2.0;
@@ -102,6 +103,31 @@ export default class EnemyActionPlanner {
         const cost = Number(skill?.costs?.ap ?? 0) || 0;
         const ap = Number(enemy?.stats?.ap ?? enemy?.ap ?? 0) || 0;
         if (cost > ap) score -= 1000;
+
+        return score;
+    }
+
+    _scoreSelfProtection(skill, enemy) {
+        const bodyParts = enemy?.bodyParts;
+        if (!bodyParts || typeof bodyParts !== 'object') return 0;
+
+        const candidateParts = this._getCandidateParts(skill, bodyParts);
+        const chosenPart = this._pickMostDamagedPart(bodyParts, candidateParts);
+        const part = chosenPart ? bodyParts[chosenPart] : null;
+        if (!part) return 0;
+
+        const maxArmor = Number(part.max ?? 0) || 0;
+        const currentArmor = Number(part.current ?? 0) || 0;
+        if (maxArmor <= 0) return 0;
+
+        const missingArmor = Math.max(0, maxArmor - currentArmor);
+        const missingRatio = missingArmor / maxArmor;
+
+        let score = missingArmor * 1.8;
+        score += missingRatio * 30;
+
+        if (missingRatio >= 0.5) score += 25;
+        if (currentArmor <= 0) score += 20;
 
         return score;
     }
