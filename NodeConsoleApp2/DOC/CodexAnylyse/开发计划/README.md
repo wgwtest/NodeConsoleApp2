@@ -58,10 +58,11 @@
 
 1. [01-WBS-L0-NodeConsoleApp2-可交付版本研发总纲](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/开发计划/01-WBS-L0-NodeConsoleApp2-可交付版本研发总纲.md)
 2. [02-WBS-L1-阶段A-战斗竖切闭环](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/开发计划/02-WBS-L1-阶段A-战斗竖切闭环.md)
-3. [00-工程总体分析](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/00-工程总体分析.md)
-4. [05-mock_ui_v11主流程测试基线](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/05-mock_ui_v11主流程测试基线.md)
-5. `design/skill_editor_design.md`、`design/buff_editor_design.md`、`design/level_design.md`
-6. 对应阶段的自测报告、验收清单和会话交接
+3. [03-执行Issue任务契约与验收口径](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/开发计划/03-执行Issue任务契约与验收口径.md)
+4. [00-工程总体分析](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/00-工程总体分析.md)
+5. [05-mock_ui_v11主流程测试基线](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/05-mock_ui_v11主流程测试基线.md)
+6. `design/skill_editor_design.md`、`design/buff_editor_design.md`、`design/level_design.md`
+7. 对应阶段的自测报告、验收清单和会话交接
 
 ## 3.1 归档入口
 
