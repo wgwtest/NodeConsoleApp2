@@ -39,6 +39,56 @@
       if (!condition) throw new Error(message);
     }
 
+    const contentConfigUrl = '../assets/data/config.json';
+    let contentConfigCache = null;
+    async function loadContentConfig() {
+      if (!contentConfigCache) {
+        contentConfigCache = await fetch(contentConfigUrl).then(r => r.json());
+      }
+      return contentConfigCache;
+    }
+
+    function normalizeContentUrl(input, base = null) {
+      if (!input || typeof input !== 'string') return input;
+      if (/^https?:\/\//i.test(input)) return input;
+      if (input.startsWith('/')) return input;
+      if (base) {
+        try {
+          return new URL(input, base).toString();
+        } catch {
+          // fall through
+        }
+      }
+      if (input.startsWith('./')) return `/${input.slice(2)}`;
+      if (input.startsWith('../')) return input;
+      return input;
+    }
+
+    async function fetchRegistryJson(contentKey, options = {}) {
+      const config = await loadContentConfig();
+      const registry = config.contentRegistry || {};
+      const originBase = `${window.location.origin}/`;
+      const basePath = normalizeContentUrl(config.basePath || '', originBase) || '';
+      let entry = registry[contentKey];
+      if (!entry) {
+        throw new Error(`contentRegistry 缺少 ${contentKey}`);
+      }
+      if (contentKey === 'skills' && options.skillTreeId && entry.byTree && entry.byTree[options.skillTreeId]) {
+        entry = entry.byTree[options.skillTreeId];
+      }
+      const path = entry.path;
+      if (!path) {
+        throw new Error(`${contentKey} 缺少 path`);
+      }
+      const normalizedFile = normalizeContentUrl(path, null);
+      const resolvedContentUrl = basePath
+        ? (normalizedFile.startsWith('http') || normalizedFile.startsWith('/')
+            ? normalizedFile
+            : `${basePath}${normalizedFile}`)
+        : normalizedFile;
+      return fetch(resolvedContentUrl).then(r => r.json());
+    }
+
     function createEventBus() {
       return {
         on() {},
@@ -117,11 +167,32 @@
       assert(/runtime\.battleState\s*=\s*\{/.test(source), 'saveBattleState 未同步 runtime.battleState');
     }
 
+    async function testContentRegistryProvidesUnifiedLoaderBoundary() {
+      const config = await loadContentConfig();
+      const registry = config.contentRegistry;
+      assert(registry && typeof registry === 'object', 'config.json 缺少 contentRegistry');
+
+      for (const key of ['player', 'items', 'skills', 'buffs', 'enemies', 'levels']) {
+        assert(registry[key], `contentRegistry 缺少 ${key}`);
+        assert(typeof registry[key].path === 'string' && registry[key].path.length > 0, `${key} 缺少 path`);
+        assert(typeof registry[key].kind === 'string' && registry[key].kind.length > 0, `${key} 缺少 kind`);
+      }
+
+      assert(registry.skills.byTree && typeof registry.skills.byTree === 'object', 'skills contentRegistry 缺少 byTree');
+      assert(registry.skills.byTree.melee_v4_5?.path === 'skills_melee_v4_5.json', `skills.byTree.melee_v4_5 路径错误: ${registry.skills.byTree.melee_v4_5?.path}`);
+      assert(registry.buffs.schemaVersion === 'buffs_v2_1_wrapped', `buffs schemaVersion 错误: ${registry.buffs.schemaVersion}`);
+
+      assert(typeof DataManager._buildContentRegistry === 'function', 'DataManagerV2 缺少 _buildContentRegistry');
+      const normalized = DataManager._buildContentRegistry(config);
+      assert(normalized?.skills?.byTree?.melee_v4_5?.path === 'skills_melee_v4_5.json', 'DataManager._buildContentRegistry 未保留 skills.byTree');
+      assert(normalized?.buffs?.schemaVersion === 'buffs_v2_1_wrapped', 'DataManager._buildContentRegistry 未保留 buffs schemaVersion');
+    }
+
     async function testAcceptanceLevelProvidesManualVerificationEntry() {
       const [levels, enemies, skills] = await Promise.all([
-        fetch('../assets/data/levels.json').then(r => r.json()),
-        fetch('../assets/data/enemies.json').then(r => r.json()),
-        fetch('../assets/data/skills_melee_v4_5.json').then(r => r.json())
+        fetchRegistryJson('levels'),
+        fetchRegistryJson('enemies'),
+        fetchRegistryJson('skills', { skillTreeId: 'melee_v4_5' })
       ]);
 
       const level = levels.level_1_2_acceptance;
@@ -145,8 +216,8 @@
 
     async function testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates() {
       const [levels, enemies] = await Promise.all([
-        fetch('../assets/data/levels.json').then(r => r.json()),
-        fetch('../assets/data/enemies.json').then(r => r.json())
+        fetchRegistryJson('levels'),
+        fetchRegistryJson('enemies')
       ]);
 
       const onHitLevel = levels.level_1_3_acceptance_on_hit_armor;
@@ -186,8 +257,8 @@
 
     async function testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack() {
       const [enemies, skills] = await Promise.all([
-        fetch('../assets/data/enemies.json').then(r => r.json()),
-        fetch('../assets/data/skills_melee_v4_5.json').then(r => r.json())
+        fetchRegistryJson('enemies'),
+        fetchRegistryJson('skills', { skillTreeId: 'melee_v4_5' })
       ]);
 
       const enemy = enemies.enemy_acceptance_guard;
@@ -447,7 +518,7 @@
     }
 
     async function testBuffSystemApCostReduceAndCounter() {
-      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const raw = await fetchRegistryJson('buffs');
       const eventBus = new EventBus.constructor();
       const registry = new BuffRegistry(raw.buffs);
       const system = new BuffSystem(eventBus, registry);
@@ -492,7 +563,7 @@
     }
 
     async function testBuffSystemPreventHpDamageInBattlePipeline() {
-      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const raw = await fetchRegistryJson('buffs');
       const eventBus = new EventBus.constructor();
       const registry = new BuffRegistry(raw.buffs);
       const system = new BuffSystem(eventBus, registry);
@@ -525,7 +596,7 @@
     }
 
     async function testBuffSystemPreventArmorDamageKeepsArmorAndHp() {
-      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const raw = await fetchRegistryJson('buffs');
       const eventBus = new EventBus.constructor();
       const registry = new BuffRegistry(raw.buffs);
       const system = new BuffSystem(eventBus, registry);
@@ -559,7 +630,7 @@
     }
 
     async function testBuffSystemPreventArmorDamageForDirectArmorEffects() {
-      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const raw = await fetchRegistryJson('buffs');
       const eventBus = new EventBus.constructor();
       const registry = new BuffRegistry(raw.buffs);
       const system = new BuffSystem(eventBus, registry);
@@ -616,7 +687,7 @@
     }
 
     async function testBuffSystemHealArmorBeforeTakingDamage() {
-      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const raw = await fetchRegistryJson('buffs');
       const eventBus = new EventBus.constructor();
       const registry = new BuffRegistry(raw.buffs);
       const system = new BuffSystem(eventBus, registry);
@@ -650,7 +721,7 @@
     }
 
     async function testBuffSystemHealArmorBeforeDirectArmorEffects() {
-      const raw = await fetch('../assets/data/buffs_v2_7.json').then(r => r.json());
+      const raw = await fetchRegistryJson('buffs');
       const eventBus = new EventBus.constructor();
       const registry = new BuffRegistry(raw.buffs);
       const system = new BuffSystem(eventBus, registry);
@@ -1010,6 +1081,7 @@
     const tests = [
       ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
       ['CoreEngine 战斗保存同步 currentScene/battleState', testCoreEngineBattleSaveSyncContract],
+      ['config registry 与 DataManager 装载边界统一', testContentRegistryProvidesUnifiedLoaderBoundary],
       ['验收关卡与样本敌人/技能已配置', testAcceptanceLevelProvidesManualVerificationEntry],
       ['验收关卡提供确定性的玩家与敌人状态', testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates],
       ['验收防御技能会先于样本敌人执行', testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack],

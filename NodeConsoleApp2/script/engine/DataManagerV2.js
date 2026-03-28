@@ -12,7 +12,9 @@ class DataManager {
         };
         this.gameConfig = {}; // To store static configs like items, skills
         this._currentLevelConfig = null; // Runtime cache for current level static config
-       this._dataSourcesVersion = null;
+        this._dataSourcesVersion = null;
+        this.contentRegistry = null;
+        this.contentPacks = null;
         this._enemySkillAliases = {
             skill_bite: 'skill_heavy_swing',
             skill_throw_stone: 'skill_skull_cracker',
@@ -36,6 +38,126 @@ class DataManager {
         if (!rawBuffs || typeof rawBuffs !== 'object') return {};
         if (rawBuffs.buffs && typeof rawBuffs.buffs === 'object') return rawBuffs.buffs;
         return rawBuffs;
+    }
+
+    _buildContentRegistry(dataSources) {
+        const fallbackSources = (dataSources && typeof dataSources.sources === 'object') ? dataSources.sources : {};
+        const inputRegistry = (dataSources && typeof dataSources.contentRegistry === 'object' && dataSources.contentRegistry)
+            ? dataSources.contentRegistry
+            : {};
+
+        const cloneEntry = (entry) => (entry && typeof entry === 'object' ? JSON.parse(JSON.stringify(entry)) : null);
+        const normalizePathEntry = (entry, fallbackPath, defaultKind, extra = {}) => {
+            if (typeof entry === 'string') {
+                return {
+                    kind: defaultKind,
+                    path: entry,
+                    ...extra
+                };
+            }
+
+            if (entry && typeof entry === 'object') {
+                return {
+                    kind: entry.kind || defaultKind,
+                    ...cloneEntry(entry),
+                    ...extra
+                };
+            }
+
+            if (typeof fallbackPath === 'string' && fallbackPath.length > 0) {
+                return {
+                    kind: defaultKind,
+                    path: fallbackPath,
+                    ...extra
+                };
+            }
+
+            return null;
+        };
+
+        const registry = {
+            player: normalizePathEntry(inputRegistry.player, fallbackSources.player, 'player'),
+            items: normalizePathEntry(inputRegistry.items, fallbackSources.items, 'items'),
+            enemies: normalizePathEntry(inputRegistry.enemies, fallbackSources.enemies, 'enemies'),
+            levels: normalizePathEntry(inputRegistry.levels, fallbackSources.levels, 'levels'),
+            buffs: normalizePathEntry(inputRegistry.buffs, fallbackSources.buffs, 'buffs', { rootKey: 'buffs' }),
+            slotLayouts: normalizePathEntry(inputRegistry.slotLayouts, fallbackSources.slotLayouts, 'slotLayouts', { required: false })
+        };
+
+        const skillsEntry = normalizePathEntry(inputRegistry.skills, fallbackSources.skills, 'skills', { rootKey: 'skills' }) || {
+            kind: 'skills',
+            path: fallbackSources.skills || null,
+            rootKey: 'skills'
+        };
+        const inputSkillsByTree = (skillsEntry && skillsEntry.byTree && typeof skillsEntry.byTree === 'object')
+            ? skillsEntry.byTree
+            : ((fallbackSources.skillsByTree && typeof fallbackSources.skillsByTree === 'object') ? fallbackSources.skillsByTree : {});
+        const normalizedByTree = {};
+        for (const [treeId, treeEntry] of Object.entries(inputSkillsByTree)) {
+            const normalizedTreeEntry = normalizePathEntry(treeEntry, null, 'skills');
+            if (normalizedTreeEntry && normalizedTreeEntry.path) {
+                normalizedByTree[treeId] = normalizedTreeEntry;
+            }
+        }
+        skillsEntry.byTree = normalizedByTree;
+        registry.skills = skillsEntry;
+
+        return registry;
+    }
+
+    _getContentRegistryEntry(contentKey, options = {}) {
+        if (!this.contentRegistry || typeof this.contentRegistry !== 'object') return null;
+        const entry = this.contentRegistry[contentKey];
+        if (!entry) return null;
+
+        if (contentKey === 'skills' && options.skillTreeId && entry.byTree && entry.byTree[options.skillTreeId]) {
+            const treeEntry = entry.byTree[options.skillTreeId];
+            return {
+                ...entry,
+                ...treeEntry,
+                basePath: entry.path,
+                selectedTreeId: options.skillTreeId
+            };
+        }
+
+        return entry;
+    }
+
+    _validateContentPack(contentKey, entry, rawPack) {
+        if (!entry || !rawPack || typeof rawPack !== 'object') {
+            throw new Error(`[DataManager] Invalid content pack for ${contentKey}.`);
+        }
+
+        const schemaVersion = entry.schemaVersion || null;
+        if (schemaVersion && rawPack.$schemaVersion && rawPack.$schemaVersion !== schemaVersion) {
+            throw new Error(`[DataManager] ${contentKey} schemaVersion mismatch. expected=${schemaVersion}, actual=${rawPack.$schemaVersion}`);
+        }
+
+        switch (contentKey) {
+            case 'skills':
+                if (!Array.isArray(rawPack.skills)) {
+                    throw new Error('Skills data must provide a skills array.');
+                }
+                break;
+            case 'buffs':
+                if (!rawPack.buffs || typeof rawPack.buffs !== 'object') {
+                    throw new Error('Buffs data must provide a buffs object.');
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    _buildContentPackMeta(contentKey, entry, rawPack) {
+        return {
+            kind: entry.kind || contentKey,
+            path: entry.path || null,
+            schemaVersion: rawPack && typeof rawPack === 'object' ? (rawPack.$schemaVersion || entry.schemaVersion || null) : (entry.schemaVersion || null),
+            rootKey: entry.rootKey || null,
+            selectedTreeId: entry.selectedTreeId || null,
+            meta: (rawPack && typeof rawPack === 'object') ? (rawPack.meta || null) : null
+        };
     }
 
     _normalizeSkills(skills, playerTemplate) {
@@ -218,14 +340,18 @@ class DataManager {
                 ? `${window.location.origin}/`
                 : null;
             const basePath = normalizeUrl(dataSources.basePath || '', originBase) || '';
-            const sources = dataSources.sources || {};
+            const registry = this._buildContentRegistry(dataSources);
+            this.contentRegistry = registry;
 
-            const fetchConfig = async (sourceKey) => {
-                const filename = sources[sourceKey];
-                if (!filename) {
-                    throw new Error(`Missing source path for ${sourceKey}`);
+            const fetchContentPack = async (contentKey, options = {}) => {
+                const entry = this._getContentRegistryEntry(contentKey, options);
+                if (!entry || !entry.path) {
+                    if (entry && entry.required === false) {
+                        return null;
+                    }
+                    throw new Error(`Missing content registry path for ${contentKey}`);
                 }
-                const normalizedFile = normalizeUrl(filename, null);
+                const normalizedFile = normalizeUrl(entry.path, null);
                 const url = basePath
                     ? (normalizedFile.startsWith('http') || normalizedFile.startsWith('/')
                         ? normalizedFile
@@ -235,27 +361,35 @@ class DataManager {
                 if (!response.ok) {
                     throw new Error(`HTTP error ${response.status} loading ${url}`);
                 }
-                return await response.json();
+                const rawPack = await response.json();
+                this._validateContentPack(contentKey, entry, rawPack);
+                return {
+                    raw: rawPack,
+                    entry,
+                    meta: this._buildContentPackMeta(contentKey, entry, rawPack)
+                };
             };
 
             // Load player first so we can decide which skill tree to load
-            const [player, items, enemies, levels, buffs] = await Promise.all([
-                fetchConfig('player'),
-                fetchConfig('items'),
-                fetchConfig('enemies'),
-                fetchConfig('levels'),
-                fetchConfig('buffs')
+            const playerPack = await fetchContentPack('player');
+            const player = playerPack.raw;
+
+            const [itemsPack, enemiesPack, levelsPack, buffsPack, slotLayoutsPack] = await Promise.all([
+                fetchContentPack('items'),
+                fetchContentPack('enemies'),
+                fetchContentPack('levels'),
+                fetchContentPack('buffs'),
+                fetchContentPack('slotLayouts').catch((e) => {
+                    console.warn('?? [DataManager] Failed to load slotLayouts. Reason:', e.message);
+                    return null;
+                })
             ]);
 
-            let slotLayouts = null;
-            if (sources.slotLayouts) {
-                try {
-                    slotLayouts = await fetchConfig('slotLayouts');
-                } catch (e) {
-                    console.warn('?? [DataManager] Failed to load slotLayouts. Reason:', e.message);
-                    slotLayouts = null;
-                }
-            }
+            const items = itemsPack.raw;
+            const enemies = enemiesPack.raw;
+            const levels = levelsPack.raw;
+            const buffs = buffsPack.raw;
+            const slotLayouts = slotLayoutsPack ? slotLayoutsPack.raw : null;
 
             const playerSkills = player && player.default ? player.default.skills : null;
             if (!playerSkills || typeof playerSkills !== 'object' || Array.isArray(playerSkills)) {
@@ -263,30 +397,8 @@ class DataManager {
             }
 
             const skillTreeId = playerSkills.skillTreeId;
-            const skillsByTree = sources.skillsByTree || {};
-            const skillsPath = (skillTreeId && skillsByTree && skillsByTree[skillTreeId])
-                ? skillsByTree[skillTreeId]
-                : sources.skills;
-
-            if (!skillsPath) {
-                throw new Error('Missing skills source path (sources.skills or sources.skillsByTree[skillTreeId]).');
-            }
-
-            const normalizedSkillsPath = normalizeUrl(skillsPath, null);
-            const skillsUrl = basePath
-                ? (normalizedSkillsPath.startsWith('http') || normalizedSkillsPath.startsWith('/')
-                    ? normalizedSkillsPath
-                    : `${basePath}${normalizedSkillsPath}`)
-                : normalizedSkillsPath;
-            const skillsResp = await fetch(skillsUrl);
-            if (!skillsResp.ok) {
-                throw new Error(`HTTP error ${skillsResp.status} loading ${skillsUrl}`);
-            }
-            const skills = await skillsResp.json();
-
-            if (!skills || !Array.isArray(skills.skills)) {
-                throw new Error('Skills data must provide a skills array (skills_melee_v4_5.json format).');
-            }
+            const skillsPack = await fetchContentPack('skills', { skillTreeId });
+            const skills = skillsPack.raw;
 
             const skillsMap = Object.create(null);
             skills.skills.forEach(skill => {
@@ -308,8 +420,19 @@ class DataManager {
                 player,
                 buffs: this._unwrapBuffDefinitions(buffs),
                 buffMeta: (buffs && typeof buffs === 'object') ? (buffs.meta || null) : null,
-                slotLayouts
+                slotLayouts,
+                contentRegistry: registry,
+                contentPacks: {
+                    player: playerPack.meta,
+                    items: itemsPack.meta,
+                    enemies: enemiesPack.meta,
+                    levels: levelsPack.meta,
+                    skills: skillsPack.meta,
+                    buffs: buffsPack.meta,
+                    slotLayouts: slotLayoutsPack ? slotLayoutsPack.meta : null
+                }
             };
+            this.contentPacks = this.gameConfig.contentPacks;
 
             console.log("? [DataManager] Configs successfully loaded from JSON files.", this.gameConfig);
         } catch (e) {
@@ -317,6 +440,8 @@ class DataManager {
             // instead of silently falling back to mock data.
             console.error("[DataManager] Failed to load JSON configs. Aborting init.", e);
             this.gameConfig = {};
+            this.contentRegistry = null;
+            this.contentPacks = null;
             throw e;
         }
     }

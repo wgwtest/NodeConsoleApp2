@@ -1,6 +1,47 @@
 {
   "version": "data_sources_v1.0.0.2",
   "basePath": "./assets/data/",
+  "contentRegistry": {
+    "player": {
+      "kind": "player",
+      "path": "player.json"
+    },
+    "items": {
+      "kind": "items",
+      "path": "items.json"
+    },
+    "skills": {
+      "kind": "skills",
+      "path": "skills_melee_v4_5.json",
+      "schemaVersion": "skills_melee_v3",
+      "rootKey": "skills",
+      "byTree": {
+        "melee_v4_5": {
+          "path": "skills_melee_v4_5.json",
+          "schemaVersion": "skills_melee_v3"
+        }
+      }
+    },
+    "enemies": {
+      "kind": "enemies",
+      "path": "enemies.json"
+    },
+    "levels": {
+      "kind": "levels",
+      "path": "levels.json"
+    },
+    "buffs": {
+      "kind": "buffs",
+      "path": "buffs_v2_7.json",
+      "schemaVersion": "buffs_v2_1_wrapped",
+      "rootKey": "buffs"
+    },
+    "slotLayouts": {
+      "kind": "slotLayouts",
+      "path": "slot_layouts.json",
+      "required": false
+    }
+  },
   "sources": {
     "skills": "skills_melee_v4_5.json",
     "skillsByTree": {
