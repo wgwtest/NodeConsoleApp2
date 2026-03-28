@@ -8,10 +8,14 @@
 
 1. WBS 根节点：`#13`
 2. 当前阶段节点：`#14`
-3. 当前阶段工作包：`#15`、`#16`、`#17`
+3. 当前阶段工作包：`#15`、`#16`、`#17`、`#49`
 4. 当前 Gate：`M1`
 5. 当前阶段计划文档：
    - [02-WBS-L1-阶段A-战斗竖切闭环](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/开发计划/02-WBS-L1-阶段A-战斗竖切闭环.md)
+6. 当前阶段并行启动线：
+   - `#50` 技能编辑契约与编辑链
+   - `#51` Buff 编辑契约与编辑链
+   - `#52` 关卡编辑契约与编辑链
 
 ## 1.1 当前协作规则
 
@@ -51,7 +55,8 @@
 2. [02-WBS-L1-阶段A-战斗竖切闭环](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/开发计划/02-WBS-L1-阶段A-战斗竖切闭环.md)
 3. [00-工程总体分析](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/00-工程总体分析.md)
 4. [05-mock_ui_v11主流程测试基线](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/05-mock_ui_v11主流程测试基线.md)
-5. 对应阶段的自测报告、验收清单和会话交接
+5. `design/skill_editor_design.md`、`design/buff_editor_design.md`、`design/level_design.md`
+6. 对应阶段的自测报告、验收清单和会话交接
 
 ## 3.1 归档入口
 

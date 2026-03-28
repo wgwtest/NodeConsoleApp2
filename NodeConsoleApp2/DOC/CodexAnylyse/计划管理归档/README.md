@@ -27,6 +27,7 @@
 3. [05-严格树形任务分解与GitHub-Issue-Tree方案](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/计划管理归档/05-严格树形任务分解与GitHub-Issue-Tree方案.md)
 4. [06-阶段A-Issue-Tree初始迁移记录](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/计划管理归档/06-阶段A-Issue-Tree初始迁移记录.md)
 5. [07-全阶段骨架Issue-Tree与Project迁移记录](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/计划管理归档/07-全阶段骨架Issue-Tree与Project迁移记录.md)
+6. [08-阶段A-A4-内容工具链Issue-Tree迁移记录](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CodexAnylyse/计划管理归档/08-阶段A-A4-内容工具链Issue-Tree迁移记录.md)
 
 ## 3. 当前活跃入口
 
