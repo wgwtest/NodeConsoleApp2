@@ -147,9 +147,13 @@ export class UI_SkillTreeModal {
 	// ----------------- Data -----------------
 
 	_loadDataFromEngine() {
-		const skills = safeGet(this.engine, ['data', 'gameConfig', 'skills'], Object.create(null));
-		this._skillsMap = skills || Object.create(null);
-		this._skillsList = Object.values(this._skillsMap);
+		const catalog = typeof this.engine?.data?.getSkillCatalog === 'function'
+			? this.engine.data.getSkillCatalog()
+			: null;
+		const skillsMap = catalog?.skillsMap || safeGet(this.engine, ['data', 'gameConfig', 'skills'], Object.create(null));
+		const skillsList = Array.isArray(catalog?.skillsList) ? catalog.skillsList : Object.values(skillsMap || Object.create(null));
+		this._skillsMap = skillsMap || Object.create(null);
+		this._skillsList = skillsList;
 
 		// Default selection: first learned, else first skill
 		const learned = this._getLearned();

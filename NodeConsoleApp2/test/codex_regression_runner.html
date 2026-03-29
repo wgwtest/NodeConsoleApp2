@@ -24,6 +24,7 @@
     import TurnPlanner from '../script/engine/TurnPlanner.js';
     import UI_SkillPanel from '../script/ui/UI_SkillPanel.js';
     import { UI_SkillTreeModal } from '../script/ui/UI_SkillTreeModal.js';
+    import { CONTENT_PACK_OVERRIDE_STORAGE_KEY, buildContentPackOverrideKey, clearContentPackOverride, getContentPackOverride, setContentPackOverride } from '../script/tooling/ContentPackOverrideStore.js';
 
     const summaryEl = document.getElementById('summary');
     const logEl = document.getElementById('log');
@@ -188,6 +189,138 @@
       assert(normalized?.buffs?.schemaVersion === 'buffs_v2_1_wrapped', 'DataManager._buildContentRegistry 未保留 buffs schemaVersion');
     }
 
+    function testDataManagerProvidesSkillCatalogBoundary() {
+      assert(typeof DataManager.getSkillCatalog === 'function', 'DataManagerV2 缺少 getSkillCatalog()');
+      assert(typeof DataManager.getCurrentSkillTreeId === 'function', 'DataManagerV2 缺少 getCurrentSkillTreeId()');
+      assert(typeof DataManager.getSkillPackMeta === 'function', 'DataManagerV2 缺少 getSkillPackMeta()');
+
+      const dm = Object.create(Object.getPrototypeOf(DataManager));
+      dm.gameConfig = {
+        skills: {
+          skill_a: { id: 'skill_a', name: 'Skill A' },
+          skill_b: { id: 'skill_b', name: 'Skill B' }
+        }
+      };
+      dm.contentPacks = {
+        skills: {
+          schemaVersion: 'skills_melee_v3',
+          selectedTreeId: 'melee_v4_5',
+          meta: {
+            displayName: 'Melee V4.5'
+          }
+        }
+      };
+
+      const catalog = DataManager.getSkillCatalog.call(dm);
+      assert(catalog && typeof catalog === 'object', 'getSkillCatalog() 未返回对象');
+      assert(catalog.skillsMap?.skill_a?.id === 'skill_a', 'skillsMap 未暴露 skill_a');
+      assert(Array.isArray(catalog.skillsList) && catalog.skillsList.length === 2, `skillsList 数量错误: ${catalog.skillsList?.length}`);
+      assert(catalog.selectedTreeId === 'melee_v4_5', `selectedTreeId 错误: ${catalog.selectedTreeId}`);
+      assert(catalog.schemaVersion === 'skills_melee_v3', `schemaVersion 错误: ${catalog.schemaVersion}`);
+      assert(catalog.meta?.displayName === 'Melee V4.5', 'meta 未透出');
+      assert(DataManager.getCurrentSkillTreeId.call(dm) === 'melee_v4_5', 'getCurrentSkillTreeId 返回错误');
+      assert(DataManager.getSkillPackMeta.call(dm)?.schemaVersion === 'skills_melee_v3', 'getSkillPackMeta 返回错误');
+    }
+
+    async function testDataManagerSupportsRuntimeSkillPackOverrideBridge() {
+      const basePack = await fetchRegistryJson('skills', { skillTreeId: 'melee_v4_5' });
+      const overridePack = JSON.parse(JSON.stringify(basePack));
+      const overrideSkill = overridePack.skills.find(skill => skill.id === 'skill_heal');
+      assert(overrideSkill, '缺少运行时覆写探针技能 skill_heal');
+      overrideSkill.name = '治疗·运行时覆写样本';
+
+      clearContentPackOverride('skills', 'melee_v4_5');
+      setContentPackOverride('skills', overridePack, 'melee_v4_5');
+
+      try {
+        const storedRaw = localStorage.getItem(CONTENT_PACK_OVERRIDE_STORAGE_KEY) || '';
+        assert(storedRaw.includes(buildContentPackOverrideKey('skills', 'melee_v4_5')), 'localStorage 未写入 skills:melee_v4_5 覆写键');
+
+        const fromStore = getContentPackOverride('skills', 'melee_v4_5');
+        assert(fromStore?.skills?.find(skill => skill.id === 'skill_heal')?.name === '治疗·运行时覆写样本', 'override store 未返回技能覆写产物');
+
+        const dm = Object.create(Object.getPrototypeOf(DataManager));
+        const fromManager = DataManager._getContentPackOverride.call(dm, 'skills', { selectedTreeId: 'melee_v4_5' });
+        assert(fromManager?.skills?.find(skill => skill.id === 'skill_heal')?.name === '治疗·运行时覆写样本', 'DataManager 未读取 skills:treeId 覆写产物');
+      } finally {
+        clearContentPackOverride('skills', 'melee_v4_5');
+      }
+    }
+
+    function testSkillTreeModalConsumesSkillCatalogBoundary() {
+      const modal = new UI_SkillTreeModal();
+      modal.engine = {
+        data: {
+          getSkillCatalog() {
+            return {
+              selectedTreeId: 'melee_v4_5',
+              schemaVersion: 'skills_melee_v3',
+              skillsMap: {
+                skill_a: { id: 'skill_a', name: 'Skill A' }
+              },
+              skillsList: [
+                { id: 'skill_a', name: 'Skill A' }
+              ]
+            };
+          },
+          playerData: {
+            skills: {
+              learned: ['skill_a'],
+              skillPoints: 2
+            }
+          }
+        }
+      };
+
+      modal._loadDataFromEngine();
+
+      assert(modal._skillsMap.skill_a?.id === 'skill_a', 'UI_SkillTreeModal 未从 catalog 读取 skillsMap');
+      assert(modal._skillsList.length === 1, `UI_SkillTreeModal skillsList 数量错误: ${modal._skillsList.length}`);
+      assert(modal._selectedSkillId === 'skill_a', `UI_SkillTreeModal 默认选中错误: ${modal._selectedSkillId}`);
+    }
+
+    function testCoreEngineLearnSkillConsumesDataBoundary() {
+      const engine = Object.create(CoreEngine.prototype);
+      let saveCalls = 0;
+      let emitted = null;
+      engine.data = {
+        playerData: {
+          skills: {
+            learned: [],
+            skillPoints: 3
+          }
+        },
+        getSkillConfig(skillId) {
+          if (skillId !== 'skill_a') return null;
+          return {
+            id: 'skill_a',
+            prerequisites: [],
+            unlock: {
+              cost: {
+                kp: 2
+              },
+              exclusives: []
+            }
+          };
+        },
+        saveGame() {
+          saveCalls += 1;
+        }
+      };
+      engine.eventBus = {
+        emit(eventName, payload) {
+          emitted = { eventName, payload };
+        }
+      };
+
+      engine.learnSkill('skill_a');
+
+      assert(engine.data.playerData.skills.learned.includes('skill_a'), 'learnSkill 未通过 data boundary 学习技能');
+      assert(engine.data.playerData.skills.skillPoints === 1, `learnSkill 未正确扣除 KP: ${engine.data.playerData.skills.skillPoints}`);
+      assert(saveCalls === 1, `learnSkill 未触发 saveGame: ${saveCalls}`);
+      assert(emitted?.eventName === 'DATA_UPDATE', `learnSkill 未发出 DATA_UPDATE: ${emitted?.eventName}`);
+    }
+
     async function testAcceptanceLevelProvidesManualVerificationEntry() {
       const [levels, enemies, skills] = await Promise.all([
         fetchRegistryJson('levels'),
@@ -317,6 +450,19 @@
       const ioPage = await fetch('../test/skill_editor_io_test.html').then(r => r.text());
       assert(ioPage.includes('skills_melee_v4_5.json'), 'skill_editor_io_test.html 未切换到 skills_melee_v4_5.json');
       assert(ioPage.includes('$schemaVersion') && ioPage.includes('meta') && ioPage.includes('skills'), 'skill_editor_io_test.html 未体现 pack 结构');
+    }
+
+    async function testSkillEditorIoPageProvidesRuntimeBridgeEntry() {
+      const ioPage = await fetch('../test/skill_editor_io_test.html').then(r => r.text());
+      for (const requiredText of [
+        'Inject Runtime Probe Sample',
+        'Apply Runtime Override',
+        'Clear Runtime Override',
+        'Open mock_ui_v11.html',
+        "../script/tooling/ContentPackOverrideStore.js"
+      ]) {
+        assert(ioPage.includes(requiredText), `skill_editor_io_test.html 缺少 runtime bridge 入口文案: ${requiredText}`);
+      }
     }
 
     function testCoreEngineInjectsLevelBattleSkillsIntoBattleStartPayload() {
@@ -1123,10 +1269,15 @@
       ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
       ['CoreEngine 战斗保存同步 currentScene/battleState', testCoreEngineBattleSaveSyncContract],
       ['config registry 与 DataManager 装载边界统一', testContentRegistryProvidesUnifiedLoaderBoundary],
+      ['DataManager 暴露技能目录边界 API', testDataManagerProvidesSkillCatalogBoundary],
+      ['DataManager 支持技能 pack 运行时覆写桥', testDataManagerSupportsRuntimeSkillPackOverrideBridge],
+      ['UI_SkillTreeModal 仅消费技能目录边界', testSkillTreeModalConsumesSkillCatalogBoundary],
+      ['CoreEngine.learnSkill 仅消费 DataManager 技能边界', testCoreEngineLearnSkillConsumesDataBoundary],
       ['验收关卡与样本敌人/技能已配置', testAcceptanceLevelProvidesManualVerificationEntry],
       ['验收关卡提供确定性的玩家与敌人状态', testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates],
       ['验收防御技能会先于样本敌人执行', testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack],
       ['技能 pack schema 与编辑器字段映射对齐', testSkillPackSchemaAndEditorFieldMappingAreAligned],
+      ['skill_editor_io_test 提供 runtime bridge 验证入口', testSkillEditorIoPageProvidesRuntimeBridgeEntry],
       ['CoreEngine 在战斗开始时注入关卡验收技能', testCoreEngineInjectsLevelBattleSkillsIntoBattleStartPayload],
       ['CoreEngine 在战斗开始时应用关卡玩家战斗态覆盖', testCoreEngineAppliesLevelBattlePlayerStateOverridesAtBattleStart],
       ['DataManager.instantiateLevel 保留验收敌人的残甲状态', testDataManagerInstantiateLevelPreservesConfiguredEnemyCurrentArmor],

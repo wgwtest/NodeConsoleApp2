@@ -1,3 +1,5 @@
+import { buildContentPackOverrideKey, getContentPackOverride } from '../tooling/ContentPackOverrideStore.js';
+
 class DataManager {
     constructor() {
         this.dataConfig = {
@@ -15,6 +17,7 @@ class DataManager {
         this._dataSourcesVersion = null;
         this.contentRegistry = null;
         this.contentPacks = null;
+        this.skillCatalog = null;
         this._enemySkillAliases = {
             skill_bite: 'skill_heavy_swing',
             skill_throw_stone: 'skill_skull_cracker',
@@ -160,6 +163,11 @@ class DataManager {
         };
     }
 
+    _getContentPackOverride(contentKey, entry = null) {
+        const scopeId = entry && entry.selectedTreeId ? entry.selectedTreeId : null;
+        return getContentPackOverride(contentKey, scopeId);
+    }
+
     _normalizeSkills(skills, playerTemplate) {
         const tpl = (playerTemplate && typeof playerTemplate.skills === 'object' && !Array.isArray(playerTemplate.skills))
             ? playerTemplate.skills
@@ -178,6 +186,25 @@ class DataManager {
             skillTreeId: null,
             skillPoints: 0,
             learned: []
+        };
+    }
+
+    _buildSkillCatalog(skillsMap, options = {}) {
+        const map = (skillsMap && typeof skillsMap === 'object') ? skillsMap : Object.create(null);
+        const list = Object.values(map);
+        const packMeta = options.packMeta || this.getSkillPackMeta();
+        const selectedTreeId = options.selectedTreeId
+            || packMeta?.selectedTreeId
+            || this.playerData?.skills?.skillTreeId
+            || this.gameConfig?.player?.default?.skills?.skillTreeId
+            || null;
+
+        return {
+            skillsMap: map,
+            skillsList: list,
+            selectedTreeId,
+            schemaVersion: packMeta?.schemaVersion || null,
+            meta: packMeta?.meta || null
         };
     }
 
@@ -351,6 +378,19 @@ class DataManager {
                     }
                     throw new Error(`Missing content registry path for ${contentKey}`);
                 }
+                const overrideRawPack = this._getContentPackOverride(contentKey, entry);
+                if (overrideRawPack) {
+                    this._validateContentPack(contentKey, entry, overrideRawPack);
+                    return {
+                        raw: overrideRawPack,
+                        entry,
+                        meta: {
+                            ...this._buildContentPackMeta(contentKey, entry, overrideRawPack),
+                            source: 'override',
+                            overrideKey: buildContentPackOverrideKey(contentKey, entry.selectedTreeId || null)
+                        }
+                    };
+                }
                 const normalizedFile = normalizeUrl(entry.path, null);
                 const url = basePath
                     ? (normalizedFile.startsWith('http') || normalizedFile.startsWith('/')
@@ -414,6 +454,10 @@ class DataManager {
 
             this.gameConfig = {
                 skills: skillsMap,
+                skillCatalog: this._buildSkillCatalog(skillsMap, {
+                    packMeta: skillsPack.meta,
+                    selectedTreeId: skillTreeId
+                }),
                 items,
                 enemies,
                 levels,
@@ -433,6 +477,7 @@ class DataManager {
                 }
             };
             this.contentPacks = this.gameConfig.contentPacks;
+            this.skillCatalog = this.gameConfig.skillCatalog;
 
             console.log("? [DataManager] Configs successfully loaded from JSON files.", this.gameConfig);
         } catch (e) {
@@ -442,6 +487,7 @@ class DataManager {
             this.gameConfig = {};
             this.contentRegistry = null;
             this.contentPacks = null;
+            this.skillCatalog = null;
             throw e;
         }
     }
@@ -450,16 +496,46 @@ class DataManager {
         throw new Error('[DataManager] Mock mode has been removed. Fix data loading errors instead of falling back.');
     }
 
-    getSkillConfig(skillId) {
-        if (!this.gameConfig.skills) return null;
+    getSkillPackMeta() {
+        return (this.contentPacks && this.contentPacks.skills) ? this.contentPacks.skills : null;
+    }
 
-        const direct = this.gameConfig.skills[skillId];
+    getCurrentSkillTreeId() {
+        return this.getSkillCatalog()?.selectedTreeId || null;
+    }
+
+    getSkillCatalog() {
+        if (this.skillCatalog && typeof this.skillCatalog === 'object') {
+            return this.skillCatalog;
+        }
+
+        if (this.gameConfig && this.gameConfig.skillCatalog && typeof this.gameConfig.skillCatalog === 'object') {
+            this.skillCatalog = this.gameConfig.skillCatalog;
+            return this.skillCatalog;
+        }
+
+        const skillsMap = (this.gameConfig && this.gameConfig.skills && typeof this.gameConfig.skills === 'object')
+            ? this.gameConfig.skills
+            : Object.create(null);
+
+        this.skillCatalog = this._buildSkillCatalog(skillsMap);
+        if (this.gameConfig && typeof this.gameConfig === 'object') {
+            this.gameConfig.skillCatalog = this.skillCatalog;
+        }
+        return this.skillCatalog;
+    }
+
+    getSkillConfig(skillId) {
+        const skillsMap = this.getSkillCatalog()?.skillsMap;
+        if (!skillsMap) return null;
+
+        const direct = skillsMap[skillId];
         if (direct) return direct;
 
         const aliasId = this._enemySkillAliases[skillId];
         if (!aliasId) return null;
 
-        const aliased = this.gameConfig.skills[aliasId];
+        const aliased = skillsMap[aliasId];
         if (!aliased) return null;
 
         return {

@@ -65,9 +65,27 @@
         <p>Output:</p>
         <textarea id="outputJson" readonly></textarea>
     </div>
+
+    <div class="panel">
+        <h2>4. Runtime Bridge</h2>
+        <p>Use the exported pack artifact as a runtime override, then verify consumption in <code>mock_ui_v11.html</code>.</p>
+        <div class="controls">
+            <button onclick="injectRuntimeProbeSample()">Inject Runtime Probe Sample</button>
+            <button onclick="applyRuntimeOverride()">Apply Runtime Override</button>
+            <button onclick="clearRuntimeOverride()">Clear Runtime Override</button>
+            <button onclick="openRuntimePreview()">Open mock_ui_v11.html</button>
+        </div>
+        <div id="runtimeOverrideStatus"></div>
+    </div>
 </div>
 
-<script>
+<script type="module">
+    import { CONTENT_PACK_OVERRIDE_STORAGE_KEY, buildContentPackOverrideKey, clearContentPackOverride as clearStoredContentPackOverride, getContentPackOverride, setContentPackOverride } from '../script/tooling/ContentPackOverrideStore.js';
+
+    const SKILL_TREE_ID = 'melee_v4_5';
+    const RUNTIME_PROBE_SKILL_ID = 'skill_heal';
+    const RUNTIME_PROBE_NAME = '治疗·运行时覆写样本';
+
     // In-memory storage for skills (Array of objects)
     let loadedSkills = [];
     let loadedDoc = {
@@ -75,6 +93,21 @@
         meta: { title: 'Skill Pack', defaultParts: [], enums: {} },
         skills: loadedSkills
     };
+
+    function clone(value) {
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    function ensureLoadedPack() {
+        if (!Array.isArray(loadedSkills) || loadedSkills.length === 0) {
+            throw new Error('No loaded skill pack. Load or paste a pack first.');
+        }
+        return {
+            $schemaVersion: loadedDoc.$schemaVersion || 'skills_melee_v3',
+            meta: loadedDoc.meta || { title: 'Skill Pack', defaultParts: [], enums: {} },
+            skills: clone(loadedSkills)
+        };
+    }
 
     // --- Import Logic ---
 
@@ -166,6 +199,7 @@
         }
 
         renderList();
+        renderRuntimeOverrideStatus();
     }
 
     function clearData() {
@@ -242,6 +276,75 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
+
+    function injectRuntimeProbeSample() {
+        try {
+            const doc = ensureLoadedPack();
+            const probe = doc.skills.find(skill => skill.id === RUNTIME_PROBE_SKILL_ID);
+            if (!probe) {
+                throw new Error(`Missing probe skill ${RUNTIME_PROBE_SKILL_ID}`);
+            }
+            probe.name = RUNTIME_PROBE_NAME;
+            probe.description = `${probe.description || ''} [runtime override probe]`.trim();
+            processData(doc);
+            document.getElementById('outputJson').value = JSON.stringify(doc, null, 4);
+            showStatus(`Injected runtime probe into ${RUNTIME_PROBE_SKILL_ID}.`);
+        } catch (error) {
+            showStatus(error.message, true);
+        }
+    }
+
+    function applyRuntimeOverride() {
+        try {
+            const doc = ensureLoadedPack();
+            setContentPackOverride('skills', doc, SKILL_TREE_ID);
+            renderRuntimeOverrideStatus();
+            showStatus(`Runtime override saved to ${CONTENT_PACK_OVERRIDE_STORAGE_KEY}. Reload mock_ui_v11.html to consume it.`);
+        } catch (error) {
+            showStatus(`Failed to apply runtime override: ${error.message}`, true);
+        }
+    }
+
+    function clearRuntimeOverride() {
+        clearStoredContentPackOverride('skills', SKILL_TREE_ID);
+        renderRuntimeOverrideStatus();
+        showStatus('Runtime override cleared.');
+    }
+
+    function renderRuntimeOverrideStatus() {
+        const el = document.getElementById('runtimeOverrideStatus');
+        const overrideKey = buildContentPackOverrideKey('skills', SKILL_TREE_ID);
+        const runtimePack = getContentPackOverride('skills', SKILL_TREE_ID);
+        if (!runtimePack) {
+            el.innerText = `No runtime override stored. Storage key: ${CONTENT_PACK_OVERRIDE_STORAGE_KEY}, scoped key: ${overrideKey}`;
+            el.style.color = '#666';
+            return;
+        }
+
+        const probe = Array.isArray(runtimePack.skills)
+            ? runtimePack.skills.find(skill => skill.id === RUNTIME_PROBE_SKILL_ID)
+            : null;
+        const probeName = probe?.name || '(probe skill missing)';
+        el.innerText = `Runtime override active. scoped key=${overrideKey}, probe=${RUNTIME_PROBE_SKILL_ID}, name=${probeName}`;
+        el.style.color = 'green';
+    }
+
+    function openRuntimePreview() {
+        window.open('../mock_ui_v11.html', '_blank');
+    }
+
+    renderRuntimeOverrideStatus();
+
+    window.loadFromUrl = loadFromUrl;
+    window.loadFromFile = loadFromFile;
+    window.parseInput = parseInput;
+    window.clearData = clearData;
+    window.exportData = exportData;
+    window.downloadJson = downloadJson;
+    window.injectRuntimeProbeSample = injectRuntimeProbeSample;
+    window.applyRuntimeOverride = applyRuntimeOverride;
+    window.clearRuntimeOverride = clearRuntimeOverride;
+    window.openRuntimePreview = openRuntimePreview;
 </script>
 
 </body>

@@ -75,10 +75,13 @@ class CoreEngine {
     }
 
     _buildEffectiveApCostForAllSkills() {
-        const root = this.data?.gameConfig?.skills;
-        if (!root || typeof root !== 'object') return Object.create(null);
-        const ids = Object.keys(root);
-      const out = Object.create(null);
+        const catalog = typeof this.data?.getSkillCatalog === 'function'
+            ? this.data.getSkillCatalog()
+            : null;
+        const ids = Array.isArray(catalog?.skillsList)
+            ? catalog.skillsList.map(skill => skill.id).filter(Boolean)
+            : [];
+        const out = Object.create(null);
         for (const id of ids) {
             const cfg = this.data.getSkillConfig(id);
             if (!cfg) continue;
@@ -375,7 +378,7 @@ class CoreEngine {
         if (!Array.isArray(player.skills.learned)) player.skills.learned = [];
         if (typeof player.skills.skillPoints !== 'number') player.skills.skillPoints = 0;
 
-        const def = (this.data.gameConfig && this.data.gameConfig.skills) ? this.data.gameConfig.skills[skillId] : null;
+        const def = this.data?.getSkillConfig ? this.data.getSkillConfig(skillId) : null;
         if (!def) {
             console.warn('[CoreEngine] learnSkill: skill not found:', skillId);
             return;
