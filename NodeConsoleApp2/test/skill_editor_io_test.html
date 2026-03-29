@@ -26,17 +26,17 @@
 
 <div class="container">
     <h1>Skill Editor I/O Test Module</h1>
-    <p>Tests loading JSON (Map or Array format) and exporting to JSON.</p>
+    <p>Tests loading skill pack JSON and exporting as pack, while keeping legacy map export only as compatibility output.</p>
 
     <!-- Import Section -->
     <div class="panel">
         <h2>1. Import Data</h2>
         <div class="controls">
-            <button onclick="loadFromUrl()">Load from ../assets/data/skills.json</button>
+            <button onclick="loadFromUrl()">Load from ../assets/data/skills_melee_v4_5.json</button>
             <input type="file" id="fileInput" accept=".json" onchange="loadFromFile(this)">
         </div>
         <p>Or paste JSON here:</p>
-        <textarea id="inputJson" placeholder="Paste skills.json content here..."></textarea>
+        <textarea id="inputJson" placeholder="Paste skills_melee_v4_5.json or legacy skills.json content here..."></textarea>
         <div style="margin-top:10px;">
             <button onclick="parseInput()">Parse JSON</button>
             <button onclick="clearData()">Clear</button>
@@ -57,7 +57,7 @@
         <h2>3. Export Data</h2>
         <div class="controls">
             <label>
-                <input type="checkbox" id="chkExportAsMap" checked> Export as Map (Legacy Format)
+                <input type="checkbox" id="chkExportAsMap"> Export as Map (Legacy Compatibility Only)
             </label>
         </div>
         <button onclick="exportData()">Generate JSON</button>
@@ -70,13 +70,18 @@
 <script>
     // In-memory storage for skills (Array of objects)
     let loadedSkills = [];
+    let loadedDoc = {
+        $schemaVersion: 'skills_melee_v3',
+        meta: { title: 'Skill Pack', defaultParts: [], enums: {} },
+        skills: loadedSkills
+    };
 
     // --- Import Logic ---
 
     async function loadFromUrl() {
         showStatus('Loading from URL...');
         try {
-            const response = await fetch('../assets/data/skills.json');
+            const response = await fetch('../assets/data/skills_melee_v4_5.json', { cache: 'no-store' });
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
             document.getElementById('inputJson').value = JSON.stringify(data, null, 2);
@@ -123,10 +128,25 @@
 
     function processData(data) {
         loadedSkills = [];
+        loadedDoc = {
+            $schemaVersion: 'skills_melee_v3',
+            meta: { title: 'Skill Pack', defaultParts: [], enums: {} },
+            skills: loadedSkills
+        };
         
-        if (Array.isArray(data)) {
+        if (data && typeof data === 'object' && Array.isArray(data.skills)) {
+            loadedDoc = {
+                $schemaVersion: data.$schemaVersion || 'skills_melee_v3',
+                meta: data.meta || { title: 'Skill Pack', defaultParts: [], enums: {} },
+                skills: loadedSkills
+            };
+            loadedSkills = data.skills.map(skill => ({ ...skill }));
+            loadedDoc.skills = loadedSkills;
+            console.log('Detected Pack format.');
+        } else if (Array.isArray(data)) {
             // It's already an array
             loadedSkills = data;
+            loadedDoc.skills = loadedSkills;
             console.log('Detected Array format.');
         } else if (typeof data === 'object' && data !== null) {
             // It's a Map (Object)
@@ -139,6 +159,7 @@
                     loadedSkills.push(skill);
                 }
             }
+            loadedDoc.skills = loadedSkills;
         } else {
             showStatus('Unknown data format.', true);
             return;
@@ -166,10 +187,11 @@
         loadedSkills.forEach(skill => {
             const div = document.createElement('div');
             div.className = 'skill-item';
+            const flavor = skill.rarity || skill.target?.scope || skill.school || skill.type || 'Unknown';
             div.innerHTML = `
                 <span class="skill-id">${skill.id || 'NO_ID'}</span>
                 <span class="skill-name">${skill.name || 'Unnamed'}</span>
-                <span class="skill-type">${skill.school || (skill.type || 'Unknown')}</span>
+                <span class="skill-type">${flavor}</span>
             `;
             list.appendChild(div);
         });
@@ -195,7 +217,11 @@
                 }
             });
         } else {
-            output = loadedSkills;
+            output = {
+                $schemaVersion: loadedDoc.$schemaVersion || 'skills_melee_v3',
+                meta: loadedDoc.meta || { title: 'Skill Pack', defaultParts: [], enums: {} },
+                skills: loadedSkills
+            };
         }
 
         const jsonStr = JSON.stringify(output, null, 4); // 4 spaces indent
@@ -210,7 +236,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'skills_export.json';
+        a.download = document.getElementById('chkExportAsMap').checked ? 'skills_export_legacy_map.json' : 'skills_melee_v4_5_export.pack.json';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

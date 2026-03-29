@@ -88,11 +88,13 @@
       ],
       "targetScopes": [
         "SCOPE_ENTITY",
-        "SCOPE_PART"
+        "SCOPE_PART",
+        "SCOPE_MULTI_PARTS"
       ],
       "selectionModes": [
         "single",
-        "multiple"
+        "multiple",
+        "random_single"
       ],
       "effectTypes": [
         "DMG_HP",
@@ -169,7 +171,8 @@
         ],
         "scope": [
           "SCOPE_ENTITY",
-          "SCOPE_PART"
+          "SCOPE_PART",
+          "SCOPE_MULTI_PARTS"
         ],
         "selectionLegacy": [
           "SELECT_FIXED_PART",
@@ -191,6 +194,12 @@
         "conditions": [
           "UNCONDITIONAL",
           "CONDITIONAL"
+        ],
+        "purpose": [
+          "DEFENSE",
+          "UTILITY",
+          "DEMO",
+          "WAIT"
         ]
       },
       "editStates": [
@@ -1709,7 +1718,9 @@
       "editorMeta": {
         "x": 414,
         "y": 514,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "speed": 2,
       "target": {
@@ -1799,7 +1810,9 @@
       "editorMeta": {
         "x": 614,
         "y": 514,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "speed": 2,
       "target": {
@@ -1889,7 +1902,9 @@
       "editorMeta": {
         "x": 514,
         "y": 714,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "speed": 2,
       "target": {
@@ -1988,7 +2003,9 @@
       "editorMeta": {
         "x": 214,
         "y": 714,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "speed": 2,
       "target": {
@@ -2090,7 +2107,9 @@
       "editorMeta": {
         "x": 514,
         "y": 914,
-        "editState": "editing"
+        "editState": "editing",
+        "group": "melee",
+        "locked": false
       },
       "speed": 0,
       "target": {
@@ -2191,7 +2210,9 @@
       "editorMeta": {
         "x": 614,
         "y": 914,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "speed": 2,
       "target": {
@@ -2291,7 +2312,9 @@
       "editorMeta": {
         "x": 1014,
         "y": 714,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "speed": 8,
       "target": {
@@ -2392,7 +2415,9 @@
       "editorMeta": {
         "x": 1014,
         "y": 1114,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "speed": 10,
       "target": {
@@ -2477,7 +2502,9 @@
       "editorMeta": {
         "x": 1314,
         "y": 514,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "speed": -3,
       "target": {
@@ -2562,7 +2589,9 @@
       "editorMeta": {
         "x": 1014,
         "y": 914,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "speed": 1,
       "target": {
@@ -2651,7 +2680,9 @@
       "editorMeta": {
         "x": 1114,
         "y": 714,
-        "editState": "editing"
+        "editState": "editing",
+        "group": "melee",
+        "locked": false
       },
       "speed": 8,
       "target": {
@@ -2758,7 +2789,9 @@
       "editorMeta": {
         "x": 1114,
         "y": 914,
-        "editState": "editing"
+        "editState": "editing",
+        "group": "melee",
+        "locked": false
       },
       "speed": 1,
       "target": {
@@ -2846,7 +2879,9 @@
       "editorMeta": {
         "x": 1214,
         "y": 914,
-        "editState": "editing"
+        "editState": "editing",
+        "group": "melee",
+        "locked": false
       },
       "speed": 1,
       "target": {
@@ -2934,7 +2969,9 @@
       "editorMeta": {
         "x": 1314,
         "y": 714,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "speed": 4,
       "target": {
@@ -3079,12 +3116,23 @@
       "editorMeta": {
         "x": 1314,
         "y": 914,
-        "editState": "editing"
+        "editState": "editing",
+        "group": "melee",
+        "locked": false
       },
       "description": "获得buff，每当扣除hp，获得攻击加成",
       "tags": [],
       "tagMeta": {},
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "requirements": {},
       "actions": []
     },
@@ -3123,12 +3171,23 @@
       "editorMeta": {
         "x": 1314,
         "y": 1114,
-        "editState": "done"
+        "editState": "done",
+        "group": "melee",
+        "locked": false
       },
       "description": "消耗2点血，对指定部位造成20点伤害",
       "tags": [],
       "tagMeta": {},
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "requirements": {},
       "actions": [
         {
@@ -3238,12 +3297,24 @@
       ],
       "editorMeta": {
         "x": 1114,
-        "y": 514
+        "y": 514,
+        "group": "melee",
+        "locked": false,
+        "editState": "done"
       },
       "description": "",
       "tags": [],
       "tagMeta": {},
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "requirements": {}
     },
     {
@@ -3295,12 +3366,24 @@
       ],
       "editorMeta": {
         "x": 814,
-        "y": 314
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done"
       },
       "description": "攻击单个部位",
       "tags": [],
       "tagMeta": {},
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "requirements": {}
     },
     {
@@ -3352,12 +3435,24 @@
       ],
       "editorMeta": {
         "x": 914,
-        "y": 314
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done"
       },
       "description": "",
       "tags": [],
       "tagMeta": {},
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "requirements": {}
     },
     {
@@ -3387,12 +3482,24 @@
       "actions": [],
       "editorMeta": {
         "x": 714,
-        "y": 314
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done"
       },
       "description": "",
       "tags": [],
       "tagMeta": {},
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "requirements": {}
     },
     {
@@ -3430,12 +3537,28 @@
       "actions": [],
       "editorMeta": {
         "x": 1110,
-        "y": 314
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done"
       },
       "description": "为自身附加 1 回合 HP 免伤，用于人工验收。",
-      "tags": ["BUFF_APPLY", "DEFENSE", "DEMO"],
+      "tags": [
+        "BUFF_APPLY",
+        "DEFENSE",
+        "DEMO"
+      ],
       "tagMeta": {},
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "requirements": {}
     },
     {
@@ -3476,12 +3599,28 @@
       "actions": [],
       "editorMeta": {
         "x": 1170,
-        "y": 314
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done"
       },
       "description": "为自身附加 1 回合护甲免伤，用于人工验收。",
-      "tags": ["BUFF_APPLY", "DEFENSE", "DEMO"],
+      "tags": [
+        "BUFF_APPLY",
+        "DEFENSE",
+        "DEMO"
+      ],
       "tagMeta": {},
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "requirements": {}
     },
     {
@@ -3521,12 +3660,28 @@
       "actions": [],
       "editorMeta": {
         "x": 1230,
-        "y": 314
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done"
       },
       "description": "为自身附加受击获甲效果，用于人工验收。",
-      "tags": ["BUFF_APPLY", "DEFENSE", "DEMO"],
+      "tags": [
+        "BUFF_APPLY",
+        "DEFENSE",
+        "DEMO"
+      ],
       "tagMeta": {},
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "requirements": {}
     },
     {
@@ -3535,7 +3690,16 @@
       "rarity": "Common",
       "description": "固定攻击头部护甲 4 点，用于护甲类 Buff 人工验收。",
       "prerequisites": [],
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "editorMeta": {
         "x": 1290,
         "y": 314,
@@ -3567,7 +3731,13 @@
         "apply": [],
         "remove": []
       },
-      "tags": ["DMG_ARMOR", "ABS", "INSTANT", "ONE_SHOT", "DEMO"],
+      "tags": [
+        "DMG_ARMOR",
+        "ABS",
+        "INSTANT",
+        "ONE_SHOT",
+        "DEMO"
+      ],
       "tagMeta": {},
       "actions": [
         {
@@ -3599,7 +3769,16 @@
       "rarity": "Common",
       "description": "不产生效果，仅用于把回合交给敌人，方便人工验收敌人行为。",
       "prerequisites": [],
-      "unlock": {},
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
       "editorMeta": {
         "x": 1350,
         "y": 314,
@@ -3627,7 +3806,11 @@
         "apply": [],
         "remove": []
       },
-      "tags": ["DEMO", "UTILITY", "WAIT"],
+      "tags": [
+        "DEMO",
+        "UTILITY",
+        "WAIT"
+      ],
       "tagMeta": {},
       "actions": []
     }

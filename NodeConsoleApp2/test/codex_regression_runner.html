@@ -43,7 +43,7 @@
     let contentConfigCache = null;
     async function loadContentConfig() {
       if (!contentConfigCache) {
-        contentConfigCache = await fetch(contentConfigUrl).then(r => r.json());
+        contentConfigCache = await fetch(contentConfigUrl, { cache: 'no-store' }).then(r => r.json());
       }
       return contentConfigCache;
     }
@@ -86,7 +86,7 @@
             ? normalizedFile
             : `${basePath}${normalizedFile}`)
         : normalizedFile;
-      return fetch(resolvedContentUrl).then(r => r.json());
+      return fetch(resolvedContentUrl, { cache: 'no-store' }).then(r => r.json());
     }
 
     function createEventBus() {
@@ -276,6 +276,47 @@
         const battleSpeed = (Number(skill.speed ?? 0) || 0) + 1; // player base speed from player.json
         assert(battleSpeed > enemyBaseSpeed, `验收技能 ${id} 速度不足，无法稳定先于样本敌人执行: ${battleSpeed} <= ${enemyBaseSpeed}`);
       }
+    }
+
+    async function testSkillPackSchemaAndEditorFieldMappingAreAligned() {
+      const skillPack = await fetchRegistryJson('skills', { skillTreeId: 'melee_v4_5' });
+      assert(skillPack && typeof skillPack === 'object', '技能 pack 未成功加载');
+      assert(skillPack.$schemaVersion === 'skills_melee_v3', `技能 pack schemaVersion 错误: ${skillPack.$schemaVersion}`);
+
+      const meta = skillPack.meta;
+      assert(meta && typeof meta === 'object', '技能 pack 缺少 meta');
+      assert(Array.isArray(meta.defaultParts) && meta.defaultParts.length >= 5, '技能 pack defaultParts 不完整');
+
+      const enums = meta.enums || {};
+      assert(Array.isArray(enums.targetScopes) && enums.targetScopes.includes('SCOPE_MULTI_PARTS'), 'meta.enums.targetScopes 缺少 SCOPE_MULTI_PARTS');
+      assert(Array.isArray(enums.selectionModes) && enums.selectionModes.includes('random_single'), 'meta.enums.selectionModes 缺少 random_single');
+
+      const allTags = Object.values(enums.tags || {}).flat();
+      for (const requiredTag of ['SCOPE_MULTI_PARTS', 'DEFENSE', 'DEMO', 'UTILITY', 'WAIT']) {
+        assert(allTags.includes(requiredTag), `meta.enums.tags 缺少 ${requiredTag}`);
+      }
+
+      const skillList = Array.isArray(skillPack.skills) ? skillPack.skills : [];
+      assert(skillList.length > 0, '技能 pack 缺少 skills 列表');
+
+      for (const skill of skillList) {
+        assert(Array.isArray(skill.actions), `${skill.id} 缺少 actions[]`);
+        assert(!Array.isArray(skill.effects), `${skill.id} 不应继续保留旧 effects[]`);
+        assert(skill.unlock && typeof skill.unlock === 'object', `${skill.id} 缺少 unlock`);
+        assert(typeof skill.unlock.cost?.kp === 'number', `${skill.id} 缺少 unlock.cost.kp`);
+        assert(skill.editorMeta && typeof skill.editorMeta === 'object', `${skill.id} 缺少 editorMeta`);
+        assert(typeof skill.editorMeta.x === 'number' && typeof skill.editorMeta.y === 'number', `${skill.id} editorMeta 坐标缺失`);
+        assert(typeof skill.editorMeta.group === 'string' && skill.editorMeta.group.length > 0, `${skill.id} editorMeta.group 缺失`);
+        assert(typeof skill.editorMeta.locked === 'boolean', `${skill.id} editorMeta.locked 缺失`);
+        assert(typeof skill.editorMeta.editState === 'string' && skill.editorMeta.editState.length > 0, `${skill.id} editorMeta.editState 缺失`);
+      }
+
+      const skillEditorPage = await fetch('../test/skill_editor_test_v3.html').then(r => r.text());
+      assert(skillEditorPage.includes('skills_melee_v4_5.json') || skillEditorPage.includes('Import skills (v4_5 pack preferred)'), 'skill_editor_test_v3.html 未体现 v4_5 pack 入口口径');
+
+      const ioPage = await fetch('../test/skill_editor_io_test.html').then(r => r.text());
+      assert(ioPage.includes('skills_melee_v4_5.json'), 'skill_editor_io_test.html 未切换到 skills_melee_v4_5.json');
+      assert(ioPage.includes('$schemaVersion') && ioPage.includes('meta') && ioPage.includes('skills'), 'skill_editor_io_test.html 未体现 pack 结构');
     }
 
     function testCoreEngineInjectsLevelBattleSkillsIntoBattleStartPayload() {
@@ -1085,6 +1126,7 @@
       ['验收关卡与样本敌人/技能已配置', testAcceptanceLevelProvidesManualVerificationEntry],
       ['验收关卡提供确定性的玩家与敌人状态', testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates],
       ['验收防御技能会先于样本敌人执行', testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack],
+      ['技能 pack schema 与编辑器字段映射对齐', testSkillPackSchemaAndEditorFieldMappingAreAligned],
       ['CoreEngine 在战斗开始时注入关卡验收技能', testCoreEngineInjectsLevelBattleSkillsIntoBattleStartPayload],
       ['CoreEngine 在战斗开始时应用关卡玩家战斗态覆盖', testCoreEngineAppliesLevelBattlePlayerStateOverridesAtBattleStart],
       ['DataManager.instantiateLevel 保留验收敌人的残甲状态', testDataManagerInstantiateLevelPreservesConfiguredEnemyCurrentArmor],

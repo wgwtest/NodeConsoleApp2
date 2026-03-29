@@ -18,14 +18,14 @@ export class SkillEditor {
         this.skills = []; // Array of skill objects (editor internal)
         this.buffDict = {}; // buffs.json map
         this.buffDoc = null; // wrapped buffs doc (optional): { $schemaVersion, meta, buffs }
-        this.skillPackMeta = null; // skills_melee_v3.json meta
+        this.skillPackMeta = null; // skills_melee_v4_5.json meta
         this.skillPackSchemaVersion = null;
-        this.defaultParts = ['head','chest','left_arm','right_arm','left_leg','right_leg'];
+        this.defaultParts = ['head','chest','abdomen','arm','leg'];
         this.enums = {
             rarities: ['Common','Uncommon','Rare','Epic','Legendary'],
             targetSubjects: ['SUBJECT_SELF','SUBJECT_ENEMY','SUBJECT_BOTH'],
-            targetScopes: ['SCOPE_ENTITY','SCOPE_PART'],
-            selectionModes: ['single','multiple'],
+            targetScopes: ['SCOPE_ENTITY','SCOPE_PART','SCOPE_MULTI_PARTS'],
+            selectionModes: ['single','multiple','random_single'],
             effectTypes: ['DMG_HP','DMG_ARMOR','PIERCE','HEAL','ARMOR_ADD','AP_GAIN','SPEED','BUFF_APPLY','BUFF_REMOVE'],
             amountTypes: ['ABS','PCT_MAX','PCT_CURRENT','SCALING'],
             editStates: ['done','editing','deprecated'],
@@ -1257,7 +1257,7 @@ export class SkillEditor {
             return clone;
         });
         const pack = {
-            $schemaVersion: this.skillPackSchemaVersion || 'skills_melee_v4',
+            $schemaVersion: this.skillPackSchemaVersion || 'skills_melee_v3',
             meta: this.skillPackMeta || {
                 title: 'Skills Export',
                 source: 'skill_editor_test_v3',
@@ -1272,7 +1272,7 @@ export class SkillEditor {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = includeEditorMeta ? 'skills_melee_v4_export.dev.json' : 'skills_melee_v4_export.runtime.json';
+        a.download = includeEditorMeta ? 'skills_melee_v4_5_export.dev.json' : 'skills_melee_v4_5_export.runtime.json';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

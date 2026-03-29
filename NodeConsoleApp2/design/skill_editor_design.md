@@ -1,10 +1,10 @@
 # 技能编辑器设计方案 (Skill Editor Design)
 
-> 本文档为 **v4 数据对齐版**：用于确保技能编辑器能够正确加载、编辑、校验并导出 `assets/data/skills_melee_v4.json`。
+> 本文档为 **v4_5 数据对齐版**：用于确保技能编辑器能够正确加载、编辑、校验并导出 `assets/data/skills_melee_v4_5.json`。
 >
 > 对齐来源：
 > - `design/skill_design.md`（技能系统规范与字段语义）
-> - `assets/data/skills_melee_v4.json`（实际样例与 `meta.enums` 枚举源）
+> - `assets/data/skills_melee_v4_5.json`（实际样例与 `meta.enums` 枚举源）
 
 ---
 
@@ -12,7 +12,8 @@
 
 技能编辑器（Skill Editor）是一个基于网页（HTML/CSS/JS）的工具，目标是：
 
-1. **加载/保存技能数据**：以 `skills_melee_v4.json` 为标准输入输出。
+1. **加载/保存技能数据**：以 `skills_melee_v4_5.json` 为标准输入输出。
+   - 当前项目的基准样本为 `skills_melee_v4_5.json`
 2. **可视化编辑技能树**：在二维网格画布上拖拽技能节点；用连线表达前置依赖。
 3. **结构化编辑技能属性**：目标选择、消耗、需求、效果、Buff 引用、解锁体系、标签等。
 4. **严格校验**：导出前进行 schema/引用关系/循环依赖 等检查，降低数据写错的概率。
@@ -62,7 +63,7 @@
 
 ### 2.1 技能数据文件（v4）
 
-标准技能文件：`assets/data/skills_melee_v4.json`
+标准技能文件：`assets/data/skills_melee_v4_5.json`
 
 顶层结构约束（必须保持）：
 
@@ -96,14 +97,14 @@
 
 ---
 
-### 2.3 `skills_melee_v4.json` 版本改动分析（v4 pack vs 旧 `skills.json`）
+### 2.3 `skills_melee_v4_5.json` 版本改动分析（v4 pack vs 旧 `skills.json`）
 
-你当前的 `skills_melee_v4.json` 相比旧版 `skills.json`（常见为 key->skillObject 的 map 结构）属于“**数据结构升级**”。编辑器适配不能只做字段“兼容映射”，而需要将 v4 pack 视为**第一类输入输出**。
+你当前的 `skills_melee_v4_5.json` 相比旧版 `skills.json`（常见为 key->skillObject 的 map 结构）属于“**数据结构升级**”。编辑器适配不能只做字段“兼容映射”，而需要将 v4 pack 视为**第一类输入输出**。
 
 #### 2.3.1 顶层结构的变化（Map -> Pack）
 
 - 旧：`skills.json` 通常是对象 map：`{ "skill_id": { ... }, ... }`
-- 新：`skills_melee_v4.json` 是 Pack：`{ $schemaVersion, meta, skills: [] }`
+- 新：`skills_melee_v4_5.json` 是 Pack：`{ $schemaVersion, meta, skills: [] }`
 
 Pack 的意义：
 
@@ -177,7 +178,7 @@ v4 的核心是 `actions[]`：
 
 ### 3.1 `meta`：枚举与默认值来源
 
-编辑器页面中的下拉框、默认列表，应尽量来自 `skills_melee_v4.json` 自带的枚举与默认值：
+编辑器页面中的下拉框、默认列表，应尽量来自 `skills_melee_v4_5.json` 自带的枚举与默认值：
 
 - `meta.defaultParts`: 默认部位列表
 - `meta.enums.*`: 全部枚举
