@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buff Runtime Probe</title>
+    <style>
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #eef2f7; color: #243447; }
+        .container { max-width: 960px; margin: 0 auto; }
+        .panel { background: #fff; border: 1px solid #d9e1ec; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05); }
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        button { padding: 8px 14px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; }
+        button.secondary { background: #475569; }
+        button.warn { background: #b45309; }
+        button:hover { opacity: 0.92; }
+        .kv { display: grid; grid-template-columns: 180px 1fr; gap: 8px 12px; }
+        .k { color: #64748b; }
+        .v { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; white-space: pre-wrap; }
+        .status { font-weight: 700; }
+        .buff-list { list-style: none; padding: 0; margin: 0; }
+        .buff-list li { padding: 8px 10px; border-bottom: 1px solid #edf2f7; }
+        .buff-list li:last-child { border-bottom: 0; }
+        pre { margin: 0; padding: 12px; background: #0f172a; color: #e2e8f0; border-radius: 8px; min-height: 180px; white-space: pre-wrap; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="panel">
+        <h1>Buff Runtime Probe</h1>
+        <p>Local runtime probe for the Buff pack bridge. This page reloads <code>DataManagerV2.js</code>, resolves <code>buff_counter</code>, and verifies that Buff runtime consumes the active pack artifact instead of relying on editor memory state.</p>
+        <div id="status" class="status">Initializing...</div>
+        <div class="controls">
+            <button onclick="reloadRuntime()">Reload Runtime</button>
+            <button onclick="applyProbeBuff()">Apply Probe Buff</button>
+            <button class="secondary" onclick="clearActiveBuffs()">Clear Active Buffs</button>
+            <button class="warn" onclick="openIoPage()">Open buff_editor_io_test.html</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Runtime Pack</h2>
+        <div class="kv">
+            <div class="k">Probe Buff ID</div>
+            <div class="v" id="probeBuffId">buff_counter</div>
+            <div class="k">Pack Source</div>
+            <div class="v" id="packSource">-</div>
+            <div class="k">Schema Version</div>
+            <div class="v" id="schemaVersion">-</div>
+            <div class="k">Override Key</div>
+            <div class="v" id="overrideKey">-</div>
+            <div class="k">Resolved Name</div>
+            <div class="v" id="resolvedName">-</div>
+            <div class="k">Resolved Description</div>
+            <div class="v" id="resolvedDescription">-</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Active Buffs</h2>
+        <ul id="activeBuffs" class="buff-list"></ul>
+    </div>
+
+    <div class="panel">
+        <h2>Runtime Logs</h2>
+        <pre id="logs"></pre>
+    </div>
+</div>
+
+<script type="module">
+    import DataManager from '../script/engine/DataManagerV2.js';
+    import EventBus from '../script/engine/EventBus.js';
+    import { buildContentPackOverrideKey } from '../script/tooling/ContentPackOverrideStore.js';
+    import { BuffRegistry, BuffManager, BuffSystem } from '../script/engine/buff/index.js';
+
+    const PROBE_BUFF_ID = 'buff_counter';
+    const statusEl = document.getElementById('status');
+    const logsEl = document.getElementById('logs');
+    const activeBuffsEl = document.getElementById('activeBuffs');
+
+    let eventBus = null;
+    let buffSystem = null;
+    let registry = null;
+    let actor = null;
+    let logs = [];
+
+    function clone(value) {
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    function setStatus(text, isError = false) {
+        statusEl.textContent = text;
+        statusEl.style.color = isError ? '#b91c1c' : '#166534';
+    }
+
+    function appendLog(text) {
+        logs.push(text);
+        logsEl.textContent = logs.join('\n');
+    }
+
+    function renderPackMeta(meta, definition) {
+        document.getElementById('packSource').textContent = meta?.source || 'file';
+        document.getElementById('schemaVersion').textContent = meta?.schemaVersion || '-';
+        document.getElementById('overrideKey').textContent = meta?.overrideKey || buildContentPackOverrideKey('buffs');
+        document.getElementById('resolvedName').textContent = definition?.name || '(missing)';
+        document.getElementById('resolvedDescription').textContent = definition?.description || '-';
+    }
+
+    function renderActiveBuffs() {
+        activeBuffsEl.innerHTML = '';
+        const active = actor?.buffs?.getAll?.() || [];
+        if (!active.length) {
+            const li = document.createElement('li');
+            li.textContent = 'No active buffs.';
+            activeBuffsEl.appendChild(li);
+            return;
+        }
+
+        active.forEach((buff) => {
+            const li = document.createElement('li');
+            li.textContent = `${buff.id} | ${buff.definition?.name || buff.id} | stacks=${buff.stacks} | remaining=${buff.remaining}`;
+            activeBuffsEl.appendChild(li);
+        });
+    }
+
+    function bindRuntimeEvents() {
+        eventBus.on('BUFF:ADDED', (payload) => {
+            appendLog(`[BUFF:ADDED] ${JSON.stringify(payload)}`);
+            renderActiveBuffs();
+        });
+        eventBus.on('BUFF:REMOVED', (payload) => {
+            appendLog(`[BUFF:REMOVED] ${JSON.stringify(payload)}`);
+            renderActiveBuffs();
+        });
+        eventBus.on('BUFF:WARN', (payload) => {
+            appendLog(`[BUFF:WARN] ${JSON.stringify(payload)}`);
+        });
+        eventBus.on('BUFF:ERROR', (payload) => {
+            appendLog(`[BUFF:ERROR] ${JSON.stringify(payload)}`);
+        });
+        eventBus.on('BATTLE_LOG', (payload) => {
+            appendLog(`[BATTLE_LOG] ${payload?.text || JSON.stringify(payload)}`);
+        });
+    }
+
+    function rebuildManager() {
+        actor = {
+            id: 'probe_actor',
+            name: 'Probe Actor',
+            stats: { hp: 100, maxHp: 100, ap: 3, speed: 5, dodgeRate: 0 },
+            bodyParts: {}
+        };
+        actor.buffs = new BuffManager(actor, registry, eventBus);
+        buffSystem.registerManager(actor.buffs);
+        renderActiveBuffs();
+    }
+
+    async function reloadRuntime() {
+        logs = [];
+        logsEl.textContent = '';
+        try {
+            try {
+                buffSystem?.stop?.();
+            } catch {
+                // noop
+            }
+
+            await DataManager.loadConfigs();
+            const definitions = clone(DataManager.getBuffDefinitions());
+            const definition = definitions?.[PROBE_BUFF_ID] || null;
+            if (!definition) {
+                throw new Error(`Missing ${PROBE_BUFF_ID} in loaded runtime definitions.`);
+            }
+
+            eventBus = new EventBus.constructor();
+            registry = new BuffRegistry(definitions);
+            buffSystem = new BuffSystem(eventBus, registry);
+            buffSystem.start();
+            bindRuntimeEvents();
+            rebuildManager();
+            renderPackMeta(DataManager.getBuffPackMeta(), definition);
+            appendLog(`Runtime loaded. source=${DataManager.getBuffPackMeta()?.source || 'file'} probeName=${definition.name}`);
+            setStatus('Runtime ready.');
+        } catch (error) {
+            setStatus(`Runtime load failed: ${error.message}`, true);
+            appendLog(`[ERROR] ${error.message}`);
+        }
+    }
+
+    function applyProbeBuff() {
+        if (!actor?.buffs) {
+            setStatus('Runtime not ready. Reload first.', true);
+            return;
+        }
+        actor.buffs.add(PROBE_BUFF_ID);
+        const active = actor.buffs.getAll();
+        const last = active[active.length - 1];
+        const resolvedName = last?.definition?.name || '(missing)';
+        setStatus(`Applied ${PROBE_BUFF_ID}: ${resolvedName}`);
+        renderActiveBuffs();
+    }
+
+    function clearActiveBuffs() {
+        if (!registry || !eventBus || !buffSystem) {
+            setStatus('Runtime not ready. Reload first.', true);
+            return;
+        }
+        rebuildManager();
+        appendLog('Active buffs cleared.');
+        setStatus('Active buffs cleared.');
+    }
+
+    function openIoPage() {
+        window.open('../test/buff_editor_io_test.html', '_blank');
+    }
+
+    window.reloadRuntime = reloadRuntime;
+    window.applyProbeBuff = applyProbeBuff;
+    window.clearActiveBuffs = clearActiveBuffs;
+    window.openIoPage = openIoPage;
+
+    reloadRuntime();
+</script>
+</body>
+</html>

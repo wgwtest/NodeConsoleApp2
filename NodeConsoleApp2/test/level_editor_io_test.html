@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Editor I/O Test</title>
+    <style>
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #eef2f7; }
+        .container { max-width: 1080px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); }
+        h1, h2 { color: #243447; }
+        .panel { margin-bottom: 20px; border: 1px solid #d9e1ec; padding: 15px; border-radius: 6px; }
+        .controls { margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+        textarea { width: 100%; height: 220px; font-family: monospace; font-size: 12px; }
+        button { padding: 8px 16px; cursor: pointer; background: #2563eb; color: #fff; border: none; border-radius: 4px; }
+        button:hover { opacity: 0.92; }
+        #status { margin-top: 10px; font-weight: bold; color: #166534; }
+        .level-list { max-height: 360px; overflow-y: auto; border: 1px solid #cbd5e1; padding: 10px; background: #f8fafc; }
+        .level-item { padding: 8px 4px; border-bottom: 1px solid #e2e8f0; display: grid; grid-template-columns: 220px 1fr 220px; gap: 12px; }
+        .level-item:last-child { border-bottom: none; }
+        .level-id { font-weight: 700; }
+        .level-name { color: #0f172a; }
+        .level-pool { color: #64748b; text-align: right; }
+        .note { color: #64748b; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Level Editor I/O Test Module</h1>
+    <p>Tests loading wrapped level pack JSON, exporting as pack, and verifying the runtime override bridge independently from battle UI memory state.</p>
+
+    <div class="panel">
+        <h2>1. Import Data</h2>
+        <div class="controls">
+            <button onclick="loadFromUrl()">Load from ../assets/data/levels.json</button>
+            <input type="file" id="fileInput" accept=".json" onchange="loadFromFile(this)">
+        </div>
+        <p>Or paste JSON here:</p>
+        <textarea id="inputJson" placeholder="Paste wrapped levels.json content here..."></textarea>
+        <div class="controls" style="margin-top: 10px;">
+            <button onclick="parseInput()">Parse JSON</button>
+            <button onclick="clearData()">Clear</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>2. Loaded Levels (<span id="count">0</span>)</h2>
+        <div class="note">Probe level id is <code>level_1_1</code>; runtime probe pool id is <code>pool_runtime_probe</code>.</div>
+        <div id="levelList" class="level-list"></div>
+        <div id="status"></div>
+    </div>
+
+    <div class="panel">
+        <h2>3. Export Data</h2>
+        <button onclick="exportData()">Generate JSON</button>
+        <button onclick="downloadJson()">Download File</button>
+        <p>Output:</p>
+        <textarea id="outputJson" readonly></textarea>
+    </div>
+
+    <div class="panel">
+        <h2>4. Runtime Bridge</h2>
+        <p>Use the exported pack artifact as a runtime override, then verify consumption in <code>level_runtime_probe.html</code>.</p>
+        <div class="controls">
+            <button onclick="injectRuntimeProbeSample()">Inject Runtime Probe Sample</button>
+            <button onclick="applyRuntimeOverride()">Apply Runtime Override</button>
+            <button onclick="clearRuntimeOverride()">Clear Runtime Override</button>
+            <button onclick="openRuntimePreview()">Open level_runtime_probe.html</button>
+        </div>
+        <div id="runtimeOverrideStatus"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { CONTENT_PACK_OVERRIDE_STORAGE_KEY, buildContentPackOverrideKey, clearContentPackOverride as clearStoredContentPackOverride, getContentPackOverride, setContentPackOverride } from '../script/tooling/ContentPackOverrideStore.js';
+
+    const PROBE_LEVEL_ID = 'level_1_1';
+    const PROBE_LEVEL_NAME = '幽暗森林边缘·运行时覆写样本';
+    const PROBE_POOL_ID = 'pool_runtime_probe';
+    const PROBE_TEMPLATE_ID = 'enemy_acceptance_repair';
+
+    let loadedDoc = {
+        $schemaVersion: 'levels_v1_wrapped',
+        meta: { title: 'Level Pack', enums: {}, fieldNotes: {} },
+        enemyPools: {},
+        levels: {}
+    };
+
+    function clone(value) {
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    function getLevelList() {
+        return Object.values(loadedDoc?.levels || {});
+    }
+
+    function ensureLoadedPack() {
+        const levelCount = Object.keys(loadedDoc?.levels || {}).length;
+        if (!levelCount) {
+            throw new Error('No loaded level pack. Load or paste a pack first.');
+        }
+        return {
+            $schemaVersion: loadedDoc.$schemaVersion || 'levels_v1_wrapped',
+            meta: loadedDoc.meta || { title: 'Level Pack', enums: {}, fieldNotes: {} },
+            enemyPools: clone(loadedDoc.enemyPools || {}),
+            levels: clone(loadedDoc.levels || {})
+        };
+    }
+
+    async function loadFromUrl() {
+        showStatus('Loading from URL...');
+        try {
+            const response = await fetch('../assets/data/levels.json', { cache: 'no-store' });
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            document.getElementById('inputJson').value = JSON.stringify(data, null, 2);
+            processData(data);
+            showStatus('Loaded successfully from URL.');
+        } catch (error) {
+            console.error(error);
+            showStatus('Error loading from URL: ' + error.message, true);
+        }
+    }
+
+    function loadFromFile(input) {
+        if (input.files.length === 0) return;
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const text = e.target.result;
+                document.getElementById('inputJson').value = text;
+                processData(JSON.parse(text));
+                showStatus('Loaded file: ' + file.name);
+            } catch (err) {
+                showStatus('Error parsing file: ' + err.message, true);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function parseInput() {
+        try {
+            const text = document.getElementById('inputJson').value;
+            if (!text.trim()) {
+                showStatus('Input is empty.', true);
+                return;
+            }
+            processData(JSON.parse(text));
+            showStatus('Parsed input JSON successfully.');
+        } catch (err) {
+            showStatus('Error parsing JSON text: ' + err.message, true);
+        }
+    }
+
+    function processData(data) {
+        loadedDoc = {
+            $schemaVersion: 'levels_v1_wrapped',
+            meta: { title: 'Level Pack', enums: {}, fieldNotes: {} },
+            enemyPools: {},
+            levels: {}
+        };
+
+        if (data && typeof data === 'object' && data.levels && typeof data.levels === 'object') {
+            loadedDoc = {
+                $schemaVersion: data.$schemaVersion || 'levels_v1_wrapped',
+                meta: data.meta || { title: 'Level Pack', enums: {}, fieldNotes: {} },
+                enemyPools: clone(data.enemyPools || {}),
+                levels: clone(data.levels || {})
+            };
+        } else if (data && typeof data === 'object') {
+            loadedDoc.levels = clone(data);
+        } else {
+            showStatus('Unknown data format.', true);
+            return;
+        }
+
+        renderList();
+        renderRuntimeOverrideStatus();
+    }
+
+    function clearData() {
+        loadedDoc = {
+            $schemaVersion: 'levels_v1_wrapped',
+            meta: { title: 'Level Pack', enums: {}, fieldNotes: {} },
+            enemyPools: {},
+            levels: {}
+        };
+        document.getElementById('inputJson').value = '';
+        document.getElementById('outputJson').value = '';
+        renderList();
+        renderRuntimeOverrideStatus();
+        showStatus('Cleared.');
+    }
+
+    function renderList() {
+        const list = document.getElementById('levelList');
+        const countSpan = document.getElementById('count');
+        const levels = getLevelList();
+        list.innerHTML = '';
+        countSpan.innerText = String(levels.length);
+
+        levels.forEach((level) => {
+            const firstWave = Array.isArray(level.waves) ? level.waves[0] : null;
+            const poolId = firstWave?.enemyPoolId || '(no enemyPoolId)';
+            const div = document.createElement('div');
+            div.className = 'level-item';
+            div.innerHTML = `
+                <span class="level-id">${level.id || 'NO_ID'}</span>
+                <span class="level-name">${level.name || 'Unnamed'}</span>
+                <span class="level-pool">${poolId}</span>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function showStatus(msg, isError = false) {
+        const el = document.getElementById('status');
+        el.innerText = msg;
+        el.style.color = isError ? '#b91c1c' : '#166534';
+    }
+
+    function exportData() {
+        const output = ensureLoadedPack();
+        const jsonStr = JSON.stringify(output, null, 2);
+        document.getElementById('outputJson').value = jsonStr;
+        showStatus('Generated JSON.');
+        return jsonStr;
+    }
+
+    function downloadJson() {
+        const jsonStr = exportData();
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'levels_export.pack.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function injectRuntimeProbeSample() {
+        try {
+            const doc = ensureLoadedPack();
+            const probeLevel = doc.levels[PROBE_LEVEL_ID];
+            if (!probeLevel) {
+                throw new Error(`Missing probe level ${PROBE_LEVEL_ID}`);
+            }
+            probeLevel.name = PROBE_LEVEL_NAME;
+            probeLevel.description = `${probeLevel.description || ''} [runtime override probe]`.trim();
+            if (!Array.isArray(probeLevel.waves) || probeLevel.waves.length === 0) {
+                throw new Error(`Probe level ${PROBE_LEVEL_ID} has no waves`);
+            }
+
+            doc.enemyPools[PROBE_POOL_ID] = {
+                id: PROBE_POOL_ID,
+                members: [{ templateId: PROBE_TEMPLATE_ID, position: 1 }]
+            };
+            probeLevel.waves[0].enemyPoolId = PROBE_POOL_ID;
+            delete probeLevel.waves[0].enemies;
+
+            processData(doc);
+            document.getElementById('outputJson').value = JSON.stringify(doc, null, 2);
+            showStatus(`Injected runtime probe into ${PROBE_LEVEL_ID}.`);
+        } catch (error) {
+            showStatus(error.message, true);
+        }
+    }
+
+    function applyRuntimeOverride() {
+        try {
+            const doc = ensureLoadedPack();
+            setContentPackOverride('levels', doc);
+            renderRuntimeOverrideStatus();
+            showStatus(`Runtime override saved to ${CONTENT_PACK_OVERRIDE_STORAGE_KEY}. Reload level_runtime_probe.html to consume it.`);
+        } catch (error) {
+            showStatus(`Failed to apply runtime override: ${error.message}`, true);
+        }
+    }
+
+    function clearRuntimeOverride() {
+        clearStoredContentPackOverride('levels');
+        renderRuntimeOverrideStatus();
+        showStatus('Runtime override cleared.');
+    }
+
+    function renderRuntimeOverrideStatus() {
+        const el = document.getElementById('runtimeOverrideStatus');
+        const overrideKey = buildContentPackOverrideKey('levels');
+        const runtimePack = getContentPackOverride('levels');
+        if (!runtimePack) {
+            el.innerText = `No runtime override stored. Storage key: ${CONTENT_PACK_OVERRIDE_STORAGE_KEY}, scoped key: ${overrideKey}`;
+            el.style.color = '#64748b';
+            return;
+        }
+
+        const probeName = runtimePack?.levels?.[PROBE_LEVEL_ID]?.name || '(probe level missing)';
+        const probePoolId = runtimePack?.levels?.[PROBE_LEVEL_ID]?.waves?.[0]?.enemyPoolId || '(probe wave missing)';
+        el.innerText = `Runtime override active. scoped key=${overrideKey}, probe=${PROBE_LEVEL_ID}, name=${probeName}, pool=${probePoolId}`;
+        el.style.color = '#166534';
+    }
+
+    function openRuntimePreview() {
+        window.open('../test/level_runtime_probe.html', '_blank');
+    }
+
+    renderList();
+    renderRuntimeOverrideStatus();
+
+    window.loadFromUrl = loadFromUrl;
+    window.loadFromFile = loadFromFile;
+    window.parseInput = parseInput;
+    window.clearData = clearData;
+    window.exportData = exportData;
+    window.downloadJson = downloadJson;
+    window.injectRuntimeProbeSample = injectRuntimeProbeSample;
+    window.applyRuntimeOverride = applyRuntimeOverride;
+    window.clearRuntimeOverride = clearRuntimeOverride;
+    window.openRuntimePreview = openRuntimePreview;
+</script>
+</body>
+</html>

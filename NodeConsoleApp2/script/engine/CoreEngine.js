@@ -209,7 +209,9 @@ class CoreEngine {
 
     _resolveSlotLayoutIdForCurrentBattle() {
         const levelId = this.data && this.data.currentLevelData ? this.data.currentLevelData.id : null;
-        const levelCfg = levelId && this.data.gameConfig && this.data.gameConfig.levels ? this.data.gameConfig.levels[levelId] : null;
+        const levelCfg = levelId && this.data && typeof this.data.getLevelConfig === 'function'
+            ? this.data.getLevelConfig(levelId)
+            : null;
         const fromLevel = levelCfg && levelCfg.battleRules ? levelCfg.battleRules.slotLayoutId : null;
         const fromConfig = (this.data && this.data.dataConfig && this.data.dataConfig.battleRules)
             ? this.data.dataConfig.battleRules.slotLayoutId
@@ -417,7 +419,11 @@ class CoreEngine {
         this.fsm.changeState('INIT');
         
         await this.data.loadConfigs();
-		this.buffRegistry.setDefinitions((this.data.gameConfig && this.data.gameConfig.buffs) ? this.data.gameConfig.buffs : {});
+		this.buffRegistry.setDefinitions(
+            typeof this.data?.getBuffDefinitions === 'function'
+                ? this.data.getBuffDefinitions()
+                : ((this.data.gameConfig && this.data.gameConfig.buffs) ? this.data.gameConfig.buffs : {})
+        );
 		this.buffSystem.start();
         
         this.loop.start();

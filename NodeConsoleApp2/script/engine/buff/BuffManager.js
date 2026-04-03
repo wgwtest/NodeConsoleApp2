@@ -90,7 +90,7 @@ export default class BuffManager {
 		const mod = totals[statKey];
 		if (!mod) return baseValue;
 
-		// 先 flat 再 percent（保持与 buff_design.md 一致）
+		// 先 flat 再 percent（保持与 09-Buff系统(buff_design)-设计说明.md 一致）
 		const flat = mod.flat || 0;
 		const percent = mod.percent || 0;
 		const overwrite = (mod.overwrite !== undefined) ? mod.overwrite : undefined;

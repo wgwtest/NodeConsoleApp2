@@ -18,6 +18,8 @@ class DataManager {
         this.contentRegistry = null;
         this.contentPacks = null;
         this.skillCatalog = null;
+        this.buffCatalog = null;
+        this.levelCatalog = null;
         this._enemySkillAliases = {
             skill_bite: 'skill_heavy_swing',
             skill_throw_stone: 'skill_skull_cracker',
@@ -41,6 +43,52 @@ class DataManager {
         if (!rawBuffs || typeof rawBuffs !== 'object') return {};
         if (rawBuffs.buffs && typeof rawBuffs.buffs === 'object') return rawBuffs.buffs;
         return rawBuffs;
+    }
+
+    _unwrapLevelDefinitions(rawLevels) {
+        if (!rawLevels || typeof rawLevels !== 'object') return {};
+        if (rawLevels.levels && typeof rawLevels.levels === 'object') return rawLevels.levels;
+        return rawLevels;
+    }
+
+    _getLevelEnemyPools(rawLevels) {
+        if (!rawLevels || typeof rawLevels !== 'object') return {};
+        return (rawLevels.enemyPools && typeof rawLevels.enemyPools === 'object')
+            ? rawLevels.enemyPools
+            : {};
+    }
+
+    _expandLevelEnemyPools(rawLevels) {
+        const levels = this._unwrapLevelDefinitions(rawLevels);
+        const enemyPools = this._getLevelEnemyPools(rawLevels);
+        const expanded = Object.create(null);
+
+        for (const [levelId, levelDef] of Object.entries(levels)) {
+            const nextLevel = JSON.parse(JSON.stringify(levelDef || {}));
+            const waves = Array.isArray(levelDef?.waves) ? levelDef.waves : [];
+            nextLevel.waves = waves.map((wave, waveIndex) => {
+                const nextWave = JSON.parse(JSON.stringify(wave || {}));
+                const poolId = typeof nextWave.enemyPoolId === 'string' ? nextWave.enemyPoolId : null;
+                const pool = poolId ? enemyPools[poolId] : null;
+                const members = Array.isArray(pool?.members)
+                    ? pool.members
+                    : (Array.isArray(nextWave.enemies) ? nextWave.enemies : []);
+
+                nextWave.waveId = nextWave.waveId || `wave_${waveIndex + 1}`;
+                nextWave.waveType = nextWave.waveType || 'fixed';
+                nextWave.enemies = members.map((member, memberIndex) => {
+                    const cloned = JSON.parse(JSON.stringify(member || {}));
+                    if (cloned.position === undefined || cloned.position === null || cloned.position === '') {
+                        cloned.position = memberIndex + 1;
+                    }
+                    return cloned;
+                });
+                return nextWave;
+            });
+            expanded[levelId] = nextLevel;
+        }
+
+        return expanded;
     }
 
     _buildContentRegistry(dataSources) {
@@ -82,7 +130,7 @@ class DataManager {
             player: normalizePathEntry(inputRegistry.player, fallbackSources.player, 'player'),
             items: normalizePathEntry(inputRegistry.items, fallbackSources.items, 'items'),
             enemies: normalizePathEntry(inputRegistry.enemies, fallbackSources.enemies, 'enemies'),
-            levels: normalizePathEntry(inputRegistry.levels, fallbackSources.levels, 'levels'),
+            levels: normalizePathEntry(inputRegistry.levels, fallbackSources.levels, 'levels', { rootKey: 'levels' }),
             buffs: normalizePathEntry(inputRegistry.buffs, fallbackSources.buffs, 'buffs', { rootKey: 'buffs' }),
             slotLayouts: normalizePathEntry(inputRegistry.slotLayouts, fallbackSources.slotLayouts, 'slotLayouts', { required: false })
         };
@@ -147,6 +195,14 @@ class DataManager {
                     throw new Error('Buffs data must provide a buffs object.');
                 }
                 break;
+            case 'levels':
+                if (!rawPack.levels || typeof rawPack.levels !== 'object') {
+                    throw new Error('Levels data must provide a levels object.');
+                }
+                if (!rawPack.enemyPools || typeof rawPack.enemyPools !== 'object') {
+                    throw new Error('Levels data must provide an enemyPools object.');
+                }
+                break;
             default:
                 break;
         }
@@ -203,6 +259,32 @@ class DataManager {
             skillsMap: map,
             skillsList: list,
             selectedTreeId,
+            schemaVersion: packMeta?.schemaVersion || null,
+            meta: packMeta?.meta || null
+        };
+    }
+
+    _buildBuffCatalog(buffsMap, options = {}) {
+        const map = (buffsMap && typeof buffsMap === 'object') ? buffsMap : Object.create(null);
+        const list = Object.values(map);
+        const packMeta = options.packMeta || this.getBuffPackMeta();
+
+        return {
+            buffsMap: map,
+            buffsList: list,
+            schemaVersion: packMeta?.schemaVersion || null,
+            meta: packMeta?.meta || null
+        };
+    }
+
+    _buildLevelCatalog(levelsMap, options = {}) {
+        const map = (levelsMap && typeof levelsMap === 'object') ? levelsMap : Object.create(null);
+        const list = Object.values(map);
+        const packMeta = options.packMeta || (typeof this.getLevelPackMeta === 'function' ? this.getLevelPackMeta() : null);
+
+        return {
+            levelsMap: map,
+            levelsList: list,
             schemaVersion: packMeta?.schemaVersion || null,
             meta: packMeta?.meta || null
         };
@@ -430,6 +512,7 @@ class DataManager {
             const levels = levelsPack.raw;
             const buffs = buffsPack.raw;
             const slotLayouts = slotLayoutsPack ? slotLayoutsPack.raw : null;
+            const expandedLevels = this._expandLevelEnemyPools(levels);
 
             const playerSkills = player && player.default ? player.default.skills : null;
             if (!playerSkills || typeof playerSkills !== 'object' || Array.isArray(playerSkills)) {
@@ -460,9 +543,15 @@ class DataManager {
                 }),
                 items,
                 enemies,
-                levels,
+                levels: expandedLevels,
+                levelCatalog: this._buildLevelCatalog(expandedLevels, {
+                    packMeta: levelsPack.meta
+                }),
                 player,
                 buffs: this._unwrapBuffDefinitions(buffs),
+                buffCatalog: this._buildBuffCatalog(this._unwrapBuffDefinitions(buffs), {
+                    packMeta: buffsPack.meta
+                }),
                 buffMeta: (buffs && typeof buffs === 'object') ? (buffs.meta || null) : null,
                 slotLayouts,
                 contentRegistry: registry,
@@ -478,6 +567,8 @@ class DataManager {
             };
             this.contentPacks = this.gameConfig.contentPacks;
             this.skillCatalog = this.gameConfig.skillCatalog;
+            this.buffCatalog = this.gameConfig.buffCatalog;
+            this.levelCatalog = this.gameConfig.levelCatalog;
 
             console.log("? [DataManager] Configs successfully loaded from JSON files.", this.gameConfig);
         } catch (e) {
@@ -488,6 +579,8 @@ class DataManager {
             this.contentRegistry = null;
             this.contentPacks = null;
             this.skillCatalog = null;
+            this.buffCatalog = null;
+            this.levelCatalog = null;
             throw e;
         }
     }
@@ -525,6 +618,64 @@ class DataManager {
         return this.skillCatalog;
     }
 
+    getBuffPackMeta() {
+        return (this.contentPacks && this.contentPacks.buffs) ? this.contentPacks.buffs : null;
+    }
+
+    getBuffCatalog() {
+        if (this.buffCatalog && typeof this.buffCatalog === 'object') {
+            return this.buffCatalog;
+        }
+
+        if (this.gameConfig && this.gameConfig.buffCatalog && typeof this.gameConfig.buffCatalog === 'object') {
+            this.buffCatalog = this.gameConfig.buffCatalog;
+            return this.buffCatalog;
+        }
+
+        const buffsMap = (this.gameConfig && this.gameConfig.buffs && typeof this.gameConfig.buffs === 'object')
+            ? this.gameConfig.buffs
+            : Object.create(null);
+
+        this.buffCatalog = this._buildBuffCatalog(buffsMap);
+        if (this.gameConfig && typeof this.gameConfig === 'object') {
+            this.gameConfig.buffCatalog = this.buffCatalog;
+        }
+        return this.buffCatalog;
+    }
+
+    getBuffDefinitions() {
+        return this.getBuffCatalog()?.buffsMap || Object.create(null);
+    }
+
+    getLevelPackMeta() {
+        return (this.contentPacks && this.contentPacks.levels) ? this.contentPacks.levels : null;
+    }
+
+    getLevelCatalog() {
+        if (this.levelCatalog && typeof this.levelCatalog === 'object') {
+            return this.levelCatalog;
+        }
+
+        if (this.gameConfig && this.gameConfig.levelCatalog && typeof this.gameConfig.levelCatalog === 'object') {
+            this.levelCatalog = this.gameConfig.levelCatalog;
+            return this.levelCatalog;
+        }
+
+        const levelsMap = (this.gameConfig && this.gameConfig.levels && typeof this.gameConfig.levels === 'object')
+            ? this.gameConfig.levels
+            : Object.create(null);
+
+        this.levelCatalog = this._buildLevelCatalog(levelsMap);
+        if (this.gameConfig && typeof this.gameConfig === 'object') {
+            this.gameConfig.levelCatalog = this.levelCatalog;
+        }
+        return this.levelCatalog;
+    }
+
+    getLevelDefinitions() {
+        return this.getLevelCatalog()?.levelsMap || Object.create(null);
+    }
+
     getSkillConfig(skillId) {
         const skillsMap = this.getSkillCatalog()?.skillsMap;
         if (!skillsMap) return null;
@@ -547,7 +698,11 @@ class DataManager {
 
     // Instantiate a level from config, creating runtime enemy instances
     instantiateLevel(levelId) {
-        const levelConfig = this.gameConfig.levels[levelId];
+        const levelConfig = typeof this.getLevelConfig === 'function'
+            ? this.getLevelConfig(levelId)
+            : ((this.gameConfig && this.gameConfig.levels && typeof this.gameConfig.levels === 'object')
+                ? (this.gameConfig.levels[levelId] || null)
+                : null);
         if (!levelConfig) return null;
 
         // Deep copy basic level info
@@ -608,7 +763,12 @@ class DataManager {
     }
 
     getLevelConfig(levelId) {
-        return this.gameConfig.levels[levelId];
+        const levelsMap = typeof this.getLevelDefinitions === 'function'
+            ? this.getLevelDefinitions()
+            : ((this.gameConfig && this.gameConfig.levels && typeof this.gameConfig.levels === 'object')
+                ? this.gameConfig.levels
+                : Object.create(null));
+        return levelsMap[levelId] || null;
     }
 
     /**
@@ -616,6 +776,9 @@ class DataManager {
      * @returns {Array} ¹Ø¿¨¶ÔÏóÊý×é
      */
     getLevels() {
+        if (typeof this.getLevelCatalog === 'function') {
+            return this.getLevelCatalog()?.levelsList || [];
+        }
         if (!this.gameConfig || !this.gameConfig.levels) {
             return [];
         }

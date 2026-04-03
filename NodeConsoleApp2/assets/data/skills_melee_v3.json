@@ -4,8 +4,8 @@
     "title": "Melee Skills v3",
     "source": "redesign from skills_近战.json",
     "notes": [
-      "本文件是基于 skill_design.md(v2) 的 schema 重设计版。",
-      "effectType 与 amountType 已对齐 skill_design.md 1.2.3 标签体系：effectType=What, amountType=How。",
+      "本文件是基于 03-技能系统(skill_design)-设计说明.md(v2) 的 schema 重设计版。",
+      "effectType 与 amountType 已对齐 03-技能系统(skill_design)-设计说明.md 1.2.3 标签体系：effectType=What, amountType=How。",
       "兼容性提示：当前引擎/编辑器可能仍依赖旧字段（type/targetType/requiredPart/castParts/slotCost）。本文件主要用于新版本数据迁移与后续工具适配。"
     ],
     "fieldNotes": {

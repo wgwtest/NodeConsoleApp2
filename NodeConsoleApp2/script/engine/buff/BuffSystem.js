@@ -78,7 +78,7 @@ export default class BuffSystem {
 	}
 
 	_onAttackPre(context) {
-		// context: { attacker/target/... }（按 buff_design.md 的 pipeline 思路）
+		// context: { attacker/target/... }（按 09-Buff系统(buff_design)-设计说明.md 的 pipeline 思路）
 		this._dispatchToParticipants('onAttackPre', context);
 	}
 

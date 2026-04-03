@@ -1187,7 +1187,7 @@ export class SkillEditor {
             })();
 
             // Normalize to a flat { buffId -> buffObject } map.
-            // Newer versions follow `buff_design.md`: { $schemaVersion, meta, buffs }.
+            // Newer versions follow `09-Buff系统(buff_design)-设计说明.md`: { $schemaVersion, meta, buffs }.
             this.buffDoc = (buffsData && typeof buffsData === 'object') ? buffsData : null;
             const normalized = (buffsData && typeof buffsData === 'object' && buffsData.buffs && typeof buffsData.buffs === 'object')
                 ? buffsData.buffs

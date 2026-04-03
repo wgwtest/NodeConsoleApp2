@@ -249,11 +249,11 @@
 		<header>
 			<div style="display:flex; flex-direction:column; gap:2px; min-width: 260px;">
 				<div style="font-weight: 800; font-size: 16px;">Buff Editor v4</div>
-				<div class="small">基于 `buffs_v2_1.json.meta.enums` 驱动；Effects 使用 `{trigger, action, target, payload}`</div>
+				<div class="small">基于 `buffs_v2_7.json.meta.enums` 驱动；Effects 使用 `{trigger, action, target, payload}`</div>
 			</div>
 			<div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap; justify-content:flex-end;">
 				<input type="file" ref="fileInput" @change="onImportFile" style="display:none" accept=".json" />
-				<button class="btn btn-dark" @click="loadProjectBuffs">Load `buffs_v2_1.json`</button>
+				<button class="btn btn-dark" @click="loadProjectBuffs">Load `buffs_v2_7.json`</button>
 				<button class="btn btn-primary" @click="$refs.fileInput.click()">Import .json</button>
 				<button class="btn btn-success" @click="exportJSON" :disabled="!doc || !doc.buffs || Object.keys(doc.buffs).length===0">Export .json</button>
 				<button class="btn btn-dark" @click="toggleBottom">{{ bottomVisible ? 'Hide' : 'Show' }} Issues/Logs</button>
@@ -1477,13 +1477,13 @@
 
 				async loadProjectBuffs() {
 					try {
-						const res = await fetch('../assets/data/buffs_v2_1.json');
+						const res = await fetch('../assets/data/buffs_v2_7.json', { cache: 'no-store' });
 						if (!res.ok) throw new Error(`HTTP ${res.status}`);
 						const json = await res.json();
 						this.setDocFromJson(json);
-						this.log('Loaded project buffs_v2_1.json', 'success');
+						this.log('Loaded project buffs_v2_7.json', 'success');
 					} catch (e) {
-						this.log(`Failed to load buffs_v2_1.json. ${e.message}`, 'error');
+						this.log(`Failed to load buffs_v2_7.json. ${e.message}`, 'error');
 					}
 				},
 
@@ -1518,11 +1518,11 @@
 					const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(output, null, 2));
 					const a = document.createElement('a');
 					a.setAttribute('href', dataStr);
-					a.setAttribute('download', 'buffs_v2_1.json');
+					a.setAttribute('download', 'buffs_v2_7.json');
 					document.body.appendChild(a);
 					a.click();
 					a.remove();
-					this.log('Exported buffs_v2_1.json', 'success');
+					this.log('Exported buffs_v2_7.json', 'success');
 				},
 
 				// ---------------- simulator ----------------

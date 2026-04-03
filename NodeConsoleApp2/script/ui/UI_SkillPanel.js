@@ -3,7 +3,7 @@
 /**
  * UI_SkillPanel
  * Manages the interaction for Skill Selection, Action Queue Planning, and Detail View.
- * Follows the "Skill -> Slot" interaction pattern designed in UI_design.md 4.6.
+ * Follows the "Skill -> Slot" interaction pattern designed in 16-战斗界面(UI_design)-设计说明.md 4.6.
  */
 export default class UI_SkillPanel {
     constructor(engine) {

@@ -3,7 +3,7 @@ import EventBus from '../engine/EventBus.js';
 /**
  * UI_TurnPanel
  * Manages the Turn Control interactions: Execute, Reset, and System Menu.
- * Implements logic defined in UI_design.md Section 4.7.
+ * Implements logic defined in 16-战斗界面(UI_design)-设计说明.md Section 4.7.
  */
 export default class UI_TurnPanel {
     constructor(engine) {

@@ -1,154 +1,219 @@
 {
-  "level_1_1": {
-    "id": "level_1_1",
-    "name": "幽暗森林边缘",
-    "description": "森林外围，常有哥布林出没。",
-    "background": "bg_forest_01",
-    "battleRules": {
-      "slotLayoutId": "default_v1"
-    },
-    "waves": [
-      {
-        "enemies": [
-          { "templateId": "goblin_01", "position": 1 }
-        ]
-      }
+  "$schemaVersion": "levels_v1_wrapped",
+  "meta": {
+    "title": "Level Pack v1",
+    "notes": [
+      "关卡数据统一封装为 { $schemaVersion, meta, enemyPools, levels }。",
+      "level 只声明 wave -> enemyPoolId 的映射，不再在关卡节点内重复散落敌人模板列表。",
+      "运行时由 DataManagerV2 在装载阶段把 enemyPoolId 展开为 waves[].enemies。"
     ],
-    "rewards": {
-      "exp": 100,
-      "gold": 50
+    "fieldNotes": {
+      "enemyPools": "敌人池字典：key 为 enemyPoolId，value 为可复用的敌人成员列表。",
+      "enemyPools.*.members": "敌人池成员列表。每个成员至少需要 templateId，可选 position。",
+      "levels": "关卡字典：key 为 levelId，value 为关卡定义。",
+      "levels.*.waves[].enemyPoolId": "关卡波次绑定的敌人池 ID，由 DataManagerV2 负责映射到运行时 enemies 列表。"
+    },
+    "enums": {
+      "waveTypes": [
+        "fixed"
+      ],
+      "slotLayoutIds": [
+        "default_v1"
+      ],
+      "backgrounds": [
+        "bg_forest_01"
+      ]
     }
   },
-  "level_1_2_acceptance": {
-    "id": "level_1_2_acceptance",
-    "name": "人工验收样本",
-    "description": "用于人工验收 HP免伤与护甲免伤，敌人为标准验收守卫。",
-    "background": "bg_forest_01",
-    "battleRules": {
-      "slotLayoutId": "default_v1"
-    },
-    "battlePlayerSkills": {
-      "learnedAdd": [
-        "skill_demo_hp_guard",
-        "skill_demo_armor_guard",
-        "skill_demo_on_hit_armor"
+  "enemyPools": {
+    "pool_story_goblin_edge": {
+      "id": "pool_story_goblin_edge",
+      "name": "幽暗森林边缘敌人池",
+      "members": [
+        { "templateId": "goblin_01", "position": 1 }
       ]
     },
-    "waves": [
-      {
-        "enemies": [
-          { "templateId": "enemy_acceptance_guard", "position": 1 }
-        ]
-      }
-    ],
-    "rewards": {
-      "exp": 0,
-      "gold": 0
+    "pool_acceptance_guard": {
+      "id": "pool_acceptance_guard",
+      "name": "人工验收守卫池",
+      "members": [
+        { "templateId": "enemy_acceptance_guard", "position": 1 }
+      ]
+    },
+    "pool_acceptance_head_tapper": {
+      "id": "pool_acceptance_head_tapper",
+      "name": "固定头部攻击敌人池",
+      "members": [
+        { "templateId": "enemy_acceptance_head_tapper", "position": 1 }
+      ]
+    },
+    "pool_acceptance_repair": {
+      "id": "pool_acceptance_repair",
+      "name": "敌人修甲样本池",
+      "members": [
+        { "templateId": "enemy_acceptance_repair", "position": 1 }
+      ]
+    },
+    "pool_acceptance_heal": {
+      "id": "pool_acceptance_heal",
+      "name": "敌人回血样本池",
+      "members": [
+        { "templateId": "enemy_acceptance_heal", "position": 1 }
+      ]
     }
   },
-  "level_1_3_acceptance_on_hit_armor": {
-    "id": "level_1_3_acceptance_on_hit_armor",
-    "name": "受击获甲验收样本",
-    "description": "用于人工验收受击获甲，开战时玩家头部护甲为 0，便于观察先补甲再承伤。",
-    "background": "bg_forest_01",
-    "battleRules": {
-      "slotLayoutId": "default_v1"
-    },
-    "battlePlayerSkills": {
-      "learnedAdd": [
-        "skill_demo_on_hit_armor"
-      ]
-    },
-    "battlePlayerState": {
-      "bodyParts": {
-        "head": { "current": 0, "max": 20, "weakness": 1.5 }
+  "levels": {
+    "level_1_1": {
+      "id": "level_1_1",
+      "name": "幽暗森林边缘",
+      "description": "森林外围，常有哥布林出没。",
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_story_goblin_edge"
+        }
+      ],
+      "rewards": {
+        "exp": 100,
+        "gold": 50
       }
     },
-    "waves": [
-      {
-        "enemies": [
-          { "templateId": "enemy_acceptance_head_tapper", "position": 1 }
+    "level_1_2_acceptance": {
+      "id": "level_1_2_acceptance",
+      "name": "人工验收样本",
+      "description": "用于人工验收 HP免伤与护甲免伤，敌人为标准验收守卫。",
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_hp_guard",
+          "skill_demo_armor_guard",
+          "skill_demo_on_hit_armor"
         ]
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_guard"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0
       }
-    ],
-    "rewards": {
-      "exp": 0,
-      "gold": 0
-    }
-  },
-  "level_1_4_acceptance_enemy_repair": {
-    "id": "level_1_4_acceptance_enemy_repair",
-    "name": "敌人修甲验收样本",
-    "description": "用于人工验收敌人受损后优先修甲，敌人胸部护甲开战即破损。",
-    "background": "bg_forest_01",
-    "battleRules": {
-      "slotLayoutId": "default_v1"
     },
-    "battlePlayerSkills": {
-      "learnedAdd": [
-        "skill_demo_wait"
-      ]
-    },
-    "waves": [
-      {
-        "enemies": [
-          { "templateId": "enemy_acceptance_repair", "position": 1 }
+    "level_1_3_acceptance_on_hit_armor": {
+      "id": "level_1_3_acceptance_on_hit_armor",
+      "name": "受击获甲验收样本",
+      "description": "用于人工验收受击获甲，开战时玩家头部护甲为 0，便于观察先补甲再承伤。",
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_on_hit_armor"
         ]
+      },
+      "battlePlayerState": {
+        "bodyParts": {
+          "head": { "current": 0, "max": 20, "weakness": 1.5 }
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_head_tapper"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0
       }
-    ],
-    "rewards": {
-      "exp": 0,
-      "gold": 0
-    }
-  },
-  "level_1_5_acceptance_enemy_heal": {
-    "id": "level_1_5_acceptance_enemy_heal",
-    "name": "敌人回血验收样本",
-    "description": "用于人工验收敌人低血量时优先回血，敌人开战即处于低血线。",
-    "background": "bg_forest_01",
-    "battleRules": {
-      "slotLayoutId": "default_v1"
     },
-    "battlePlayerSkills": {
-      "learnedAdd": [
-        "skill_demo_wait"
-      ]
-    },
-    "waves": [
-      {
-        "enemies": [
-          { "templateId": "enemy_acceptance_heal", "position": 1 }
+    "level_1_4_acceptance_enemy_repair": {
+      "id": "level_1_4_acceptance_enemy_repair",
+      "name": "敌人修甲验收样本",
+      "description": "用于人工验收敌人受损后优先修甲，敌人胸部护甲开战即破损。",
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_wait"
         ]
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_repair"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0
       }
-    ],
-    "rewards": {
-      "exp": 0,
-      "gold": 0
-    }
-  },
-  "level_1_6_acceptance_armor_guard": {
-    "id": "level_1_6_acceptance_armor_guard",
-    "name": "护甲免伤验收样本",
-    "description": "用于人工验收护甲免伤，敌人固定攻击头部护甲，便于观察护甲是否保持不变。",
-    "background": "bg_forest_01",
-    "battleRules": {
-      "slotLayoutId": "default_v1"
     },
-    "battlePlayerSkills": {
-      "learnedAdd": [
-        "skill_demo_armor_guard"
-      ]
-    },
-    "waves": [
-      {
-        "enemies": [
-          { "templateId": "enemy_acceptance_head_tapper", "position": 1 }
+    "level_1_5_acceptance_enemy_heal": {
+      "id": "level_1_5_acceptance_enemy_heal",
+      "name": "敌人回血验收样本",
+      "description": "用于人工验收敌人低血量时优先回血，敌人开战即处于低血线。",
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_wait"
         ]
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_heal"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0
       }
-    ],
-    "rewards": {
-      "exp": 0,
-      "gold": 0
+    },
+    "level_1_6_acceptance_armor_guard": {
+      "id": "level_1_6_acceptance_armor_guard",
+      "name": "护甲免伤验收样本",
+      "description": "用于人工验收护甲免伤，敌人固定攻击头部护甲，便于观察护甲是否保持不变。",
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_armor_guard"
+        ]
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_head_tapper"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0
+      }
     }
   }
 }

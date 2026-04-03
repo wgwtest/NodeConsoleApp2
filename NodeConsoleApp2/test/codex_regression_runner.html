@@ -118,6 +118,26 @@
       };
     }
 
+    function getWrappedLevels(levelPack) {
+      assert(levelPack && typeof levelPack === 'object', 'levels pack 未成功加载');
+      assert(levelPack.$schemaVersion === 'levels_v1_wrapped', `levels pack schemaVersion 错误: ${levelPack.$schemaVersion}`);
+      assert(levelPack.meta && typeof levelPack.meta === 'object', 'levels pack 缺少 meta');
+      assert(levelPack.enemyPools && typeof levelPack.enemyPools === 'object', 'levels pack 缺少 enemyPools');
+      assert(levelPack.levels && typeof levelPack.levels === 'object', 'levels pack 缺少 levels');
+      return levelPack.levels;
+    }
+
+    function resolveLevelWaveEnemyRefs(levelPack, wave) {
+      assert(wave && typeof wave === 'object', 'wave 缺失');
+      const enemyPools = levelPack.enemyPools || {};
+      const poolId = wave.enemyPoolId;
+      assert(typeof poolId === 'string' && poolId.length > 0, 'wave.enemyPoolId 缺失');
+      const pool = enemyPools[poolId];
+      assert(pool && typeof pool === 'object', `enemyPool 不存在: ${poolId}`);
+      assert(Array.isArray(pool.members) && pool.members.length > 0, `enemyPool.members 为空: ${poolId}`);
+      return pool.members;
+    }
+
     function setupSkillPanelDom() {
       document.body.insertAdjacentHTML('beforeend', `
         <section class="skill-panel">
@@ -247,6 +267,122 @@
       }
     }
 
+    async function testDataManagerSupportsRuntimeBuffPackOverrideBridge() {
+      const basePack = await fetchRegistryJson('buffs');
+      const overridePack = JSON.parse(JSON.stringify(basePack));
+      const overrideBuff = overridePack?.buffs?.buff_counter;
+      assert(overrideBuff, '缺少运行时覆写探针 Buff buff_counter');
+      overrideBuff.name = '反击·运行时覆写样本';
+
+      clearContentPackOverride('buffs');
+      setContentPackOverride('buffs', overridePack);
+
+      try {
+        const storedRaw = localStorage.getItem(CONTENT_PACK_OVERRIDE_STORAGE_KEY) || '';
+        assert(storedRaw.includes('"buffs"'), 'localStorage 未写入 buffs 覆写键');
+
+        const fromStore = getContentPackOverride('buffs');
+        assert(fromStore?.buffs?.buff_counter?.name === '反击·运行时覆写样本', 'override store 未返回 Buff 覆写产物');
+
+        await DataManager.loadConfigs();
+        assert(DataManager.getBuffDefinitions()?.buff_counter?.name === '反击·运行时覆写样本', 'DataManager 未消费 Buff 覆写产物');
+        assert(DataManager.getBuffPackMeta()?.source === 'override', `Buff pack source 错误: ${DataManager.getBuffPackMeta()?.source}`);
+      } finally {
+        clearContentPackOverride('buffs');
+      }
+    }
+
+    async function testDataManagerSupportsRuntimeLevelPackOverrideBridge() {
+      const basePack = await fetchRegistryJson('levels');
+      const overridePack = JSON.parse(JSON.stringify(basePack));
+      const probeLevel = overridePack?.levels?.level_1_1;
+      assert(probeLevel, '缺少运行时覆写探针关卡 level_1_1');
+      probeLevel.name = '幽暗森林边缘·运行时覆写样本';
+      overridePack.enemyPools = overridePack.enemyPools || {};
+      overridePack.enemyPools.pool_runtime_probe = {
+        id: 'pool_runtime_probe',
+        members: [{ templateId: 'enemy_acceptance_repair', position: 1 }]
+      };
+      assert(Array.isArray(probeLevel.waves) && probeLevel.waves.length > 0, 'probe 关卡缺少 waves');
+      probeLevel.waves[0].enemyPoolId = 'pool_runtime_probe';
+
+      clearContentPackOverride('levels');
+      setContentPackOverride('levels', overridePack);
+
+      try {
+        const storedRaw = localStorage.getItem(CONTENT_PACK_OVERRIDE_STORAGE_KEY) || '';
+        assert(storedRaw.includes('"levels"'), 'localStorage 未写入 levels 覆写键');
+
+        const fromStore = getContentPackOverride('levels');
+        assert(fromStore?.levels?.level_1_1?.name === '幽暗森林边缘·运行时覆写样本', 'override store 未返回关卡覆写产物');
+
+        await DataManager.loadConfigs();
+        assert(DataManager.getLevelConfig('level_1_1')?.name === '幽暗森林边缘·运行时覆写样本', 'DataManager 未消费关卡覆写产物');
+        assert(DataManager.getLevelConfig('level_1_1')?.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_repair', 'DataManager 未展开覆写 enemyPool');
+        assert(DataManager.getLevelPackMeta()?.source === 'override', `Level pack source 错误: ${DataManager.getLevelPackMeta()?.source}`);
+      } finally {
+        clearContentPackOverride('levels');
+      }
+    }
+
+    function testDataManagerProvidesBuffCatalogBoundary() {
+      const dm = {
+        contentPacks: {
+          buffs: {
+            schemaVersion: 'buffs_v2_1_wrapped',
+            meta: {
+              title: 'Buff Pack'
+            }
+          }
+        },
+        gameConfig: {
+          buffs: {
+            buff_a: { id: 'buff_a', name: 'Buff A' }
+          }
+        },
+        buffCatalog: null,
+        _buildBuffCatalog: DataManager._buildBuffCatalog,
+        getBuffPackMeta: DataManager.getBuffPackMeta,
+        getBuffCatalog: DataManager.getBuffCatalog
+      };
+
+      const catalog = DataManager.getBuffCatalog.call(dm);
+      assert(catalog && typeof catalog === 'object', 'getBuffCatalog 未返回对象');
+      assert(catalog.buffsMap?.buff_a?.id === 'buff_a', 'getBuffCatalog 未透出 buffsMap');
+      assert(Array.isArray(catalog.buffsList) && catalog.buffsList.length === 1, `getBuffCatalog buffsList 数量错误: ${catalog.buffsList?.length}`);
+      assert(DataManager.getBuffDefinitions.call(dm)?.buff_a?.name === 'Buff A', 'getBuffDefinitions 未返回 buffsMap');
+      assert(DataManager.getBuffPackMeta.call(dm)?.schemaVersion === 'buffs_v2_1_wrapped', 'getBuffPackMeta 返回错误');
+    }
+
+    function testDataManagerProvidesLevelCatalogBoundary() {
+      const dm = {
+        contentPacks: {
+          levels: {
+            schemaVersion: 'levels_v1_wrapped',
+            meta: {
+              title: 'Level Pack'
+            }
+          }
+        },
+        gameConfig: {
+          levels: {
+            level_a: { id: 'level_a', name: 'Level A' }
+          }
+        },
+        levelCatalog: null,
+        _buildLevelCatalog: DataManager._buildLevelCatalog,
+        getLevelPackMeta: DataManager.getLevelPackMeta,
+        getLevelCatalog: DataManager.getLevelCatalog
+      };
+
+      const catalog = DataManager.getLevelCatalog.call(dm);
+      assert(catalog && typeof catalog === 'object', 'getLevelCatalog 未返回对象');
+      assert(catalog.levelsMap?.level_a?.id === 'level_a', 'getLevelCatalog 未透出 levelsMap');
+      assert(Array.isArray(catalog.levelsList) && catalog.levelsList.length === 1, `getLevelCatalog levelsList 数量错误: ${catalog.levelsList?.length}`);
+      assert(DataManager.getLevelDefinitions.call(dm)?.level_a?.name === 'Level A', 'getLevelDefinitions 未返回 levelsMap');
+      assert(DataManager.getLevelPackMeta.call(dm)?.schemaVersion === 'levels_v1_wrapped', 'getLevelPackMeta 返回错误');
+    }
+
     function testSkillTreeModalConsumesSkillCatalogBoundary() {
       const modal = new UI_SkillTreeModal();
       modal.engine = {
@@ -321,16 +457,92 @@
       assert(emitted?.eventName === 'DATA_UPDATE', `learnSkill 未发出 DATA_UPDATE: ${emitted?.eventName}`);
     }
 
+    async function testCoreEngineInitConsumesBuffDataBoundary() {
+      let registryDefinitions = null;
+      let buffSystemStartCalls = 0;
+      let loopStartCalls = 0;
+      const transitions = [];
+
+      const engine = Object.create(CoreEngine.prototype);
+      engine.fsm = {
+        changeState(next) {
+          transitions.push(next);
+        }
+      };
+      engine.data = {
+        async loadConfigs() {},
+        getBuffDefinitions() {
+          return {
+            buff_a: { id: 'buff_a', name: 'Buff A' }
+          };
+        },
+        gameConfig: {}
+      };
+      engine.buffRegistry = {
+        setDefinitions(definitions) {
+          registryDefinitions = definitions;
+        }
+      };
+      engine.buffSystem = {
+        start() {
+          buffSystemStartCalls += 1;
+        }
+      };
+      engine.loop = {
+        start() {
+          loopStartCalls += 1;
+        }
+      };
+
+      await CoreEngine.prototype.init.call(engine);
+
+      assert(registryDefinitions?.buff_a?.id === 'buff_a', 'CoreEngine.init 未通过 DataManager buff boundary 注入定义');
+      assert(buffSystemStartCalls === 1, `BuffSystem.start 调用次数错误: ${buffSystemStartCalls}`);
+      assert(loopStartCalls === 1, `loop.start 调用次数错误: ${loopStartCalls}`);
+      assert(transitions.includes('INIT') && transitions.includes('LOGIN'), `状态切换不完整: ${transitions.join(', ')}`);
+    }
+
+    function testCoreEngineResolvesSlotLayoutViaLevelBoundary() {
+      const engine = Object.create(CoreEngine.prototype);
+      engine.data = {
+        currentLevelData: {
+          id: 'level_acceptance'
+        },
+        getLevelConfig(levelId) {
+          return levelId === 'level_acceptance'
+            ? {
+                battleRules: {
+                  slotLayoutId: 'acceptance_layout'
+                }
+              }
+            : null;
+        },
+        dataConfig: {
+          battleRules: {
+            slotLayoutId: 'default_v1'
+          }
+        },
+        gameConfig: {
+          levels: {}
+        }
+      };
+
+      const layoutId = CoreEngine.prototype._resolveSlotLayoutIdForCurrentBattle.call(engine);
+      assert(layoutId === 'acceptance_layout', `CoreEngine 未通过 level boundary 解析 slotLayoutId: ${layoutId}`);
+    }
+
     async function testAcceptanceLevelProvidesManualVerificationEntry() {
-      const [levels, enemies, skills] = await Promise.all([
+      const [levelsPack, enemies, skills] = await Promise.all([
         fetchRegistryJson('levels'),
         fetchRegistryJson('enemies'),
         fetchRegistryJson('skills', { skillTreeId: 'melee_v4_5' })
       ]);
+      const levels = getWrappedLevels(levelsPack);
 
       const level = levels.level_1_2_acceptance;
       assert(level, '缺少人工验收关卡 level_1_2_acceptance');
-      assert(level.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_guard', `验收关卡未接入样本敌人: ${level.waves?.[0]?.enemies?.[0]?.templateId}`);
+      const waveEnemies = resolveLevelWaveEnemyRefs(levelsPack, level.waves?.[0]);
+      assert(waveEnemies?.[0]?.templateId === 'enemy_acceptance_guard', `验收关卡未接入样本敌人: ${waveEnemies?.[0]?.templateId}`);
 
       const enemy = enemies.enemy_acceptance_guard;
       assert(enemy, '缺少样本敌人 enemy_acceptance_guard');
@@ -348,24 +560,25 @@
     }
 
     async function testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates() {
-      const [levels, enemies] = await Promise.all([
+      const [levelsPack, enemies] = await Promise.all([
         fetchRegistryJson('levels'),
         fetchRegistryJson('enemies')
       ]);
+      const levels = getWrappedLevels(levelsPack);
 
       const onHitLevel = levels.level_1_3_acceptance_on_hit_armor;
       assert(onHitLevel, '缺少受击获甲人工验收关卡 level_1_3_acceptance_on_hit_armor');
-      assert(onHitLevel.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_head_tapper', `受击获甲验收关卡未接入敌人: ${onHitLevel.waves?.[0]?.enemies?.[0]?.templateId}`);
+      assert(resolveLevelWaveEnemyRefs(levelsPack, onHitLevel.waves?.[0])?.[0]?.templateId === 'enemy_acceptance_head_tapper', `受击获甲验收关卡未接入敌人: ${resolveLevelWaveEnemyRefs(levelsPack, onHitLevel.waves?.[0])?.[0]?.templateId}`);
       assert(onHitLevel.battlePlayerState?.bodyParts?.head?.current === 0, `受击获甲验收关卡未将玩家头部护甲置为 0: ${onHitLevel.battlePlayerState?.bodyParts?.head?.current}`);
       assert(onHitLevel.battlePlayerState?.bodyParts?.head?.max === 20, `受击获甲验收关卡头部护甲上限异常: ${onHitLevel.battlePlayerState?.bodyParts?.head?.max}`);
 
       const armorGuardLevel = levels.level_1_6_acceptance_armor_guard;
       assert(armorGuardLevel, '缺少护甲免伤人工验收关卡 level_1_6_acceptance_armor_guard');
-      assert(armorGuardLevel.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_head_tapper', `护甲免伤验收关卡未接入敌人: ${armorGuardLevel.waves?.[0]?.enemies?.[0]?.templateId}`);
+      assert(resolveLevelWaveEnemyRefs(levelsPack, armorGuardLevel.waves?.[0])?.[0]?.templateId === 'enemy_acceptance_head_tapper', `护甲免伤验收关卡未接入敌人: ${resolveLevelWaveEnemyRefs(levelsPack, armorGuardLevel.waves?.[0])?.[0]?.templateId}`);
 
       const repairLevel = levels.level_1_4_acceptance_enemy_repair;
       assert(repairLevel, '缺少敌人修甲人工验收关卡 level_1_4_acceptance_enemy_repair');
-      assert(repairLevel.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_repair', `敌人修甲验收关卡未接入样本敌人: ${repairLevel.waves?.[0]?.enemies?.[0]?.templateId}`);
+      assert(resolveLevelWaveEnemyRefs(levelsPack, repairLevel.waves?.[0])?.[0]?.templateId === 'enemy_acceptance_repair', `敌人修甲验收关卡未接入样本敌人: ${resolveLevelWaveEnemyRefs(levelsPack, repairLevel.waves?.[0])?.[0]?.templateId}`);
       assert(Array.isArray(repairLevel.battlePlayerSkills?.learnedAdd) && repairLevel.battlePlayerSkills.learnedAdd.includes('skill_demo_wait'), '敌人修甲验收关卡未注入等待技能');
 
       const repairEnemy = enemies.enemy_acceptance_repair;
@@ -375,7 +588,7 @@
 
       const healLevel = levels.level_1_5_acceptance_enemy_heal;
       assert(healLevel, '缺少敌人回血人工验收关卡 level_1_5_acceptance_enemy_heal');
-      assert(healLevel.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_heal', `敌人回血验收关卡未接入样本敌人: ${healLevel.waves?.[0]?.enemies?.[0]?.templateId}`);
+      assert(resolveLevelWaveEnemyRefs(levelsPack, healLevel.waves?.[0])?.[0]?.templateId === 'enemy_acceptance_heal', `敌人回血验收关卡未接入样本敌人: ${resolveLevelWaveEnemyRefs(levelsPack, healLevel.waves?.[0])?.[0]?.templateId}`);
       assert(Array.isArray(healLevel.battlePlayerSkills?.learnedAdd) && healLevel.battlePlayerSkills.learnedAdd.includes('skill_demo_wait'), '敌人回血验收关卡未注入等待技能');
 
       const healEnemy = enemies.enemy_acceptance_heal;
@@ -386,6 +599,40 @@
       const armorEnemy = enemies.enemy_acceptance_head_tapper;
       assert(armorEnemy, '缺少护甲验收样本 enemy_acceptance_head_tapper');
       assert(Array.isArray(armorEnemy.skills) && armorEnemy.skills.includes('skill_demo_enemy_head_tap'), '护甲验收样本缺少固定头部攻击技能');
+    }
+
+    async function testLevelPackSchemaAndEnemyPoolMappingAreAligned() {
+      const [levelsPack, enemies] = await Promise.all([
+        fetchRegistryJson('levels'),
+        fetchRegistryJson('enemies')
+      ]);
+      const levels = getWrappedLevels(levelsPack);
+      const meta = levelsPack.meta || {};
+      assert(meta.fieldNotes && typeof meta.fieldNotes === 'object', 'levels pack 缺少 meta.fieldNotes');
+      assert(meta.enums && typeof meta.enums === 'object', 'levels pack 缺少 meta.enums');
+      assert(Array.isArray(meta.enums.waveTypes) && meta.enums.waveTypes.length > 0, 'meta.enums.waveTypes 缺失');
+
+      const enemyPools = levelsPack.enemyPools || {};
+      const levelList = Object.values(levels);
+      assert(levelList.length > 0, 'levels pack 缺少 levels 字典');
+      assert(Object.keys(enemyPools).length > 0, 'levels pack 缺少 enemyPools 字典');
+
+      for (const [poolId, pool] of Object.entries(enemyPools)) {
+        assert(pool?.id === poolId, `enemyPool.id 与 key 不一致: ${poolId}`);
+        assert(Array.isArray(pool.members) && pool.members.length > 0, `enemyPool.members 为空: ${poolId}`);
+        for (const member of pool.members) {
+          assert(typeof member.templateId === 'string' && member.templateId.length > 0, `${poolId} 存在空 templateId`);
+          assert(enemies[member.templateId], `${poolId} 引用了不存在的敌人模板: ${member.templateId}`);
+        }
+      }
+
+      for (const level of levelList) {
+        assert(Array.isArray(level.waves) && level.waves.length > 0, `${level.id} 缺少 waves`);
+        for (const wave of level.waves) {
+          const members = resolveLevelWaveEnemyRefs(levelsPack, wave);
+          assert(members.length > 0, `${level.id} 的 wave 未映射到敌人池成员`);
+        }
+      }
     }
 
     async function testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack() {
@@ -462,6 +709,94 @@
         "../script/tooling/ContentPackOverrideStore.js"
       ]) {
         assert(ioPage.includes(requiredText), `skill_editor_io_test.html 缺少 runtime bridge 入口文案: ${requiredText}`);
+      }
+    }
+
+    async function testBuffPackSchemaAndEditorWorkspaceAreAligned() {
+      const buffPack = await fetchRegistryJson('buffs');
+      assert(buffPack && typeof buffPack === 'object', 'Buff pack 未成功加载');
+      assert(buffPack.$schemaVersion === 'buffs_v2_1_wrapped', `Buff pack schemaVersion 错误: ${buffPack.$schemaVersion}`);
+
+      const meta = buffPack.meta;
+      assert(meta && typeof meta === 'object', 'Buff pack 缺少 meta');
+      assert(meta.fieldNotes && typeof meta.fieldNotes === 'object', 'Buff pack 缺少 meta.fieldNotes');
+
+      const enums = meta.enums || {};
+      for (const requiredEnum of ['buffTypes', 'stackStrategies', 'triggers', 'effectActions', 'targets', 'valueTypes', 'stats', 'statModifierTypes']) {
+        assert(Array.isArray(enums[requiredEnum]) && enums[requiredEnum].length > 0, `meta.enums.${requiredEnum} 缺失或为空`);
+      }
+
+      const buffs = buffPack.buffs || {};
+      const buffList = Object.values(buffs);
+      assert(buffList.length > 0, 'Buff pack 缺少 buffs 字典');
+
+      for (const buff of buffList) {
+        assert(typeof buff.id === 'string' && buff.id.length > 0, 'Buff 缺少 id');
+        assert(typeof buff.name === 'string' && buff.name.length > 0, `${buff.id} 缺少 name`);
+        assert(typeof buff.type === 'string' && enums.buffTypes.includes(buff.type), `${buff.id} type 未对齐 meta.enums.buffTypes`);
+        assert(buff.lifecycle && typeof buff.lifecycle === 'object', `${buff.id} 缺少 lifecycle`);
+        assert(Array.isArray(buff.effects), `${buff.id} 缺少 effects[]`);
+        assert(Array.isArray(buff.statModifiers), `${buff.id} 缺少 statModifiers[]`);
+      }
+
+      const editorPage = await fetch('../test/buff_editor_v4.html').then(r => r.text());
+      assert(editorPage.includes('buffs_v2_7.json'), 'buff_editor_v4.html 未切换到 buffs_v2_7.json');
+      assert(editorPage.includes('meta.enums') && editorPage.includes('fieldNotes'), 'buff_editor_v4.html 未体现 meta.enums / fieldNotes workspace 口径');
+      assert(!editorPage.includes('Loaded project buffs_v2_1.json'), 'buff_editor_v4.html 仍残留 buffs_v2_1.json 旧入口文案');
+    }
+
+    async function testBuffEditorIoPageProvidesRuntimeBridgeEntry() {
+      const ioPage = await fetch('../test/buff_editor_io_test.html').then(r => r.text());
+      for (const requiredText of [
+        'Load from ../assets/data/buffs_v2_7.json',
+        'Inject Runtime Probe Sample',
+        'Apply Runtime Override',
+        'Clear Runtime Override',
+        'Open buff_runtime_probe.html',
+        "../script/tooling/ContentPackOverrideStore.js"
+      ]) {
+        assert(ioPage.includes(requiredText), `buff_editor_io_test.html 缺少 runtime bridge 入口文案: ${requiredText}`);
+      }
+    }
+
+    async function testBuffRuntimeProbePageProvidesRuntimeConsumptionEntry() {
+      const probePage = await fetch('../test/buff_runtime_probe.html').then(r => r.text());
+      for (const requiredText of [
+        'Reload Runtime',
+        'Apply Probe Buff',
+        'Clear Active Buffs',
+        'buff_counter',
+        'DataManagerV2.js'
+      ]) {
+        assert(probePage.includes(requiredText), `buff_runtime_probe.html 缺少运行时消费入口文案: ${requiredText}`);
+      }
+    }
+
+    async function testLevelEditorIoPageProvidesRuntimeBridgeEntry() {
+      const ioPage = await fetch('../test/level_editor_io_test.html').then(r => r.text());
+      for (const requiredText of [
+        'Load from ../assets/data/levels.json',
+        'Inject Runtime Probe Sample',
+        'Apply Runtime Override',
+        'Clear Runtime Override',
+        'Open level_runtime_probe.html',
+        "../script/tooling/ContentPackOverrideStore.js"
+      ]) {
+        assert(ioPage.includes(requiredText), `level_editor_io_test.html 缺少 runtime bridge 入口文案: ${requiredText}`);
+      }
+    }
+
+    async function testLevelRuntimeProbePageProvidesRuntimeConsumptionEntry() {
+      const probePage = await fetch('../test/level_runtime_probe.html').then(r => r.text());
+      for (const requiredText of [
+        'Reload Runtime',
+        'Instantiate Probe Level',
+        'Resolved Enemy Members',
+        'Instantiated Enemy Names',
+        'level_1_1',
+        'DataManagerV2.js'
+      ]) {
+        assert(probePage.includes(requiredText), `level_runtime_probe.html 缺少运行时消费入口文案: ${requiredText}`);
       }
     }
 
@@ -1271,13 +1606,25 @@
       ['config registry 与 DataManager 装载边界统一', testContentRegistryProvidesUnifiedLoaderBoundary],
       ['DataManager 暴露技能目录边界 API', testDataManagerProvidesSkillCatalogBoundary],
       ['DataManager 支持技能 pack 运行时覆写桥', testDataManagerSupportsRuntimeSkillPackOverrideBridge],
+      ['DataManager 暴露 Buff 目录边界 API', testDataManagerProvidesBuffCatalogBoundary],
+      ['DataManager 支持 Buff pack 运行时覆写桥', testDataManagerSupportsRuntimeBuffPackOverrideBridge],
+      ['DataManager 支持关卡 pack 运行时覆写桥', testDataManagerSupportsRuntimeLevelPackOverrideBridge],
+      ['DataManager 暴露关卡目录边界 API', testDataManagerProvidesLevelCatalogBoundary],
       ['UI_SkillTreeModal 仅消费技能目录边界', testSkillTreeModalConsumesSkillCatalogBoundary],
       ['CoreEngine.learnSkill 仅消费 DataManager 技能边界', testCoreEngineLearnSkillConsumesDataBoundary],
+      ['CoreEngine.init 仅消费 DataManager Buff 边界', testCoreEngineInitConsumesBuffDataBoundary],
+      ['CoreEngine 通过关卡边界解析战斗布局', testCoreEngineResolvesSlotLayoutViaLevelBoundary],
       ['验收关卡与样本敌人/技能已配置', testAcceptanceLevelProvidesManualVerificationEntry],
       ['验收关卡提供确定性的玩家与敌人状态', testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates],
       ['验收防御技能会先于样本敌人执行', testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack],
+      ['关卡 pack schema 与敌人池配置映射对齐', testLevelPackSchemaAndEnemyPoolMappingAreAligned],
       ['技能 pack schema 与编辑器字段映射对齐', testSkillPackSchemaAndEditorFieldMappingAreAligned],
+      ['Buff pack schema 与编辑器 workspace 契约对齐', testBuffPackSchemaAndEditorWorkspaceAreAligned],
       ['skill_editor_io_test 提供 runtime bridge 验证入口', testSkillEditorIoPageProvidesRuntimeBridgeEntry],
+      ['buff_editor_io_test 提供 runtime bridge 验证入口', testBuffEditorIoPageProvidesRuntimeBridgeEntry],
+      ['buff_runtime_probe 提供运行时消费入口', testBuffRuntimeProbePageProvidesRuntimeConsumptionEntry],
+      ['level_editor_io_test 提供 runtime bridge 验证入口', testLevelEditorIoPageProvidesRuntimeBridgeEntry],
+      ['level_runtime_probe 提供运行时消费入口', testLevelRuntimeProbePageProvidesRuntimeConsumptionEntry],
       ['CoreEngine 在战斗开始时注入关卡验收技能', testCoreEngineInjectsLevelBattleSkillsIntoBattleStartPayload],
       ['CoreEngine 在战斗开始时应用关卡玩家战斗态覆盖', testCoreEngineAppliesLevelBattlePlayerStateOverridesAtBattleStart],
       ['DataManager.instantiateLevel 保留验收敌人的残甲状态', testDataManagerInstantiateLevelPreservesConfiguredEnemyCurrentArmor],

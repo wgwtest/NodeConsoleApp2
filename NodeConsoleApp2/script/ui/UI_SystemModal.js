@@ -1,7 +1,7 @@
 ﻿/**
  * @file UI_SystemModal.js
  * @description 系统模态窗口 UI 组件，负责主菜单、关卡选择、存档读档等界面的显示与交互。
- * 遵循 UI_design.md 中的接口规范与代码规范。
+ * 遵循 16-战斗界面(UI_design)-设计说明.md 中的接口规范与代码规范。
  */
 
 export class UI_SystemModal {

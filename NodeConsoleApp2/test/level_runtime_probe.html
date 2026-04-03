@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Runtime Probe</title>
+    <style>
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #eef2f7; color: #243447; }
+        .container { max-width: 960px; margin: 0 auto; }
+        .panel { background: #fff; border: 1px solid #d9e1ec; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05); }
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        button { padding: 8px 14px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; }
+        button.secondary { background: #475569; }
+        button.warn { background: #b45309; }
+        button:hover { opacity: 0.92; }
+        .kv { display: grid; grid-template-columns: 180px 1fr; gap: 8px 12px; }
+        .k { color: #64748b; }
+        .v { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; white-space: pre-wrap; }
+        .status { font-weight: 700; }
+        pre { margin: 0; padding: 12px; background: #0f172a; color: #e2e8f0; border-radius: 8px; min-height: 180px; white-space: pre-wrap; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="panel">
+        <h1>Level Runtime Probe</h1>
+        <p>Local runtime probe for the level pack bridge. This page reloads <code>DataManagerV2.js</code>, resolves <code>level_1_1</code>, and verifies that runtime consumes the active level pack artifact instead of relying on editor memory state.</p>
+        <div id="status" class="status">Initializing...</div>
+        <div class="controls">
+            <button onclick="reloadRuntime()">Reload Runtime</button>
+            <button onclick="instantiateProbeLevel()">Instantiate Probe Level</button>
+            <button class="secondary" onclick="openIoPage()">Open level_editor_io_test.html</button>
+            <button class="warn" onclick="openMockUi()">Open mock_ui_v11.html</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Runtime Pack</h2>
+        <div class="kv">
+            <div class="k">Probe Level ID</div>
+            <div class="v" id="probeLevelId">level_1_1</div>
+            <div class="k">Pack Source</div>
+            <div class="v" id="packSource">-</div>
+            <div class="k">Schema Version</div>
+            <div class="v" id="schemaVersion">-</div>
+            <div class="k">Override Key</div>
+            <div class="v" id="overrideKey">-</div>
+            <div class="k">Resolved Level Name</div>
+            <div class="v" id="resolvedName">-</div>
+            <div class="k">Resolved Enemy Members</div>
+            <div class="v" id="resolvedMembers">-</div>
+            <div class="k">Slot Layout ID</div>
+            <div class="v" id="slotLayoutId">-</div>
+            <div class="k">Instantiated Enemy Names</div>
+            <div class="v" id="instantiatedEnemies">-</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Runtime Logs</h2>
+        <pre id="logs"></pre>
+    </div>
+</div>
+
+<script type="module">
+    import DataManager from '../script/engine/DataManagerV2.js';
+    import { buildContentPackOverrideKey } from '../script/tooling/ContentPackOverrideStore.js';
+
+    const PROBE_LEVEL_ID = 'level_1_1';
+    const statusEl = document.getElementById('status');
+    const logsEl = document.getElementById('logs');
+    let logs = [];
+
+    function setStatus(text, isError = false) {
+        statusEl.textContent = text;
+        statusEl.style.color = isError ? '#b91c1c' : '#166534';
+    }
+
+    function appendLog(text) {
+        logs.push(text);
+        logsEl.textContent = logs.join('\n');
+    }
+
+    function renderPackMeta(levelConfig) {
+        const meta = DataManager.getLevelPackMeta();
+        const members = Array.isArray(levelConfig?.waves?.[0]?.enemies)
+            ? levelConfig.waves[0].enemies.map((enemy) => `${enemy.templateId}@${enemy.position}`).join(', ')
+            : '(none)';
+        document.getElementById('packSource').textContent = meta?.source || 'file';
+        document.getElementById('schemaVersion').textContent = meta?.schemaVersion || '-';
+        document.getElementById('overrideKey').textContent = meta?.overrideKey || buildContentPackOverrideKey('levels');
+        document.getElementById('resolvedName').textContent = levelConfig?.name || '(missing)';
+        document.getElementById('resolvedMembers').textContent = members;
+        document.getElementById('slotLayoutId').textContent = levelConfig?.battleRules?.slotLayoutId || 'default_v1';
+    }
+
+    async function reloadRuntime() {
+        logs = [];
+        logsEl.textContent = '';
+        document.getElementById('instantiatedEnemies').textContent = '-';
+        try {
+            await DataManager.loadConfigs();
+            const levelConfig = DataManager.getLevelConfig(PROBE_LEVEL_ID);
+            if (!levelConfig) {
+                throw new Error(`Missing ${PROBE_LEVEL_ID} in loaded runtime definitions.`);
+            }
+            renderPackMeta(levelConfig);
+            appendLog(`Runtime loaded. source=${DataManager.getLevelPackMeta()?.source || 'file'} levelName=${levelConfig.name}`);
+            setStatus('Runtime ready.');
+        } catch (error) {
+            setStatus(`Runtime load failed: ${error.message}`, true);
+            appendLog(`[ERROR] ${error.message}`);
+        }
+    }
+
+    function instantiateProbeLevel() {
+        try {
+            const runtimeLevel = DataManager.instantiateLevel(PROBE_LEVEL_ID);
+            if (!runtimeLevel) {
+                throw new Error(`instantiateLevel returned null for ${PROBE_LEVEL_ID}`);
+            }
+            const enemyNames = Array.isArray(runtimeLevel.enemies)
+                ? runtimeLevel.enemies.map((enemy) => enemy.name || enemy.id || '(unnamed)').join(', ')
+                : '(none)';
+            document.getElementById('instantiatedEnemies').textContent = enemyNames;
+            appendLog(`Instantiated ${PROBE_LEVEL_ID}: ${enemyNames}`);
+            setStatus(`Instantiated ${PROBE_LEVEL_ID}.`);
+        } catch (error) {
+            setStatus(`Instantiate failed: ${error.message}`, true);
+            appendLog(`[ERROR] ${error.message}`);
+        }
+    }
+
+    function openIoPage() {
+        window.open('../test/level_editor_io_test.html', '_blank');
+    }
+
+    function openMockUi() {
+        window.open('../mock_ui_v11.html', '_blank');
+    }
+
+    window.reloadRuntime = reloadRuntime;
+    window.instantiateProbeLevel = instantiateProbeLevel;
+    window.openIoPage = openIoPage;
+    window.openMockUi = openMockUi;
+
+    reloadRuntime();
+</script>
+</body>
+</html>

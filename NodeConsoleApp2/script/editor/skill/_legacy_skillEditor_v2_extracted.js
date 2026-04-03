@@ -359,7 +359,7 @@ class SkillEditor {
     }
 
     drawConnection(sourceNode, targetNode) {
-        // Routing Strategy (per design/skill_editor_design.md)
+        // Routing Strategy (per DOC/CODEX_DOC/02_设计说明/04-技能编辑器(skill_editor_design)-设计说明.md)
         // - Orthogonal polyline
         // - Visual priority: Vertical -> Horizontal -> Vertical (V-H-V)
         // - Adaptive anchors by relative Y (top/bottom)

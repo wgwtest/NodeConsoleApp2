@@ -28,7 +28,9 @@
     },
     "levels": {
       "kind": "levels",
-      "path": "levels.json"
+      "path": "levels.json",
+      "schemaVersion": "levels_v1_wrapped",
+      "rootKey": "levels"
     },
     "buffs": {
       "kind": "buffs",
