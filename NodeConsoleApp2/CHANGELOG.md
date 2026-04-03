@@ -50,7 +50,7 @@
 
 ### 变更 (2026-01-10) - 数据架构升级
 - **数据设计标准化**:
-    - 创建了 `design/data_design.md`，统一了游戏核心数据结构。
+    - 创建了 `DOC/CODEX_DOC/02_设计说明/02-数据结构(data_design)-设计说明.md`，统一了游戏核心数据结构。
     - **身体部位 (Body Parts)**: 将所有角色（玩家和敌人）的身体部位统一扩展为 7 个部位（头部、胸部、腹部、双臂、双腿）。
     - **装备系统重构**: 装备不再直接定义属性，而是作为 **Buff 容器**。通过装备携带的 `duration: -1` (常驻) Buff 来动态修改角色属性（如 `armor_head`）。
     - **Buff/Debuff系统**: 确立了通用的 Buff 数据结构，支持属性修正(STAT_MOD)、持续伤害(DOT)等效果。
@@ -81,7 +81,7 @@
         - 更新 `instantiateLevel` 方法，正确适配新的敌人 `bodyParts` 结构 (初始化 `current` = `max`)。
         - 更新模拟数据 `loadMockConfigs` 以符合新的数据字段标准。
     - **Data Design & Player Schema**:
-        - `data_design.md`: 明确了玩家 Schema 中需包含完整的 7 身体部位定义。
+        - `02-数据结构(data_design)-设计说明.md`: 明确了玩家 Schema 中需包含完整的 7 身体部位定义。
         - `player.json`: 更新了默认玩家配置，加入了完整的 7 身体部位（初始值为0），作为基础属性。
         - `CoreEngine`: 更新 `initializePlayerBodyParts` 这里优先使用 `player.json` 中定义的部位数据（如果存在），再在此基础上应用装备的 Buff 加成。
 
