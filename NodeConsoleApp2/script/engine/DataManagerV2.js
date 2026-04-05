@@ -1,5 +1,10 @@
 import { buildContentPackOverrideKey, getContentPackOverride } from '../tooling/ContentPackOverrideStore.js';
 
+const LEGACY_SAVE_STORAGE_KEY = 'save_game';
+const LAST_SAVE_SLOT_STORAGE_KEY = 'save_game_last_slot';
+const SAVE_SLOT_STORAGE_PREFIX = 'save_game_slot_';
+const SAVE_SLOT_COUNT = 3;
+
 class DataManager {
     constructor() {
         this.dataConfig = {
@@ -245,6 +250,46 @@ class DataManager {
         };
     }
 
+    _normalizePlayerResources(resources, playerTemplate = null) {
+        const tpl = (playerTemplate && typeof playerTemplate.resources === 'object' && !Array.isArray(playerTemplate.resources))
+            ? playerTemplate.resources
+            : null;
+        const source = (resources && typeof resources === 'object' && !Array.isArray(resources)) ? resources : tpl;
+        return {
+            exp: Number.isFinite(source?.exp) ? source.exp : 0,
+            gold: Number.isFinite(source?.gold) ? source.gold : 0
+        };
+    }
+
+    _normalizeProgress(progress) {
+        const source = (progress && typeof progress === 'object' && !Array.isArray(progress)) ? progress : {};
+        const unlockedLevels = Array.isArray(source.unlockedLevels) && source.unlockedLevels.length > 0
+            ? [...source.unlockedLevels]
+            : ['level_1_1'];
+        const completedQuests = Array.isArray(source.completedQuests) ? [...source.completedQuests] : [];
+        const completedLevels = Array.isArray(source.completedLevels) ? [...source.completedLevels] : [];
+        const flags = (source.flags && typeof source.flags === 'object' && !Array.isArray(source.flags))
+            ? JSON.parse(JSON.stringify(source.flags))
+            : {};
+
+        return {
+            unlockedLevels,
+            completedQuests,
+            completedLevels,
+            flags,
+            lastSettlement: source.lastSettlement ? JSON.parse(JSON.stringify(source.lastSettlement)) : null
+        };
+    }
+
+    _normalizeBattleRewards(rewards) {
+        const source = (rewards && typeof rewards === 'object' && !Array.isArray(rewards)) ? rewards : {};
+        return {
+            exp: Number.isFinite(source.exp) ? source.exp : 0,
+            gold: Number.isFinite(source.gold) ? source.gold : 0,
+            kp: Number.isFinite(source.kp) ? source.kp : 0
+        };
+    }
+
     _buildSkillCatalog(skillsMap, options = {}) {
         const map = (skillsMap && typeof skillsMap === 'object') ? skillsMap : Object.create(null);
         const list = Object.values(map);
@@ -304,7 +349,98 @@ class DataManager {
 
     // --- Persistence ---
 
-    saveGame() {
+    _normalizeSaveSlotId(slotId) {
+        const numeric = Number(slotId);
+        if (!Number.isInteger(numeric)) return null;
+        if (numeric < 1 || numeric > SAVE_SLOT_COUNT) return null;
+        return numeric;
+    }
+
+    _getSlotStorageKey(slotId) {
+        const normalized = this._normalizeSaveSlotId(slotId);
+        return normalized ? `${SAVE_SLOT_STORAGE_PREFIX}${normalized}` : null;
+    }
+
+    _hasDedicatedSlotSave() {
+        for (let slotId = 1; slotId <= SAVE_SLOT_COUNT; slotId++) {
+            const key = this._getSlotStorageKey(slotId);
+            if (key && localStorage.getItem(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    _readSaveJson(slotId = null) {
+        const normalized = this._normalizeSaveSlotId(slotId);
+        if (normalized) {
+            const slotKey = this._getSlotStorageKey(normalized);
+            const slotJson = slotKey ? localStorage.getItem(slotKey) : null;
+            if (slotJson) return slotJson;
+            if (normalized === 1 && !this._hasDedicatedSlotSave()) {
+                return localStorage.getItem(LEGACY_SAVE_STORAGE_KEY);
+            }
+            return null;
+        }
+        return localStorage.getItem(LEGACY_SAVE_STORAGE_KEY);
+    }
+
+    _formatSaveTimestamp(timestamp) {
+        if (!Number.isFinite(timestamp) || timestamp <= 0) return '空';
+        try {
+            return new Date(timestamp).toLocaleString('zh-CN', { hour12: false });
+        } catch {
+            return new Date(timestamp).toISOString();
+        }
+    }
+
+    _extractSaveSlotMeta(slotId) {
+        const json = this._readSaveJson(slotId);
+        if (!json) {
+            return {
+                id: slotId,
+                date: '空',
+                level: '-',
+                scene: '-',
+                turn: '-',
+                isEmpty: true
+            };
+        }
+
+        try {
+            const parsed = JSON.parse(json);
+            const runtime = (parsed && typeof parsed.runtime === 'object') ? parsed.runtime : {};
+            const levelName = runtime?.levelData?.name || runtime?.levelData?.id || (runtime?.currentScene === 'MAIN_MENU' ? '主菜单' : '-');
+            const turn = Number.isFinite(runtime?.turn) ? runtime.turn : '-';
+            return {
+                id: slotId,
+                date: this._formatSaveTimestamp(Number(parsed?.timestamp)),
+                level: levelName,
+                scene: runtime?.currentScene || '-',
+                turn,
+                isEmpty: false
+            };
+        } catch {
+            return {
+                id: slotId,
+                date: '损坏',
+                level: '-',
+                scene: '-',
+                turn: '-',
+                isEmpty: true
+            };
+        }
+    }
+
+    getSaveList() {
+        const list = [];
+        for (let slotId = 1; slotId <= SAVE_SLOT_COUNT; slotId++) {
+            list.push(this._extractSaveSlotMeta(slotId));
+        }
+        return list;
+    }
+
+    saveGame(slotId = null) {
         if (this.dataConfig.global) {
             // Sync runtime data before saving
             if (!this.dataConfig.runtime) {
@@ -323,13 +459,26 @@ class DataManager {
                 this.dataConfig.dataSourcesVersion = this._dataSourcesVersion;
             }
             const json = JSON.stringify(this.dataConfig);
-            localStorage.setItem('save_game', json);
+            localStorage.setItem(LEGACY_SAVE_STORAGE_KEY, json);
+
+            const normalizedSlotId = this._normalizeSaveSlotId(slotId);
+            if (normalizedSlotId) {
+                const slotKey = this._getSlotStorageKey(normalizedSlotId);
+                if (slotKey) {
+                    localStorage.setItem(slotKey, json);
+                    localStorage.setItem(LAST_SAVE_SLOT_STORAGE_KEY, String(normalizedSlotId));
+                }
+            }
+
             console.log('Game saved.');
+            return true;
         }
+        return false;
     }
 
-    loadGame() {
-        const json = localStorage.getItem('save_game');
+    loadGame(slotId = null) {
+        const normalizedSlotId = this._normalizeSaveSlotId(slotId);
+        const json = this._readSaveJson(normalizedSlotId);
         if (json) {
             try {
                 const parsed = JSON.parse(json);
@@ -360,6 +509,15 @@ class DataManager {
                 // Migration/Normalization: skills schema (object) + backward compatibility
                 if (this.playerData) {
                     this.playerData.skills = this._normalizeSkills(this.playerData.skills, playerTemplate);
+                    this.playerData.resources = this._normalizePlayerResources(this.playerData.resources, playerTemplate);
+                }
+                if (this.dataConfig.global) {
+                    this.dataConfig.global.progress = this._normalizeProgress(this.dataConfig.global.progress);
+                }
+
+                localStorage.setItem(LEGACY_SAVE_STORAGE_KEY, json);
+                if (normalizedSlotId) {
+                    localStorage.setItem(LAST_SAVE_SLOT_STORAGE_KEY, String(normalizedSlotId));
                 }
                 
                 console.log('Game loaded.');
@@ -386,15 +544,16 @@ class DataManager {
                 name: username,
                 stats: { ...playerTemplate.stats },
                 skills: this._normalizeSkills(playerTemplate.skills, playerTemplate),
+                resources: this._normalizePlayerResources(playerTemplate.resources, playerTemplate),
                 bodyParts: playerTemplate.bodyParts ? JSON.parse(JSON.stringify(playerTemplate.bodyParts)) : undefined,
                 equipment: JSON.parse(JSON.stringify(playerTemplate.equipment)),
                 inventory: [...playerTemplate.inventory],
             },
-            progress: {
+            progress: this._normalizeProgress({
                 unlockedLevels: ['level_1_1'],
                 completedQuests: [],
                 flags: {}
-            }
+            })
         };
 
         this.dataConfig.runtime = {
@@ -676,6 +835,54 @@ class DataManager {
         return this.getLevelCatalog()?.levelsMap || Object.create(null);
     }
 
+    _getLevelFlow(levelConfig, fallbackOrder = null) {
+        const source = (levelConfig && typeof levelConfig.flow === 'object') ? levelConfig.flow : {};
+        const parsedOrder = Number(source.order);
+        return {
+            kind: source.kind || 'story',
+            order: Number.isFinite(parsedOrder) ? parsedOrder : fallbackOrder
+        };
+    }
+
+    _getStoryLevelsList() {
+        const levels = Object.values(this.getLevelDefinitions() || {});
+        return levels
+            .filter(level => this._getLevelFlow(level).kind === 'story')
+            .sort((a, b) => {
+                const orderA = Number(this._getLevelFlow(a, Number.MAX_SAFE_INTEGER).order);
+                const orderB = Number(this._getLevelFlow(b, Number.MAX_SAFE_INTEGER).order);
+                if (orderA !== orderB) return orderA - orderB;
+                return String(a?.id || '').localeCompare(String(b?.id || ''));
+            });
+    }
+
+    getNextStoryLevelId(levelId) {
+        if (!levelId) return null;
+        const storyLevels = this._getStoryLevelsList();
+        const currentIndex = storyLevels.findIndex(level => level?.id === levelId);
+        if (currentIndex < 0) return null;
+        return storyLevels[currentIndex + 1]?.id || null;
+    }
+
+    getLevelSelectEntries() {
+        if (this.dataConfig.global) {
+            this.dataConfig.global.progress = this._normalizeProgress(this.dataConfig.global.progress);
+        }
+
+        const progress = this.dataConfig.global?.progress;
+        const unlockedLevels = Array.isArray(progress?.unlockedLevels) ? progress.unlockedLevels : [];
+        const completedLevels = Array.isArray(progress?.completedLevels) ? progress.completedLevels : [];
+
+        return this._getStoryLevelsList().map(level => ({
+            id: level.id,
+            name: level.name || level.id,
+            description: level.description || '',
+            flow: this._getLevelFlow(level),
+            isUnlocked: unlockedLevels.includes(level.id),
+            isCompleted: completedLevels.includes(level.id)
+        }));
+    }
+
     getSkillConfig(skillId) {
         const skillsMap = this.getSkillCatalog()?.skillsMap;
         if (!skillsMap) return null;
@@ -769,6 +976,93 @@ class DataManager {
                 ? this.gameConfig.levels
                 : Object.create(null));
         return levelsMap[levelId] || null;
+    }
+
+    getLevelRewards(levelId) {
+        return this._normalizeBattleRewards(this.getLevelConfig(levelId)?.rewards);
+    }
+
+    applyBattleSettlement({ levelId = null, victory = false } = {}) {
+        const player = this.playerData;
+        const playerTemplate = (this.gameConfig && this.gameConfig.player && this.gameConfig.player.default)
+            ? this.gameConfig.player.default
+            : null;
+        if (!player) {
+            return {
+                levelId,
+                levelName: levelId || '未知关卡',
+                victory: Boolean(victory),
+                rewards: this._normalizeBattleRewards(null),
+                firstClear: false,
+                playerBefore: {
+                    resources: this._normalizePlayerResources(null, playerTemplate),
+                    skillPoints: 0
+                },
+                playerAfter: {
+                    resources: this._normalizePlayerResources(null, playerTemplate),
+                    skillPoints: 0
+                }
+            };
+        }
+
+        player.skills = this._normalizeSkills(player.skills, playerTemplate);
+        player.resources = this._normalizePlayerResources(player.resources, playerTemplate);
+        if (this.dataConfig.global) {
+            this.dataConfig.global.progress = this._normalizeProgress(this.dataConfig.global.progress);
+        }
+
+        const progress = this.dataConfig.global?.progress;
+        const levelConfig = levelId ? this.getLevelConfig(levelId) : null;
+        const baseRewards = Boolean(victory)
+            ? this._normalizeBattleRewards(levelConfig?.rewards)
+            : this._normalizeBattleRewards(null);
+        const beforeResources = JSON.parse(JSON.stringify(player.resources));
+        const beforeSkillPoints = Number(player.skills?.skillPoints) || 0;
+        const alreadyCompleted = Boolean(levelId) && Array.isArray(progress?.completedLevels)
+            ? progress.completedLevels.includes(levelId)
+            : false;
+        const nextStoryLevelId = victory ? this.getNextStoryLevelId(levelId) : null;
+        const newUnlocks = [];
+
+        if (victory) {
+            player.resources.exp += baseRewards.exp;
+            player.resources.gold += baseRewards.gold;
+            player.skills.skillPoints += baseRewards.kp;
+            if (levelId && progress && Array.isArray(progress.completedLevels) && !progress.completedLevels.includes(levelId)) {
+                progress.completedLevels.push(levelId);
+            }
+            if (nextStoryLevelId && progress && Array.isArray(progress.unlockedLevels) && !progress.unlockedLevels.includes(nextStoryLevelId)) {
+                progress.unlockedLevels.push(nextStoryLevelId);
+                newUnlocks.push(nextStoryLevelId);
+            }
+        }
+
+        const nextLevelConfig = nextStoryLevelId ? this.getLevelConfig(nextStoryLevelId) : null;
+
+        const settlement = {
+            levelId,
+            levelName: levelConfig?.name || levelId || '未知关卡',
+            victory: Boolean(victory),
+            rewards: baseRewards,
+            firstClear: Boolean(victory && levelId && !alreadyCompleted),
+            nextLevelId: nextStoryLevelId,
+            nextLevelName: nextLevelConfig?.name || null,
+            newUnlocks,
+            playerBefore: {
+                resources: beforeResources,
+                skillPoints: beforeSkillPoints
+            },
+            playerAfter: {
+                resources: JSON.parse(JSON.stringify(player.resources)),
+                skillPoints: Number(player.skills?.skillPoints) || 0
+            }
+        };
+
+        if (progress) {
+            progress.lastSettlement = JSON.parse(JSON.stringify(settlement));
+        }
+
+        return settlement;
     }
 
     /**

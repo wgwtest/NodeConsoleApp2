@@ -21,12 +21,107 @@
         .buff-name { flex: 1; }
         .buff-type { color: #666; width: 90px; text-align: right; }
         .note { color: #666; font-size: 13px; }
+        .guide-panel { background: #f8fbff; border: 1px solid #cfe1ff; }
+        .guide-grid { display: flex; flex-direction: column; gap: 12px; }
+        .guide-card { background: #fff; border: 1px solid #dbe7f6; border-radius: 6px; padding: 12px; }
+        .guide-card h3 { margin-top: 0; margin-bottom: 8px; font-size: 16px; }
+        .guide-card p, .guide-card li { color: #334155; line-height: 1.6; }
+        .guide-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #dbeafe; color: #1d4ed8; margin-right: 8px; }
+        .explain-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .explain-table th, .explain-table td { border: 1px solid #dbe7f6; padding: 10px; text-align: left; vertical-align: top; }
+        .explain-table th { background: #edf4ff; color: #1e3a8a; }
+        .explain-table td { line-height: 1.6; color: #334155; }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>Buff Editor I/O Test Module</h1>
-    <p>Tests loading buff pack JSON and exporting as pack, then verifies the runtime override bridge independently from the editor page state.</p>
+    <p>用于验证 Buff 数据导入、导出，以及“当前页临时写入一份 Buff 数据后，其他页面刷新后是否也能用上这份数据”。</p>
+
+    <div class="panel guide-panel" id="pageGuide">
+        <h2>本页用途</h2>
+        <p><span class="guide-tag">产物注入页</span>本页是“产物注入页”，负责把 <code>buffs_v2_7.json</code> 这份 Buff 配置数据载入当前页面，并在你点击确认后，把当前页里的 Buff 数据另存为一份浏览器本地临时数据。</p>
+        <p>它<strong>不直接证明运行时已经用上这份数据</strong>。真正负责证明“运行时已经读到这份临时 Buff 数据”的页面是 <code>buff_runtime_probe.html</code>。</p>
+        <div class="guide-grid">
+            <div class="guide-card">
+                <h3>验证链路</h3>
+                <ol>
+                    <li>先从文件加载默认 Buff 数据。</li>
+                    <li>用 <code>Inject Runtime Probe Sample</code> 给 <code>buff_counter</code> 打上明显的覆写样本名称。</li>
+                    <li>用 <code>Apply Runtime Override</code> 把当前页里的 Buff 数据写入浏览器本地临时存储。</li>
+                    <li>再去 <code>buff_runtime_probe.html</code> 刷新运行时，看另一页是否也读到这个名称。</li>
+                </ol>
+            </div>
+            <div class="guide-card">
+                <h3>你在本页应该看什么</h3>
+                <ol>
+                    <li>默认加载后，列表应显示 <code>19</code> 条 Buff。</li>
+                    <li>注入样本后，<code>buff_counter</code> 的名称应变成 <code>反击·运行时覆写样本</code>。</li>
+                    <li>应用 override 后，底部应显示 <code>Runtime override active</code>。</li>
+                </ol>
+            </div>
+            <div class="guide-card">
+                <h3>为什么这能证明</h3>
+                <p><code>Inject Runtime Probe Sample</code> 只修改当前页面内存，不会自动改别的页面。只有点击 <code>Apply Runtime Override</code> 后，另一张页面在刷新或重新打开后仍能读到同样的样本名称，并且能把这个 Buff 真正加到运行时列表里，才说明这份临时 Buff 数据已经被运行时用上。</p>
+            </div>
+            <div class="guide-card">
+                <h3>几个关键词是什么意思</h3>
+                <ul>
+                    <li>这里说的 Buff 数据，就是当前页载入的 <code>buffs_v2_7.json</code> 这份 Buff 配置数据。</li>
+                    <li><code>Apply Runtime Override</code> 的意思不是“重写 <code>buffs_v2_7.json</code> 文件”，而是“把当前页里的 Buff 数据另存为一份临时数据”。</li>
+                    <li>这里说的本地 override 存储，不是本地文件，也不是几个页面共用的一段内存；它实际是浏览器 <code>localStorage</code> 里的一段 JSON 数据。</li>
+                    <li>这里的“本地”是指当前浏览器对这个站点保存的数据，不是工程目录里的文件。</li>
+                </ul>
+            </div>
+            <div class="guide-card">
+                <h3>与其他页面关系</h3>
+                <ul>
+                    <li><code>buff_editor_io_test.html</code> 本身是一个单页工具。点击加载、注入样本这类操作，只会修改当前页面内存。</li>
+                    <li>它不会直接修改 <code>buff_editor_v4.html</code>。因为 <code>buff_editor_v4.html</code> 每次都是重新读取默认文件 <code>buffs_v2_7.json</code>，不会读取这份浏览器临时数据。</li>
+                    <li>只有点击 <code>Apply Runtime Override</code> 后，才会把当前页里的 Buff 数据写入浏览器本地临时存储。此后只会影响那些会重新加载 Buff 数据的页面，例如 <code>buff_runtime_probe.html</code>，以及刷新后重新进入运行时的 <code>mock_ui_v11.html</code>。</li>
+                    <li>同一浏览器里打开的其他页面，在刷新或重新打开后可以重新读到它；已经打开但没有刷新的页面，不会自动同步。</li>
+                    <li>这就是为什么验收步骤会在不同页面之间跳转。目的不是跨页拼操作，而是证明“这一页写入浏览器临时 Buff 数据后，另一页刷新后真的会用上它”。</li>
+                </ul>
+            </div>
+        </div>
+        <h3>按钮说明</h3>
+        <table class="explain-table">
+            <thead>
+                <tr>
+                    <th>按钮</th>
+                    <th>点击后会做什么</th>
+                    <th>为什么这能证明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Load from ../assets/data/buffs_v2_7.json</code></td>
+                    <td>从默认文件加载 Buff pack 到本页内存。</td>
+                    <td>证明默认 pack 可被工具页正确读取，是后续注入和导出的基线。</td>
+                </tr>
+                <tr>
+                    <td><code>Inject Runtime Probe Sample</code></td>
+                    <td>把当前内存中的 <code>buff_counter</code> 改成一个易辨识的样本名。</td>
+                    <td>给后续验证制造一个“只有 override 才会出现”的明显标记。</td>
+                </tr>
+                <tr>
+                    <td><code>Apply Runtime Override</code></td>
+                    <td>把当前页里的 Buff 数据写入浏览器 <code>localStorage</code> 里的临时 JSON 数据槽，不会改磁盘上的 <code>buffs_v2_7.json</code> 文件。</td>
+                    <td>这是把“当前页里的 Buff 数据”变成“其他页面刷新后也能重新读到的数据”的关键一步。</td>
+                </tr>
+                <tr>
+                    <td><code>Clear Runtime Override</code></td>
+                    <td>清空浏览器里的这份临时 Buff 数据，恢复默认文件来源。</td>
+                    <td>证明这条验证链可重复执行，不会永久污染默认数据。</td>
+                </tr>
+                <tr>
+                    <td><code>Open buff_runtime_probe.html</code></td>
+                    <td>打开独立运行时消费页。</td>
+                    <td>下一页会重新加载运行时，而不是沿用本页内存，这样才能验证“别的页面刷新后也能读到这份临时 Buff 数据”。</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
     <div class="panel">
         <h2>1. Import Data</h2>
@@ -59,7 +154,7 @@
 
     <div class="panel">
         <h2>4. Runtime Bridge</h2>
-        <p>Use the exported pack artifact as a runtime override, then verify consumption in <code>buff_runtime_probe.html</code>.</p>
+        <p>把当前页里的 Buff 数据临时写入浏览器本地存储，再去 <code>buff_runtime_probe.html</code> 验证另一页刷新后是否真的读到这份数据。</p>
         <div class="controls">
             <button onclick="injectRuntimeProbeSample()">Inject Runtime Probe Sample</button>
             <button onclick="applyRuntimeOverride()">Apply Runtime Override</button>

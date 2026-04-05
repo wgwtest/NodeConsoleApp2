@@ -22,6 +22,7 @@ export class UI_SystemModal {
 
         // 当前视图状态
         this.currentView = null;
+        this.saveLoadStatusMessage = '';
 
         // 引擎引用 (仅用于发送指令和监听事件)
         this.engine = null;
@@ -128,6 +129,7 @@ export class UI_SystemModal {
         console.log('[UI_SystemModal] Rendering Battle Settlement');
         this.currentView = 'BATTLE_SETTLEMENT';
         const isVictory = params && params.victory;
+        const settlement = params && params.settlement ? params.settlement : null;
         
         this.setTitle(isVictory ? '战斗胜利' : '战斗失败');
         this.clearContent();
@@ -156,28 +158,127 @@ export class UI_SystemModal {
             ? '战斗结束，你赢得了胜利。' 
             : '战斗结束，请重新来过。';
 
-        const btn = document.createElement('button');
-        btn.className = 'btn-primary';
-        btn.textContent = '返回主菜单';
-        btn.style.padding = '10px 30px';
-        btn.style.fontSize = '1.2rem';
-        btn.style.marginTop = '20px';
-        btn.style.cursor = 'pointer';
-        /* 简单样，实际应使用 CSS 类 */
-        btn.style.background = '#1f2440';
-        btn.style.color = '#fff';
-        btn.style.border = '1px solid #7cf5d9';
-        btn.style.borderRadius = '4px';
-        
-        btn.onclick = () => {
+        container.appendChild(message);
+        container.appendChild(subMsg);
+
+        if (settlement) {
+            const levelInfo = document.createElement('div');
+            levelInfo.style.fontSize = '0.95rem';
+            levelInfo.style.opacity = '0.85';
+            levelInfo.textContent = `关卡：${settlement.levelName || settlement.levelId || '未知关卡'}`;
+            container.appendChild(levelInfo);
+        }
+
+        const rewardItems = [
+            {
+                label: '经验',
+                delta: Number(settlement?.rewards?.exp) || 0,
+                total: Number(settlement?.playerAfter?.resources?.exp)
+            },
+            {
+                label: '金币',
+                delta: Number(settlement?.rewards?.gold) || 0,
+                total: Number(settlement?.playerAfter?.resources?.gold)
+            },
+            {
+                label: '知识点 KP',
+                delta: Number(settlement?.rewards?.kp) || 0,
+                total: Number(settlement?.playerAfter?.skillPoints)
+            }
+        ];
+
+        if (settlement) {
+            const rewardPanel = document.createElement('div');
+            rewardPanel.style.width = '100%';
+            rewardPanel.style.maxWidth = '420px';
+            rewardPanel.style.padding = '16px';
+            rewardPanel.style.border = '1px solid rgba(124,245,217,0.35)';
+            rewardPanel.style.borderRadius = '8px';
+            rewardPanel.style.background = 'rgba(18, 23, 38, 0.92)';
+
+            const rewardTitle = document.createElement('div');
+            rewardTitle.style.fontSize = '0.95rem';
+            rewardTitle.style.fontWeight = '700';
+            rewardTitle.style.marginBottom = '12px';
+            rewardTitle.textContent = isVictory ? '本局奖励' : '本局结果';
+            rewardPanel.appendChild(rewardTitle);
+
+            rewardItems.forEach(item => {
+                if (!Number.isFinite(item.total) && item.delta === 0) return;
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justifyContent = 'space-between';
+                row.style.alignItems = 'center';
+                row.style.padding = '6px 0';
+                row.style.borderTop = '1px solid rgba(255,255,255,0.06)';
+
+                const label = document.createElement('span');
+                label.textContent = item.label;
+
+                const value = document.createElement('span');
+                const totalText = Number.isFinite(item.total) ? ` / 累计 ${item.total}` : '';
+                value.textContent = `${item.delta >= 0 ? '+' : ''}${item.delta}${totalText}`;
+
+                row.appendChild(label);
+                row.appendChild(value);
+                rewardPanel.appendChild(row);
+            });
+
+            if (settlement.firstClear) {
+                const firstClearTag = document.createElement('div');
+                firstClearTag.style.marginTop = '12px';
+                firstClearTag.style.color = '#7cf5d9';
+                firstClearTag.style.fontSize = '0.9rem';
+                firstClearTag.textContent = '首次通关';
+                rewardPanel.appendChild(firstClearTag);
+            }
+
+            container.appendChild(rewardPanel);
+        }
+
+        const actionRow = document.createElement('div');
+        actionRow.style.display = 'flex';
+        actionRow.style.flexWrap = 'wrap';
+        actionRow.style.justifyContent = 'center';
+        actionRow.style.gap = '12px';
+        actionRow.style.marginTop = '20px';
+
+        const createActionButton = (label, onClick) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-primary';
+            btn.textContent = label;
+            btn.style.padding = '10px 24px';
+            btn.style.fontSize = '1rem';
+            btn.style.cursor = 'pointer';
+            btn.style.background = '#1f2440';
+            btn.style.color = '#fff';
+            btn.style.border = '1px solid #7cf5d9';
+            btn.style.borderRadius = '4px';
+            btn.onclick = onClick;
+            return btn;
+        };
+
+        actionRow.appendChild(createActionButton('再次挑战', () => {
+            if (this.engine.input && this.engine.input.selectLevel && settlement?.levelId) {
+                this.engine.input.selectLevel(settlement.levelId);
+            }
+        }));
+
+        if (settlement?.nextLevelId) {
+            actionRow.appendChild(createActionButton(`前往下一关${settlement?.nextLevelName ? `：${settlement.nextLevelName}` : ''}`, () => {
+                if (this.engine.input && this.engine.input.selectLevel) {
+                    this.engine.input.selectLevel(settlement.nextLevelId);
+                }
+            }));
+        }
+
+        actionRow.appendChild(createActionButton('返回主菜单', () => {
             if (this.engine.input && this.engine.input.confirmSettlement) {
                 this.engine.input.confirmSettlement();
             }
-        };
+        }));
 
-        container.appendChild(message);
-        container.appendChild(subMsg);
-        container.appendChild(btn);
+        container.appendChild(actionRow);
         this.dom.body.appendChild(container);
     }
 
@@ -238,12 +339,12 @@ export class UI_SystemModal {
      * @param {Object} updateData - { type, data }
      */
     handleDataUpdate(updateData) {
-        const { type, data } = updateData;
+        const { type, data, message } = updateData || {};
         console.log(`[UI_SystemModal] Data update received: ${type}`);
 
         // 如果当前正在显示存档/读档界面，且收到了存档列表更新
         if (this.currentView === 'SAVE_LOAD' && type === 'SAVE_LIST') {
-            this.renderSaveLoad(data);
+            this.renderSaveLoad(data, message || '');
         }
     }
 
@@ -382,15 +483,22 @@ export class UI_SystemModal {
         // 获取关卡数据 (假设 DataManager 有同步接口，或者通过 Engine 获取)
         let levels = [];
         // 修正：CoreEngine 中挂载的是 this.data
-        if (this.engine.data && this.engine.data.getLevels) {
-            levels = this.engine.data.getLevels();
+        if (this.engine.data && this.engine.data.getLevelSelectEntries) {
+            levels = this.engine.data.getLevelSelectEntries();
+            console.log('[UI_SystemModal] Loaded selectable levels from DataManager:', levels);
+        } else if (this.engine.data && this.engine.data.getLevels) {
+            levels = this.engine.data.getLevels().map(level => ({
+                ...level,
+                isUnlocked: true,
+                isCompleted: false
+            }));
             console.log('[UI_SystemModal] Loaded levels from DataManager:', levels);
         } else {
             console.warn('[UI_SystemModal] DataManager not found or getLevels missing. Using mock data.');
             // Fallback / Mock data
              levels = [
-                { id: '1-1', name: '森林边缘', desc: 'Lv.1 - 史莱姆' },
-                { id: '1-2', name: '幽暗密林', desc: 'Lv.3 - 狼群' }
+                { id: '1-1', name: '森林边缘', desc: 'Lv.1 - 史莱姆', isUnlocked: true, isCompleted: false },
+                { id: '1-2', name: '幽暗密林', desc: 'Lv.3 - 狼群', isUnlocked: false, isCompleted: false }
             ];
         }
 
@@ -404,8 +512,25 @@ export class UI_SystemModal {
                 const card = document.createElement('div');
                 card.className = 'level-card';
                 const levelDesc = lvl.description || lvl.desc || 'No description';
-                // 假设 lvl 对象结构符合 UI 需求
-                card.innerHTML = `<h4>${lvl.name || lvl.id}</h4><p>${levelDesc}</p>`;
+                const stateTags = [];
+                if (lvl.isCompleted) stateTags.push('已完成');
+                if (lvl.isUnlocked === false) stateTags.push('未解锁');
+                const stateLine = stateTags.length > 0
+                    ? `<div class="level-card-state" style="margin-top:8px; font-size:0.82rem; color:${lvl.isUnlocked === false ? '#ff9dbb' : '#7cf5d9'};">${stateTags.join(' · ')}</div>`
+                    : '';
+                card.innerHTML = `<h4>${lvl.name || lvl.id}</h4><p>${levelDesc}</p>${stateLine}`;
+
+                if (lvl.isUnlocked === false) {
+                    card.setAttribute('aria-disabled', 'true');
+                    card.style.opacity = '0.55';
+                    card.style.cursor = 'not-allowed';
+                    card.onclick = () => {
+                        console.warn(`[UI_SystemModal] Level card is locked: ${lvl.id}`);
+                    };
+                    grid.appendChild(card);
+                    return;
+                }
+
                 card.onclick = () => {
                     console.log(`[UI_SystemModal] Level card clicked: ${lvl.id}`);
                     if (this.engine.input && this.engine.input.selectLevel) {
@@ -429,17 +554,32 @@ export class UI_SystemModal {
      * 渲染存档/读档视图
      * @param {Array} [saveList] - 可选的存档列表数据，若不传则尝试获取
      */
-    renderSaveLoad(saveList) {
+    renderSaveLoad(saveList, statusMessage = '') {
         console.log('[UI_SystemModal] Rendering Save/Load');
         this.currentView = 'SAVE_LOAD';
+        this.saveLoadStatusMessage = statusMessage || '';
         this.setTitle('存档 / 读档');
         this.clearContent();
 
         const slots = saveList || (this.engine.data && this.engine.data.getSaveList ? this.engine.data.getSaveList() : [
-            { id: 1, date: '空', level: '-', hp: '-' },
-            { id: 2, date: '空', level: '-', hp: '-' },
-            { id: 3, date: '空', level: '-', hp: '-' }
+            { id: 1, date: '空', level: '-', turn: '-', isEmpty: true },
+            { id: 2, date: '空', level: '-', turn: '-', isEmpty: true },
+            { id: 3, date: '空', level: '-', turn: '-', isEmpty: true }
         ]);
+
+        if (this.saveLoadStatusMessage) {
+            const status = document.createElement('div');
+            status.className = 'save-load-status';
+            status.textContent = this.saveLoadStatusMessage;
+            status.style.marginBottom = '12px';
+            status.style.padding = '10px 12px';
+            status.style.borderRadius = '8px';
+            status.style.background = 'rgba(124,245,217,0.12)';
+            status.style.border = '1px solid rgba(124,245,217,0.28)';
+            status.style.color = '#dffef6';
+            status.style.fontSize = '0.92rem';
+            this.dom.body.appendChild(status);
+        }
 
         slots.forEach(slot => {
             const el = document.createElement('div');
@@ -447,7 +587,10 @@ export class UI_SystemModal {
 
             const info = document.createElement('div');
             info.className = 'save-slot-info';
-            info.innerHTML = `<h4>存档位 ${slot.id}</h4><div class="save-slot-meta">${slot.date} | 关卡: ${slot.level}</div>`;
+            const turnSuffix = slot.turn !== undefined && slot.turn !== null && slot.turn !== '-'
+                ? ` | 回合: ${slot.turn}`
+                : '';
+            info.innerHTML = `<h4>存档位 ${slot.id}</h4><div class="save-slot-meta">${slot.date} | 关卡: ${slot.level}${turnSuffix}</div>`;
 
             const actions = document.createElement('div');
             actions.className = 'slot-actions';
@@ -465,7 +608,7 @@ export class UI_SystemModal {
             const loadBtn = document.createElement('button');
             loadBtn.className = 'btn-primary';
             loadBtn.textContent = '读取';
-            loadBtn.disabled = slot.date === '空';
+            loadBtn.disabled = slot.isEmpty === true || slot.date === '空';
             loadBtn.onclick = () => {
                 if (this.engine.input && this.engine.input.loadGame) {
                     this.engine.input.loadGame(slot.id);

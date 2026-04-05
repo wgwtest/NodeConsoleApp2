@@ -19,6 +19,16 @@
         .status { font-weight: 700; }
         pre { margin: 0; padding: 12px; background: #0f172a; color: #e2e8f0; border-radius: 8px; min-height: 180px; white-space: pre-wrap; }
         code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        .guide-panel { background: #f8fbff; border-color: #cfe1ff; }
+        .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .guide-card { background: #fff; border: 1px solid #dbe7f6; border-radius: 6px; padding: 12px; }
+        .guide-card h3 { margin-top: 0; margin-bottom: 8px; font-size: 16px; }
+        .guide-card p, .guide-card li { color: #334155; line-height: 1.6; }
+        .guide-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #dbeafe; color: #1d4ed8; margin-right: 8px; }
+        .explain-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .explain-table th, .explain-table td { border: 1px solid #dbe7f6; padding: 10px; text-align: left; vertical-align: top; }
+        .explain-table th { background: #edf4ff; color: #1e3a8a; }
+        .explain-table td { line-height: 1.6; color: #334155; }
     </style>
 </head>
 <body>
@@ -33,6 +43,68 @@
             <button class="secondary" onclick="openIoPage()">Open level_editor_io_test.html</button>
             <button class="warn" onclick="openMockUi()">Open mock_ui_v11.html</button>
         </div>
+    </div>
+
+    <div class="panel guide-panel" id="pageGuide">
+        <h2>本页用途</h2>
+        <p><span class="guide-tag">运行时消费页</span>本页是“运行时消费页”，会重新加载 <code>DataManagerV2.js</code>，再基于当前关卡 pack 解析 <code>level_1_1</code>，并验证运行时是否真的消费了 override 后的关卡配置。</p>
+        <p>它和 <code>level_editor_io_test.html</code> 的职责不同：I/O 页负责写入 override，本页负责在一个独立运行时里读出 override，并进一步实例化关卡敌人。</p>
+        <div class="guide-grid">
+            <div class="guide-card">
+                <h3>字段怎么读</h3>
+                <ul>
+                    <li><code>Pack Source</code>：`file` 表示走默认文件，`override` 表示运行时已经读到 override 存储。</li>
+                    <li><code>Resolved Level Name</code>：运行时真正解析出来的关卡名。</li>
+                    <li><code>Resolved Enemy Members</code>：运行时从关卡波次和敌人池映射出来的成员列表。</li>
+                    <li><code>Instantiated Enemy Names</code>：真正调用 <code>instantiateLevel()</code> 后实例化出来的敌人名。</li>
+                </ul>
+            </div>
+            <div class="guide-card">
+                <h3>你在本页应该看什么</h3>
+                <ol>
+                    <li>点 <code>Reload Runtime</code> 后，页面会重新读取当前关卡 pack。</li>
+                    <li>若前一页已写入 override，则 <code>Pack Source</code> 应显示为 <code>override</code>。</li>
+                    <li><code>Resolved Level Name</code> 和 <code>Resolved Enemy Members</code> 应显示覆写后的样本值。</li>
+                    <li>点 <code>Instantiate Probe Level</code> 后，<code>Instantiated Enemy Names</code> 应显示运行时实例化出的敌人名。</li>
+                </ol>
+            </div>
+            <div class="guide-card">
+                <h3>为什么这能证明</h3>
+                <p>本页会重新加载 <code>DataManagerV2.js</code>，不共享 I/O 页内存。如果这里仍能读到 override 后的关卡名和敌人池成员，说明运行时消费的是“存储里的产物”而不是“上一页的内存对象”。再调用 <code>instantiateLevel()</code> 得到具体敌人名，就证明关卡 pack 到实例化链路已经贯通。</p>
+            </div>
+        </div>
+        <h3>按钮说明</h3>
+        <table class="explain-table">
+            <thead>
+                <tr>
+                    <th>按钮</th>
+                    <th>点击后会做什么</th>
+                    <th>为什么这能证明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Reload Runtime</code></td>
+                    <td>重新加载 <code>DataManagerV2.js</code> 和关卡 pack 解析结果。</td>
+                    <td>确保当前显示的是一次全新的运行时解析结果，而不是旧页面残留。</td>
+                </tr>
+                <tr>
+                    <td><code>Instantiate Probe Level</code></td>
+                    <td>调用运行时的 <code>instantiateLevel(level_1_1)</code>，把关卡真正实例化成敌人对象。</td>
+                    <td>证明 override 不只是“能显示”，而是能驱动真实实例化流程。</td>
+                </tr>
+                <tr>
+                    <td><code>Open level_editor_io_test.html</code></td>
+                    <td>回到产物注入页继续写入或清除 override。</td>
+                    <td>用来和上一页配合，形成“写入 - 读取 - 实例化”的完整验证链路。</td>
+                </tr>
+                <tr>
+                    <td><code>Open mock_ui_v11.html</code></td>
+                    <td>打开主流程页面做进一步人工烟测。</td>
+                    <td>用于在局部验证页确认 override 链路后，再回到真实主流程观察是否有副作用。</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <div class="panel">

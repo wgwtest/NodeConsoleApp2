@@ -15,6 +15,10 @@
             "skillPoints": 30,
             "learned": ["skill_heal", "skill_heavy_swing", "skill_savage_charge"]
         },
+        "resources": {
+            "exp": 0,
+            "gold": 0
+        },
         "bodyParts": {
             "head":       { "current": 0, "max": 20, "weakness": 1.5 },
             "chest":      { "current": 10, "max": 20, "weakness": 1.0 },

@@ -134,11 +134,19 @@ class CoreEngine {
         const runtimeState = {
             buffs: [],
             tempStatModifiers: {},
+            stats: this._cloneSerializable(this.data?.playerData?.stats || {}),
             bodyParts: this.initializePlayerBodyParts(this.data.playerData)
         };
         const levelState = this.data?.currentLevelData?.battlePlayerState;
         if (!levelState || typeof levelState !== 'object') {
             return runtimeState;
+        }
+
+        if (levelState.stats && typeof levelState.stats === 'object') {
+            runtimeState.stats = {
+                ...(runtimeState.stats && typeof runtimeState.stats === 'object' ? runtimeState.stats : {}),
+                ...this._cloneSerializable(levelState.stats)
+            };
         }
 
         if (levelState.bodyParts && typeof levelState.bodyParts === 'object') {
@@ -152,6 +160,110 @@ class CoreEngine {
         }
 
         return runtimeState;
+    }
+
+    _cloneSerializable(value) {
+        if (value === undefined) return undefined;
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    _persistRuntimeSnapshot() {
+        if (this.fsm?.currentState !== 'BATTLE_LOOP') return;
+        this.saveBattleState();
+    }
+
+    _ensureBuffManager(entity) {
+        if (!entity) return null;
+
+        const existing = entity.buffs;
+        if (existing && typeof existing.getAll === 'function' && typeof existing.fromJSON === 'function') {
+            return existing;
+        }
+
+        const serializedBuffs = Array.isArray(existing)
+            ? this._cloneSerializable(existing)
+            : [];
+
+        entity.buffs = new BuffManager(entity, this.buffRegistry, this.eventBus);
+        if (typeof entity.buffs.fromJSON === 'function' && serializedBuffs.length > 0) {
+            entity.buffs.fromJSON(serializedBuffs);
+        }
+
+        if (this.buffSystem && typeof this.buffSystem.registerManager === 'function') {
+            this.buffSystem.registerManager(entity.buffs);
+        }
+        return entity.buffs;
+    }
+
+    _restorePlannerFromRuntime() {
+        if (!this.turnPlanner) return;
+
+        const runtime = this.data?.dataConfig?.runtime;
+        const planningState = runtime?.planning?.player;
+        const plannedSkillIds = Array.from(new Set(
+            (this.playerSkillQueue || []).map(action => action?.skillId).filter(Boolean)
+        ));
+        const effectiveApCostBySkill = plannedSkillIds.length > 0
+            ? this._buildEffectiveApCostBySkill(plannedSkillIds)
+            : this._buildEffectiveApCostForAllSkills();
+
+        if (planningState && typeof this.turnPlanner.restoreFromSnapshot === 'function') {
+            this.turnPlanner.restoreFromSnapshot(planningState);
+        } else {
+            this.turnPlanner.reset();
+        }
+
+        this.turnPlanner.enterPlanning({
+            availableAp: Number(this.data?.playerData?.stats?.ap ?? 0) || 0,
+            effectiveApCostBySkill
+        });
+        this.turnPlanner.recalcApBudgetForDraft({
+            planningDraftBySkill: this.turnPlanner.plannedBySkill
+        });
+    }
+
+    _restoreTimelineFromRuntime() {
+        if (!this.timeline) return;
+
+        if (!Array.isArray(this.playerSkillQueue) || !Array.isArray(this.enemySkillQueue)) {
+            if (typeof this.timeline.reset === 'function') {
+                this.timeline.reset();
+            }
+            return;
+        }
+
+        if (this.playerSkillQueue.length === 0 && this.enemySkillQueue.length === 0) {
+            if (typeof this.timeline.reset === 'function') {
+                this.timeline.reset();
+            }
+            return;
+        }
+
+        const loadRes = this.timeline.loadRoundActions({
+            roundId: this.currentTurn,
+            selfPlans: this.playerSkillQueue,
+            enemyPlans: this.enemySkillQueue,
+            rules: { tieBreak: 'selfFirst' }
+        });
+
+        if (!loadRes.ok) {
+            this.eventBus.emit('BATTLE_LOG', { text: `Restore timeline build failed: ${loadRes.reason}` });
+            return;
+        }
+
+        const savedTimelinePhase = this.data?.dataConfig?.runtime?.battleState?.timelinePhase;
+        if (savedTimelinePhase === 'PAUSED') {
+            this.timeline.phase = 'PAUSED';
+            this.timeline._isPlaying = false;
+        } else if (savedTimelinePhase === 'PLAYING') {
+            // Restore to a safe replayable state instead of pretending playback is still running.
+            this.timeline.phase = 'READY';
+            this.timeline._isPlaying = false;
+        }
+
+        if (typeof this.timeline.getSnapshot === 'function') {
+            this.eventBus.emit('TIMELINE_SNAPSHOT', this.timeline.getSnapshot());
+        }
     }
 
     _enterPlanningBudgetSnapshot() {
@@ -466,7 +578,9 @@ class CoreEngine {
     }
 
     selectLevel(levelId) {
-        if (this.fsm.currentState !== 'MAIN_MENU' && this.fsm.currentState !== 'LEVEL_SELECT') return;
+        if (this.fsm.currentState !== 'MAIN_MENU'
+            && this.fsm.currentState !== 'LEVEL_SELECT'
+            && this.fsm.currentState !== 'BATTLE_SETTLEMENT') return;
 
         const levelData = this.data.instantiateLevel(levelId);
         if (!levelData) {
@@ -509,7 +623,6 @@ class CoreEngine {
                     part.status = 'NORMAL';
                 }
             }
-            this.eventBus.emit('DATA_UPDATE', p);
         }
 
         this.currentTurn = 0;
@@ -556,11 +669,19 @@ class CoreEngine {
 
         // 4. 玩家临时状态
         runtime.playerBattleState = this._buildBattlePlayerState();
+        if (runtime.playerBattleState?.stats && typeof runtime.playerBattleState.stats === 'object') {
+            this.data.playerData.stats = {
+                ...(this.data.playerData.stats && typeof this.data.playerData.stats === 'object' ? this.data.playerData.stats : {}),
+                ...runtime.playerBattleState.stats
+            };
+        }
         this.data.playerData.bodyParts = runtime.playerBattleState.bodyParts;
+        this.eventBus.emit('DATA_UPDATE', this.data.playerData);
 
         const playerWithRuntime = {
             ...this.data.playerData,
             skills: this._buildBattlePlayerSkills(),
+            stats: this.data.playerData.stats,
             bodyParts: runtime.playerBattleState.bodyParts
         };
 
@@ -651,41 +772,43 @@ class CoreEngine {
         const runtime = this.data.dataConfig.runtime;
         this.currentTurn = runtime.turn || 1;
         this.battlePhase = runtime.phase || 'PLANNING';
+        this._battleSlotLayout = runtime?.battleRules?.slotLayout || null;
 
 		// Ensure BuffManager exists for player after load
-		if (this.data.playerData && !this.data.playerData.buffs) {
-			this.data.playerData.buffs = new BuffManager(this.data.playerData, this.buffRegistry, this.eventBus);
-			this.buffSystem.registerManager(this.data.playerData.buffs);
+		if (this.data.playerData) {
+            this._ensureBuffManager(this.data.playerData);
 		}
 
         if (this.data.currentLevelData && Array.isArray(this.data.currentLevelData.enemies)) {
             for (const enemy of this.data.currentLevelData.enemies) {
-                if (!enemy.buffs) {
-                    enemy.buffs = new BuffManager(enemy, this.buffRegistry, this.eventBus);
-                    this.buffSystem.registerManager(enemy.buffs);
-                }
+                this._ensureBuffManager(enemy);
             }
         }
         
         // 恢复队列
-        this.playerSkillQueue = runtime.queues ? (runtime.queues.player || []) : [];
-        this.enemySkillQueue = runtime.queues ? (runtime.queues.enemy || []) : [];
+        this.playerSkillQueue = runtime.queues ? (this._cloneSerializable(runtime.queues.player) || []) : [];
+        this.enemySkillQueue = runtime.queues ? (this._cloneSerializable(runtime.queues.enemy) || []) : [];
 
         this.fsm.changeState('BATTLE_LOOP');
         
         // Prepare player object with runtime body parts
         const playerWithRuntime = {
             ...this.data.playerData,
+            skills: this._buildBattlePlayerSkills(),
             bodyParts: (runtime.playerBattleState) ? runtime.playerBattleState.bodyParts : {}
         };
         if (runtime.playerBattleState?.bodyParts) {
-            this.data.playerData.bodyParts = runtime.playerBattleState.bodyParts;
+            this.data.playerData.bodyParts = this._cloneSerializable(runtime.playerBattleState.bodyParts);
+            playerWithRuntime.bodyParts = this.data.playerData.bodyParts;
         }
 
         this.eventBus.emit('BATTLE_START', { 
             player: playerWithRuntime, 
             level: this.data.currentLevelData 
         });
+
+        this._restorePlannerFromRuntime();
+        this._restoreTimelineFromRuntime();
         
         console.log(`Resumed battle at Turn ${this.currentTurn}, Phase ${this.battlePhase}`);
         
@@ -758,9 +881,22 @@ class CoreEngine {
             delete this.data.dataConfig.runtime.playerTempState;
             this.data.currentLevelData = null;
         }
-        
-        this.data.saveGame();
-        this.eventBus.emit('BATTLE_LOG', { text: 'Game Saved.' });
+
+        const saved = this.data.saveGame(slotId);
+        if (!saved) {
+            this.eventBus.emit('BATTLE_LOG', { text: 'Game Save Failed.' });
+            return;
+        }
+
+        if (typeof this.data.getSaveList === 'function') {
+            this.eventBus.emit('DATA_UPDATE', {
+                type: 'SAVE_LIST',
+                data: this.data.getSaveList(),
+                message: slotId ? `已保存到存档位 ${slotId}` : '当前进度已保存'
+            });
+        }
+
+        this.eventBus.emit('BATTLE_LOG', { text: slotId ? `Game Saved to slot ${slotId}.` : 'Game Saved.' });
     }
 
     startTurn() {
@@ -829,6 +965,7 @@ class CoreEngine {
 
         // Planning-enter snapshot: initialize AP budget FSM once per planning phase.
         this._enterPlanningBudgetSnapshot();
+        this._persistRuntimeSnapshot();
         this.emitBattleUpdate();
         this.eventBus.emit('BATTLE_LOG', { text: `Turn ${this.currentTurn} started. Please configure skills.` });
     }
@@ -1010,6 +1147,7 @@ class CoreEngine {
             return;
         }
 
+        this._persistRuntimeSnapshot();
         this.eventBus.emit('PLANNING_COMMITTED', {
             planningDraftBySkill: JSON.parse(JSON.stringify(normalized)),
             plannedActions: JSON.parse(JSON.stringify(this.turnPlanner.getPlannedActions()))
@@ -1680,6 +1818,16 @@ class CoreEngine {
         this.timeline.stop();
         const result = isVictory ? 'Victory' : 'Defeat';
         this.eventBus.emit('BATTLE_LOG', { text: `Battle Ended: ${result}!` });
+        const settledLevelId = this.data?.currentLevelData?.id || null;
+        const settlement = (typeof this.data?.applyBattleSettlement === 'function')
+            ? this.data.applyBattleSettlement({ levelId: settledLevelId, victory: isVictory })
+            : {
+                levelId: settledLevelId,
+                levelName: this.data?.currentLevelData?.name || settledLevelId || '未知关卡',
+                victory: Boolean(isVictory),
+                rewards: { exp: 0, gold: 0, kp: 0 }
+            };
+        this.eventBus.emit('DATA_UPDATE', this.data.playerData);
         
         //  DataManager ???
         if (this.data.dataConfig.runtime) {
@@ -1696,8 +1844,8 @@ class CoreEngine {
         this.data.currentLevelData = null;
         this.data.saveGame(); // ???
 
-        this.fsm.changeState('BATTLE_SETTLEMENT', { victory: isVictory });
-        this.eventBus.emit('BATTLE_END', { victory: isVictory });
+        this.fsm.changeState('BATTLE_SETTLEMENT', { victory: isVictory, settlement });
+        this.eventBus.emit('BATTLE_END', { victory: isVictory, settlement });
     }
 
     resetTurn() {
@@ -1732,8 +1880,8 @@ class CoreEngine {
             
             // 保存队列
             if (!runtime.queues) runtime.queues = {};
-            runtime.queues.player = this.playerSkillQueue;
-            runtime.queues.enemy = this.enemySkillQueue;
+            runtime.queues.player = this._cloneSerializable(this.playerSkillQueue || []);
+            runtime.queues.enemy = this._cloneSerializable(this.enemySkillQueue || []);
         }
     }
 

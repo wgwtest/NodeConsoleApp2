@@ -306,4 +306,34 @@ export default class TurnPlanner {
 	getPlannedActions() {
 		return this.order.map(id => this.actionsById[id]).filter(Boolean);
 	}
+
+	restoreFromSnapshot(snapshot) {
+		const root = (snapshot && typeof snapshot === 'object') ? snapshot : {};
+		const assigned = (root.assigned && typeof root.assigned === 'object') ? root.assigned : {};
+		const actionsById = (root.actionsById && typeof root.actionsById === 'object') ? root.actionsById : {};
+		const requestedOrder = Array.isArray(root.order) ? root.order : Object.keys(actionsById);
+
+		this.reset();
+		this.assigned = { ...assigned };
+		this.actionsById = JSON.parse(JSON.stringify(actionsById));
+		this.order = requestedOrder.filter(id => !!this.actionsById[id]);
+		this.skillCounts = Object.create(null);
+
+		for (const id of this.order) {
+			const action = this.actionsById[id];
+			if (!action?.skillId) continue;
+			this.skillCounts[action.skillId] = (this.skillCounts[action.skillId] || 0) + 1;
+		}
+
+		this._rebuildSkillViews();
+
+		let maxNumericId = 0;
+		for (const id of this.order) {
+			const match = String(id).match(/^a_(\d+)$/);
+			if (!match) continue;
+			maxNumericId = Math.max(maxNumericId, Number(match[1]) || 0);
+		}
+		this._nextId = maxNumericId + 1;
+		return { ok: true, restored: this.order.length };
+	}
 }

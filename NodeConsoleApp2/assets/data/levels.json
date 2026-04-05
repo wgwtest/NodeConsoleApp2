@@ -11,7 +11,12 @@
       "enemyPools": "敌人池字典：key 为 enemyPoolId，value 为可复用的敌人成员列表。",
       "enemyPools.*.members": "敌人池成员列表。每个成员至少需要 templateId，可选 position。",
       "levels": "关卡字典：key 为 levelId，value 为关卡定义。",
-      "levels.*.waves[].enemyPoolId": "关卡波次绑定的敌人池 ID，由 DataManagerV2 负责映射到运行时 enemies 列表。"
+      "levels.*.flow": "关卡流转元数据。当前支持 kind=story|acceptance，以及 story 关卡的顺序字段 order。",
+      "levels.*.waves[].enemyPoolId": "关卡波次绑定的敌人池 ID，由 DataManagerV2 负责映射到运行时 enemies 列表。",
+      "levels.*.battlePlayerState": "进入战斗时注入的玩家运行时战斗态覆盖。当前支持 stats / bodyParts。",
+      "levels.*.battlePlayerState.stats": "进入战斗时覆盖玩家运行时 stats，例如 hp / ap / speed。建议用于验收样本或特殊战斗规则。",
+      "levels.*.battlePlayerState.bodyParts": "进入战斗时覆盖玩家运行时 bodyParts，可指定部位护甲当前值、上限和 weakness。",
+      "levels.*.rewards": "关卡结算奖励。当前支持 exp / gold / kp，其中 kp 用于技能树知识点。"
     },
     "enums": {
       "waveTypes": [
@@ -31,6 +36,20 @@
       "name": "幽暗森林边缘敌人池",
       "members": [
         { "templateId": "goblin_01", "position": 1 }
+      ]
+    },
+    "pool_story_goblin_outpost": {
+      "id": "pool_story_goblin_outpost",
+      "name": "密林前哨敌人池",
+      "members": [
+        { "templateId": "goblin_scout_lvl3", "position": 1 }
+      ]
+    },
+    "pool_story_ruins_gate": {
+      "id": "pool_story_ruins_gate",
+      "name": "废墟关隘敌人池",
+      "members": [
+        { "templateId": "skeleton_guard_lvl4", "position": 1 }
       ]
     },
     "pool_acceptance_guard": {
@@ -67,6 +86,10 @@
       "id": "level_1_1",
       "name": "幽暗森林边缘",
       "description": "森林外围，常有哥布林出没。",
+      "flow": {
+        "kind": "story",
+        "order": 1
+      },
       "background": "bg_forest_01",
       "battleRules": {
         "slotLayoutId": "default_v1"
@@ -80,13 +103,68 @@
       ],
       "rewards": {
         "exp": 100,
-        "gold": 50
+        "gold": 50,
+        "kp": 1
+      }
+    },
+    "level_1_2_story": {
+      "id": "level_1_2_story",
+      "name": "密林前哨",
+      "description": "深入森林后，机动更快的哥布林斥候开始骚扰玩家。",
+      "flow": {
+        "kind": "story",
+        "order": 2
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_story_goblin_outpost"
+        }
+      ],
+      "rewards": {
+        "exp": 140,
+        "gold": 80,
+        "kp": 1
+      }
+    },
+    "level_1_3_story": {
+      "id": "level_1_3_story",
+      "name": "废墟关隘",
+      "description": "骷髅卫士把守废墟入口，敌人的防御与修复能力开始成形。",
+      "flow": {
+        "kind": "story",
+        "order": 3
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_story_ruins_gate"
+        }
+      ],
+      "rewards": {
+        "exp": 220,
+        "gold": 120,
+        "kp": 2
       }
     },
     "level_1_2_acceptance": {
       "id": "level_1_2_acceptance",
       "name": "人工验收样本",
       "description": "用于人工验收 HP免伤与护甲免伤，敌人为标准验收守卫。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 101
+      },
       "background": "bg_forest_01",
       "battleRules": {
         "slotLayoutId": "default_v1"
@@ -107,13 +185,18 @@
       ],
       "rewards": {
         "exp": 0,
-        "gold": 0
+        "gold": 0,
+        "kp": 0
       }
     },
     "level_1_3_acceptance_on_hit_armor": {
       "id": "level_1_3_acceptance_on_hit_armor",
       "name": "受击获甲验收样本",
       "description": "用于人工验收受击获甲，开战时玩家头部护甲为 0，便于观察先补甲再承伤。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 102
+      },
       "background": "bg_forest_01",
       "battleRules": {
         "slotLayoutId": "default_v1"
@@ -137,13 +220,18 @@
       ],
       "rewards": {
         "exp": 0,
-        "gold": 0
+        "gold": 0,
+        "kp": 0
       }
     },
     "level_1_4_acceptance_enemy_repair": {
       "id": "level_1_4_acceptance_enemy_repair",
       "name": "敌人修甲验收样本",
       "description": "用于人工验收敌人受损后优先修甲，敌人胸部护甲开战即破损。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 103
+      },
       "background": "bg_forest_01",
       "battleRules": {
         "slotLayoutId": "default_v1"
@@ -162,13 +250,18 @@
       ],
       "rewards": {
         "exp": 0,
-        "gold": 0
+        "gold": 0,
+        "kp": 0
       }
     },
     "level_1_5_acceptance_enemy_heal": {
       "id": "level_1_5_acceptance_enemy_heal",
       "name": "敌人回血验收样本",
       "description": "用于人工验收敌人低血量时优先回血，敌人开战即处于低血线。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 104
+      },
       "background": "bg_forest_01",
       "battleRules": {
         "slotLayoutId": "default_v1"
@@ -187,13 +280,18 @@
       ],
       "rewards": {
         "exp": 0,
-        "gold": 0
+        "gold": 0,
+        "kp": 0
       }
     },
     "level_1_6_acceptance_armor_guard": {
       "id": "level_1_6_acceptance_armor_guard",
       "name": "护甲免伤验收样本",
       "description": "用于人工验收护甲免伤，敌人固定攻击头部护甲，便于观察护甲是否保持不变。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 105
+      },
       "background": "bg_forest_01",
       "battleRules": {
         "slotLayoutId": "default_v1"
@@ -212,7 +310,8 @@
       ],
       "rewards": {
         "exp": 0,
-        "gold": 0
+        "gold": 0,
+        "kp": 0
       }
     }
   }

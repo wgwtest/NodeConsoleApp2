@@ -22,6 +22,16 @@
         .buff-list li:last-child { border-bottom: 0; }
         pre { margin: 0; padding: 12px; background: #0f172a; color: #e2e8f0; border-radius: 8px; min-height: 180px; white-space: pre-wrap; }
         code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        .guide-panel { background: #f8fbff; border-color: #cfe1ff; }
+        .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .guide-card { background: #fff; border: 1px solid #dbe7f6; border-radius: 6px; padding: 12px; }
+        .guide-card h3 { margin-top: 0; margin-bottom: 8px; font-size: 16px; }
+        .guide-card p, .guide-card li { color: #334155; line-height: 1.6; }
+        .guide-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #dbeafe; color: #1d4ed8; margin-right: 8px; }
+        .explain-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .explain-table th, .explain-table td { border: 1px solid #dbe7f6; padding: 10px; text-align: left; vertical-align: top; }
+        .explain-table th { background: #edf4ff; color: #1e3a8a; }
+        .explain-table td { line-height: 1.6; color: #334155; }
     </style>
 </head>
 <body>
@@ -36,6 +46,67 @@
             <button class="secondary" onclick="clearActiveBuffs()">Clear Active Buffs</button>
             <button class="warn" onclick="openIoPage()">Open buff_editor_io_test.html</button>
         </div>
+    </div>
+
+    <div class="panel guide-panel" id="pageGuide">
+        <h2>本页用途</h2>
+        <p><span class="guide-tag">运行时消费页</span>本页是“运行时消费页”，会重新加载 <code>DataManagerV2.js</code>、重建 <code>BuffRegistry / BuffSystem / Probe Actor</code>，然后验证运行时是否真的消费了当前 Buff pack。</p>
+        <p>它和 <code>buff_editor_io_test.html</code> 的职责不同：I/O 页负责写入 override，本页负责在一个独立运行时里读出 override 并真正应用 Buff。</p>
+        <div class="guide-grid">
+            <div class="guide-card">
+                <h3>字段怎么读</h3>
+                <ul>
+                    <li><code>Pack Source</code>：`file` 表示走默认文件，`override` 表示运行时已经读到 override 存储。</li>
+                    <li><code>Resolved Name</code>：运行时真正解析出来的 Buff 名称。</li>
+                    <li><code>Active Buffs</code>：把该 Buff 实际加到 Probe Actor 后，运行时对象里最终生效的结果。</li>
+                </ul>
+            </div>
+            <div class="guide-card">
+                <h3>你在本页应该看什么</h3>
+                <ol>
+                    <li>点 <code>Reload Runtime</code> 后，页面会重新读取当前 Buff pack。</li>
+                    <li>若前一页已写入 override，则 <code>Pack Source</code> 应显示为 <code>override</code>。</li>
+                    <li><code>Resolved Name</code> 应变成样本名 <code>反击·运行时覆写样本</code>。</li>
+                    <li>点 <code>Apply Probe Buff</code> 后，<code>Active Buffs</code> 里应出现同样的名字。</li>
+                </ol>
+            </div>
+            <div class="guide-card">
+                <h3>为什么这能证明</h3>
+                <p>本页会重新加载 <code>DataManagerV2.js</code>，不共享 I/O 页内存。如果这里仍能读到 override 名称，说明运行时消费的是“存储里的产物”而不是“上一页的内存对象”。再把 Buff 真正加到 <code>Active Buffs</code> 里，就证明运行时消费链闭环成立。</p>
+            </div>
+        </div>
+        <h3>按钮说明</h3>
+        <table class="explain-table">
+            <thead>
+                <tr>
+                    <th>按钮</th>
+                    <th>点击后会做什么</th>
+                    <th>为什么这能证明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Reload Runtime</code></td>
+                    <td>重新加载 <code>DataManagerV2.js</code> 和 Buff 运行时对象。</td>
+                    <td>确保当前显示的是一次全新的运行时解析结果，而不是旧页面残留。</td>
+                </tr>
+                <tr>
+                    <td><code>Apply Probe Buff</code></td>
+                    <td>把 <code>buff_counter</code> 真正加到 Probe Actor 身上。</td>
+                    <td>证明“解析出来的定义”不仅能看，还能被运行时 BuffManager 真正消费。</td>
+                </tr>
+                <tr>
+                    <td><code>Clear Active Buffs</code></td>
+                    <td>重建 Probe Actor，清空当前运行时 Buff 列表。</td>
+                    <td>便于重复验证，但不会清掉 override 存储本身。</td>
+                </tr>
+                <tr>
+                    <td><code>Open buff_editor_io_test.html</code></td>
+                    <td>回到产物注入页继续写入或清除 override。</td>
+                    <td>用来和上一页配合，形成“写入 - 读取 - 应用”的完整验证链路。</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <div class="panel">
