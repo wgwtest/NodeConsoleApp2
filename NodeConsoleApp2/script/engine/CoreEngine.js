@@ -1553,18 +1553,31 @@ class CoreEngine {
             if (!target?.buffs || !row?.buffId) continue;
             const chance = Number(row?.chance ?? 1);
             if (Number.isFinite(chance) && chance < 1 && Math.random() > chance) continue;
-            target.buffs.add(row.buffId, {
+            const buffInst = target.buffs.add(row.buffId, {
                 duration: row.duration,
                 params: row.params
             });
-            applied.push({ kind: 'apply', buffId: row.buffId, targetId: target.id });
+            applied.push({
+                kind: 'apply',
+                buffId: row.buffId,
+                buffName: buffInst?.definition?.name || row.buffId,
+                targetId: target.id
+            });
         }
 
         for (const row of removeRows) {
             const target = row?.target === 'self' ? actor : defaultTarget;
             if (!target?.buffs || !row?.buffId) continue;
+            const existingBuff = typeof target.buffs.getAll === 'function'
+                ? target.buffs.getAll().find(buff => buff?.id === row.buffId)
+                : null;
             if (target.buffs.remove(row.buffId, 'skill_ref_remove')) {
-                applied.push({ kind: 'remove', buffId: row.buffId, targetId: target.id });
+                applied.push({
+                    kind: 'remove',
+                    buffId: row.buffId,
+                    buffName: existingBuff?.definition?.name || row.buffId,
+                    targetId: target.id
+                });
             }
         }
 
@@ -1740,7 +1753,8 @@ class CoreEngine {
 
         const buffResults = this._applySkillBuffRefs({ actor, defaultTarget, skillConfig });
         buffResults.forEach(item => {
-            logs.push(`${skillConfig.name} ${item.kind === 'apply' ? 'applied' : 'removed'} ${item.buffId} on ${item.targetId}.`);
+            const buffLabel = item.buffName || item.buffId;
+            logs.push(`${skillConfig.name} ${item.kind === 'apply' ? 'applied' : 'removed'} ${buffLabel} on ${item.targetId}.`);
         });
 
         return {

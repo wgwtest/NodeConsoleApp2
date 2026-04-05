@@ -65,6 +65,7 @@
     import UI_SkillPanel from '../script/ui/UI_SkillPanel.js';
     import { UI_SkillTreeModal } from '../script/ui/UI_SkillTreeModal.js';
     import { UI_SystemModal } from '../script/ui/UI_SystemModal.js';
+    import { UI_BattleRow } from '../script/ui/UI_BattleRow.js';
     import { CONTENT_PACK_OVERRIDE_STORAGE_KEY, buildContentPackOverrideKey, clearContentPackOverride, getContentPackOverride, setContentPackOverride } from '../script/tooling/ContentPackOverrideStore.js';
 
     const summaryEl = document.getElementById('summary');
@@ -460,6 +461,39 @@
           <div id="detailTags"></div>
           <div id="apMeter"><div id="apMeterSlots"></div><div id="apMeterValue"></div></div>
         </aside>
+        `);
+    }
+
+    function setupBattleRowDom(target = document.body) {
+      target.insertAdjacentHTML('beforeend', `
+        <section class="battle-row">
+          <div class="player-hud">
+            <h2>玩家：</h2>
+            <div class="hud-stat"><span>HP 0 / 0</span><div class="bar hp"><span style="width:0%"></span></div></div>
+            <div class="status-row"><span class="status-label">BUFF</span><div class="status-icons"></div></div>
+            <div class="status-row"><span class="status-label">DEBUFF</span><div class="status-icons"></div></div>
+            <div class="armor-list-wrapper">
+              <div class="armor-row" data-key="head"><span class="armor-name">头部</span><div class="armor-bar"><span></span></div><span class="armor-value"></span></div>
+              <div class="armor-row" data-key="chest"><span class="armor-name">胸部</span><div class="armor-bar"><span></span></div><span class="armor-value"></span></div>
+            </div>
+          </div>
+          <div class="enemy-hud">
+            <h2>敌人：</h2>
+            <div class="hud-stat"><span>HP 0 / 0</span><div class="bar hp"><span style="width:0%"></span></div></div>
+            <div class="status-row"><span class="status-label">BUFF</span><div class="status-icons"></div></div>
+            <div class="status-row"><span class="status-label">DEBUFF</span><div class="status-icons"></div></div>
+            <div class="armor-list-wrapper">
+              <div class="armor-row" data-key="head"><span class="armor-name">头部</span><div class="armor-bar"><span></span></div><span class="armor-value"></span></div>
+              <div class="armor-row" data-key="chest"><span class="armor-name">胸部</span><div class="armor-bar"><span></span></div><span class="armor-value"></span></div>
+            </div>
+          </div>
+          <div class="battle-scene">
+            <div class="stage-background"></div>
+            <div class="fighter player-character"></div>
+            <div class="fighter enemy-character"></div>
+            <div class="fx-layer"></div>
+          </div>
+        </section>
       `);
     }
 
@@ -1350,6 +1384,106 @@
       }
     }
 
+    function collectMissingSkillChain(skillMap, learnedSet, skillId, missingSet, visiting = new Set()) {
+      if (!skillId || learnedSet.has(skillId) || visiting.has(skillId) || missingSet.has(skillId)) return;
+      const skill = skillMap.get(skillId);
+      assert(skill, `技能树缺少节点 ${skillId}`);
+      visiting.add(skillId);
+      for (const prereqId of Array.isArray(skill.prerequisites) ? skill.prerequisites : []) {
+        collectMissingSkillChain(skillMap, learnedSet, prereqId, missingSet, visiting);
+      }
+      visiting.delete(skillId);
+      if (!learnedSet.has(skillId)) {
+        missingSet.add(skillId);
+      }
+    }
+
+    async function testMainFlowBuffSamplesProvideProductionReadySkillTreeChains() {
+      const [skillPack, playerPack, buffPack] = await Promise.all([
+        fetchRegistryJson('skills', { skillTreeId: 'melee_v4_5' }),
+        fetchRegistryJson('player'),
+        fetchRegistryJson('buffs')
+      ]);
+
+      const skillList = Array.isArray(skillPack.skills) ? skillPack.skills : [];
+      const skillMap = new Map(skillList.map(skill => [skill.id, skill]));
+      const playerSkills = playerPack.default?.skills || {};
+      const learnedSet = new Set(Array.isArray(playerSkills.learned) ? playerSkills.learned : []);
+      const availableKp = Number(playerSkills.skillPoints ?? 0) || 0;
+      const buffMap = buffPack.buffs || {};
+
+      const specs = [
+        {
+          id: 'skill_regroup',
+          expectedName: '受击备甲',
+          expectedPrereqs: ['skill_savage_charge'],
+          expectedBuffId: 'new_buff_1771485041778',
+          expectedBuffTarget: 'self',
+          mustInclude: ['受击', '护甲'],
+          mustExclude: ['缺少对应BUFF']
+        },
+        {
+          id: 'skill_fortify',
+          expectedName: '堡垒姿态',
+          expectedPrereqs: ['skill_regroup'],
+          expectedBuffId: 'buff_ap_regen',
+          expectedBuffTarget: 'self',
+          mustInclude: ['立即获得', '下回合'],
+          mustExclude: ['这里有个问题']
+        },
+        {
+          id: 'skill_aegis',
+          expectedName: '绝对防御',
+          expectedPrereqs: ['skill_fortify'],
+          expectedBuffId: 'new_buff_1771481773827',
+          expectedBuffTarget: 'self',
+          mustInclude: ['护甲免伤'],
+          mustExclude: []
+        },
+        {
+          id: 'skill_1771769351059',
+          expectedName: '锯齿斩',
+          expectedPrereqs: ['skill_heavy_swing'],
+          expectedBuffId: 'buff_bleed',
+          expectedBuffTarget: 'enemy',
+          mustInclude: ['流血'],
+          mustExclude: []
+        }
+      ];
+
+      const missingForSamples = new Set();
+      for (const spec of specs) {
+        collectMissingSkillChain(skillMap, learnedSet, spec.id, missingForSamples);
+      }
+      const totalKp = Array.from(missingForSamples).reduce((sum, skillId) => {
+        const skill = skillMap.get(skillId);
+        return sum + (Number(skill?.unlock?.cost?.kp ?? 0) || 0);
+      }, 0);
+
+      assert(totalKp <= availableKp, `主流程 Buff 样本链所需 KP 超出默认玩家预算: ${totalKp} > ${availableKp}`);
+
+      for (const spec of specs) {
+        const skill = skillMap.get(spec.id);
+        assert(skill, `缺少主流程 Buff 样本技能 ${spec.id}`);
+        assert(skill.name === spec.expectedName, `${spec.id} 名称未收口为正式样本: ${skill.name}`);
+        assert(JSON.stringify(skill.prerequisites || []) === JSON.stringify(spec.expectedPrereqs), `${spec.id} 前置路径错误: ${JSON.stringify(skill.prerequisites || [])}`);
+        const applyRows = Array.isArray(skill.buffRefs?.apply) ? skill.buffRefs.apply : [];
+        const sampleRef = applyRows.find(row => row?.buffId === spec.expectedBuffId);
+        assert(sampleRef, `${spec.id} 未绑定预期 Buff ${spec.expectedBuffId}`);
+        assert(sampleRef.target === spec.expectedBuffTarget, `${spec.id} Buff 目标错误: ${sampleRef.target}`);
+        const description = String(skill.description || '');
+        for (const token of spec.mustInclude) {
+          assert(description.includes(token), `${spec.id} 描述未体现主流程用途: ${token}`);
+        }
+        for (const token of spec.mustExclude) {
+          assert(!description.includes(token), `${spec.id} 描述仍残留编辑期占位语: ${token}`);
+        }
+      }
+
+      assert(!String(buffMap.buff_ap_regen?.description || '').includes('后续需要补充'), 'buff_ap_regen 描述仍残留编辑期备注');
+      assert(!String(buffMap.new_buff_1771485041778?.description || '').includes('获取护甲'), '受击获甲 Buff 描述仍未收口为正式文本');
+    }
+
     async function testSkillPackSchemaAndEditorFieldMappingAreAligned() {
       const skillPack = await fetchRegistryJson('skills', { skillTreeId: 'melee_v4_5' });
       assert(skillPack && typeof skillPack === 'object', '技能 pack 未成功加载');
@@ -1467,6 +1601,94 @@
       ]) {
         assertPageIncludesText(ioPage, requiredText, 'buff_editor_io_test.html 缺少 runtime bridge 入口文案');
       }
+    }
+
+    function testSkillPanelBuffRefsUseBuffDisplayNames() {
+      const panel = Object.create(UI_SkillPanel.prototype);
+      panel.engine = {
+        data: {
+          getBuffDefinitions() {
+            return {
+              buff_guard: { id: 'buff_guard', name: '护甲免伤' },
+              buff_bleed: { id: 'buff_bleed', name: '流血' }
+            };
+          }
+        }
+      };
+
+      const text = panel.formatBuffRefsText({
+        buffRefs: {
+          apply: [{ buffId: 'buff_guard' }],
+          remove: [{ buffId: 'buff_bleed' }]
+        }
+      });
+
+      assert(text.includes('护甲免伤'), `技能详情未显示 Buff 名称: ${text}`);
+      assert(text.includes('流血'), `技能详情未显示移除 Buff 名称: ${text}`);
+      assert(!text.includes('buff_guard'), `技能详情仍暴露 Buff id: ${text}`);
+      assert(!text.includes('buff_bleed'), `技能详情仍暴露 Buff id: ${text}`);
+    }
+
+    function testCoreEngineSkillBuffLogsUseBuffDisplayNames() {
+      const registry = new BuffRegistry({
+        new_buff_1771485041778: {
+          id: 'new_buff_1771485041778',
+          name: '受击获甲',
+          type: 'buff',
+          lifecycle: {
+            duration: 2,
+            maxStacks: 1,
+            stackStrategy: 'refresh',
+            removeOnBattleEnd: true
+          },
+          effects: [],
+          statModifiers: []
+        }
+      });
+      const eventBus = createEventBus();
+      const actor = createCombatant({ id: 'player_1' });
+      actor.name = 'Player';
+      actor.buffs = new BuffManager(actor, registry, eventBus);
+      const enemy = createCombatant({ id: 'enemy_1' });
+      enemy.name = 'Enemy';
+      enemy.buffs = new BuffManager(enemy, registry, eventBus);
+
+      const engine = Object.create(CoreEngine.prototype);
+      engine.eventBus = eventBus;
+      engine._getEntityById = (entityId) => entityId === 'enemy_1' ? enemy : null;
+
+      const result = engine._executeSkillActions({
+        actor,
+        action: {
+          targetId: 'enemy_1',
+          bodyPart: 'head'
+        },
+        skillConfig: {
+          id: 'skill_regroup',
+          name: '受击备甲',
+          target: {
+            subject: 'SUBJECT_SELF',
+            scope: 'SCOPE_ENTITY',
+            selection: {
+              mode: 'single'
+            }
+          },
+          actions: [],
+          buffRefs: {
+            apply: [
+              {
+                buffId: 'new_buff_1771485041778',
+                target: 'self'
+              }
+            ],
+            remove: []
+          }
+        }
+      });
+
+      const combinedLogs = (result?.logs || []).join('\n');
+      assert(combinedLogs.includes('受击获甲'), `Buff 执行日志未显示 Buff 名称: ${combinedLogs}`);
+      assert(!combinedLogs.includes('new_buff_1771485041778'), `Buff 执行日志仍暴露 Buff id: ${combinedLogs}`);
     }
 
     async function testBuffRuntimeProbePageProvidesRuntimeConsumptionEntry() {
@@ -2411,6 +2633,76 @@
       assert(dataSaveCalls === 0, `不应直接调用 engine.data.saveGame: ${dataSaveCalls}`);
     }
 
+    function testBattleRowSeparatesBuffAndDebuffIconsFromRuntimeStatuses() {
+      const fixture = resetRegressionFixture();
+      setupBattleRowDom(fixture);
+
+      const row = new UI_BattleRow();
+      row.init({ eventBus: createEventBus() });
+
+      const runtimeStatuses = [
+        {
+          id: 'buff_guard',
+          type: 'buff',
+          definition: {
+            name: '护甲免伤',
+            description: '护甲不会因伤害下降。',
+            type: 'buff'
+          }
+        },
+        {
+          id: 'buff_bleed',
+          type: 'debuff',
+          definition: {
+            name: '流血',
+            description: '回合开始时持续掉血。',
+            type: 'debuff'
+          }
+        }
+      ];
+
+      row.onBattleUpdate({
+        player: {
+          name: 'Player1',
+          stats: { hp: 90, maxHp: 100 },
+          bodyParts: {
+            head: { current: 10, max: 20 },
+            chest: { current: 20, max: 20 }
+          },
+          buffs: runtimeStatuses
+        },
+        enemies: [
+          {
+            name: 'Enemy1',
+            stats: { hp: 40, maxHp: 50 },
+            bodyParts: {
+              head: { current: 5, max: 10 },
+              chest: { current: 8, max: 10 }
+            },
+            buffs: runtimeStatuses
+          }
+        ]
+      });
+
+      const getNamesByLabel = (rootSelector, label) => {
+        const root = document.querySelector(rootSelector);
+        const rowEl = [...root.querySelectorAll('.status-row')].find(item => item.querySelector('.status-label')?.textContent?.trim() === label);
+        return [...(rowEl?.querySelectorAll('.status-icon') || [])].map(icon => icon.dataset.name || '');
+      };
+
+      const playerBuffs = getNamesByLabel('.player-hud', 'BUFF');
+      const playerDebuffs = getNamesByLabel('.player-hud', 'DEBUFF');
+      const enemyBuffs = getNamesByLabel('.enemy-hud', 'BUFF');
+      const enemyDebuffs = getNamesByLabel('.enemy-hud', 'DEBUFF');
+
+      assert(playerBuffs.includes('护甲免伤'), `玩家 BUFF 栏未显示护甲免伤: ${playerBuffs.join(',')}`);
+      assert(!playerBuffs.includes('流血'), `玩家 BUFF 栏混入 Debuff: ${playerBuffs.join(',')}`);
+      assert(playerDebuffs.includes('流血'), `玩家 DEBUFF 栏未显示流血: ${playerDebuffs.join(',')}`);
+      assert(enemyBuffs.includes('护甲免伤'), `敌人 BUFF 栏未显示护甲免伤: ${enemyBuffs.join(',')}`);
+      assert(!enemyBuffs.includes('流血'), `敌人 BUFF 栏混入 Debuff: ${enemyBuffs.join(',')}`);
+      assert(enemyDebuffs.includes('流血'), `敌人 DEBUFF 栏未显示流血: ${enemyDebuffs.join(',')}`);
+    }
+
     function testDataManagerAppliesBattleSettlementRewards() {
       assert(typeof DataManager.applyBattleSettlement === 'function', 'DataManagerV2 缺少 applyBattleSettlement()');
 
@@ -2999,9 +3291,11 @@
       ['验收关卡与样本敌人/技能已配置', testAcceptanceLevelProvidesManualVerificationEntry],
       ['验收关卡提供确定性的玩家与敌人状态', testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates],
       ['验收防御技能会先于样本敌人执行', testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack],
+      ['主流程 Buff 样本链具备正式可学路径', testMainFlowBuffSamplesProvideProductionReadySkillTreeChains],
       ['关卡 pack schema 与敌人池配置映射对齐', testLevelPackSchemaAndEnemyPoolMappingAreAligned],
       ['技能 pack schema 与编辑器字段映射对齐', testSkillPackSchemaAndEditorFieldMappingAreAligned],
       ['Buff pack schema 与编辑器 workspace 契约对齐', testBuffPackSchemaAndEditorWorkspaceAreAligned],
+      ['UI_SkillPanel Buff 明细显示 Buff 名称', testSkillPanelBuffRefsUseBuffDisplayNames],
       ['skill_editor_io_test 提供 runtime bridge 验证入口', testSkillEditorIoPageProvidesRuntimeBridgeEntry],
       ['buff_editor_io_test 提供 runtime bridge 验证入口', testBuffEditorIoPageProvidesRuntimeBridgeEntry],
       ['buff_runtime_probe 提供运行时消费入口', testBuffRuntimeProbePageProvidesRuntimeConsumptionEntry],
@@ -3013,6 +3307,7 @@
       ['DataManager.instantiateLevel 保留验收敌人的残甲状态', testDataManagerInstantiateLevelPreservesConfiguredEnemyCurrentArmor],
       ['EnemyActionPlanner 受损时优先修甲', testEnemyPlannerPrefersArmorRepairWhenDamaged],
       ['EnemyActionPlanner 低血量时优先回血', testEnemyPlannerPrefersHealWhenLowHp],
+      ['CoreEngine Buff 执行日志显示 Buff 名称', testCoreEngineSkillBuffLogsUseBuffDisplayNames],
       ['BuffSystem 触发降耗与反击', testBuffSystemApCostReduceAndCounter],
       ['BuffSystem 战斗管线中的 HP 免伤', testBuffSystemPreventHpDamageInBattlePipeline],
       ['BuffSystem 战斗管线中的护甲免伤', testBuffSystemPreventArmorDamageKeepsArmorAndHp],
@@ -3024,6 +3319,7 @@
       ['UI_SkillPanel 通用 DATA_UPDATE 不应丢失战斗注入技能', testSkillPanelKeepsBattleInjectedSkillsOnGenericDataUpdate],
       ['UI_SkillPanel 仅高亮 candidateParts', testSkillPanelHighlightsCandidatePartsOnly],
       ['UI_SkillTreeModal 走 engine.saveGame 保存路径', testSkillTreeCommitUsesEngineSavePath],
+      ['UI_BattleRow 会分离 Buff 与 Debuff 图标', testBattleRowSeparatesBuffAndDebuffIconsFromRuntimeStatuses],
       ['DataManager 结算奖励会入账到玩家与进度', testDataManagerAppliesBattleSettlementRewards],
       ['故事关卡提供连续推进路径', testStoryLevelsProvideSequentialProgressionPath],
       ['DataManager 构建故事关卡选择入口', testDataManagerBuildsLevelSelectEntriesFromStoryProgress],

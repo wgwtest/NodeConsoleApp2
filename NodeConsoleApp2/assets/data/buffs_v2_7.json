@@ -388,7 +388,7 @@
           "_payloadJson": ""
         }
       ],
-      "description": "护甲回复没有部位的概念，后续需要补充",
+      "description": "回合开始时恢复护甲，可用于把防守姿态延续到下一回合。",
       "statModifiers": [],
       "paramsSchema": {
         "ArmorGetVal": {
@@ -408,7 +408,7 @@
     "new_buff_1771481773827": {
       "id": "new_buff_1771481773827",
       "name": "护甲免伤",
-      "description": "护甲不会因为伤害降低",
+      "description": "在持续时间内，护甲不会因受到伤害而下降。",
       "icon": "",
       "type": "buff",
       "tags": [],
@@ -513,7 +513,7 @@
     "new_buff_1771485041778": {
       "id": "new_buff_1771485041778",
       "name": "受击获甲",
-      "description": "受到攻击，获取护甲",
+      "description": "在持续时间内，受到攻击前先获得护甲。",
       "icon": "",
       "type": "buff",
       "tags": [],

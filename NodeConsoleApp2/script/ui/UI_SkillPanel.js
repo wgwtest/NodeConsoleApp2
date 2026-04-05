@@ -1078,17 +1078,27 @@ export default class UI_SkillPanel {
         return JSON.stringify(skill.requirements);
     }
 
+    getBuffDisplayName(buffId) {
+        if (!buffId) return '';
+        const buffMap = (typeof this.engine?.data?.getBuffDefinitions === 'function')
+            ? this.engine.data.getBuffDefinitions()
+            : (this.engine?.data?.gameConfig?.buffs || null);
+        const buff = buffMap && typeof buffMap === 'object' ? buffMap[buffId] : null;
+        return buff?.name || buffId;
+    }
+
     formatBuffRefsText(skill) {
         if (!skill.buffRefs) return '-';
+        const mapRows = (rows = []) => rows.map(row => this.getBuffDisplayName(row?.buffId)).filter(Boolean).join(',');
         const parts = [];
         if (skill.buffRefs.apply && skill.buffRefs.apply.length) {
-            parts.push(`施加:${skill.buffRefs.apply.map(b => b.buffId).join(',')}`);
+            parts.push(`施加:${mapRows(skill.buffRefs.apply)}`);
         }
         if (skill.buffRefs.applySelf && skill.buffRefs.applySelf.length) {
-            parts.push(`自施:${skill.buffRefs.applySelf.map(b => b.buffId).join(',')}`);
+            parts.push(`自施:${mapRows(skill.buffRefs.applySelf)}`);
         }
         if (skill.buffRefs.remove && skill.buffRefs.remove.length) {
-            parts.push(`移除:${skill.buffRefs.remove.map(b => b.buffId).join(',')}`);
+            parts.push(`移除:${mapRows(skill.buffRefs.remove)}`);
         }
         return parts.join(' | ') || '-';
     }

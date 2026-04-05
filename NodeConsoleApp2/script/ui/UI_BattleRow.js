@@ -77,9 +77,10 @@ class BattleHUD {
         }
 
         // 更新状态图标
-        if (data.buffs || data.debuffs) { // 假设数据结构中有 buffs/debuffs 数组
-            this.updateStatusIcons(data.buffs || [], this.dom.buffContainer, 'buff');
-            this.updateStatusIcons(data.debuffs || [], this.dom.debuffContainer, 'debuff'); // 或者 neutral/debuff
+        if (data.buffs || data.debuffs) {
+            const { buffs, debuffs } = this.partitionStatuses(data.buffs, data.debuffs);
+            this.updateStatusIcons(buffs, this.dom.buffContainer, 'buff');
+            this.updateStatusIcons(debuffs, this.dom.debuffContainer, 'debuff');
         }
     }
 
@@ -159,6 +160,31 @@ class BattleHUD {
         if (typeof statusList.getAll === 'function') return statusList.getAll();
         if (typeof statusList === 'object') return Object.values(statusList);
         return [];
+    }
+
+    partitionStatuses(buffStatuses, debuffStatuses) {
+        const normalizedBuffs = this.normalizeStatusList(buffStatuses);
+        const normalizedDebuffs = this.normalizeStatusList(debuffStatuses);
+
+        if (normalizedDebuffs.length > 0) {
+            return {
+                buffs: normalizedBuffs,
+                debuffs: normalizedDebuffs
+            };
+        }
+
+        const buffs = [];
+        const debuffs = [];
+        normalizedBuffs.forEach(status => {
+            const kind = status?.definition?.type || status?.type || 'buff';
+            if (kind === 'debuff') {
+                debuffs.push(status);
+            } else {
+                buffs.push(status);
+            }
+        });
+
+        return { buffs, debuffs };
     }
 }
 

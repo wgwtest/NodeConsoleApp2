@@ -1110,9 +1110,9 @@
     },
     {
       "id": "skill_regroup",
-      "name": "受害狂",
+      "name": "受击备甲",
       "rarity": "Epic",
-      "description": "受到攻击叠甲（缺少对应BUFF)",
+      "description": "进入受击备战姿态。在持续时间内，受到攻击前先获得 5 点护甲。",
       "prerequisites": [
         "skill_savage_charge"
       ],
@@ -1170,7 +1170,7 @@
         "apply": [
           {
             "buffId": "new_buff_1771485041778",
-            "target": "enemy",
+            "target": "self",
             "params": {
               "healArmorVal": 5
             }
@@ -1312,9 +1312,9 @@
       "id": "skill_fortify",
       "name": "堡垒姿态",
       "rarity": "Epic",
-      "description": "本回合获得40点护甲，下回合获得40点护甲。\n这里有个问题，回复的护甲不知道部位",
+      "description": "立即获得 40 点护甲，并在下回合开始时再恢复 40 点护甲。",
       "prerequisites": [
-        "skill_hold_the_line"
+        "skill_regroup"
       ],
       "unlock": {
         "cost": {
@@ -1331,12 +1331,12 @@
         "y": 914,
         "group": "melee",
         "locked": false,
-        "editState": "editing"
+        "editState": "done"
       },
       "speed": 0,
       "target": {
-        "subject": "SUBJECT_ENEMY",
-        "scope": "SCOPE_PART",
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
         "selection": {
           "mode": "single",
           "candidateParts": [
@@ -1419,7 +1419,7 @@
       "id": "skill_aegis",
       "name": "绝对防御",
       "rarity": "Legendary",
-      "description": "施加护甲免伤",
+      "description": "施加护甲免伤，本回合内优先保住现有护甲。",
       "prerequisites": [
         "skill_fortify"
       ],
@@ -3239,7 +3239,7 @@
     },
     {
       "id": "skill_1771769351059",
-      "name": "锯齿剑",
+      "name": "锯齿斩",
       "rarity": "Uncommon",
       "costs": {
         "ap": 1,
@@ -3263,7 +3263,7 @@
         }
       },
       "prerequisites": [
-        "skill_double_thrust"
+        "skill_heavy_swing"
       ],
       "buffRefs": {
         "apply": [
@@ -3302,7 +3302,7 @@
         "locked": false,
         "editState": "done"
       },
-      "description": "",
+      "description": "以锯齿刃撕开伤口，造成伤害并施加流血。",
       "tags": [],
       "tagMeta": {},
       "unlock": {
