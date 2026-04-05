@@ -435,6 +435,9 @@ export class UI_SystemModal {
         menu.className = 'menu-list';
 
         const items = [];
+        const acceptanceEntries = (this.engine.data && this.engine.data.getAcceptanceLevelSelectEntries)
+            ? this.engine.data.getAcceptanceLevelSelectEntries()
+            : [];
 
         if (canResume) {
             items.push({ label: '继续游戏', action: () => this.handleClose() });
@@ -450,6 +453,10 @@ export class UI_SystemModal {
                 // 暂时直接渲染视图
                 this.renderLevelSelect();
             }},
+            ...(acceptanceEntries.length > 0 ? [{
+                label: '验收样本',
+                action: () => this.renderAcceptanceLevelSelect()
+            }] : []),
             { label: '存档 / 读档', action: () => this.renderSaveLoad() },
             { label: '设置', action: () => this.renderSettings() },
             { label: '注销', action: () => {
@@ -471,15 +478,83 @@ export class UI_SystemModal {
         this.clearFooter(); // 主菜单通常不需要 Footer 按钮
     }
 
+    _renderLevelCardsView(levels, options = {}) {
+        const {
+            view = 'LEVEL_SELECT',
+            title = '选择关卡',
+            introText = '',
+            emptyText = '暂无可用关卡'
+        } = options;
+
+        this.currentView = view;
+        this.setTitle(title);
+        this.clearContent();
+
+        if (introText) {
+            const hint = document.createElement('p');
+            hint.style.margin = '0 0 16px';
+            hint.style.color = '#cfe8ff';
+            hint.style.fontSize = '0.92rem';
+            hint.textContent = introText;
+            this.dom.body.appendChild(hint);
+        }
+
+        if (!Array.isArray(levels) || levels.length === 0) {
+            const empty = document.createElement('p');
+            empty.style.textAlign = 'center';
+            empty.style.color = '#888';
+            empty.textContent = emptyText;
+            this.dom.body.appendChild(empty);
+            this.renderFooterBackBtn(() => this.openMainMenu());
+            return;
+        }
+
+        const grid = document.createElement('div');
+        grid.className = 'level-grid';
+
+        levels.forEach(lvl => {
+            const card = document.createElement('div');
+            card.className = 'level-card';
+            const levelDesc = lvl.description || lvl.desc || 'No description';
+            const stateTags = [];
+            if (lvl.isCompleted) stateTags.push('已完成');
+            if (lvl.isUnlocked === false) stateTags.push('未解锁');
+            const stateLine = stateTags.length > 0
+                ? `<div class="level-card-state" style="margin-top:8px; font-size:0.82rem; color:${lvl.isUnlocked === false ? '#ff9dbb' : '#7cf5d9'};">${stateTags.join(' · ')}</div>`
+                : '';
+            card.innerHTML = `<h4>${lvl.name || lvl.id}</h4><p>${levelDesc}</p>${stateLine}`;
+
+            if (lvl.isUnlocked === false) {
+                card.setAttribute('aria-disabled', 'true');
+                card.style.opacity = '0.55';
+                card.style.cursor = 'not-allowed';
+                card.onclick = () => {
+                    console.warn(`[UI_SystemModal] Level card is locked: ${lvl.id}`);
+                };
+                grid.appendChild(card);
+                return;
+            }
+
+            card.onclick = () => {
+                console.log(`[UI_SystemModal] Level card clicked: ${lvl.id}`);
+                if (this.engine.input && this.engine.input.selectLevel) {
+                    this.engine.input.selectLevel(lvl.id);
+                } else {
+                    console.error('[UI_SystemModal] engine.input.selectLevel is missing!');
+                }
+            };
+            grid.appendChild(card);
+        });
+
+        this.dom.body.appendChild(grid);
+        this.renderFooterBackBtn(() => this.openMainMenu());
+    }
+
     /**
      * 渲染关卡选择视图
      */
     renderLevelSelect() {
         console.log('[UI_SystemModal] Rendering Level Select');
-        this.currentView = 'LEVEL_SELECT';
-        this.setTitle('选择关卡');
-        this.clearContent();
-
         // 获取关卡数据 (假设 DataManager 有同步接口，或者通过 Engine 获取)
         let levels = [];
         // 修正：CoreEngine 中挂载的是 this.data
@@ -502,52 +577,26 @@ export class UI_SystemModal {
             ];
         }
 
-        if (levels.length === 0) {
-            this.dom.body.innerHTML = '<p style="text-align:center; color:#888;">暂无可用关卡</p>';
-        } else {
-            const grid = document.createElement('div');
-            grid.className = 'level-grid';
-    
-            levels.forEach(lvl => {
-                const card = document.createElement('div');
-                card.className = 'level-card';
-                const levelDesc = lvl.description || lvl.desc || 'No description';
-                const stateTags = [];
-                if (lvl.isCompleted) stateTags.push('已完成');
-                if (lvl.isUnlocked === false) stateTags.push('未解锁');
-                const stateLine = stateTags.length > 0
-                    ? `<div class="level-card-state" style="margin-top:8px; font-size:0.82rem; color:${lvl.isUnlocked === false ? '#ff9dbb' : '#7cf5d9'};">${stateTags.join(' · ')}</div>`
-                    : '';
-                card.innerHTML = `<h4>${lvl.name || lvl.id}</h4><p>${levelDesc}</p>${stateLine}`;
+        this._renderLevelCardsView(levels, {
+            view: 'LEVEL_SELECT',
+            title: '选择关卡',
+            emptyText: '暂无可用关卡'
+        });
+    }
 
-                if (lvl.isUnlocked === false) {
-                    card.setAttribute('aria-disabled', 'true');
-                    card.style.opacity = '0.55';
-                    card.style.cursor = 'not-allowed';
-                    card.onclick = () => {
-                        console.warn(`[UI_SystemModal] Level card is locked: ${lvl.id}`);
-                    };
-                    grid.appendChild(card);
-                    return;
-                }
+    renderAcceptanceLevelSelect() {
+        console.log('[UI_SystemModal] Rendering Acceptance Level Select');
+        const levels = (this.engine.data && this.engine.data.getAcceptanceLevelSelectEntries)
+            ? this.engine.data.getAcceptanceLevelSelectEntries()
+            : [];
+        console.log('[UI_SystemModal] Loaded acceptance levels from DataManager:', levels);
 
-                card.onclick = () => {
-                    console.log(`[UI_SystemModal] Level card clicked: ${lvl.id}`);
-                    if (this.engine.input && this.engine.input.selectLevel) {
-                        this.engine.input.selectLevel(lvl.id);
-                    } else {
-                        console.error('[UI_SystemModal] engine.input.selectLevel is missing!');
-                    }
-                    // 注意：不需要手动 hide，因为 selectLevel 会触发 STATE_CHANGED -> BATTLE_PREPARE，从而触发 hide
-                };
-                grid.appendChild(card);
-            });
-    
-            this.dom.body.appendChild(grid);
-        }
-
-        // Footer: 返回按钮
-        this.renderFooterBackBtn(() => this.openMainMenu());
+        this._renderLevelCardsView(levels, {
+            view: 'ACCEPTANCE_LEVEL_SELECT',
+            title: '选择验收样本',
+            introText: '本页用于人工验收样本，不影响故事推进。',
+            emptyText: '当前没有可用的验收样本'
+        });
     }
 
     /**

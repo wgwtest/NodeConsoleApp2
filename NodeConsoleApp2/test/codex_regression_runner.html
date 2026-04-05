@@ -2812,6 +2812,51 @@
       assert(entries[1]?.isCompleted === false, '未完成故事关卡错误标记为已完成');
     }
 
+    function testDataManagerBuildsAcceptanceLevelEntriesForManualVerification() {
+      assert(typeof DataManager.getAcceptanceLevelSelectEntries === 'function', 'DataManagerV2 缺少 getAcceptanceLevelSelectEntries()');
+
+      const dm = Object.create(Object.getPrototypeOf(DataManager));
+      dm.dataConfig = {
+        global: {
+          progress: {
+            unlockedLevels: ['level_1_1'],
+            completedLevels: ['level_1_1'],
+            flags: {}
+          }
+        }
+      };
+      dm.gameConfig = {
+        levels: {
+          level_1_1: {
+            id: 'level_1_1',
+            name: '第一关',
+            description: 'first',
+            flow: { kind: 'story', order: 1 }
+          },
+          level_1_2_acceptance: {
+            id: 'level_1_2_acceptance',
+            name: '人工验收样本',
+            description: 'acceptance',
+            flow: { kind: 'acceptance', order: 101 }
+          },
+          level_1_3_acceptance: {
+            id: 'level_1_3_acceptance',
+            name: '受击获甲验收样本',
+            description: 'acceptance-2',
+            flow: { kind: 'acceptance', order: 102 }
+          }
+        }
+      };
+
+      const entries = DataManager.getAcceptanceLevelSelectEntries.call(dm);
+      assert(Array.isArray(entries), 'getAcceptanceLevelSelectEntries() 未返回数组');
+      assert(entries.length === 2, `验收样本入口数量错误: ${entries.length}`);
+      assert(entries[0]?.id === 'level_1_2_acceptance', `第一项验收样本错误: ${entries[0]?.id}`);
+      assert(entries[1]?.id === 'level_1_3_acceptance', `第二项验收样本错误: ${entries[1]?.id}`);
+      assert(entries.every(entry => entry.isUnlocked === true), '验收样本默认应始终可进入');
+      assert(entries.every(entry => entry.flow?.kind === 'acceptance'), '验收样本入口不应混入 story 关卡');
+    }
+
     function testDataManagerFirstClearUnlocksNextStoryLevel() {
       const dm = Object.create(Object.getPrototypeOf(DataManager));
       dm.dataConfig = {
@@ -3233,6 +3278,83 @@
       assert(selected[0] === 'level_1_1', `已解锁关卡点击结果错误: ${selected[0]}`);
     }
 
+    function testSystemModalProvidesAcceptanceSampleEntryWithoutBreakingStorySelect() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const selected = [];
+      const modal = new UI_SystemModal();
+      modal.engine = {
+        fsm: {
+          currentState: 'MAIN_MENU'
+        },
+        data: {
+          getLevelSelectEntries() {
+            return [
+              {
+                id: 'level_1_1',
+                name: '第一关',
+                description: 'story',
+                isUnlocked: true,
+                isCompleted: false,
+                flow: { kind: 'story', order: 1 }
+              }
+            ];
+          },
+          getAcceptanceLevelSelectEntries() {
+            return [
+              {
+                id: 'level_1_2_acceptance',
+                name: '人工验收样本',
+                description: 'manual acceptance',
+                isUnlocked: true,
+                isCompleted: false,
+                flow: { kind: 'acceptance', order: 101 }
+              }
+            ];
+          }
+        },
+        input: {
+          selectLevel(levelId) {
+            selected.push(levelId);
+          }
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderMainMenu();
+
+      const menuButtons = Array.from(document.querySelectorAll('#modalBody .menu-btn')).map(btn => btn.textContent.trim());
+      assert(menuButtons.includes('关卡选择'), '主菜单缺少故事关卡选择入口');
+      assert(menuButtons.includes('验收样本'), '主菜单缺少验收样本入口');
+
+      const acceptanceBtn = Array.from(document.querySelectorAll('#modalBody .menu-btn'))
+        .find(btn => btn.textContent.trim() === '验收样本');
+      acceptanceBtn.click();
+
+      assert((document.getElementById('modalTitle')?.textContent || '').includes('验收样本'), '验收样本页标题错误');
+      const bodyText = document.getElementById('modalBody')?.textContent || '';
+      assert(bodyText.includes('人工验收样本'), '验收样本页未显示验收关卡');
+      assert(bodyText.includes('不影响故事推进'), '验收样本页缺少用途说明');
+
+      const cards = Array.from(document.querySelectorAll('.level-card'));
+      assert(cards.length === 1, `验收样本页卡片数量错误: ${cards.length}`);
+      cards[0].click();
+      assert(selected[0] === 'level_1_2_acceptance', `验收样本点击结果错误: ${selected[0]}`);
+
+      modal.renderLevelSelect();
+      const storyCards = Array.from(document.querySelectorAll('.level-card'));
+      assert(storyCards.length === 1, `故事关卡选择仍应只显示 story 关卡: ${storyCards.length}`);
+      assert((document.getElementById('modalBody')?.textContent || '').includes('第一关'), '故事关卡选择丢失 story 关卡');
+      assert(!(document.getElementById('modalBody')?.textContent || '').includes('人工验收样本'), '故事关卡选择不应混入验收样本');
+    }
+
     function testSystemModalRendersSaveLoadFeedbackAndSlotMeta() {
       resetRegressionFixture(`
         <div id="systemModal" hidden aria-hidden="true"></div>
@@ -3323,6 +3445,7 @@
       ['DataManager 结算奖励会入账到玩家与进度', testDataManagerAppliesBattleSettlementRewards],
       ['故事关卡提供连续推进路径', testStoryLevelsProvideSequentialProgressionPath],
       ['DataManager 构建故事关卡选择入口', testDataManagerBuildsLevelSelectEntriesFromStoryProgress],
+      ['DataManager 构建独立验收样本选择入口', testDataManagerBuildsAcceptanceLevelEntriesForManualVerification],
       ['DataManager 首次通关会解锁下一故事关卡', testDataManagerFirstClearUnlocksNextStoryLevel],
       ['CoreEngine.endBattle 会发出带 settlement 的结算事件', testCoreEngineEndBattleEmitsSettlementPayload],
       ['CoreEngine 自然执行链会触发胜利结算', testCoreEngineTriggersVictorySettlementFromNaturalExecution],
@@ -3331,6 +3454,7 @@
       ['UI_SystemModal 会渲染奖励摘要', testSystemModalRendersSettlementRewardSummary],
       ['UI_SystemModal 会渲染结算去向按钮', testSystemModalRendersSettlementFlowActions],
       ['UI_SystemModal 关卡选择遵守解锁状态', testSystemModalLevelSelectHonorsUnlockedState],
+      ['UI_SystemModal 提供独立验收样本入口', testSystemModalProvidesAcceptanceSampleEntryWithoutBreakingStorySelect],
       ['UI_SystemModal 存档页会显示反馈与槽位元数据', testSystemModalRendersSaveLoadFeedbackAndSlotMeta]
     ];
 

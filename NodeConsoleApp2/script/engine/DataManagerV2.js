@@ -844,16 +844,24 @@ class DataManager {
         };
     }
 
-    _getStoryLevelsList() {
+    _getLevelsListByKind(kind) {
         const levels = Object.values(this.getLevelDefinitions() || {});
         return levels
-            .filter(level => this._getLevelFlow(level).kind === 'story')
+            .filter(level => this._getLevelFlow(level).kind === kind)
             .sort((a, b) => {
                 const orderA = Number(this._getLevelFlow(a, Number.MAX_SAFE_INTEGER).order);
                 const orderB = Number(this._getLevelFlow(b, Number.MAX_SAFE_INTEGER).order);
                 if (orderA !== orderB) return orderA - orderB;
                 return String(a?.id || '').localeCompare(String(b?.id || ''));
             });
+    }
+
+    _getStoryLevelsList() {
+        return this._getLevelsListByKind('story');
+    }
+
+    _getAcceptanceLevelsList() {
+        return this._getLevelsListByKind('acceptance');
     }
 
     getNextStoryLevelId(levelId) {
@@ -880,6 +888,17 @@ class DataManager {
             flow: this._getLevelFlow(level),
             isUnlocked: unlockedLevels.includes(level.id),
             isCompleted: completedLevels.includes(level.id)
+        }));
+    }
+
+    getAcceptanceLevelSelectEntries() {
+        return this._getAcceptanceLevelsList().map(level => ({
+            id: level.id,
+            name: level.name || level.id,
+            description: level.description || '',
+            flow: this._getLevelFlow(level),
+            isUnlocked: true,
+            isCompleted: false
         }));
     }
 
