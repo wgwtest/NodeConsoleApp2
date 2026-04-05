@@ -1,6 +1,6 @@
 # 验收清单 README
 
-最后整理时间：2026-04-03
+最后整理时间：2026-04-06 00:03:27 +0800
 
 状态：`当前有效`
 
@@ -27,7 +27,27 @@
 
 1. [归档](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/归档)
 
-## 2. 当前有效清单
+## 1.1 集中验收入口
+
+如果要在同一天集中审核当前待验收功能，优先从以下入口开始。
+
+如果 [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md) 已明确写明“当前无待验收节点”，则直接从本页的“已通过节点索引”或对应组页回查历史结果，不再重复进入旧验收流程：
+
+1. [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md)
+2. [01-A3-战斗恢复验收总页](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/01-A3-战斗恢复验收总页.md)
+3. [02-A4.2-Buff编辑链验收总页](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/02-A4.2-Buff编辑链验收总页.md)
+4. [03-A4.3-关卡编辑链验收总页](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/03-A4.3-关卡编辑链验收总页.md)
+5. [04-B阶段单局体验验收总页](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/04-B阶段单局体验验收总页.md)
+
+## 2. 当前待验收清单
+
+以下清单仍处于 `待验收` 或 `待重测` 状态，也是 [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md) 应该覆盖的对象：
+
+当前为空。
+
+## 3. 已通过节点索引
+
+以下节点已通过人工验收，不再列入“当前待验收功能总入口”，但保留在本目录中作为有效历史记录：
 
 1. `#53 / A4.0`
    - [A4.0-[已通过]-2026-03-29-005241-统一内容契约入口与装载基线-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.0-[已通过]-2026-03-29-005241-统一内容契约入口与装载基线-人工验收清单.md)
@@ -38,19 +58,29 @@
 4. `#56 / A4.1.3`
    - [A4.1.3-[已通过]-2026-03-29-082021-技能编辑链局部验证入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.1.3-[已通过]-2026-03-29-082021-技能编辑链局部验证入口-人工验收清单.md)
 5. `#57 / A4.2.1`
-   - [A4.2.1-[待验收]-2026-03-30-231523-Buff-schema与workspace契约收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.2.1-[待验收]-2026-03-30-231523-Buff-schema与workspace契约收口-人工验收清单.md)
+   - [A4.2.1-[已通过]-2026-03-30-231523-Buff-schema与workspace契约收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.2.1-[已通过]-2026-03-30-231523-Buff-schema与workspace契约收口-人工验收清单.md)
 6. `#58 / A4.2.2`
-   - [A4.2.2-[待验收]-2026-03-30-231523-Buff装载与运行时消费边界收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.2.2-[待验收]-2026-03-30-231523-Buff装载与运行时消费边界收口-人工验收清单.md)
+   - [A4.2.2-[已通过]-2026-03-30-231523-Buff装载与运行时消费边界收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.2.2-[已通过]-2026-03-30-231523-Buff装载与运行时消费边界收口-人工验收清单.md)
 7. `#59 / A4.2.3`
-   - [A4.2.3-[待验收]-2026-03-31-000051-Buff编辑链局部验证入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.2.3-[待验收]-2026-03-31-000051-Buff编辑链局部验证入口-人工验收清单.md)
+   - [A4.2.3-[已通过]-2026-03-31-000051-Buff编辑链局部验证入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.2.3-[已通过]-2026-03-31-000051-Buff编辑链局部验证入口-人工验收清单.md)
 8. `#60 / A4.3.1`
-   - [A4.3.1-[待验收]-2026-04-01-124334-关卡schema与敌人池配置映射收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.3.1-[待验收]-2026-04-01-124334-关卡schema与敌人池配置映射收口-人工验收清单.md)
+   - [A4.3.1-[已通过]-2026-04-01-124334-关卡schema与敌人池配置映射收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.3.1-[已通过]-2026-04-01-124334-关卡schema与敌人池配置映射收口-人工验收清单.md)
 9. `#61 / A4.3.2`
-   - [A4.3.2-[待验收]-2026-04-01-124334-关卡装载与实例化边界收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.3.2-[待验收]-2026-04-01-124334-关卡装载与实例化边界收口-人工验收清单.md)
+   - [A4.3.2-[已通过]-2026-04-01-124334-关卡装载与实例化边界收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.3.2-[已通过]-2026-04-01-124334-关卡装载与实例化边界收口-人工验收清单.md)
 10. `#62 / A4.3.3`
-   - [A4.3.3-[待验收]-2026-04-01-124334-关卡编辑链局部验证入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.3.3-[待验收]-2026-04-01-124334-关卡编辑链局部验证入口-人工验收清单.md)
+   - [A4.3.3-[已通过]-2026-04-01-124334-关卡编辑链局部验证入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A4.3.3-[已通过]-2026-04-01-124334-关卡编辑链局部验证入口-人工验收清单.md)
+11. `#22 / A3.1`
+   - [A3.1-[已通过]-2026-04-04-013552-战斗runtime快照最小字段-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A3.1-[已通过]-2026-04-04-013552-战斗runtime快照最小字段-人工验收清单.md)
+12. `#23 / A3.2`
+   - [A3.2-[已通过]-2026-04-04-013552-恢复后Buff与规划状态重建-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A3.2-[已通过]-2026-04-04-013552-恢复后Buff与规划状态重建-人工验收清单.md)
+13. `#24 / A3.3`
+   - [A3.3-[已通过]-2026-04-04-013552-恢复后继续执行回归-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A3.3-[已通过]-2026-04-04-013552-恢复后继续执行回归-人工验收清单.md)
+14. `#26 / B1`
+   - [B1-[已通过]-2026-04-04-015615-战斗结算奖励入账与展示-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B1-[已通过]-2026-04-04-015615-战斗结算奖励入账与展示-人工验收清单.md)
+15. `#27 / B2`
+   - [B2-[已通过]-2026-04-04-080951-故事关卡流转与结算去向-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B2-[已通过]-2026-04-04-080951-故事关卡流转与结算去向-人工验收清单.md)
 
-## 3. 当前不再放在这里的清单
+## 4. 当前不再放在这里的清单
 
 以下类型不再留在当前有效区：
 
@@ -59,7 +89,7 @@
 3. 被新策略或新清单替代的旧清单
 4. 跨多个 WBS 节点的组合性过程清单
 
-## 4. 使用约束
+## 5. 使用约束
 
 从现在开始：
 
@@ -69,3 +99,10 @@
 4. 不再把“读代码确认”写成当前有效人工验收项
 5. 当前有效清单文件名统一采用 `WBS编号-[状态]-日期-时间-内容-人工验收清单.md`
 6. 如果未来发生目录迁移或文件改名，必须同步修正对应 GitHub Issue / Project 中的路径引用
+7. `00-当前待验收功能总入口.md` 只允许列出 `待验收` 或 `待重测` 节点
+8. 某个节点一旦人工验收通过，应在同一轮从“当前待验收功能总入口”移除，并同步更新 GitHub Issue / Project 状态
+9. 对人工验收结论的读取，默认只以用户写在 `【】` 内的内容为准
+10. 用户不会主动维护开发者预填的 `状态`、`验收结论`、复选框或占位字段；这些字段由 Codex 根据 `【】` 批注回写同步
+11. 如果文档预填字段与用户 `【】` 批注冲突，应一律以 `【】` 批注为准
+12. 一旦某份活跃清单中的用户批注已经进入处理回路，下一轮应先把旧批注转存到 `06_过程文档/03_验收意见处理/`，再刷新出干净版活跃清单
+13. 开发者在新写的活跃清单、策略文档和说明文档中，不主动使用用户批注保留标记
