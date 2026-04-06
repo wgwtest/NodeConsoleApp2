@@ -155,6 +155,10 @@
       };
     }
 
+    function deepClone(value) {
+      return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+    }
+
     function createBattleDriver(eventBus) {
       const driver = Object.create(CoreEngine.prototype);
       driver.eventBus = eventBus;
@@ -203,6 +207,47 @@
           return 0;
         }
       };
+    }
+
+    async function buildStoryEnemyPlanningFixture(levelId) {
+      await DataManager.loadConfigs();
+      const levelConfig = DataManager.getLevelConfig(levelId);
+      assert(levelConfig, `缺少故事关卡 ${levelId}`);
+
+      const runtimeLevel = DataManager.instantiateLevel(levelId);
+      const enemy = runtimeLevel?.enemies?.[0];
+      assert(enemy, `故事关卡 ${levelId} 未实例化首个敌人`);
+
+      const playerTemplate = DataManager.gameConfig?.player?.default || {};
+      const player = {
+        id: 'player_story_probe',
+        stats: deepClone(playerTemplate.stats || { hp: 100, maxHp: 100, ap: 3, speed: 10 }),
+        bodyParts: deepClone(playerTemplate.bodyParts || {
+          head: { current: 20, max: 20, weakness: 1.5 },
+          chest: { current: 20, max: 20, weakness: 1.0 },
+          abdomen: { current: 20, max: 20, weakness: 1.1 },
+          arm: { current: 20, max: 20, weakness: 1.0 },
+          leg: { current: 20, max: 20, weakness: 1.0 }
+        })
+      };
+
+      const battlePlayerState = levelConfig?.battlePlayerState;
+      if (battlePlayerState?.stats) {
+        player.stats = {
+          ...(player.stats || {}),
+          ...deepClone(battlePlayerState.stats)
+        };
+      }
+      if (battlePlayerState?.bodyParts) {
+        for (const [partKey, override] of Object.entries(battlePlayerState.bodyParts)) {
+          player.bodyParts[partKey] = {
+            ...(player.bodyParts[partKey] || {}),
+            ...deepClone(override)
+          };
+        }
+      }
+
+      return { levelConfig, enemy, player };
     }
 
     function createNaturalSettlementHarness({
@@ -1322,9 +1367,60 @@
       assert(Number(healEnemy.stats?.hp ?? 0) === 18, `敌人回血样本初始 HP 错误: ${healEnemy.stats?.hp}`);
       assert(Array.isArray(healEnemy.skills) && healEnemy.skills.includes('skill_heal'), '敌人回血样本缺少 skill_heal');
 
+      const pursuitLevel = levels.level_1_7_acceptance_enemy_pursuit;
+      assert(pursuitLevel, '缺少敌人弱点追击人工验收关卡 level_1_7_acceptance_enemy_pursuit');
+      assert(resolveLevelWaveEnemyRefs(levelsPack, pursuitLevel.waves?.[0])?.[0]?.templateId === 'enemy_acceptance_pursuit', `敌人弱点追击验收关卡未接入样本敌人: ${resolveLevelWaveEnemyRefs(levelsPack, pursuitLevel.waves?.[0])?.[0]?.templateId}`);
+      assert(Array.isArray(pursuitLevel.battlePlayerSkills?.learnedAdd) && pursuitLevel.battlePlayerSkills.learnedAdd.includes('skill_demo_wait'), '敌人弱点追击验收关卡未注入等待技能');
+      assert(pursuitLevel.battlePlayerState?.bodyParts?.head?.current === 20, `敌人弱点追击验收关卡头部护甲起始值错误: ${pursuitLevel.battlePlayerState?.bodyParts?.head?.current}`);
+      assert(pursuitLevel.battlePlayerState?.bodyParts?.head?.weakness === 1.5, `敌人弱点追击验收关卡头部弱点系数错误: ${pursuitLevel.battlePlayerState?.bodyParts?.head?.weakness}`);
+
+      const pursuitEnemy = enemies.enemy_acceptance_pursuit;
+      assert(pursuitEnemy, '缺少敌人弱点追击样本 enemy_acceptance_pursuit');
+      assert(Array.isArray(pursuitEnemy.skills) && pursuitEnemy.skills.includes('skill_throw_stone'), '敌人弱点追击样本缺少 skill_throw_stone');
+      assert(Array.isArray(pursuitEnemy.skills) && pursuitEnemy.skills.includes('skill_bite'), '敌人弱点追击样本缺少基础攻击 skill_bite');
+      assert((Number(pursuitEnemy.stats?.ap ?? 0) || 0) >= 4, `敌人弱点追击样本 AP 不足: ${pursuitEnemy.stats?.ap}`);
+
       const armorEnemy = enemies.enemy_acceptance_head_tapper;
       assert(armorEnemy, '缺少护甲验收样本 enemy_acceptance_head_tapper');
       assert(Array.isArray(armorEnemy.skills) && armorEnemy.skills.includes('skill_demo_enemy_head_tap'), '护甲验收样本缺少固定头部攻击技能');
+    }
+
+    async function testEnemyPlannerUsesExpectedStrategyOnAcceptanceEnemySamples() {
+      const planner = new EnemyActionPlanner({
+        getSkillConfig: (skillId) => DataManager.getSkillConfig(skillId)
+      });
+
+      const repair = await buildStoryEnemyPlanningFixture('level_1_4_acceptance_enemy_repair');
+      const repairPlan = planner.planTurn({
+        enemy: repair.enemy,
+        player: repair.player,
+        playerBodyParts: repair.player.bodyParts
+      });
+      assert(repairPlan, '敌人修甲验收样本未生成任何规划');
+      assert(repairPlan.skillId === 'skill_block', `敌人修甲验收样本未优先修甲: ${repairPlan.skillId}`);
+      assert(repairPlan.targetId === repair.enemy.id, `敌人修甲验收样本 targetId 错误: ${repairPlan.targetId}`);
+      assert(repairPlan.bodyPart === 'chest', `敌人修甲验收样本未选择胸部残甲: ${repairPlan.bodyPart}`);
+
+      const heal = await buildStoryEnemyPlanningFixture('level_1_5_acceptance_enemy_heal');
+      const healPlan = planner.planTurn({
+        enemy: heal.enemy,
+        player: heal.player,
+        playerBodyParts: heal.player.bodyParts
+      });
+      assert(healPlan, '敌人回血验收样本未生成任何规划');
+      assert(healPlan.skillId === 'skill_heal', `敌人回血验收样本未优先回血: ${healPlan.skillId}`);
+      assert(healPlan.targetId === heal.enemy.id, `敌人回血验收样本 targetId 错误: ${healPlan.targetId}`);
+
+      const pursuit = await buildStoryEnemyPlanningFixture('level_1_7_acceptance_enemy_pursuit');
+      const pursuitPlan = planner.planTurn({
+        enemy: pursuit.enemy,
+        player: pursuit.player,
+        playerBodyParts: pursuit.player.bodyParts
+      });
+      assert(pursuitPlan, '敌人弱点追击验收样本未生成任何规划');
+      assert(pursuitPlan.skillId === 'skill_throw_stone', `敌人弱点追击验收样本未优先追击弱点: ${pursuitPlan.skillId}`);
+      assert(pursuitPlan.bodyPart === 'head', `敌人弱点追击验收样本未锁定头部: ${pursuitPlan.bodyPart}`);
+      assert(pursuitPlan.targetId === pursuit.player.id, `敌人弱点追击验收样本 targetId 错误: ${pursuitPlan.targetId}`);
     }
 
     async function testLevelPackSchemaAndEnemyPoolMappingAreAligned() {
@@ -2069,6 +2165,66 @@
       assert(plan.skillId === 'skill_block', `受伤敌人未优先修甲，实际选择: ${plan.skillId}`);
       assert(plan.targetId === 'enemy_1', `修甲技能 targetId 错误: ${plan.targetId}`);
       assert(plan.bodyPart === 'chest', `修甲技能未选择最破损部位: ${plan.bodyPart}`);
+    }
+
+    async function testStoryLevelsExposeDistinctEnemyStrategySamples() {
+      await DataManager.loadConfigs();
+
+      const edgeLevel = DataManager.getLevelConfig('level_1_1');
+      const edgeEnemy = DataManager.gameConfig?.enemies?.[edgeLevel?.waves?.[0]?.enemies?.[0]?.templateId];
+      assert(edgeEnemy, '首关缺少首个故事敌人模板');
+      assert(Array.isArray(edgeEnemy.skills) && edgeEnemy.skills.includes('skill_throw_stone'), '首关缺少弱点追击型敌人技能 skill_throw_stone');
+      assert(Array.isArray(edgeEnemy.skills) && edgeEnemy.skills.includes('skill_bite'), '首关缺少基础攻击技能 skill_bite');
+      assert((Number(edgeEnemy.stats?.ap ?? 0) || 0) >= 4, `首关追击型敌人 AP 不足以使用追击技能: ${edgeEnemy.stats?.ap}`);
+
+      const outpostLevel = DataManager.getLevelConfig('level_1_2_story');
+      const outpostEnemy = DataManager.gameConfig?.enemies?.[outpostLevel?.waves?.[0]?.enemies?.[0]?.templateId];
+      assert(outpostEnemy, '第二关缺少首个故事敌人模板');
+      assert(Array.isArray(outpostEnemy.skills) && outpostEnemy.skills.includes('skill_heal'), '第二关缺少恢复型敌人技能 skill_heal');
+      assert((Number(outpostEnemy.stats?.hp ?? 0) || 0) < (Number(outpostEnemy.stats?.maxHp ?? 0) || 0), `第二关恢复型敌人未处于低血量起始态: ${outpostEnemy.stats?.hp}/${outpostEnemy.stats?.maxHp}`);
+
+      const ruinsLevel = DataManager.getLevelConfig('level_1_3_story');
+      const ruinsEnemy = DataManager.gameConfig?.enemies?.[ruinsLevel?.waves?.[0]?.enemies?.[0]?.templateId];
+      assert(ruinsEnemy, '第三关缺少首个故事敌人模板');
+      assert(Array.isArray(ruinsEnemy.skills) && ruinsEnemy.skills.includes('skill_bone_repair'), '第三关缺少修甲型敌人技能 skill_bone_repair');
+      assert((Number(ruinsEnemy.bodyParts?.chest?.current ?? 0) || 0) < (Number(ruinsEnemy.bodyParts?.chest?.max ?? 0) || 0), `第三关修甲型敌人胸部未预置残甲: ${ruinsEnemy.bodyParts?.chest?.current}/${ruinsEnemy.bodyParts?.chest?.max}`);
+    }
+
+    async function testEnemyPlannerUsesDistinctStrategyOnStoryLevels() {
+      const planner = new EnemyActionPlanner({
+        getSkillConfig: (skillId) => DataManager.getSkillConfig(skillId)
+      });
+
+      const edge = await buildStoryEnemyPlanningFixture('level_1_1');
+      const edgePlan = planner.planTurn({
+        enemy: edge.enemy,
+        player: edge.player,
+        playerBodyParts: edge.player.bodyParts
+      });
+      assert(edgePlan, '首关敌人未生成任何规划');
+      assert(edgePlan.skillId === 'skill_throw_stone', `首关追击型敌人未选择弱点追击技能: ${edgePlan.skillId}`);
+      assert(edgePlan.bodyPart === 'head', `首关追击型敌人未追击头部弱点: ${edgePlan.bodyPart}`);
+
+      const outpost = await buildStoryEnemyPlanningFixture('level_1_2_story');
+      const outpostPlan = planner.planTurn({
+        enemy: outpost.enemy,
+        player: outpost.player,
+        playerBodyParts: outpost.player.bodyParts
+      });
+      assert(outpostPlan, '第二关敌人未生成任何规划');
+      assert(outpostPlan.skillId === 'skill_heal', `第二关恢复型敌人未优先回血: ${outpostPlan.skillId}`);
+      assert(outpostPlan.targetId === outpost.enemy.id, `第二关回血技能 targetId 错误: ${outpostPlan.targetId}`);
+
+      const ruins = await buildStoryEnemyPlanningFixture('level_1_3_story');
+      const ruinsPlan = planner.planTurn({
+        enemy: ruins.enemy,
+        player: ruins.player,
+        playerBodyParts: ruins.player.bodyParts
+      });
+      assert(ruinsPlan, '第三关敌人未生成任何规划');
+      assert(ruinsPlan.skillId === 'skill_bone_repair', `第三关修甲型敌人未优先修甲: ${ruinsPlan.skillId}`);
+      assert(ruinsPlan.targetId === ruins.enemy.id, `第三关修甲技能 targetId 错误: ${ruinsPlan.targetId}`);
+      assert(ruinsPlan.bodyPart === 'chest', `第三关修甲技能未选择胸部残甲: ${ruinsPlan.bodyPart}`);
     }
 
     async function testBuffSystemApCostReduceAndCounter() {
@@ -3223,6 +3379,83 @@
       assert(confirmCalls === 1, `返回主菜单未走 confirmSettlement: ${confirmCalls}`);
     }
 
+    async function testSystemModalOpensSkillTreeFromVictorySettlement() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const callOrder = [];
+      const emitted = [];
+      const modal = new UI_SystemModal();
+      modal.engine = {
+        data: {
+          playerData: {
+            skills: {
+              skillTreeId: 'player1',
+              skillPoints: 31,
+              learned: ['skill_heal', 'skill_heavy_swing', 'skill_savage_charge']
+            }
+          },
+          getAcceptanceLevelSelectEntries() {
+            return [];
+          }
+        },
+        input: {
+          confirmSettlement() {
+            callOrder.push('confirmSettlement');
+            modal.handleStateChange({ to: 'MAIN_MENU' });
+          },
+          selectLevel() {}
+        },
+        eventBus: {
+          emit(type, payload) {
+            emitted.push({ type, payload });
+            callOrder.push(type);
+          }
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderBattleSettlement({
+        victory: true,
+        settlement: {
+          levelId: 'level_1_1',
+          levelName: '幽暗森林边缘',
+          nextLevelId: 'level_1_2_story',
+          nextLevelName: '密林前哨',
+          rewards: {
+            exp: 100,
+            gold: 50,
+            kp: 1
+          },
+          playerAfter: {
+            resources: {
+              exp: 100,
+              gold: 50
+            },
+            skillPoints: 31
+          }
+        }
+      });
+
+      const buttons = Array.from(document.querySelectorAll('#modalBody button'));
+      const skillTreeBtn = buttons.find(btn => (btn.textContent || '').includes('技能树 / 构筑'));
+      assert(skillTreeBtn, '胜利结算页缺少“前往技能树 / 构筑”按钮');
+
+      skillTreeBtn.click();
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      assert(callOrder[0] === 'confirmSettlement', `结算跳转技能树未先确认结算: ${callOrder.join(' -> ')}`);
+      assert(emitted.some(entry => entry.type === 'UI:OPEN_SKILL_TREE'), '结算跳转技能树未发送 UI:OPEN_SKILL_TREE');
+      assert((document.getElementById('modalTitle')?.textContent || '').includes('游戏菜单'), '结算跳转技能树后未回到主菜单');
+      assert((document.getElementById('modalBody')?.textContent || '').includes('成长摘要'), '结算跳转技能树后主菜单未渲染成长摘要');
+    }
+
     function testSystemModalLevelSelectHonorsUnlockedState() {
       resetRegressionFixture(`
         <div id="systemModal" hidden aria-hidden="true"></div>
@@ -3342,6 +3575,10 @@
       const bodyText = document.getElementById('modalBody')?.textContent || '';
       assert(bodyText.includes('人工验收样本'), '验收样本页未显示验收关卡');
       assert(bodyText.includes('不影响故事推进'), '验收样本页缺少用途说明');
+      assert(bodyText.includes('等待'), '验收样本页缺少敌人行为样本的操作说明');
+      assert(bodyText.includes('修甲'), '验收样本页缺少敌人修甲观察点说明');
+      assert(bodyText.includes('回血'), '验收样本页缺少敌人回血观察点说明');
+      assert(bodyText.includes('弱点追击'), '验收样本页缺少敌人弱点追击观察点说明');
 
       const cards = Array.from(document.querySelectorAll('.level-card'));
       assert(cards.length === 1, `验收样本页卡片数量错误: ${cards.length}`);
@@ -3353,6 +3590,107 @@
       assert(storyCards.length === 1, `故事关卡选择仍应只显示 story 关卡: ${storyCards.length}`);
       assert((document.getElementById('modalBody')?.textContent || '').includes('第一关'), '故事关卡选择丢失 story 关卡');
       assert(!(document.getElementById('modalBody')?.textContent || '').includes('人工验收样本'), '故事关卡选择不应混入验收样本');
+    }
+
+    function testSystemModalRendersGrowthSummaryAndSkillTreeEntry() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const emitted = [];
+      const modal = new UI_SystemModal();
+      modal.engine = {
+        fsm: {
+          currentState: 'MAIN_MENU'
+        },
+        data: {
+          playerData: {
+            skills: {
+              skillTreeId: 'player1',
+              skillPoints: 7,
+              learned: ['skill_heal', 'skill_block']
+            }
+          },
+          getAcceptanceLevelSelectEntries() {
+            return [];
+          }
+        },
+        eventBus: {
+          emit(type, payload) {
+            emitted.push({ type, payload });
+          }
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderMainMenu();
+
+      const bodyText = document.getElementById('modalBody')?.textContent || '';
+      assert(bodyText.includes('成长摘要'), '主菜单缺少成长摘要区');
+      assert(bodyText.includes('KP'), '主菜单成长摘要缺少 KP 文案');
+      assert(bodyText.includes('7'), '主菜单成长摘要未显示当前 KP 数量');
+      assert(bodyText.includes('已学技能'), '主菜单成长摘要缺少已学技能文案');
+      assert(bodyText.includes('2'), '主菜单成长摘要未显示已学技能数量');
+
+      const skillTreeBtn = Array.from(document.querySelectorAll('#modalBody .menu-btn'))
+        .find(btn => btn.textContent.trim() === '技能树 / 构筑');
+      assert(skillTreeBtn, '主菜单缺少“技能树 / 构筑”入口');
+      skillTreeBtn.click();
+
+      assert(emitted.length === 1, `技能树入口未发送事件: ${emitted.length}`);
+      assert(emitted[0]?.type === 'UI:OPEN_SKILL_TREE', `技能树入口事件类型错误: ${emitted[0]?.type}`);
+      assert((document.getElementById('modalBody')?.textContent || '').includes('关卡选择'), '技能树入口不应破坏原有关卡选择入口');
+    }
+
+    function testSystemModalRefreshesGrowthSummaryOnPlayerSkillsUpdate() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const modal = new UI_SystemModal();
+      const playerSkills = {
+        skillTreeId: 'player1',
+        skillPoints: 7,
+        learned: ['skill_heal', 'skill_block']
+      };
+      modal.engine = {
+        fsm: {
+          currentState: 'MAIN_MENU'
+        },
+        data: {
+          playerData: {
+            skills: playerSkills
+          },
+          getAcceptanceLevelSelectEntries() {
+            return [];
+          }
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderMainMenu();
+      let bodyText = document.getElementById('modalBody')?.textContent || '';
+      assert(bodyText.includes('7'), '主菜单初始 KP 显示错误');
+      assert(bodyText.includes('2'), '主菜单初始已学技能数显示错误');
+
+      playerSkills.skillPoints = 4;
+      playerSkills.learned = ['skill_heal', 'skill_block', 'skill_throw_stone'];
+      modal.handleDataUpdate({ type: 'PLAYER_SKILLS', data: playerSkills });
+
+      bodyText = document.getElementById('modalBody')?.textContent || '';
+      assert(bodyText.includes('4'), 'PLAYER_SKILLS 更新后主菜单 KP 未刷新');
+      assert(bodyText.includes('3'), 'PLAYER_SKILLS 更新后主菜单已学技能数未刷新');
+      assert(bodyText.includes('关卡选择'), 'PLAYER_SKILLS 更新后主菜单入口被破坏');
     }
 
     function testSystemModalRendersSaveLoadFeedbackAndSlotMeta() {
@@ -3413,6 +3751,7 @@
       ['验收关卡与样本敌人/技能已配置', testAcceptanceLevelProvidesManualVerificationEntry],
       ['验收关卡提供确定性的玩家与敌人状态', testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates],
       ['验收防御技能会先于样本敌人执行', testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack],
+      ['EnemyActionPlanner 会在敌人行为验收样本中选出对应策略', testEnemyPlannerUsesExpectedStrategyOnAcceptanceEnemySamples],
       ['主流程 Buff 样本链具备正式可学路径', testMainFlowBuffSamplesProvideProductionReadySkillTreeChains],
       ['关卡 pack schema 与敌人池配置映射对齐', testLevelPackSchemaAndEnemyPoolMappingAreAligned],
       ['技能 pack schema 与编辑器字段映射对齐', testSkillPackSchemaAndEditorFieldMappingAreAligned],
@@ -3429,6 +3768,8 @@
       ['DataManager.instantiateLevel 保留验收敌人的残甲状态', testDataManagerInstantiateLevelPreservesConfiguredEnemyCurrentArmor],
       ['EnemyActionPlanner 受损时优先修甲', testEnemyPlannerPrefersArmorRepairWhenDamaged],
       ['EnemyActionPlanner 低血量时优先回血', testEnemyPlannerPrefersHealWhenLowHp],
+      ['故事关卡已接入三类真实敌人策略样本', testStoryLevelsExposeDistinctEnemyStrategySamples],
+      ['EnemyActionPlanner 会在故事关卡样本中选出对应策略', testEnemyPlannerUsesDistinctStrategyOnStoryLevels],
       ['CoreEngine Buff 执行日志显示 Buff 名称', testCoreEngineSkillBuffLogsUseBuffDisplayNames],
       ['BuffSystem 触发降耗与反击', testBuffSystemApCostReduceAndCounter],
       ['BuffSystem 战斗管线中的 HP 免伤', testBuffSystemPreventHpDamageInBattlePipeline],
@@ -3453,8 +3794,11 @@
       ['CoreEngine 结算态允许重新选择关卡', testCoreEngineSelectLevelAllowsSettlementRestart],
       ['UI_SystemModal 会渲染奖励摘要', testSystemModalRendersSettlementRewardSummary],
       ['UI_SystemModal 会渲染结算去向按钮', testSystemModalRendersSettlementFlowActions],
+      ['UI_SystemModal 会在胜利结算后直达技能树入口', testSystemModalOpensSkillTreeFromVictorySettlement],
       ['UI_SystemModal 关卡选择遵守解锁状态', testSystemModalLevelSelectHonorsUnlockedState],
       ['UI_SystemModal 提供独立验收样本入口', testSystemModalProvidesAcceptanceSampleEntryWithoutBreakingStorySelect],
+      ['UI_SystemModal 会渲染成长摘要并提供技能树入口', testSystemModalRendersGrowthSummaryAndSkillTreeEntry],
+      ['UI_SystemModal 会在 PLAYER_SKILLS 更新后刷新成长摘要', testSystemModalRefreshesGrowthSummaryOnPlayerSkillsUpdate],
       ['UI_SystemModal 存档页会显示反馈与槽位元数据', testSystemModalRendersSaveLoadFeedbackAndSlotMeta]
     ];
 

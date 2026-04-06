@@ -272,6 +272,15 @@ export class UI_SystemModal {
             }));
         }
 
+        if (isVictory) {
+            actionRow.appendChild(createActionButton('前往技能树 / 构筑', () => {
+                if (this.engine.input && this.engine.input.confirmSettlement) {
+                    this.engine.input.confirmSettlement();
+                }
+                this.openSkillTree('SETTLEMENT', { defer: true });
+            }));
+        }
+
         actionRow.appendChild(createActionButton('返回主菜单', () => {
             if (this.engine.input && this.engine.input.confirmSettlement) {
                 this.engine.input.confirmSettlement();
@@ -345,6 +354,12 @@ export class UI_SystemModal {
         // 如果当前正在显示存档/读档界面，且收到了存档列表更新
         if (this.currentView === 'SAVE_LOAD' && type === 'SAVE_LIST') {
             this.renderSaveLoad(data, message || '');
+            return;
+        }
+
+        // 主菜单需要在技能学习提交后立即刷新成长摘要
+        if (this.currentView === 'MAIN_MENU' && type === 'PLAYER_SKILLS') {
+            this.renderMainMenu();
         }
     }
 
@@ -433,6 +448,7 @@ export class UI_SystemModal {
 
         const menu = document.createElement('div');
         menu.className = 'menu-list';
+        const growthSummary = this._buildMainMenuGrowthSummary();
 
         const items = [];
         const acceptanceEntries = (this.engine.data && this.engine.data.getAcceptanceLevelSelectEntries)
@@ -453,6 +469,7 @@ export class UI_SystemModal {
                 // 暂时直接渲染视图
                 this.renderLevelSelect();
             }},
+            { label: '技能树 / 构筑', action: () => this.openSkillTreeFromMainMenu() },
             ...(acceptanceEntries.length > 0 ? [{
                 label: '验收样本',
                 action: () => this.renderAcceptanceLevelSelect()
@@ -474,8 +491,93 @@ export class UI_SystemModal {
             menu.appendChild(btn);
         });
 
+        if (growthSummary) {
+            this.dom.body.appendChild(growthSummary);
+        }
         this.dom.body.appendChild(menu);
         this.clearFooter(); // 主菜单通常不需要 Footer 按钮
+    }
+
+    _buildMainMenuGrowthSummary() {
+        const playerSkills = this.engine?.data?.playerData?.skills;
+        const learned = Array.isArray(playerSkills?.learned) ? playerSkills.learned : [];
+        const skillPoints = Number(playerSkills?.skillPoints);
+        const summary = document.createElement('section');
+        summary.className = 'menu-growth-summary';
+        summary.style.padding = '14px 16px';
+        summary.style.marginBottom = '14px';
+        summary.style.borderRadius = '10px';
+        summary.style.border = '1px solid rgba(124, 245, 217, 0.25)';
+        summary.style.background = 'rgba(18, 23, 38, 0.92)';
+        summary.style.color = '#dfe7ff';
+
+        const title = document.createElement('div');
+        title.textContent = '成长摘要';
+        title.style.fontSize = '0.96rem';
+        title.style.fontWeight = '700';
+        title.style.marginBottom = '8px';
+
+        const tip = document.createElement('p');
+        tip.textContent = '在进入关卡前先确认当前知识点和已学技能，再决定这局要走什么构筑方向。';
+        tip.style.margin = '0 0 12px';
+        tip.style.fontSize = '0.88rem';
+        tip.style.lineHeight = '1.5';
+        tip.style.color = '#cfe8ff';
+
+        const statGrid = document.createElement('div');
+        statGrid.style.display = 'grid';
+        statGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(140px, 1fr))';
+        statGrid.style.gap = '10px';
+
+        const createStatCard = (label, value) => {
+            const card = document.createElement('div');
+            card.style.padding = '10px 12px';
+            card.style.borderRadius = '8px';
+            card.style.background = 'rgba(255, 255, 255, 0.04)';
+            card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+
+            const labelEl = document.createElement('div');
+            labelEl.textContent = label;
+            labelEl.style.fontSize = '0.8rem';
+            labelEl.style.color = '#8fb0d6';
+            labelEl.style.marginBottom = '4px';
+
+            const valueEl = document.createElement('div');
+            valueEl.textContent = value;
+            valueEl.style.fontSize = '1.1rem';
+            valueEl.style.fontWeight = '700';
+
+            card.appendChild(labelEl);
+            card.appendChild(valueEl);
+            return card;
+        };
+
+        statGrid.appendChild(createStatCard('知识点 KP', Number.isFinite(skillPoints) ? String(skillPoints) : '0'));
+        statGrid.appendChild(createStatCard('已学技能', String(learned.length)));
+
+        summary.appendChild(title);
+        summary.appendChild(tip);
+        summary.appendChild(statGrid);
+        return summary;
+    }
+
+    openSkillTreeFromMainMenu() {
+        this.openSkillTree('MAIN_MENU');
+    }
+
+    openSkillTree(source = 'UNKNOWN', options = {}) {
+        if (this.engine?.eventBus?.emit) {
+            const emitOpen = () => {
+                this.engine.eventBus.emit('UI:OPEN_SKILL_TREE', { source });
+            };
+            if (options.defer) {
+                window.setTimeout(emitOpen, 0);
+            } else {
+                emitOpen();
+            }
+        } else {
+            console.warn('[UI_SystemModal] eventBus.emit is missing, cannot open skill tree');
+        }
     }
 
     _renderLevelCardsView(levels, options = {}) {
@@ -495,6 +597,7 @@ export class UI_SystemModal {
             hint.style.margin = '0 0 16px';
             hint.style.color = '#cfe8ff';
             hint.style.fontSize = '0.92rem';
+            hint.style.whiteSpace = 'pre-line';
             hint.textContent = introText;
             this.dom.body.appendChild(hint);
         }
@@ -594,7 +697,12 @@ export class UI_SystemModal {
         this._renderLevelCardsView(levels, {
             view: 'ACCEPTANCE_LEVEL_SELECT',
             title: '选择验收样本',
-            introText: '本页用于人工验收样本，不影响故事推进。',
+            introText: [
+                '本页用于人工验收样本，不影响故事推进。',
+                '敌人行为样本建议优先不部署攻击技能，或只部署“等待”，再提交规划并执行。',
+                '修甲 / 回血 / 弱点追击分别对应：先补残甲、先回低血量、先压迫玩家头部弱点。',
+                '这些样本是对 story 关卡敌人行为的稳定复核入口，不替代正常推进。'
+            ].join('\n'),
             emptyText: '当前没有可用的验收样本'
         });
     }

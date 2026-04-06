@@ -49,6 +49,46 @@
         "leg": { "current": 10, "max": 10, "weakness": 1.0 }
     }
   },
+  "goblin_story_headhunter": {
+    "id": "goblin_story_headhunter",
+    "name": "哥布林追猎手",
+    "race": "goblin",
+    "class": "hunter",
+    "stats": {
+      "hp": 65,
+      "maxHp": 65,
+      "speed": 11,
+      "ap": 4
+    },
+    "bodyParts": {
+      "head": { "current": 4, "max": 4, "weakness": 1.2 },
+      "chest": { "current": 8, "max": 8, "weakness": 1.0 },
+      "abdomen": { "current": 4, "max": 4, "weakness": 1.1 },
+      "arm": { "current": 0, "max": 0, "weakness": 1.0 },
+      "leg": { "current": 0, "max": 0, "weakness": 0.9 }
+    },
+    "skills": ["skill_bite", "skill_throw_stone"]
+  },
+  "goblin_story_medic": {
+    "id": "goblin_story_medic",
+    "name": "哥布林医护斥候",
+    "race": "goblin",
+    "class": "support",
+    "stats": {
+      "hp": 18,
+      "maxHp": 70,
+      "speed": 12,
+      "ap": 3
+    },
+    "bodyParts": {
+      "head": { "current": 3, "max": 3, "weakness": 1.2 },
+      "chest": { "current": 6, "max": 6, "weakness": 1.0 },
+      "abdomen": { "current": 3, "max": 3, "weakness": 1.1 },
+      "arm": { "current": 0, "max": 0, "weakness": 1.0 },
+      "leg": { "current": 0, "max": 0, "weakness": 0.9 }
+    },
+    "skills": ["skill_bite", "skill_heal"]
+  },
   "orc_berserker_lvl5": {
     "id": "orc_berserker_lvl5",
     "name": "嗜血兽人 (Lv.5)",
@@ -103,6 +143,26 @@
     "bodyParts": {
       "head": { "max": 20, "current": 20, "weakness": 1.1 },
       "chest": { "max": 40, "current": 40, "weakness": 0.9 },
+      "abdomen": { "max": 20, "current": 20, "weakness": 1.0 },
+      "arm": { "max": 40, "current": 40, "weakness": 0.75 },
+      "leg": { "max": 30, "current": 30, "weakness": 1.0 }
+    },
+    "skills": ["skill_shield_bash", "skill_bone_repair"]
+  },
+  "skeleton_story_repair_guard": {
+    "id": "skeleton_story_repair_guard",
+    "name": "残甲骷髅卫士",
+    "race": "undead",
+    "class": "defender",
+    "stats": {
+      "hp": 100,
+      "maxHp": 100,
+      "speed": 5,
+      "ap": 4
+    },
+    "bodyParts": {
+      "head": { "max": 20, "current": 20, "weakness": 1.1 },
+      "chest": { "max": 40, "current": 8, "weakness": 0.9 },
       "abdomen": { "max": 20, "current": 20, "weakness": 1.0 },
       "arm": { "max": 40, "current": 40, "weakness": 0.75 },
       "leg": { "max": 30, "current": 30, "weakness": 1.0 }
@@ -168,6 +228,26 @@
       "leg": { "max": 10, "current": 10, "weakness": 1.0 }
     },
     "skills": ["skill_bite", "skill_heal"]
+  },
+  "enemy_acceptance_pursuit": {
+    "id": "enemy_acceptance_pursuit",
+    "name": "验收追击猎手",
+    "race": "construct",
+    "class": "hunter",
+    "stats": {
+      "hp": 70,
+      "maxHp": 70,
+      "speed": 8,
+      "ap": 4
+    },
+    "bodyParts": {
+      "head": { "max": 8, "current": 8, "weakness": 1.2 },
+      "chest": { "max": 12, "current": 12, "weakness": 1.0 },
+      "abdomen": { "max": 8, "current": 8, "weakness": 1.1 },
+      "arm": { "max": 0, "current": 0, "weakness": 1.0 },
+      "leg": { "max": 0, "current": 0, "weakness": 0.9 }
+    },
+    "skills": ["skill_bite", "skill_throw_stone"]
   },
   "enemy_acceptance_head_tapper": {
     "id": "enemy_acceptance_head_tapper",

@@ -74,11 +74,12 @@ export default class EnemyActionPlanner {
 
         let score = 0;
         if (skill?.target?.subject === 'SUBJECT_SELF') {
-            score += summary.healHp * (1.6 - hpRatio);
+            score += summary.healHp * (1.8 - hpRatio);
             score += summary.addArmor * (1.4 - hpRatio);
             score += summary.buffRefsSelf * 18;
             score += this._scoreSelfProtection(skill, enemy);
             if (hpRatio <= 0.45) score += 35;
+            if (hpRatio <= 0.3) score += 18;
         } else {
             score += summary.damageHp * 2.0;
             score += summary.damageArmor * 1.2;
@@ -91,6 +92,11 @@ export default class EnemyActionPlanner {
                 const armorCurrent = Number(part.current ?? 0) || 0;
                 score += weakness * 10;
                 if (armorCurrent <= 0) score += 14;
+                score += this._scoreFocusedPartPressure(skill, summary, {
+                    chosenPart,
+                    part,
+                    candidateParts: this._getCandidateParts(skill, playerBodyParts || player?.bodyParts)
+                });
             }
 
             const playerHp = Number(player?.stats?.hp ?? player?.hp ?? 0) || 0;
@@ -103,6 +109,30 @@ export default class EnemyActionPlanner {
         const cost = Number(skill?.costs?.ap ?? 0) || 0;
         const ap = Number(enemy?.stats?.ap ?? enemy?.ap ?? 0) || 0;
         if (cost > ap) score -= 1000;
+
+        return score;
+    }
+
+    _scoreFocusedPartPressure(skill, summary, { chosenPart, part, candidateParts }) {
+        if (!part) return 0;
+        if (!Array.isArray(candidateParts) || candidateParts.length !== 1) return 0;
+        if (candidateParts[0] !== chosenPart) return 0;
+
+        const weakness = Number(part.weakness ?? 1) || 1;
+        const armorCurrent = Number(part.current ?? 0) || 0;
+        let score = 0;
+
+        if (summary.damageArmor > 0 && armorCurrent > 0) {
+            score += Math.min(armorCurrent, summary.damageArmor) * (0.8 + weakness * 0.4);
+        }
+
+        if (summary.damageHp > 0 && armorCurrent <= 0) {
+            score += weakness * 10;
+        }
+
+        if (skill?.target?.selection?.selectedParts?.length === 1) {
+            score += weakness * 4;
+        }
 
         return score;
     }

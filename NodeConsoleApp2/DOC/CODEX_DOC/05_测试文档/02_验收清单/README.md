@@ -1,6 +1,6 @@
 # 验收清单 README
 
-最后整理时间：2026-04-06 00:03:27 +0800
+最后整理时间：2026-04-06 11:10:02 +0800
 
 状态：`当前有效`
 
@@ -43,7 +43,22 @@
 
 以下清单仍处于 `待验收` 或 `待重测` 状态，也是 [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md) 应该覆盖的对象：
 
-当前为空。
+当前共有 `7` 个待验收节点：
+
+1. `#18 / A1.1`
+   - [A1.1-[待验收]-2026-04-06-015347-验收样本独立入口与手验链路-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A1.1-[待验收]-2026-04-06-015347-验收样本独立入口与手验链路-人工验收清单.md)
+2. `#19 / A1.2`
+   - [A1.2-[待验收]-2026-04-06-012747-扩展Buff学习装配执行闭环-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A1.2-[待验收]-2026-04-06-012747-扩展Buff学习装配执行闭环-人工验收清单.md)
+3. `#20 / A2.1`
+   - [A2.1-[待验收]-2026-04-06-091958-故事关卡敌人策略样本-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A2.1-[待验收]-2026-04-06-091958-故事关卡敌人策略样本-人工验收清单.md)
+4. `#21 / A2.2`
+   - [A2.2-[待验收]-2026-04-06-093650-敌人行为人工验收路径-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A2.2-[待验收]-2026-04-06-093650-敌人行为人工验收路径-人工验收清单.md)
+5. `#63 / C1.1`
+   - [C1.1-[待验收]-2026-04-06-103705-主菜单成长摘要与技能树入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.1-[待验收]-2026-04-06-103705-主菜单成长摘要与技能树入口-人工验收清单.md)
+6. `#64 / C1.2`
+   - [C1.2-[待验收]-2026-04-06-110954-学习提交后主菜单成长摘要即时刷新-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.2-[待验收]-2026-04-06-110954-学习提交后主菜单成长摘要即时刷新-人工验收清单.md)
+7. `#65 / C1.3`
+   - [C1.3-[待验收]-2026-04-06-111002-结算页直达技能树与构筑入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.3-[待验收]-2026-04-06-111002-结算页直达技能树与构筑入口-人工验收清单.md)
 
 ## 3. 已通过节点索引
 

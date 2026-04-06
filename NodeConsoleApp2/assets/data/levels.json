@@ -35,21 +35,21 @@
       "id": "pool_story_goblin_edge",
       "name": "幽暗森林边缘敌人池",
       "members": [
-        { "templateId": "goblin_01", "position": 1 }
+        { "templateId": "goblin_story_headhunter", "position": 1 }
       ]
     },
     "pool_story_goblin_outpost": {
       "id": "pool_story_goblin_outpost",
       "name": "密林前哨敌人池",
       "members": [
-        { "templateId": "goblin_scout_lvl3", "position": 1 }
+        { "templateId": "goblin_story_medic", "position": 1 }
       ]
     },
     "pool_story_ruins_gate": {
       "id": "pool_story_ruins_gate",
       "name": "废墟关隘敌人池",
       "members": [
-        { "templateId": "skeleton_guard_lvl4", "position": 1 }
+        { "templateId": "skeleton_story_repair_guard", "position": 1 }
       ]
     },
     "pool_acceptance_guard": {
@@ -79,13 +79,20 @@
       "members": [
         { "templateId": "enemy_acceptance_heal", "position": 1 }
       ]
+    },
+    "pool_acceptance_pursuit": {
+      "id": "pool_acceptance_pursuit",
+      "name": "敌人弱点追击样本池",
+      "members": [
+        { "templateId": "enemy_acceptance_pursuit", "position": 1 }
+      ]
     }
   },
   "levels": {
     "level_1_1": {
       "id": "level_1_1",
       "name": "幽暗森林边缘",
-      "description": "森林外围，常有哥布林出没。",
+      "description": "森林外围的哥布林追猎手会优先压迫玩家最脆弱的部位。",
       "flow": {
         "kind": "story",
         "order": 1
@@ -93,6 +100,15 @@
       "background": "bg_forest_01",
       "battleRules": {
         "slotLayoutId": "default_v1"
+      },
+      "battlePlayerState": {
+        "bodyParts": {
+          "head": { "current": 20, "max": 20, "weakness": 1.5 },
+          "chest": { "current": 10, "max": 20, "weakness": 1.0 },
+          "abdomen": { "current": 6, "max": 20, "weakness": 1.1 },
+          "arm": { "current": 6, "max": 20, "weakness": 1.0 },
+          "leg": { "current": 12, "max": 20, "weakness": 1.0 }
+        }
       },
       "waves": [
         {
@@ -110,7 +126,7 @@
     "level_1_2_story": {
       "id": "level_1_2_story",
       "name": "密林前哨",
-      "description": "深入森林后，机动更快的哥布林斥候开始骚扰玩家。",
+      "description": "前哨内的医护斥候会在低血量时优先自疗，再重新投入战斗。",
       "flow": {
         "kind": "story",
         "order": 2
@@ -135,7 +151,7 @@
     "level_1_3_story": {
       "id": "level_1_3_story",
       "name": "废墟关隘",
-      "description": "骷髅卫士把守废墟入口，敌人的防御与修复能力开始成形。",
+      "description": "残甲骷髅卫士会先修补破损胸甲，再用重击继续压迫玩家。",
       "flow": {
         "kind": "story",
         "order": 3
@@ -227,7 +243,7 @@
     "level_1_4_acceptance_enemy_repair": {
       "id": "level_1_4_acceptance_enemy_repair",
       "name": "敌人修甲验收样本",
-      "description": "用于人工验收敌人受损后优先修甲，敌人胸部护甲开战即破损。",
+      "description": "先只部署“等待”并执行。若敌人第一回合先修补胸部残甲，再攻击，说明修甲策略成立。",
       "flow": {
         "kind": "acceptance",
         "order": 103
@@ -257,7 +273,7 @@
     "level_1_5_acceptance_enemy_heal": {
       "id": "level_1_5_acceptance_enemy_heal",
       "name": "敌人回血验收样本",
-      "description": "用于人工验收敌人低血量时优先回血，敌人开战即处于低血线。",
+      "description": "先只部署“等待”并执行。若敌人第一回合先回复自身 HP，再继续战斗，说明回血策略成立。",
       "flow": {
         "kind": "acceptance",
         "order": 104
@@ -284,13 +300,52 @@
         "kp": 0
       }
     },
+    "level_1_7_acceptance_enemy_pursuit": {
+      "id": "level_1_7_acceptance_enemy_pursuit",
+      "name": "敌人弱点追击验收样本",
+      "description": "先只部署“等待”并执行。若敌人第一回合优先压迫玩家头部弱点，说明弱点追击策略成立。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 105
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_wait"
+        ]
+      },
+      "battlePlayerState": {
+        "bodyParts": {
+          "head": { "current": 20, "max": 20, "weakness": 1.5 },
+          "chest": { "current": 10, "max": 20, "weakness": 1.0 },
+          "abdomen": { "current": 6, "max": 20, "weakness": 1.1 },
+          "arm": { "current": 6, "max": 20, "weakness": 1.0 },
+          "leg": { "current": 12, "max": 20, "weakness": 1.0 }
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_pursuit"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    },
     "level_1_6_acceptance_armor_guard": {
       "id": "level_1_6_acceptance_armor_guard",
       "name": "护甲免伤验收样本",
       "description": "用于人工验收护甲免伤，敌人固定攻击头部护甲，便于观察护甲是否保持不变。",
       "flow": {
         "kind": "acceptance",
-        "order": 105
+        "order": 106
       },
       "background": "bg_forest_01",
       "battleRules": {
