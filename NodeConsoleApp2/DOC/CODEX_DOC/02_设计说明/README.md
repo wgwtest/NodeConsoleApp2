@@ -1,6 +1,6 @@
 # 设计说明 README
 
-最后整理时间：2026-04-03
+最后整理时间：2026-04-07
 
 状态：`当前有效 / 已完成 design 目录迁移与命名规范化`
 
@@ -20,11 +20,13 @@
 1. 引擎与数据边界：
    - `01-核心引擎(core_engine)-设计说明.md`
    - `02-数据结构(data_design)-设计说明.md`
+   - `18-本地存档(local_save_design)-设计说明.md`
 2. 战斗系统与运行时设计：
    - `03-技能系统(skill_design)-设计说明.md`
    - `09-Buff系统(buff_design)-设计说明.md`
    - `11-敌人系统(enemy_design)-设计说明.md`
    - `12-关卡系统(level_design)-设计说明.md`
+   - `19-关卡选择内容元数据(level_select_content)-设计说明.md`
    - `13-道具系统(item_design)-设计说明.md`
 3. 作者工具与验证设计：
    - `04-技能编辑器(skill_editor_design)-设计说明.md`
@@ -38,6 +40,8 @@
    - `15-时间线界面(timeline_UI_design)-设计说明.md`
    - `16-战斗界面(UI_design)-设计说明.md`
    - `17-战斗场景提案(battle_scene_proposal)-设计说明.md`
+   - `20-对战演出与动画展示层(battle_presentation)-设计说明.md`
+   - `21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明.md`
 
 ## 3. 设计文档清单
 
@@ -60,6 +64,10 @@
 | `15` | `15-时间线界面(timeline_UI_design)-设计说明.md` | 时间线 UI 设计 |
 | `16` | `16-战斗界面(UI_design)-设计说明.md` | UI 总体设计 |
 | `17` | `17-战斗场景提案(battle_scene_proposal)-设计说明.md` | 战斗场景方案设计 |
+| `18` | `18-本地存档(local_save_design)-设计说明.md` | 本地存档生命周期与触发机制设计 |
+| `19` | `19-关卡选择内容元数据(level_select_content)-设计说明.md` | story 关卡选择信息与内容元数据设计 |
+| `20` | `20-对战演出与动画展示层(battle_presentation)-设计说明.md` | 战斗展示层、动画驱动与 probe 页设计 |
+| `21` | `21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明.md` | Spine 独立素材工程、导入边界与可行性分析 |
 
 ## 4. 当前使用规则
 
