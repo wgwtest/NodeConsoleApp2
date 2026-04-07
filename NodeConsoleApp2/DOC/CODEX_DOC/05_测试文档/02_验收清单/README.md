@@ -1,6 +1,6 @@
 # 验收清单 README
 
-最后整理时间：2026-04-06 11:10:02 +0800
+最后整理时间：2026-04-07 14:57:02 +0800
 
 状态：`当前有效`
 
@@ -29,36 +29,40 @@
 
 ## 1.1 集中验收入口
 
-如果要在同一天集中审核当前待验收功能，优先从以下入口开始。
-
-如果 [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md) 已明确写明“当前无待验收节点”，则直接从本页的“已通过节点索引”或对应组页回查历史结果，不再重复进入旧验收流程：
+如果要在同一天集中审核当前待验收功能，优先从以下入口开始：
 
 1. [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md)
-2. [01-A3-战斗恢复验收总页](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/01-A3-战斗恢复验收总页.md)
-3. [02-A4.2-Buff编辑链验收总页](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/02-A4.2-Buff编辑链验收总页.md)
-4. [03-A4.3-关卡编辑链验收总页](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/03-A4.3-关卡编辑链验收总页.md)
-5. [04-B阶段单局体验验收总页](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/04-B阶段单局体验验收总页.md)
+
+如果 [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md) 已明确写明“当前无待验收节点”，则直接从本页的“已通过节点索引”回查历史结果。
+
+此前遗留的 A3 / A4.2 / A4.3 / B 阶段“验收总页”属于历史导航页，现已移除，不再作为当前有效目录的一部分。
 
 ## 2. 当前待验收清单
 
 以下清单仍处于 `待验收` 或 `待重测` 状态，也是 [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md) 应该覆盖的对象：
 
-当前共有 `7` 个待验收节点：
+当前共有 `10` 个待验收节点：
 
-1. `#18 / A1.1`
-   - [A1.1-[待验收]-2026-04-06-015347-验收样本独立入口与手验链路-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A1.1-[待验收]-2026-04-06-015347-验收样本独立入口与手验链路-人工验收清单.md)
-2. `#19 / A1.2`
+1. `#19 / A1.2`
    - [A1.2-[待验收]-2026-04-06-012747-扩展Buff学习装配执行闭环-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A1.2-[待验收]-2026-04-06-012747-扩展Buff学习装配执行闭环-人工验收清单.md)
-3. `#20 / A2.1`
+2. `#20 / A2.1`
    - [A2.1-[待验收]-2026-04-06-091958-故事关卡敌人策略样本-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A2.1-[待验收]-2026-04-06-091958-故事关卡敌人策略样本-人工验收清单.md)
-4. `#21 / A2.2`
+3. `#21 / A2.2`
    - [A2.2-[待验收]-2026-04-06-093650-敌人行为人工验收路径-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A2.2-[待验收]-2026-04-06-093650-敌人行为人工验收路径-人工验收清单.md)
-5. `#63 / C1.1`
+4. `#66 / B3.1`
+   - [B3.1-[待验收]-2026-04-07-003900-自动存档槽位与入口语义收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B3.1-[待验收]-2026-04-07-003900-自动存档槽位与入口语义收口-人工验收清单.md)
+5. `#68 / B3.2`
+   - [B3.2-[待验收]-2026-04-07-003900-统一保存协调层与存档回归补强-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B3.2-[待验收]-2026-04-07-003900-统一保存协调层与存档回归补强-人工验收清单.md)
+6. `#63 / C1.1`
    - [C1.1-[待验收]-2026-04-06-103705-主菜单成长摘要与技能树入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.1-[待验收]-2026-04-06-103705-主菜单成长摘要与技能树入口-人工验收清单.md)
-6. `#64 / C1.2`
+7. `#64 / C1.2`
    - [C1.2-[待验收]-2026-04-06-110954-学习提交后主菜单成长摘要即时刷新-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.2-[待验收]-2026-04-06-110954-学习提交后主菜单成长摘要即时刷新-人工验收清单.md)
-7. `#65 / C1.3`
+8. `#65 / C1.3`
    - [C1.3-[待验收]-2026-04-06-111002-结算页直达技能树与构筑入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.3-[待验收]-2026-04-06-111002-结算页直达技能树与构筑入口-人工验收清单.md)
+9. `#71 / D3.1`
+   - [D3.1-[待验收]-2026-04-07-024354-动画展示驱动与验证页基线-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.1-[待验收]-2026-04-07-024354-动画展示驱动与验证页基线-人工验收清单.md)
+10. `#72 / D3.2`
+   - [D3.2-[待验收]-2026-04-07-145702-SpineAssets协作规则与导入契约基线-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.2-[待验收]-2026-04-07-145702-SpineAssets协作规则与导入契约基线-人工验收清单.md)
 
 ## 3. 已通过节点索引
 
@@ -90,9 +94,11 @@
    - [A3.2-[已通过]-2026-04-04-013552-恢复后Buff与规划状态重建-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A3.2-[已通过]-2026-04-04-013552-恢复后Buff与规划状态重建-人工验收清单.md)
 13. `#24 / A3.3`
    - [A3.3-[已通过]-2026-04-04-013552-恢复后继续执行回归-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A3.3-[已通过]-2026-04-04-013552-恢复后继续执行回归-人工验收清单.md)
-14. `#26 / B1`
+14. `#18 / A1.1`
+   - [A1.1-[已通过]-2026-04-06-015347-验收样本独立入口与手验链路-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A1.1-[已通过]-2026-04-06-015347-验收样本独立入口与手验链路-人工验收清单.md)
+15. `#26 / B1`
    - [B1-[已通过]-2026-04-04-015615-战斗结算奖励入账与展示-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B1-[已通过]-2026-04-04-015615-战斗结算奖励入账与展示-人工验收清单.md)
-15. `#27 / B2`
+16. `#27 / B2`
    - [B2-[已通过]-2026-04-04-080951-故事关卡流转与结算去向-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B2-[已通过]-2026-04-04-080951-故事关卡流转与结算去向-人工验收清单.md)
 
 ## 4. 当前不再放在这里的清单

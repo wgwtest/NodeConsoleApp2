@@ -4,6 +4,8 @@
  * 负责监听战斗事件并更新界面显示。
  */
 
+import { BattlePresentationController } from './presentation/BattlePresentationController.js';
+
 class BattleHUD {
     /**
      * @param {HTMLElement} element - HUD 容器元素 (.player-hud 或 .enemy-hud)
@@ -197,6 +199,16 @@ class BattleScene {
             enemyContainer: element.querySelector('.fighter.enemy-character'),
             fxLayer: element.querySelector('.fx-layer')
         };
+
+        this.presentation = new BattlePresentationController({
+            root: element.closest('.battle-row'),
+            sceneRoot: element
+        });
+    }
+
+    attach(eventBus) {
+        this.presentation.setEventBus(eventBus);
+        this.presentation.connect();
     }
 
     /**
@@ -208,28 +220,25 @@ class BattleScene {
     update(playerSpriteData, enemySpriteData, backgroundUrl) {
        // 更新背景
        if (backgroundUrl && this.dom.background) {
-           // this.dom.background.style.backgroundImage = `url(${backgroundUrl})`; 
-           // 实际可能需操纵内部 img 或 div
+           this.dom.background.style.backgroundImage = `url(${backgroundUrl})`;
        }
 
-       // 更新角色立绘 (略，需具体实现 Sprite 渲染逻辑)
+       this.presentation.handleBattleUpdate({
+           player: playerSpriteData,
+           enemies: enemySpriteData ? [enemySpriteData] : []
+       });
     }
 
     playEffect(effectName, targetArgs) {
-        // 在 fxLayer 播放特效
-        console.log(`[BattleScene] Playing effect: ${effectName}`);
+        console.log(`[BattleScene] Playing effect: ${effectName}`, targetArgs);
     }
 
-    showDamageText(text, positionArgs) {
-        if (!this.dom.fxLayer) return;
-        const el = document.createElement('div');
-        el.className = 'damage-text pop-up-anim'; // 假设有对应 CSS 动画
-        el.textContent = text;
-        // 设置位置...
-        this.dom.fxLayer.appendChild(el);
-        
-        // 动画结束后移除
-        setTimeout(() => el.remove(), 1000);
+    showDamageText(text, positionArgs = {}) {
+        const side = positionArgs.side === 'enemy' ? 'enemy' : 'self';
+        const presenter = side === 'enemy'
+            ? this.presentation.presenters.enemy
+            : this.presentation.presenters.self;
+        presenter?.showFloatText(text, positionArgs.kind || 'damage');
     }
 }
 
@@ -267,6 +276,9 @@ export class UI_BattleRow {
     init(engine) {
         this.engine = engine;
         this.bindDOM();
+        if (this.components.sceneDiff) {
+            this.components.sceneDiff.attach(engine.eventBus);
+        }
         this.bindEvents();
         this.log('Initialized.');
     }

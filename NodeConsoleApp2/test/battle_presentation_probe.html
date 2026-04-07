@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Presentation Probe</title>
+    <link rel="stylesheet" href="../mock_ui_v11.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            background: #eef2f7;
+            color: #243447;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            display: block;
+        }
+
+        .page {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: grid;
+            gap: 16px;
+        }
+
+        .panel {
+            background: #ffffff;
+            border: 1px solid #d9e1ec;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .guide-card {
+            background: #f8fbff;
+            border: 1px solid #dbe7f6;
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .guide-card h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #1e3a8a;
+        }
+
+        .guide-card p,
+        .guide-card li,
+        .explain-table td,
+        .explain-table th {
+            line-height: 1.7;
+            color: #334155;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+            background: #2563eb;
+            color: #fff;
+        }
+
+        button.secondary {
+            background: #475569;
+        }
+
+        button.warn {
+            background: #b45309;
+        }
+
+        .probe-shell {
+            background: #f4f8ff;
+            border: 1px solid #d9e7f7;
+            border-radius: 18px;
+            padding: 16px;
+        }
+
+        .probe-shell .battle-row {
+            display: grid;
+            grid-template-columns: 320px 1fr 320px;
+            gap: 12px;
+        }
+
+        .probe-shell .hud-panel {
+            color: #eef4ff;
+            overflow: hidden;
+        }
+
+        .probe-shell .hud-panel h2 {
+            margin-bottom: 10px;
+        }
+
+        .probe-shell .hud-stat span,
+        .probe-shell .armor-value,
+        .probe-shell .status-label {
+            color: #dbe7ff;
+        }
+
+        .probe-shell .battle-scene {
+            min-height: 360px;
+        }
+
+        .probe-shell .player-character .sprite-layer.body {
+            background: radial-gradient(circle at 45% 25%, rgba(255,255,255,0.88), rgba(106,224,255,0.16) 30%, rgba(33,52,96,0.1) 31%),
+                linear-gradient(180deg, rgba(125,221,255,0.95), rgba(59,130,246,0.65));
+            border-radius: 48% 48% 40% 40%;
+            inset: 28px 58px 34px 58px;
+            box-shadow: 0 18px 26px rgba(19, 39, 80, 0.3);
+        }
+
+        .probe-shell .player-character .sprite-layer.armor {
+            inset: 88px 74px 62px 74px;
+            border-radius: 28px 28px 38px 38px;
+            background: linear-gradient(180deg, rgba(223, 239, 255, 0.95), rgba(125, 158, 214, 0.72));
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.26);
+        }
+
+        .probe-shell .player-character .sprite-layer.weapon::before {
+            content: "";
+            position: absolute;
+            top: 74px;
+            right: 76px;
+            width: 18px;
+            height: 124px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #fff8cf, #9db9ff 68%, #6575a3);
+            box-shadow: 0 10px 20px rgba(9, 18, 42, 0.28);
+            transform: rotate(18deg);
+            transform-origin: center 88%;
+        }
+
+        .probe-shell .enemy-character .sprite-layer.body {
+            background: radial-gradient(circle at 45% 25%, rgba(255,255,255,0.74), rgba(255,92,92,0.12) 28%, rgba(33,14,14,0.12) 31%),
+                linear-gradient(180deg, rgba(255, 148, 148, 0.92), rgba(239, 68, 68, 0.62));
+            border-radius: 48% 48% 40% 40%;
+            inset: 30px 60px 34px 60px;
+            box-shadow: 0 18px 26px rgba(80, 19, 19, 0.26);
+        }
+
+        .probe-shell .enemy-character .sprite-layer.armor {
+            inset: 96px 82px 62px 82px;
+            border-radius: 28px 28px 38px 38px;
+            background: linear-gradient(180deg, rgba(252, 232, 232, 0.9), rgba(177, 100, 100, 0.76));
+        }
+
+        .probe-shell .enemy-character .sprite-layer.weapon::before {
+            content: "";
+            position: absolute;
+            top: 102px;
+            left: 78px;
+            width: 16px;
+            height: 98px;
+            border-radius: 8px;
+            background: linear-gradient(180deg, #ffe2e2, #c58f8f 70%, #7f4a4a);
+            transform: rotate(-28deg);
+            transform-origin: center 80%;
+        }
+
+        .log {
+            min-height: 120px;
+            white-space: pre-wrap;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 12px;
+            border-radius: 10px;
+            margin: 0;
+        }
+
+        .explain-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        .explain-table th,
+        .explain-table td {
+            border: 1px solid #dbe7f6;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .explain-table th {
+            background: #edf4ff;
+            color: #1e3a8a;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <section class="panel">
+        <h1>Battle Presentation Probe</h1>
+        <p><span class="badge">展示层验证页</span>本页不是战斗规则页，而是“对战演出展示层”的独立验证页。按钮会用与主流程相同的事件语义去驱动画面反馈，用来证明动画层可以脱离规则层单独成立。</p>
+        <p>它与 <code>mock_ui_v11.html</code> 的分工不同：本页证明“展示层驱动成立”，主流程页证明“展示层接入后不会阻塞真实游玩”。</p>
+    </section>
+
+    <section class="panel">
+        <h2>本页用途</h2>
+        <div class="guide-grid">
+            <div class="guide-card">
+                <h3>本页验证什么</h3>
+                <ul>
+                    <li>攻击前冲、受击闪白、伤害飘字、治疗回弹、Buff / Debuff 提示是否可以由独立控制器驱动。</li>
+                    <li>玩家角色的 <code>body / armor / weapon</code> 三层是否能做轻量纸娃娃动作试验。</li>
+                    <li>关闭动画后，页面状态更新仍然可以继续，证明动画只是增强层。</li>
+                </ul>
+            </div>
+            <div class="guide-card">
+                <h3>为什么这能证明</h3>
+                <p>这些按钮不会调用主战斗按钮，也不依赖完整规则链，而是直接发出和主流程一致的展示层输入事件。如果页面仍然能完成动作、飘字、回弹和状态提示，就说明演出层与战斗结算层确实分开了。</p>
+            </div>
+            <div class="guide-card">
+                <h3>与其他页面的关系</h3>
+                <ul>
+                    <li><code>battle_presentation_probe.html</code>：验证展示层本身。</li>
+                    <li><code>mock_ui_v11.html</code>：验证展示层接入真实主流程后不阻断点击链。</li>
+                    <li><code>codex_regression_runner.html</code>：验证关键契约没有被后续修改打坏。</li>
+                </ul>
+            </div>
+        </div>
+        <table class="explain-table">
+            <thead>
+                <tr>
+                    <th>按钮</th>
+                    <th>点击后会做什么</th>
+                    <th>为什么这能证明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>攻击前冲</code></td>
+                    <td>发出 <code>TIMELINE_ENTRY_START</code> 语义，让角色进入起手动作。</td>
+                    <td>证明展示层可以只根据时间线条目起手，而不是绑在某个按钮点击回调上。</td>
+                </tr>
+                <tr>
+                    <td><code>玩家打敌人</code></td>
+                    <td>先触发起手，再发出 <code>BATTLE_TAKE_DAMAGE</code> 与快照更新。</td>
+                    <td>证明受击、飘字、血条变化可以组合工作，而不要求完整战斗结算页参与。</td>
+                </tr>
+                <tr>
+                    <td><code>玩家治疗</code></td>
+                    <td>只改运行时快照，再发出 <code>BATTLE_UPDATE</code>。</td>
+                    <td>证明治疗回弹和血条回升可以由状态差异驱动，不需要额外写死逻辑。</td>
+                </tr>
+                <tr>
+                    <td><code>加 Buff / 加 Debuff</code></td>
+                    <td>增加状态数量并刷新快照。</td>
+                    <td>证明状态提示可以通过新旧快照差异驱动。</td>
+                </tr>
+                <tr>
+                    <td><code>切换动画</code></td>
+                    <td>关闭或重新启用展示层控制器。</td>
+                    <td>证明动画关闭后不会影响状态刷新，展示层只是增强层。</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="panel">
+        <h2>轻量纸娃娃试验</h2>
+        <p>本页的玩家角色额外给 <code>body / armor / weapon</code> 三层绘制了占位形状，用来验证“纸娃娃式分层运动”是否可行。这里验证的不是最终美术，而是分层动作边界：<code>idle / attack / hit / recover</code> 是否可以在不碰规则层的前提下成立。</p>
+        <p>为保证“玩家治疗”按钮一键可验证，玩家默认以轻伤基线进入本页，<code>重置状态</code> 也会回到这套轻伤基线，而不是回到满血状态。</p>
+        <div class="controls">
+            <button type="button" id="btnProbeAction">攻击前冲</button>
+            <button type="button" id="btnPlayerHitEnemy">玩家打敌人</button>
+            <button type="button" id="btnEnemyHitPlayer">敌人打玩家</button>
+            <button type="button" id="btnPlayerHeal">玩家治疗</button>
+            <button type="button" id="btnPlayerBuff">玩家加 Buff</button>
+            <button type="button" id="btnEnemyDebuff">敌人加 Debuff</button>
+            <button type="button" class="secondary" id="btnTogglePresentation">切换动画：开</button>
+            <button type="button" class="warn" id="btnResetState">重置状态</button>
+        </div>
+    </section>
+
+    <section class="panel probe-shell">
+        <div class="battle-row">
+            <section class="hud-panel player-hud labeled-block">
+                <h2>玩家：演示骑士</h2>
+                <div class="hud-stat">
+                    <span id="playerHpText">HP 108 / 120</span>
+                    <div class="bar hp"><span style="width:90%"></span></div>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">BUFF</span>
+                    <div class="status-icons" id="playerBuffs"></div>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">DEBUFF</span>
+                    <div class="status-icons" id="playerDebuffs"></div>
+                </div>
+                <div class="armor-list-wrapper">
+                    <div class="armor-row" data-key="head">
+                        <span class="armor-name">头部</span>
+                        <div class="armor-bar"><span style="width:100%"></span></div>
+                        <span class="armor-value" id="playerArmorHead">18 / 18</span>
+                    </div>
+                    <div class="armor-row" data-key="chest">
+                        <span class="armor-name">胸部</span>
+                        <div class="armor-bar"><span style="width:100%"></span></div>
+                        <span class="armor-value" id="playerArmorChest">24 / 24</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="battle-scene labeled-block">
+                <div class="stage-background"></div>
+                <div class="fighters-layer">
+                    <div class="fighter player-character">
+                        <div class="character-sprite-container">
+                            <div class="sprite-layer body"></div>
+                            <div class="sprite-layer armor"></div>
+                            <div class="sprite-layer weapon"></div>
+                        </div>
+                        <div class="character-shadow"></div>
+                        <div class="effect-anchor"></div>
+                    </div>
+                    <div class="fighter enemy-character">
+                        <div class="character-sprite-container">
+                            <div class="sprite-layer body"></div>
+                            <div class="sprite-layer armor"></div>
+                            <div class="sprite-layer weapon"></div>
+                        </div>
+                        <div class="character-shadow"></div>
+                        <div class="effect-anchor"></div>
+                    </div>
+                </div>
+                <div class="fx-layer"></div>
+            </section>
+
+            <section class="hud-panel enemy-hud labeled-block">
+                <h2>敌人：演示刺客</h2>
+                <div class="hud-stat">
+                    <span id="enemyHpText">HP 96 / 96</span>
+                    <div class="bar hp"><span style="width:100%"></span></div>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">BUFF</span>
+                    <div class="status-icons" id="enemyBuffs"></div>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">DEBUFF</span>
+                    <div class="status-icons" id="enemyDebuffs"></div>
+                </div>
+                <div class="armor-list-wrapper">
+                    <div class="armor-row" data-key="head">
+                        <span class="armor-name">头部</span>
+                        <div class="armor-bar"><span style="width:100%"></span></div>
+                        <span class="armor-value" id="enemyArmorHead">12 / 12</span>
+                    </div>
+                    <div class="armor-row" data-key="chest">
+                        <span class="armor-name">胸部</span>
+                        <div class="armor-bar"><span style="width:100%"></span></div>
+                        <span class="armor-value" id="enemyArmorChest">18 / 18</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Probe Logs</h2>
+        <pre id="probeLog" class="log"></pre>
+    </section>
+</div>
+
+<script type="module">
+    import { BattlePresentationController } from '../script/ui/presentation/BattlePresentationController.js';
+
+    function createMiniEventBus() {
+        const listeners = new Map();
+        return {
+            on(event, callback) {
+                if (!listeners.has(event)) {
+                    listeners.set(event, []);
+                }
+                listeners.get(event).push(callback);
+                return () => {
+                    const next = (listeners.get(event) || []).filter(fn => fn !== callback);
+                    listeners.set(event, next);
+                };
+            },
+            emit(event, payload) {
+                for (const fn of listeners.get(event) || []) {
+                    fn(payload);
+                }
+            }
+        };
+    }
+
+    const logEl = document.getElementById('probeLog');
+    const baseState = {
+        player: {
+            id: 'player',
+            name: '演示骑士',
+            stats: { hp: 108, maxHp: 120 },
+            bodyParts: {
+                head: { current: 18, max: 18 },
+                chest: { current: 24, max: 24 }
+            },
+            buffs: [],
+            debuffs: []
+        },
+        enemy: {
+            id: 'enemy_probe',
+            name: '演示刺客',
+            hp: 96,
+            maxHp: 96,
+            bodyParts: {
+                head: { current: 12, max: 12 },
+                chest: { current: 18, max: 18 }
+            },
+            buffs: [],
+            debuffs: []
+        }
+    };
+
+    const eventBus = createMiniEventBus();
+    const root = document.querySelector('.battle-row');
+    const controller = new BattlePresentationController({ root, eventBus });
+    controller.connect();
+
+    let presentationEnabled = true;
+    let state = null;
+
+    function clone(value) {
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    function appendLog(text) {
+        const current = logEl.textContent ? `${logEl.textContent}\n` : '';
+        logEl.textContent = `${current}${text}`;
+    }
+
+    function renderStatusIcons(containerId, rows, mode) {
+        const host = document.getElementById(containerId);
+        host.innerHTML = '';
+        const list = Array.isArray(rows) ? rows : [];
+        if (list.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'status-icon neutral';
+            empty.dataset.name = mode === 'buff' ? '无增益' : '无减益';
+            empty.dataset.desc = '当前为空';
+            host.appendChild(empty);
+            return;
+        }
+
+        list.forEach(row => {
+            const icon = document.createElement('div');
+            icon.className = `status-icon ${mode === 'debuff' ? 'debuff' : 'buff'}`;
+            icon.dataset.name = row.name || row.id || mode.toUpperCase();
+            icon.dataset.desc = row.desc || 'probe status';
+            host.appendChild(icon);
+        });
+    }
+
+    function updateHud(side) {
+        const entity = side === 'player' ? state.player : state.enemy;
+        const isPlayer = side === 'player';
+        const hp = Number(entity.stats?.hp ?? entity.hp ?? 0) || 0;
+        const maxHp = Number(entity.stats?.maxHp ?? entity.maxHp ?? 0) || 0;
+        document.getElementById(isPlayer ? 'playerHpText' : 'enemyHpText').textContent = `HP ${hp} / ${maxHp}`;
+
+        const hpBar = root.querySelector(`.${isPlayer ? 'player-hud' : 'enemy-hud'} .bar.hp span`);
+        if (hpBar) {
+            const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
+            hpBar.style.width = `${pct}%`;
+        }
+
+        const parts = entity.bodyParts || {};
+        const head = parts.head || { current: 0, max: 0 };
+        const chest = parts.chest || { current: 0, max: 0 };
+        document.getElementById(isPlayer ? 'playerArmorHead' : 'enemyArmorHead').textContent = `${head.current} / ${head.max}`;
+        document.getElementById(isPlayer ? 'playerArmorChest' : 'enemyArmorChest').textContent = `${chest.current} / ${chest.max}`;
+
+        const rows = root.querySelectorAll(`.${isPlayer ? 'player-hud' : 'enemy-hud'} .armor-row`);
+        rows.forEach(row => {
+            const partKey = row.dataset.key;
+            const data = parts[partKey];
+            if (!data) return;
+            const current = Number(data.current ?? 0) || 0;
+            const max = Number(data.max ?? 0) || 0;
+            const bar = row.querySelector('.armor-bar span');
+            if (bar) {
+                const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
+                bar.style.width = `${pct}%`;
+            }
+        });
+
+        renderStatusIcons(isPlayer ? 'playerBuffs' : 'enemyBuffs', entity.buffs, 'buff');
+        renderStatusIcons(isPlayer ? 'playerDebuffs' : 'enemyDebuffs', entity.debuffs, 'debuff');
+    }
+
+    function emitBattleUpdate() {
+        updateHud('player');
+        updateHud('enemy');
+        eventBus.emit('BATTLE_UPDATE', {
+            player: state.player,
+            enemies: [state.enemy]
+        });
+    }
+
+    function resetState() {
+        state = clone(baseState);
+        logEl.textContent = '';
+        updateHud('player');
+        updateHud('enemy');
+        eventBus.emit('BATTLE_START', {
+            player: state.player,
+            enemies: [state.enemy]
+        });
+        appendLog('[RESET] 状态已重置，展示层已重新绑定初始快照。');
+    }
+
+    function runPlayerAttackOnly() {
+        eventBus.emit('TIMELINE_ENTRY_START', {
+            entry: {
+                side: 'self',
+                actorId: state.player.id,
+                skillId: 'probe_attack',
+                meta: { label: '攻击前冲' }
+            }
+        });
+        appendLog('[EVENT] TIMELINE_ENTRY_START self');
+    }
+
+    function applyPlayerHitEnemy() {
+        runPlayerAttackOnly();
+        state.enemy.hp = Math.max(0, state.enemy.hp - 18);
+        state.enemy.bodyParts.head.current = Math.max(0, state.enemy.bodyParts.head.current - 4);
+        eventBus.emit('BATTLE_TAKE_DAMAGE', {
+            attacker: { id: state.player.id },
+            target: { id: state.enemy.id },
+            damageDealt: 18,
+            armorDamage: 4,
+            targetPart: 'head',
+            targetHpRemaining: state.enemy.hp
+        });
+        emitBattleUpdate();
+        appendLog('[EVENT] 玩家打敌人，触发受击、伤害飘字、血条变化。');
+    }
+
+    function applyEnemyHitPlayer() {
+        eventBus.emit('TIMELINE_ENTRY_START', {
+            entry: {
+                side: 'enemy',
+                actorId: state.enemy.id,
+                skillId: 'probe_enemy_strike',
+                meta: { label: '敌方突刺' }
+            }
+        });
+        state.player.stats.hp = Math.max(0, state.player.stats.hp - 14);
+        state.player.bodyParts.chest.current = Math.max(0, state.player.bodyParts.chest.current - 3);
+        eventBus.emit('BATTLE_TAKE_DAMAGE', {
+            attacker: { id: state.enemy.id },
+            target: { id: state.player.id },
+            damageDealt: 14,
+            armorDamage: 3,
+            targetPart: 'chest',
+            targetHpRemaining: state.player.stats.hp
+        });
+        emitBattleUpdate();
+        appendLog('[EVENT] 敌人打玩家，触发玩家受击与胸部护甲损伤。');
+    }
+
+    function applyPlayerHeal() {
+        state.player.stats.hp = Math.min(state.player.stats.maxHp, state.player.stats.hp + 12);
+        emitBattleUpdate();
+        appendLog('[EVENT] 玩家治疗，验证治疗回弹与血条回升。');
+    }
+
+    function applyPlayerBuff() {
+        state.player.buffs.push({
+            id: `buff_${state.player.buffs.length + 1}`,
+            name: '圣光祝福',
+            desc: '攻击后获得短时强化'
+        });
+        emitBattleUpdate();
+        appendLog('[EVENT] 玩家新增 Buff，验证状态提示脉冲。');
+    }
+
+    function applyEnemyDebuff() {
+        state.enemy.debuffs.push({
+            id: `debuff_${state.enemy.debuffs.length + 1}`,
+            name: '灼烧',
+            desc: '持续掉血'
+        });
+        emitBattleUpdate();
+        appendLog('[EVENT] 敌人新增 Debuff，验证减益提示脉冲。');
+    }
+
+    function togglePresentation() {
+        presentationEnabled = !presentationEnabled;
+        controller.setEnabled(presentationEnabled);
+        document.getElementById('btnTogglePresentation').textContent = `切换动画：${presentationEnabled ? '开' : '关'}`;
+        emitBattleUpdate();
+        appendLog(`[CONFIG] 展示层动画已${presentationEnabled ? '开启' : '关闭'}。`);
+    }
+
+    document.getElementById('btnProbeAction').addEventListener('click', runPlayerAttackOnly);
+    document.getElementById('btnPlayerHitEnemy').addEventListener('click', applyPlayerHitEnemy);
+    document.getElementById('btnEnemyHitPlayer').addEventListener('click', applyEnemyHitPlayer);
+    document.getElementById('btnPlayerHeal').addEventListener('click', applyPlayerHeal);
+    document.getElementById('btnPlayerBuff').addEventListener('click', applyPlayerBuff);
+    document.getElementById('btnEnemyDebuff').addEventListener('click', applyEnemyDebuff);
+    document.getElementById('btnTogglePresentation').addEventListener('click', togglePresentation);
+    document.getElementById('btnResetState').addEventListener('click', resetState);
+
+    resetState();
+</script>
+</body>
+</html>

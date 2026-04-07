@@ -155,6 +155,27 @@
       };
     }
 
+    function createMiniEventBus() {
+      const listeners = new Map();
+      return {
+        on(event, callback) {
+          if (!listeners.has(event)) {
+            listeners.set(event, []);
+          }
+          listeners.get(event).push(callback);
+          return () => {
+            const next = (listeners.get(event) || []).filter(fn => fn !== callback);
+            listeners.set(event, next);
+          };
+        },
+        emit(event, payload) {
+          for (const fn of listeners.get(event) || []) {
+            fn(payload);
+          }
+        }
+      };
+    }
+
     function deepClone(value) {
       return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
     }
@@ -261,7 +282,8 @@
       const emitted = [];
       let stateChange = null;
       let applyArgs = null;
-      let saveCalls = 0;
+      let requestSaveCalls = 0;
+      let dataSaveCalls = 0;
 
       const playerId = 'player_1';
       const enemyId = 'enemy_1';
@@ -424,8 +446,11 @@
           };
         },
         saveGame() {
-          saveCalls += 1;
+          dataSaveCalls += 1;
         }
+      };
+      engine.requestSave = () => {
+        requestSaveCalls += 1;
       };
 
       return {
@@ -434,7 +459,8 @@
         emitted,
         getStateChange: () => stateChange,
         getApplyArgs: () => applyArgs,
-        getSaveCalls: () => saveCalls
+        getRequestSaveCalls: () => requestSaveCalls,
+        getDataSaveCalls: () => dataSaveCalls
       };
     }
 
@@ -532,20 +558,172 @@
               <div class="armor-row" data-key="chest"><span class="armor-name">胸部</span><div class="armor-bar"><span></span></div><span class="armor-value"></span></div>
             </div>
           </div>
-          <div class="battle-scene">
+          <div class="battle-scene labeled-block">
             <div class="stage-background"></div>
-            <div class="fighter player-character"></div>
-            <div class="fighter enemy-character"></div>
+            <div class="fighters-layer">
+              <div class="fighter player-character">
+                <div class="character-sprite-container">
+                  <div class="sprite-layer body"></div>
+                  <div class="sprite-layer armor"></div>
+                  <div class="sprite-layer weapon"></div>
+                </div>
+                <div class="character-shadow"></div>
+                <div class="effect-anchor"></div>
+              </div>
+              <div class="fighter enemy-character">
+                <div class="character-sprite-container">
+                  <div class="sprite-layer body"></div>
+                  <div class="sprite-layer armor"></div>
+                  <div class="sprite-layer weapon"></div>
+                </div>
+                <div class="character-shadow"></div>
+                <div class="effect-anchor"></div>
+              </div>
+            </div>
             <div class="fx-layer"></div>
           </div>
         </section>
       `);
     }
 
+    async function importBattlePresentationControllerModule() {
+      return import(`../script/ui/presentation/BattlePresentationController.js?ts=${Date.now()}`);
+    }
+
     async function testMockUiUsesSingletonEngine() {
       const html = await fetch('../mock_ui_v11.html').then(r => r.text());
       assert(!/new\s+CoreEngine\s*\(/.test(html), 'mock_ui_v11.html 仍在直接 new CoreEngine()');
       assert(/import\s+engine\s+from\s+['"]\.\.\/script\/engine\/CoreEngine\.js['"]/.test(html), 'mock_ui_v11.html 未改为导入默认 engine 单例');
+    }
+
+    async function testBattlePresentationControllerMarksActorOnTimelineEntry() {
+      const host = resetRegressionFixture('');
+      setupBattleRowDom(host);
+
+      const { BattlePresentationController } = await importBattlePresentationControllerModule();
+      const eventBus = createMiniEventBus();
+      const controller = new BattlePresentationController({
+        root: host.querySelector('.battle-row'),
+        eventBus
+      });
+      if (typeof controller.connect === 'function') {
+        controller.connect();
+      }
+
+      eventBus.emit('BATTLE_START', {
+        player: { id: 'player', name: '玩家', stats: { hp: 120, maxHp: 120 }, buffs: [] },
+        enemies: [{ id: 'enemy_1', name: '敌人', hp: 90, maxHp: 90, buffs: [] }]
+      });
+      eventBus.emit('TIMELINE_ENTRY_START', {
+        entry: {
+          side: 'self',
+          actorId: 'player',
+          skillId: 'skill_slash',
+          meta: { label: '斩击' }
+        },
+        index: 0
+      });
+
+      const fighter = host.querySelector('.fighter.player-character');
+      assert(fighter, '玩家角色 DOM 未创建');
+      assert(fighter.classList.contains('is-acting'), '时间线条目启动后玩家角色未进入攻击态');
+    }
+
+    async function testBattlePresentationControllerCreatesFloatTextOnDamage() {
+      const host = resetRegressionFixture('');
+      setupBattleRowDom(host);
+
+      const { BattlePresentationController } = await importBattlePresentationControllerModule();
+      const eventBus = createMiniEventBus();
+      const controller = new BattlePresentationController({
+        root: host.querySelector('.battle-row'),
+        eventBus
+      });
+      if (typeof controller.connect === 'function') {
+        controller.connect();
+      }
+
+      eventBus.emit('BATTLE_START', {
+        player: { id: 'player', name: '玩家', stats: { hp: 120, maxHp: 120 }, buffs: [] },
+        enemies: [{ id: 'enemy_1', name: '敌人', hp: 90, maxHp: 90, buffs: [] }]
+      });
+      eventBus.emit('BATTLE_TAKE_DAMAGE', {
+        attacker: { id: 'player' },
+        target: { id: 'enemy_1' },
+        damageDealt: 18,
+        armorDamage: 0,
+        targetPart: 'head',
+        targetHpRemaining: 72
+      });
+
+      const floats = Array.from(host.querySelectorAll('.fx-layer .battle-float-text'));
+      assert(floats.length > 0, '受击后未生成飘字节点');
+      assert(floats.some(el => (el.textContent || '').includes('-18')), '伤害飘字未显示正确数值');
+    }
+
+    async function testBattlePresentationControllerClearsTransientStateOnBattleStart() {
+      const host = resetRegressionFixture('');
+      setupBattleRowDom(host);
+
+      const { BattlePresentationController } = await importBattlePresentationControllerModule();
+      const eventBus = createMiniEventBus();
+      const controller = new BattlePresentationController({
+        root: host.querySelector('.battle-row'),
+        eventBus
+      });
+      if (typeof controller.connect === 'function') {
+        controller.connect();
+      }
+
+      eventBus.emit('BATTLE_START', {
+        player: { id: 'player', name: '玩家', stats: { hp: 120, maxHp: 120 }, buffs: [] },
+        enemies: [{ id: 'enemy_1', name: '敌人', hp: 90, maxHp: 90, buffs: [] }]
+      });
+      eventBus.emit('TIMELINE_ENTRY_START', {
+        entry: {
+          side: 'self',
+          actorId: 'player',
+          skillId: 'skill_slash'
+        }
+      });
+      eventBus.emit('BATTLE_TAKE_DAMAGE', {
+        attacker: { id: 'player' },
+        target: { id: 'enemy_1' },
+        damageDealt: 18,
+        armorDamage: 4,
+        targetPart: 'head'
+      });
+
+      assert(host.querySelector('.battle-float-text'), '前置条件失败：上一轮未生成飘字');
+      assert(host.querySelector('.fighter.is-acting') || host.querySelector('.fighter.is-hit'), '前置条件失败：上一轮未生成瞬态动作类');
+
+      eventBus.emit('BATTLE_START', {
+        player: { id: 'player', name: '玩家', stats: { hp: 120, maxHp: 120 }, buffs: [] },
+        enemies: [{ id: 'enemy_1', name: '敌人', hp: 90, maxHp: 90, buffs: [] }]
+      });
+
+      assert(!host.querySelector('.battle-float-text'), '新战斗开始后仍残留上一轮飘字');
+      assert(!host.querySelector('.fighter.is-acting'), '新战斗开始后仍残留攻击态');
+      assert(!host.querySelector('.fighter.is-hit'), '新战斗开始后仍残留受击态');
+      assert(!host.querySelector('.armor-row.is-armor-hit'), '新战斗开始后仍残留护甲受击态');
+    }
+
+    async function testBattlePresentationProbeProvidesReadableGuide() {
+      const response = await fetch('./battle_presentation_probe.html', { cache: 'no-store' });
+      assert(response.ok, `battle_presentation_probe.html 加载失败: ${response.status}`);
+      const html = await response.text();
+      assertPageIncludesText(html, '本页用途', 'battle_presentation_probe 缺少用途说明');
+      assertPageIncludesText(html, '为什么这能证明', 'battle_presentation_probe 缺少“为什么这能证明”说明');
+      assertPageIncludesText(html, '攻击前冲', 'battle_presentation_probe 缺少攻击前冲验证入口');
+      assertPageIncludesText(html, '轻量纸娃娃', 'battle_presentation_probe 缺少轻量纸娃娃试验说明');
+    }
+
+    async function testBattlePresentationProbeProvidesHealableBaseline() {
+      const response = await fetch('./battle_presentation_probe.html', { cache: 'no-store' });
+      assert(response.ok, `battle_presentation_probe.html 加载失败: ${response.status}`);
+      const html = await response.text();
+      assertPageIncludesText(html, '为保证“玩家治疗”按钮一键可验证', 'battle_presentation_probe 缺少治疗按钮验证依据说明');
+      assertPageIncludesText(html, 'HP 108 / 120', 'battle_presentation_probe 未提供轻伤治疗基线');
     }
 
     async function testCoreEngineBattleSaveSyncContract() {
@@ -781,9 +959,45 @@
       assert(modal._selectedSkillId === 'skill_a', `UI_SkillTreeModal 默认选中错误: ${modal._selectedSkillId}`);
     }
 
+    function testSkillTreeModalFiltersOutDemoSkillsFromFormalTree() {
+      const modal = new UI_SkillTreeModal();
+      modal.engine = {
+        data: {
+          getSkillCatalog() {
+            return {
+              selectedTreeId: 'melee_v4_5',
+              schemaVersion: 'skills_melee_v3',
+              skillsMap: {
+                skill_formal: { id: 'skill_formal', name: '正式技能', tags: ['DEFENSE'] },
+                skill_demo: { id: 'skill_demo', name: '演示技能', tags: ['DEMO', 'DEFENSE'] }
+              },
+              skillsList: [
+                { id: 'skill_formal', name: '正式技能', tags: ['DEFENSE'] },
+                { id: 'skill_demo', name: '演示技能', tags: ['DEMO', 'DEFENSE'] }
+              ]
+            };
+          },
+          playerData: {
+            skills: {
+              learned: ['skill_formal'],
+              skillPoints: 2
+            }
+          }
+        }
+      };
+
+      modal._loadDataFromEngine();
+
+      assert(modal._skillsMap.skill_demo?.id === 'skill_demo', '技能树不应破坏 skillsMap 中的 DEMO 技能');
+      assert(modal._skillsList.length === 1, `正式技能树应过滤 DEMO 节点，实际 ${modal._skillsList.length}`);
+      assert(modal._skillsList[0]?.id === 'skill_formal', `正式技能树保留的节点错误: ${modal._skillsList[0]?.id}`);
+      assert(modal._selectedSkillId === 'skill_formal', `过滤 DEMO 后默认选中错误: ${modal._selectedSkillId}`);
+    }
+
     function testCoreEngineLearnSkillConsumesDataBoundary() {
       const engine = Object.create(CoreEngine.prototype);
-      let saveCalls = 0;
+      let requestSaveCalls = 0;
+      let dataSaveCalls = 0;
       let emitted = null;
       engine.data = {
         playerData: {
@@ -806,8 +1020,11 @@
           };
         },
         saveGame() {
-          saveCalls += 1;
+          dataSaveCalls += 1;
         }
+      };
+      engine.requestSave = () => {
+        requestSaveCalls += 1;
       };
       engine.eventBus = {
         emit(eventName, payload) {
@@ -819,8 +1036,59 @@
 
       assert(engine.data.playerData.skills.learned.includes('skill_a'), 'learnSkill 未通过 data boundary 学习技能');
       assert(engine.data.playerData.skills.skillPoints === 1, `learnSkill 未正确扣除 KP: ${engine.data.playerData.skills.skillPoints}`);
-      assert(saveCalls === 1, `learnSkill 未触发 saveGame: ${saveCalls}`);
+      assert(requestSaveCalls === 1, `learnSkill 未触发统一保存协调层: ${requestSaveCalls}`);
+      assert(dataSaveCalls === 0, `learnSkill 不应直接调用 data.saveGame: ${dataSaveCalls}`);
       assert(emitted?.eventName === 'DATA_UPDATE', `learnSkill 未发出 DATA_UPDATE: ${emitted?.eventName}`);
+    }
+
+    function testCoreEngineLoginStartsNewGameWithoutImplicitLoad() {
+      const engine = Object.create(CoreEngine.prototype);
+      let loadCalls = 0;
+      let createCalls = 0;
+      let requestSaveCalls = 0;
+      let changedTo = null;
+      let emitted = null;
+
+      engine.fsm = {
+        currentState: 'LOGIN',
+        changeState(nextState) {
+          this.currentState = nextState;
+          changedTo = nextState;
+        }
+      };
+      engine.data = {
+        playerData: {
+          id: 'player_login_test',
+          name: 'Player1'
+        },
+        loadGame() {
+          loadCalls += 1;
+          return true;
+        },
+        createNewGame(username) {
+          createCalls += 1;
+          this.playerData = {
+            id: 'player_login_test',
+            name: username
+          };
+        }
+      };
+      engine.requestSave = () => {
+        requestSaveCalls += 1;
+      };
+      engine.eventBus = {
+        emit(eventName, payload) {
+          emitted = { eventName, payload };
+        }
+      };
+
+      engine.login('Player1');
+
+      assert(loadCalls === 0, `登录入口不应隐式读档，实际调用 loadGame ${loadCalls} 次`);
+      assert(createCalls === 1, `登录入口应显式创建新游戏，实际 createNewGame ${createCalls} 次`);
+      assert(requestSaveCalls === 1, `登录入口应通过统一保存协调层创建自动存档，实际 ${requestSaveCalls} 次`);
+      assert(changedTo === 'MAIN_MENU', `登录后未切到 MAIN_MENU: ${changedTo}`);
+      assert(emitted?.eventName === 'DATA_UPDATE', `登录后未发出 DATA_UPDATE: ${emitted?.eventName}`);
     }
 
     async function testCoreEngineInitConsumesBuffDataBoundary() {
@@ -1126,6 +1394,38 @@
       }
     }
 
+    function testDataManagerGetSaveListIncludesAutoSaveEntry() {
+      localStorage.removeItem('save_game');
+      localStorage.removeItem('save_game_slot_1');
+      localStorage.removeItem('save_game_slot_2');
+      localStorage.removeItem('save_game_slot_3');
+
+      const autoSave = {
+        version: '1.0.0',
+        timestamp: Date.now(),
+        global: {
+          player: {
+            id: 'player_auto',
+            name: 'Tester'
+          }
+        },
+        runtime: {
+          currentScene: 'MAIN_MENU'
+        }
+      };
+
+      localStorage.setItem('save_game', JSON.stringify(autoSave));
+
+      const list = DataManager.getSaveList();
+      const autoEntry = Array.isArray(list) ? list.find(item => item?.slotType === 'auto') : null;
+
+      assert(Array.isArray(list), 'getSaveList 未返回数组');
+      assert(autoEntry, 'getSaveList 未包含自动存档槽位');
+      assert(autoEntry?.id === 'auto', `自动存档槽位 id 错误: ${autoEntry?.id}`);
+      assert(autoEntry?.title === '自动存档', `自动存档标题错误: ${autoEntry?.title}`);
+      assert(autoEntry?.isEmpty === false, '自动存档已有数据时不应标记为空');
+    }
+
     async function testCoreEngineResumeBattleRebuildsRuntimeState() {
       const buffPack = await fetchRegistryJson('buffs');
       const layout = createRegressionSlotLayout();
@@ -1317,8 +1617,7 @@
 
       const enemy = enemies.enemy_acceptance_guard;
       assert(enemy, '缺少样本敌人 enemy_acceptance_guard');
-      assert(Array.isArray(enemy.skills) && enemy.skills.includes('skill_block'), '样本敌人缺少修甲技能 skill_block');
-      assert(Array.isArray(enemy.skills) && enemy.skills.includes('skill_heal'), '样本敌人缺少回血技能 skill_heal');
+      assert(Array.isArray(enemy.skills) && enemy.skills.includes('skill_demo_enemy_head_break'), '样本敌人缺少固定头部重击技能 skill_demo_enemy_head_break');
 
       const skillList = Array.isArray(skills.skills) ? skills.skills : [];
       const byId = (id) => skillList.find(skill => skill.id === id);
@@ -1326,6 +1625,7 @@
       assert(byId('skill_demo_hp_guard'), '缺少人工验收技能 skill_demo_hp_guard');
       assert(byId('skill_demo_armor_guard'), '缺少人工验收技能 skill_demo_armor_guard');
       assert(byId('skill_demo_on_hit_armor'), '缺少人工验收技能 skill_demo_on_hit_armor');
+      assert(byId('skill_demo_enemy_head_break'), '缺少固定头部重击技能 skill_demo_enemy_head_break');
       assert(byId('skill_demo_enemy_head_tap'), '缺少护甲验收敌人攻击技能 skill_demo_enemy_head_tap');
       assert(byId('skill_demo_wait'), '缺少敌人样本等待技能 skill_demo_wait');
     }
@@ -1383,6 +1683,93 @@
       const armorEnemy = enemies.enemy_acceptance_head_tapper;
       assert(armorEnemy, '缺少护甲验收样本 enemy_acceptance_head_tapper');
       assert(Array.isArray(armorEnemy.skills) && armorEnemy.skills.includes('skill_demo_enemy_head_tap'), '护甲验收样本缺少固定头部攻击技能');
+    }
+
+    async function testAcceptanceBuffSampleLevelsInjectVisibleArmorBaselineForLegacySaves() {
+      await DataManager.loadConfigs();
+
+      const previousDataConfig = deepClone(DataManager.dataConfig);
+      const previousLevel = DataManager.currentLevelData ? deepClone(DataManager.currentLevelData) : null;
+      const previousWindowConfig = window.__DATA_CONFIG__;
+
+      const expectedBodyParts = {
+        head: { current: 20, max: 20 },
+        chest: { current: 10, max: 20 },
+        abdomen: { current: 6, max: 20 },
+        arm: { current: 6, max: 20 },
+        leg: { current: 12, max: 20 }
+      };
+
+      try {
+        DataManager.dataConfig = {
+          version: '1.0.0',
+          timestamp: 0,
+          global: {
+            player: {
+              id: 'player_legacy_acceptance',
+              name: 'Tester',
+              stats: { hp: 100, maxHp: 100, ap: 4, maxAp: 6, speed: 1 },
+              skills: {
+                skillTreeId: 'melee_v4_5',
+                skillPoints: 0,
+                learned: []
+              },
+              resources: {
+                exp: 0,
+                gold: 0
+              },
+              equipment: {
+                weapon: null,
+                head: null,
+                chest: null,
+                abdomen: null,
+                arm: null,
+                leg: null
+              },
+              inventory: []
+            },
+            progress: {
+              unlockedLevels: ['level_1_1'],
+              completedQuests: [],
+              completedLevels: [],
+              flags: {}
+            }
+          },
+          runtime: {
+            currentScene: 'MAIN_MENU',
+            battleState: null
+          },
+          settings: {
+            audio: { bgmVolume: 0.8, sfxVolume: 1.0 },
+            display: { showDamageNumbers: true }
+          }
+        };
+        window.__DATA_CONFIG__ = DataManager.dataConfig;
+
+        const engine = Object.create(CoreEngine.prototype);
+        engine.data = DataManager;
+        engine.initializePlayerBodyParts = CoreEngine.prototype.initializePlayerBodyParts;
+        engine._cloneSerializable = CoreEngine.prototype._cloneSerializable;
+
+        for (const levelId of ['level_1_2_acceptance', 'level_1_6_acceptance_armor_guard']) {
+          DataManager.currentLevelData = DataManager.instantiateLevel(levelId);
+          const runtimeState = CoreEngine.prototype._buildBattlePlayerState.call(engine);
+          const visibleParts = Object.values(runtimeState.bodyParts || {}).filter(part => Number(part?.max ?? 0) > 0);
+
+          assert(visibleParts.length === 5, `${levelId} 未为旧存档玩家补齐 5 个可见护甲部位: ${visibleParts.length}`);
+
+          for (const [partKey, expected] of Object.entries(expectedBodyParts)) {
+            const actual = runtimeState.bodyParts?.[partKey];
+            assert(actual, `${levelId} 缺少护甲部位 ${partKey}`);
+            assert(Number(actual.current ?? 0) === expected.current, `${levelId} ${partKey}.current 错误: ${actual.current}`);
+            assert(Number(actual.max ?? 0) === expected.max, `${levelId} ${partKey}.max 错误: ${actual.max}`);
+          }
+        }
+      } finally {
+        DataManager.dataConfig = previousDataConfig;
+        DataManager.currentLevelData = previousLevel;
+        window.__DATA_CONFIG__ = previousWindowConfig;
+      }
     }
 
     async function testEnemyPlannerUsesExpectedStrategyOnAcceptanceEnemySamples() {
@@ -1480,6 +1867,78 @@
       }
     }
 
+    async function testAcceptanceHpGuardManualSampleProvidesHeadFocusedObservation() {
+      const rawBuffs = await fetchRegistryJson('buffs');
+      await DataManager.loadConfigs();
+
+      const eventBus = new EventBus.constructor();
+      const registry = new BuffRegistry(rawBuffs.buffs);
+      const system = new BuffSystem(eventBus, registry);
+      system.start();
+
+      const driver = createBattleDriver(eventBus);
+      const planner = new EnemyActionPlanner({
+        getSkillConfig: (skillId) => DataManager.getSkillConfig(skillId)
+      });
+
+      const runtimeLevel = DataManager.instantiateLevel('level_1_2_acceptance');
+      const enemy = runtimeLevel?.enemies?.[0];
+      assert(enemy, '人工验收样本未实例化敌人');
+
+      const levelConfig = DataManager.getLevelConfig('level_1_2_acceptance');
+      const player = createCombatant({
+        id: 'player_acceptance_manual',
+        bodyParts: deepClone(levelConfig?.battlePlayerState?.bodyParts || {}),
+        hp: 100,
+        maxHp: 100,
+        ap: 4,
+        speed: 1
+      });
+      player.name = 'Tester';
+      player.buffs = new BuffManager(player, registry, eventBus);
+      system.registerManager(player.buffs);
+
+      driver.data = {
+        playerData: player,
+        currentLevelData: {
+          enemies: [enemy]
+        },
+        getSkillConfig(skillId) {
+          return DataManager.getSkillConfig(skillId);
+        }
+      };
+
+      const applyHpGuard = driver._executeSkillActions({
+        actor: player,
+        action: {
+          sourceId: player.id,
+          targetId: player.id,
+          skillId: 'skill_demo_hp_guard'
+        },
+        skillConfig: DataManager.getSkillConfig('skill_demo_hp_guard')
+      });
+      assert(applyHpGuard?.ok, 'HP免伤演示未成功施加 Buff');
+
+      const enemyPlan = planner.planTurn({
+        enemy,
+        player,
+        playerBodyParts: player.bodyParts
+      });
+
+      assert(enemyPlan, '人工验收样本敌人未生成规划');
+      assert(enemyPlan.skillId === 'skill_demo_enemy_head_break', `人工验收样本未使用固定头部重击: ${enemyPlan.skillId}`);
+      assert(enemyPlan.bodyPart === 'head', `人工验收样本未固定攻击头部: ${enemyPlan.bodyPart}`);
+
+      const result = driver._executeSkillActions({
+        actor: enemy,
+        action: enemyPlan,
+        skillConfig: DataManager.getSkillConfig(enemyPlan.skillId)
+      });
+      assert(result?.ok, '人工验收样本敌人执行失败');
+      assert(player.bodyParts?.head?.current === 0, `HP免伤样本头部护甲未清零: ${player.bodyParts?.head?.current}`);
+      assert(player.stats?.hp === 100, `HP免伤样本仍然掉血: ${player.stats?.hp}`);
+    }
+
     function collectMissingSkillChain(skillMap, learnedSet, skillId, missingSet, visiting = new Set()) {
       if (!skillId || learnedSet.has(skillId) || visiting.has(skillId) || missingSet.has(skillId)) return;
       const skill = skillMap.get(skillId);
@@ -1504,8 +1963,14 @@
       const skillList = Array.isArray(skillPack.skills) ? skillPack.skills : [];
       const skillMap = new Map(skillList.map(skill => [skill.id, skill]));
       const playerSkills = playerPack.default?.skills || {};
-      const learnedSet = new Set(Array.isArray(playerSkills.learned) ? playerSkills.learned : []);
+      const learnedList = Array.isArray(playerSkills.learned) ? playerSkills.learned : [];
+      const learnedSet = new Set(learnedList);
       const availableKp = Number(playerSkills.skillPoints ?? 0) || 0;
+      const refundKp = learnedList.reduce((sum, skillId) => {
+        const skill = skillMap.get(skillId);
+        return sum + (Number(skill?.unlock?.cost?.kp ?? 0) || 0);
+      }, 0);
+      const resetBudget = availableKp + refundKp;
       const buffMap = buffPack.buffs || {};
 
       const specs = [
@@ -1557,6 +2022,20 @@
       }, 0);
 
       assert(totalKp <= availableKp, `主流程 Buff 样本链所需 KP 超出默认玩家预算: ${totalKp} > ${availableKp}`);
+
+      const missingAfterReset = new Set();
+      for (const spec of specs) {
+        collectMissingSkillChain(skillMap, new Set(), spec.id, missingAfterReset);
+      }
+      const totalKpFromCleanReset = Array.from(missingAfterReset).reduce((sum, skillId) => {
+        const skill = skillMap.get(skillId);
+        return sum + (Number(skill?.unlock?.cost?.kp ?? 0) || 0);
+      }, 0);
+
+      assert(
+        totalKpFromCleanReset <= resetBudget,
+        `主流程 Buff 样本链在默认清档基线下不可达: ${totalKpFromCleanReset} > ${resetBudget}`
+      );
 
       for (const spec of specs) {
         const skill = skillMap.get(spec.id);
@@ -2859,6 +3338,13 @@
       assert(enemyDebuffs.includes('流血'), `敌人 DEBUFF 栏未显示流血: ${enemyDebuffs.join(',')}`);
     }
 
+    async function testMockUiStatusTooltipUsesReadableSeparator() {
+      const cssText = await fetch('../mock_ui_v11.css', { cache: 'no-store' }).then(r => r.text());
+      assert(cssText.includes('.status-icon::after'), 'mock_ui_v11.css 缺少 status-icon tooltip 规则');
+      assert(!cssText.includes('��'), 'status tooltip 仍包含乱码分隔符');
+      assert(cssText.includes('content: attr(data-name) " · " attr(data-desc);'), 'status tooltip 未使用可读分隔符');
+    }
+
     function testDataManagerAppliesBattleSettlementRewards() {
       assert(typeof DataManager.applyBattleSettlement === 'function', 'DataManagerV2 缺少 applyBattleSettlement()');
 
@@ -2966,6 +3452,49 @@
       assert(entries[1]?.id === 'level_1_2_story', `第二项错误: ${entries[1]?.id}`);
       assert(entries[1]?.isUnlocked === false, '未解锁故事关卡错误标记为已解锁');
       assert(entries[1]?.isCompleted === false, '未完成故事关卡错误标记为已完成');
+    }
+
+    function testDataManagerBuildsStoryLevelSelectionMetaAndRewardPreview() {
+      const dm = Object.create(Object.getPrototypeOf(DataManager));
+      dm.dataConfig = {
+        global: {
+          progress: {
+            unlockedLevels: ['level_1_1'],
+            completedLevels: [],
+            flags: {}
+          }
+        }
+      };
+      dm.gameConfig = {
+        levels: {
+          level_1_1: {
+            id: 'level_1_1',
+            name: '幽暗森林边缘',
+            description: 'story',
+            flow: { kind: 'story', order: 1 },
+            selectionMeta: {
+              difficultyLabel: '标准',
+              enemyStyleTags: ['弱点追击', '快攻'],
+              buildHint: '优先补头部防御，再找机会反打。'
+            },
+            rewards: {
+              exp: 100,
+              gold: 50,
+              kp: 1
+            }
+          }
+        }
+      };
+
+      const entries = DataManager.getLevelSelectEntries.call(dm);
+      assert(entries.length === 1, `故事关卡入口数量错误: ${entries.length}`);
+      assert(entries[0]?.selectionMeta?.difficultyLabel === '标准', `difficultyLabel 未透出: ${entries[0]?.selectionMeta?.difficultyLabel}`);
+      assert(Array.isArray(entries[0]?.selectionMeta?.enemyStyleTags), 'enemyStyleTags 未透出为数组');
+      assert(entries[0]?.selectionMeta?.enemyStyleTags?.includes('弱点追击'), 'enemyStyleTags 缺少弱点追击');
+      assert(entries[0]?.selectionMeta?.buildHint === '优先补头部防御，再找机会反打。', `buildHint 未透出: ${entries[0]?.selectionMeta?.buildHint}`);
+      assert(entries[0]?.rewards?.exp === 100, `奖励预览 exp 错误: ${entries[0]?.rewards?.exp}`);
+      assert(entries[0]?.rewards?.gold === 50, `奖励预览 gold 错误: ${entries[0]?.rewards?.gold}`);
+      assert(entries[0]?.rewards?.kp === 1, `奖励预览 kp 错误: ${entries[0]?.rewards?.kp}`);
     }
 
     function testDataManagerBuildsAcceptanceLevelEntriesForManualVerification() {
@@ -3081,7 +3610,8 @@
       const emitted = [];
       let stateChange = null;
       let applyArgs = null;
-      let saveCalls = 0;
+      let requestSaveCalls = 0;
+      let dataSaveCalls = 0;
       const driver = Object.create(CoreEngine.prototype);
       driver.timeline = {
         stop() {}
@@ -3119,8 +3649,11 @@
           };
         },
         saveGame() {
-          saveCalls += 1;
+          dataSaveCalls += 1;
         }
+      };
+      driver.requestSave = () => {
+        requestSaveCalls += 1;
       };
 
       driver.endBattle(true);
@@ -3132,7 +3665,8 @@
       const battleEndEvent = emitted.find(([type]) => type === 'BATTLE_END');
       assert(battleEndEvent, '未发出 BATTLE_END 事件');
       assert(battleEndEvent[1]?.settlement?.rewards?.gold === 50, 'BATTLE_END 未携带 settlement rewards');
-      assert(saveCalls === 1, `endBattle 应保存一次存档，实际 ${saveCalls}`);
+      assert(requestSaveCalls === 1, `endBattle 应走统一保存协调层，实际 ${requestSaveCalls}`);
+      assert(dataSaveCalls === 0, `endBattle 不应直接调用 data.saveGame: ${dataSaveCalls}`);
     }
 
     function testCoreEngineTriggersVictorySettlementFromNaturalExecution() {
@@ -3142,7 +3676,8 @@
         emitted,
         getStateChange,
         getApplyArgs,
-        getSaveCalls
+        getRequestSaveCalls,
+        getDataSaveCalls
       } = createNaturalSettlementHarness({
         levelId: 'level_b1_victory',
         levelName: '自然胜利样本',
@@ -3173,7 +3708,8 @@
       assert(battleEndEvent, '自然胜利后未发出 BATTLE_END');
       assert(battleEndEvent.payload?.victory === true, 'BATTLE_END 未标记 victory=true');
       assert(battleEndEvent.payload?.settlement?.rewards?.kp === 2, `自然胜利奖励未透传到结算事件: ${battleEndEvent.payload?.settlement?.rewards?.kp}`);
-      assert(getSaveCalls() === 1, `自然胜利应保存一次存档，实际 ${getSaveCalls()}`);
+      assert(getRequestSaveCalls() === 1, `自然胜利应走统一保存协调层，实际 ${getRequestSaveCalls()}`);
+      assert(getDataSaveCalls() === 0, `自然胜利不应直接调用 data.saveGame: ${getDataSaveCalls()}`);
     }
 
     function testCoreEngineTriggersDefeatSettlementFromNaturalExecution() {
@@ -3183,7 +3719,8 @@
         emitted,
         getStateChange,
         getApplyArgs,
-        getSaveCalls
+        getRequestSaveCalls,
+        getDataSaveCalls
       } = createNaturalSettlementHarness({
         levelId: 'level_b1_defeat',
         levelName: '自然失败样本',
@@ -3224,7 +3761,8 @@
       assert(battleEndEvent, '自然失败后未发出 BATTLE_END');
       assert(battleEndEvent.payload?.victory === false, 'BATTLE_END 未标记 victory=false');
       assert(battleEndEvent.payload?.settlement?.rewards?.exp === 0, `失败结算奖励应为 0: ${battleEndEvent.payload?.settlement?.rewards?.exp}`);
-      assert(getSaveCalls() === 1, `自然失败应保存一次存档，实际 ${getSaveCalls()}`);
+      assert(getRequestSaveCalls() === 1, `自然失败应走统一保存协调层，实际 ${getRequestSaveCalls()}`);
+      assert(getDataSaveCalls() === 0, `自然失败不应直接调用 data.saveGame: ${getDataSaveCalls()}`);
     }
 
     function testCoreEngineSelectLevelAllowsSettlementRestart() {
@@ -3511,6 +4049,62 @@
       assert(selected[0] === 'level_1_1', `已解锁关卡点击结果错误: ${selected[0]}`);
     }
 
+    function testSystemModalRendersStoryLevelContentHints() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const modal = new UI_SystemModal();
+      modal.engine = {
+        data: {
+          getLevelSelectEntries() {
+            return [
+              {
+                id: 'level_1_1',
+                name: '幽暗森林边缘',
+                description: '森林外围的哥布林追猎手会优先压迫玩家最脆弱的部位。',
+                isUnlocked: true,
+                isCompleted: false,
+                rewards: {
+                  exp: 100,
+                  gold: 50,
+                  kp: 1
+                },
+                selectionMeta: {
+                  difficultyLabel: '标准',
+                  enemyStyleTags: ['弱点追击', '快攻'],
+                  buildHint: '优先补头部防御，再找机会反打。'
+                }
+              }
+            ];
+          }
+        },
+        input: {
+          selectLevel() {}
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderLevelSelect();
+
+      const bodyText = document.getElementById('modalBody').textContent || '';
+      assert(bodyText.includes('难度'), '故事关卡卡片缺少难度提示');
+      assert(bodyText.includes('标准'), '故事关卡卡片缺少难度值');
+      assert(bodyText.includes('敌人风格'), '故事关卡卡片缺少敌人风格标题');
+      assert(bodyText.includes('弱点追击'), '故事关卡卡片缺少敌人风格标签');
+      assert(bodyText.includes('奖励预览'), '故事关卡卡片缺少奖励预览标题');
+      assert(bodyText.includes('EXP 100'), `故事关卡卡片缺少 EXP 奖励: ${bodyText}`);
+      assert(bodyText.includes('GOLD 50'), '故事关卡卡片缺少 GOLD 奖励');
+      assert(bodyText.includes('KP 1'), '故事关卡卡片缺少 KP 奖励');
+      assert(bodyText.includes('构筑提示'), '故事关卡卡片缺少构筑提示标题');
+      assert(bodyText.includes('优先补头部防御，再找机会反打。'), '故事关卡卡片缺少构筑提示正文');
+    }
+
     function testSystemModalProvidesAcceptanceSampleEntryWithoutBreakingStorySelect() {
       resetRegressionFixture(`
         <div id="systemModal" hidden aria-hidden="true"></div>
@@ -3647,6 +4241,59 @@
       assert((document.getElementById('modalBody')?.textContent || '').includes('关卡选择'), '技能树入口不应破坏原有关卡选择入口');
     }
 
+    function testSystemModalLoginProvidesExplicitNewGameAndLoadActions() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      let newGameCalls = 0;
+      const modal = new UI_SystemModal();
+      modal.engine = {
+        data: {
+          hasAnySave() {
+            return true;
+          },
+          getSaveList() {
+            return [
+              { id: 'auto', slotType: 'auto', title: '自动存档', date: '2026/04/07 08:00:00', level: '主菜单', turn: '-', isEmpty: false },
+              { id: 1, slotType: 'manual', title: '手动槽位 1', date: '空', level: '-', turn: '-', isEmpty: true }
+            ];
+          }
+        },
+        input: {
+          login() {
+            newGameCalls += 1;
+          },
+          loadGame() {}
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderLogin();
+
+      const buttons = Array.from(document.querySelectorAll('#modalBody button'));
+      const labels = buttons.map(btn => btn.textContent.trim());
+      assert(labels.includes('新游戏'), '登录页缺少“新游戏”按钮');
+      assert(labels.includes('读取存档'), '登录页缺少“读取存档”按钮');
+      assert(!labels.includes('开始冒险'), '登录页不应继续使用“开始冒险”作为隐式读档入口');
+
+      const loadBtn = buttons.find(btn => btn.textContent.trim() === '读取存档');
+      assert(loadBtn && loadBtn.disabled === false, '已有存档时“读取存档”按钮不应禁用');
+      loadBtn.click();
+      assert(modal.currentView === 'SAVE_LOAD', `点击“读取存档”后未进入存档页: ${modal.currentView}`);
+
+      modal.renderLogin();
+      const newGameBtn = Array.from(document.querySelectorAll('#modalBody button'))
+        .find(btn => btn.textContent.trim() === '新游戏');
+      newGameBtn.click();
+      assert(newGameCalls === 1, `点击“新游戏”未触发 engine.input.login: ${newGameCalls}`);
+    }
+
     function testSystemModalRefreshesGrowthSummaryOnPlayerSkillsUpdate() {
       resetRegressionFixture(`
         <div id="systemModal" hidden aria-hidden="true"></div>
@@ -3693,6 +4340,44 @@
       assert(bodyText.includes('关卡选择'), 'PLAYER_SKILLS 更新后主菜单入口被破坏');
     }
 
+    function testSystemModalRendersBattleReturnEntryInsteadOfContinueGame() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const modal = new UI_SystemModal();
+      modal.engine = {
+        fsm: {
+          currentState: 'BATTLE_LOOP'
+        },
+        data: {
+          dataConfig: {
+            runtime: {
+              levelData: {
+                id: 'level_1_1'
+              }
+            }
+          },
+          getAcceptanceLevelSelectEntries() {
+            return [];
+          }
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderMainMenu();
+
+      const labels = Array.from(document.querySelectorAll('#modalBody .menu-btn'))
+        .map(btn => btn.textContent.trim());
+      assert(labels.includes('返回战斗'), '战斗内主菜单缺少“返回战斗”入口');
+      assert(!labels.includes('继续游戏'), '战斗内主菜单不应继续显示语义模糊的“继续游戏”');
+    }
+
     function testSystemModalRendersSaveLoadFeedbackAndSlotMeta() {
       resetRegressionFixture(`
         <div id="systemModal" hidden aria-hidden="true"></div>
@@ -3708,9 +4393,10 @@
         data: {
           getSaveList() {
             return [
-              { id: 1, date: '2026/04/05 01:23:45', level: '幽暗森林边缘', turn: 2, isEmpty: false },
-              { id: 2, date: '空', level: '-', turn: '-', isEmpty: true },
-              { id: 3, date: '空', level: '-', turn: '-', isEmpty: true }
+              { id: 'auto', slotType: 'auto', title: '自动存档', date: '2026/04/05 01:23:45', level: '幽暗森林边缘', turn: 2, isEmpty: false },
+              { id: 1, slotType: 'manual', title: '手动槽位 1', date: '空', level: '-', turn: '-', isEmpty: true },
+              { id: 2, slotType: 'manual', title: '手动槽位 2', date: '空', level: '-', turn: '-', isEmpty: true },
+              { id: 3, slotType: 'manual', title: '手动槽位 3', date: '空', level: '-', turn: '-', isEmpty: true }
             ];
           }
         },
@@ -3725,12 +4411,25 @@
 
       const bodyText = document.getElementById('modalBody').textContent || '';
       assert(bodyText.includes('已保存到存档位 1'), '存档页未显示显式反馈消息');
+      assert(bodyText.includes('自动存档'), '存档页未显示自动存档正式槽位');
       assert(bodyText.includes('幽暗森林边缘'), '存档页未显示槽位关卡名');
       assert(bodyText.includes('回合'), '存档页未显示槽位回合信息');
+
+      const slots = Array.from(document.querySelectorAll('#modalBody .save-slot'));
+      const autoSlot = slots.find(slot => (slot.textContent || '').includes('自动存档'));
+      assert(autoSlot, '未渲染自动存档卡片');
+      const autoButtons = Array.from(autoSlot.querySelectorAll('button')).map(btn => btn.textContent.trim());
+      assert(!autoButtons.includes('保存'), '自动存档卡片不应提供手动保存按钮');
+      assert(autoButtons.includes('读取'), '自动存档卡片缺少读取按钮');
     }
 
     const tests = [
       ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
+      ['BattlePresentationController 会在时间线启动时标记攻击态', testBattlePresentationControllerMarksActorOnTimelineEntry],
+      ['BattlePresentationController 会在受击时生成伤害飘字', testBattlePresentationControllerCreatesFloatTextOnDamage],
+      ['BattlePresentationController 会在新战斗开始时清理上一轮瞬态演出', testBattlePresentationControllerClearsTransientStateOnBattleStart],
+      ['battle_presentation_probe 提供可理解的展示层验证说明', testBattlePresentationProbeProvidesReadableGuide],
+      ['battle_presentation_probe 提供一键可验证的治疗演示基线', testBattlePresentationProbeProvidesHealableBaseline],
       ['codex_regression_runner 提供人工使用说明', testRegressionRunnerProvidesHumanUsageGuide],
       ['CoreEngine 战斗保存同步 currentScene/battleState', testCoreEngineBattleSaveSyncContract],
       ['config registry 与 DataManager 装载边界统一', testContentRegistryProvidesUnifiedLoaderBoundary],
@@ -3741,16 +4440,21 @@
       ['DataManager 支持关卡 pack 运行时覆写桥', testDataManagerSupportsRuntimeLevelPackOverrideBridge],
       ['DataManager 暴露关卡目录边界 API', testDataManagerProvidesLevelCatalogBoundary],
       ['UI_SkillTreeModal 仅消费技能目录边界', testSkillTreeModalConsumesSkillCatalogBoundary],
+      ['UI_SkillTreeModal 会过滤 DEMO 技能节点', testSkillTreeModalFiltersOutDemoSkillsFromFormalTree],
       ['CoreEngine.learnSkill 仅消费 DataManager 技能边界', testCoreEngineLearnSkillConsumesDataBoundary],
+      ['CoreEngine.login 新游戏入口不应隐式读档', testCoreEngineLoginStartsNewGameWithoutImplicitLoad],
       ['CoreEngine.init 仅消费 DataManager Buff 边界', testCoreEngineInitConsumesBuffDataBoundary],
       ['CoreEngine 通过关卡边界解析战斗布局', testCoreEngineResolvesSlotLayoutViaLevelBoundary],
       ['CoreEngine.startTurn 仅刷新内存 runtime snapshot', testCoreEngineStartTurnRefreshesInMemoryRuntimeSnapshotOnly],
       ['CoreEngine.commitPlanning 仅刷新内存已提交规划快照', testCoreEngineCommitPlanningRefreshesInMemoryRuntimeSnapshotOnly],
       ['CoreEngine.resumeBattle 会重建 Buff/规划/时间线状态', testCoreEngineResumeBattleRebuildsRuntimeState],
       ['DataManager 显式保存后会刷新存档槽元数据', testDataManagerSaveSlotsReflectExplicitSaveMetadata],
+      ['DataManager.getSaveList 包含自动存档正式槽位', testDataManagerGetSaveListIncludesAutoSaveEntry],
       ['验收关卡与样本敌人/技能已配置', testAcceptanceLevelProvidesManualVerificationEntry],
       ['验收关卡提供确定性的玩家与敌人状态', testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates],
+      ['Buff 验收样本会为旧存档玩家注入可见护甲基线', testAcceptanceBuffSampleLevelsInjectVisibleArmorBaselineForLegacySaves],
       ['验收防御技能会先于样本敌人执行', testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack],
+      ['人工验收样本会稳定给出头部掉甲不掉血的 HP 免伤现象', testAcceptanceHpGuardManualSampleProvidesHeadFocusedObservation],
       ['EnemyActionPlanner 会在敌人行为验收样本中选出对应策略', testEnemyPlannerUsesExpectedStrategyOnAcceptanceEnemySamples],
       ['主流程 Buff 样本链具备正式可学路径', testMainFlowBuffSamplesProvideProductionReadySkillTreeChains],
       ['关卡 pack schema 与敌人池配置映射对齐', testLevelPackSchemaAndEnemyPoolMappingAreAligned],
@@ -3783,9 +4487,11 @@
       ['UI_SkillPanel 仅高亮 candidateParts', testSkillPanelHighlightsCandidatePartsOnly],
       ['UI_SkillTreeModal 走 engine.saveGame 保存路径', testSkillTreeCommitUsesEngineSavePath],
       ['UI_BattleRow 会分离 Buff 与 Debuff 图标', testBattleRowSeparatesBuffAndDebuffIconsFromRuntimeStatuses],
+      ['mock_ui_v11 状态 tooltip 使用可读分隔符', testMockUiStatusTooltipUsesReadableSeparator],
       ['DataManager 结算奖励会入账到玩家与进度', testDataManagerAppliesBattleSettlementRewards],
       ['故事关卡提供连续推进路径', testStoryLevelsProvideSequentialProgressionPath],
       ['DataManager 构建故事关卡选择入口', testDataManagerBuildsLevelSelectEntriesFromStoryProgress],
+      ['DataManager 透出故事关卡内容元数据与奖励预览', testDataManagerBuildsStoryLevelSelectionMetaAndRewardPreview],
       ['DataManager 构建独立验收样本选择入口', testDataManagerBuildsAcceptanceLevelEntriesForManualVerification],
       ['DataManager 首次通关会解锁下一故事关卡', testDataManagerFirstClearUnlocksNextStoryLevel],
       ['CoreEngine.endBattle 会发出带 settlement 的结算事件', testCoreEngineEndBattleEmitsSettlementPayload],
@@ -3796,9 +4502,12 @@
       ['UI_SystemModal 会渲染结算去向按钮', testSystemModalRendersSettlementFlowActions],
       ['UI_SystemModal 会在胜利结算后直达技能树入口', testSystemModalOpensSkillTreeFromVictorySettlement],
       ['UI_SystemModal 关卡选择遵守解锁状态', testSystemModalLevelSelectHonorsUnlockedState],
+      ['UI_SystemModal 会渲染故事关卡内容提示', testSystemModalRendersStoryLevelContentHints],
       ['UI_SystemModal 提供独立验收样本入口', testSystemModalProvidesAcceptanceSampleEntryWithoutBreakingStorySelect],
       ['UI_SystemModal 会渲染成长摘要并提供技能树入口', testSystemModalRendersGrowthSummaryAndSkillTreeEntry],
+      ['UI_SystemModal 登录页提供显式新游戏与读档入口', testSystemModalLoginProvidesExplicitNewGameAndLoadActions],
       ['UI_SystemModal 会在 PLAYER_SKILLS 更新后刷新成长摘要', testSystemModalRefreshesGrowthSummaryOnPlayerSkillsUpdate],
+      ['UI_SystemModal 战斗内菜单使用返回战斗语义', testSystemModalRendersBattleReturnEntryInsteadOfContinueGame],
       ['UI_SystemModal 存档页会显示反馈与槽位元数据', testSystemModalRendersSaveLoadFeedbackAndSlotMeta]
     ];
 

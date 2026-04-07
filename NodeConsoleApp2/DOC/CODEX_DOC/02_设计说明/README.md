@@ -42,6 +42,7 @@
    - `17-战斗场景提案(battle_scene_proposal)-设计说明.md`
    - `20-对战演出与动画展示层(battle_presentation)-设计说明.md`
    - `21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明.md`
+   - `22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md`
 
 ## 3. 设计文档清单
 
@@ -68,6 +69,7 @@
 | `19` | `19-关卡选择内容元数据(level_select_content)-设计说明.md` | story 关卡选择信息与内容元数据设计 |
 | `20` | `20-对战演出与动画展示层(battle_presentation)-设计说明.md` | 战斗展示层、动画驱动与 probe 页设计 |
 | `21` | `21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明.md` | Spine 独立素材工程、导入边界与可行性分析 |
+| `22` | `22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md` | 主工程侧双仓库协作规则、消费边界与降级策略 |
 
 ## 4. 当前使用规则
 
