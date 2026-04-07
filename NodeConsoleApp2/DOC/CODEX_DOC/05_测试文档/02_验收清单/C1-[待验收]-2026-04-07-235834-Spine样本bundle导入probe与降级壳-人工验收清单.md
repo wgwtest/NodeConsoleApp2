@@ -1,0 +1,154 @@
+# C1 Spine样本bundle导入probe与降级壳人工验收清单
+
+状态：`待验收`
+
+## 1. 本清单是验证什么的
+
+本清单不是验证 `Spine` 已经接进战斗页。
+
+它只验证：
+
+1. 主工程是否已经能读取真实样本 bundle 并生成导入报告
+2. 主工程是否已经把导入失败转换成稳定的降级结论
+3. 独立 probe 页是否已经能在 `file://` 下直接打开
+4. 这一切是否仍然没有侵入主战斗流程
+
+## 2. 验收入口
+
+准备命令：
+
+```bash
+cd /home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2
+node tools/build_spine_bundle_probe_report.mjs
+```
+
+主入口：
+
+1. `file:///home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/test/spine_bundle_probe.html`
+
+辅助证据：
+
+1. `test-results/spine_bundle_probe_report.json`
+2. `test-results/c1_spine_bundle_probe.png`
+
+## 3. 进入前说明
+
+为了避免误解，先明确两点：
+
+1. 这个 probe 页是独立诊断页，不是战斗页
+2. 通过本页，只能证明“主工程已经能消费样本 bundle 并做失败分类”，不能证明“战斗里已经播放 Spine”
+
+## 4. 人工验收步骤
+
+### 4.1 真实样本 bundle 是否已生成报告
+
+操作：
+
+1. 在主工程目录执行 `node tools/build_spine_bundle_probe_report.mjs`
+2. 打开 `test-results/spine_bundle_probe_report.json`
+
+检查重点：
+
+1. 命令行输出应包含 `mode=sibling_repo`
+2. `bundleRoot` 应指向：
+   - `/home/wgw/CodexProject/NodeConsoleApp2-SpineAssets/workspace/exports/b1_official_samples`
+3. `fallback.decision` 应为 `use_bundle`
+
+批注区：
+
+【】
+
+### 4.2 Probe 页是否能直接通过 file 协议打开
+
+操作：
+
+1. 直接打开：
+   - `file:///home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/test/spine_bundle_probe.html`
+
+检查重点：
+
+1. 页面能正常打开，不是空白页
+2. 页面上能看到 `Bundle Source`
+3. 页面上能看到 `Bundle Summary`
+4. 页面上能看到 `Characters`
+5. 页面上能看到 `Fallback Decision`
+
+为什么这能证明：
+
+1. 这说明 probe 页已经不依赖本地静态服务
+2. 这说明报告加载链路没有再被 `file://` 下的模块 CORS 拦截
+
+批注区：
+
+【】
+
+### 4.3 页面数据是否与真实样本一致
+
+操作：
+
+1. 在 probe 页查看 `Bundle Summary`
+2. 查看角色区块
+
+检查重点：
+
+1. `bundleId = b1_official_samples`
+2. `bundleVersion = 0.1.0`
+3. `schemaVersion = spine_bundle_manifest_v1`
+4. `characters = 2`
+5. 角色卡里至少应包含：
+   - `spineboy`
+   - `raptor`
+6. 两个角色当前都应显示 `use_bundle`
+
+批注区：
+
+【】
+
+### 4.4 错误区与降级结论是否清晰
+
+操作：
+
+1. 查看 `Failure Diagnostics`
+2. 查看 `Fallback Decision`
+
+检查重点：
+
+1. 当前正常样本下，`Failure Diagnostics` 应显示 `无错误`
+2. 当前整体降级结论应显示 `use_bundle`
+3. 页面底部应明确解释：
+   - `use_bundle`
+   - `fallback_static_character`
+   - `fallback_static_all`
+
+为什么这能证明：
+
+1. 这说明主工程已经把“导入结果”转换成了“主工程可执行的降级语义”
+
+批注区：
+
+【】
+
+### 4.5 本轮是否未侵入主战斗流程
+
+操作：
+
+1. 检查本轮入口只落在：
+   - `test/spine_bundle_probe.html`
+   - `tools/build_spine_bundle_probe_report.mjs`
+   - `script/ui/presentation/spine/`
+
+检查重点：
+
+1. 当前没有要求打开 `mock_ui_v11.html`
+2. 当前没有要求执行战斗流程
+3. 当前没有要求接入 `Spine runtime`
+
+批注区：
+
+【】
+
+## 5. 验收结论
+
+结论记录区：
+
+【】

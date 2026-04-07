@@ -70,7 +70,7 @@
 
 输出结论至少覆盖：
 
-1. `reject_bundle`
+1. `use_bundle`
 2. `fallback_static_character`
 3. `fallback_static_all`
 
@@ -112,13 +112,14 @@ probe 默认优先读取兄弟仓库真实样本 bundle：
 
 ## 5. 为什么 probe 页不直接读取任意本地路径
 
-本轮 probe 页不直接在浏览器里读取任意本地目录，而是通过 Node 侧辅助脚本先生成一份同源报告模块，再由 HTML 页面导入。
+本轮 probe 页不直接在浏览器里读取任意本地目录，而是通过 Node 侧辅助脚本先生成一份同目录报告产物，再由 HTML 页面加载 classic script 并读取全局对象。
 
 原因：
 
 1. 浏览器对本地文件路径读取存在限制
-2. 把读取逻辑放在 Node 侧更容易做存在性检查和错误归类
-3. 这样可以复用同一份导入适配层做自动测试与页面验证
+2. `file://` 下的 ES module import 会被浏览器 CORS 策略拦截
+3. 把读取逻辑放在 Node 侧更容易做存在性检查和错误归类
+4. 这样可以复用同一份导入适配层做自动测试与页面验证
 
 ## 6. Node 侧辅助脚本
 
@@ -133,8 +134,15 @@ probe 默认优先读取兄弟仓库真实样本 bundle：
 3. 生成：
    - `test-results/spine_bundle_probe_report.json`
    - `test-results/spine_bundle_probe_report.mjs`
+   - `test-results/spine_bundle_probe_report.js`
 
-这样 probe 页只需要导入报告模块，不直接承担文件系统读取职责。
+其中：
+
+1. `.json` 用于结构化证据归档
+2. `.mjs` 用于 Node / 测试侧消费
+3. `.js` 用于 `file://` probe 页以 classic script 方式加载，并向 `globalThis.__SPINE_BUNDLE_PROBE_REPORT__` 挂载数据
+
+这样 probe 页只需要消费已生成的报告脚本，不直接承担文件系统读取职责。
 
 ## 7. probe 页展示内容
 
@@ -176,7 +184,7 @@ probe 默认优先读取兄弟仓库真实样本 bundle：
 
 明确显示主工程应采取的处理方式，例如：
 
-1. `reject_bundle`
+1. `use_bundle`
 2. `fallback_static_all`
 3. `fallback_static_character`
 
@@ -201,7 +209,7 @@ probe 默认优先读取兄弟仓库真实样本 bundle：
 `C1` 当前切片通过应满足：
 
 1. 主工程能从兄弟仓库真实样本 bundle 生成导入报告
-2. probe 页面能显示 bundle 摘要、角色结果、错误分类与降级结论
+2. probe 页面能在 `file://` 下显示 bundle 摘要、角色结果、错误分类与降级结论
 3. 缺 bundle、坏 schema、缺资源时，能输出明确且稳定的结论
 4. 不修改主战斗主流程
 5. 后续若进入真实接入阶段，可直接复用 `Loader + FallbackPolicy`

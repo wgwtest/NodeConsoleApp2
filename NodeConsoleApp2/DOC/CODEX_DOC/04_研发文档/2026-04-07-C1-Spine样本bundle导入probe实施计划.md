@@ -4,7 +4,7 @@
 
 **Goal:** Build a main-project-side probe that imports the `B1` sample bundle from the SpineAssets repository, classifies failures, and renders a standalone diagnostic page without touching the live battle flow.
 
-**Architecture:** Split the work into a pure bundle loader, a pure fallback policy, a Node-side report builder, and a standalone HTML probe page. Keep all filesystem reads inside Node tooling, emit a generated report module into `test-results/`, and let the probe page render from that report so the browser never has to read arbitrary local directories directly.
+**Architecture:** Split the work into a pure bundle loader, a pure fallback policy, a Node-side report builder, and a standalone HTML probe page. Keep all filesystem reads inside Node tooling, emit generated report artifacts into `test-results/` (`.json / .mjs / .js`), and let the probe page render from the classic-script report so the browser never has to read arbitrary local directories directly or hit `file://` module CORS restrictions.
 
 **Tech Stack:** Node.js ESM, `node:test`, static HTML, filesystem tooling, existing `test-results/` probe pattern
 
@@ -107,6 +107,7 @@ git commit -m "feat: add C1 spine bundle loader and fallback policy"
 - Modify: `test/spine_bundle_loader.test.mjs`
 - Create: `test-results/spine_bundle_probe_report.json`
 - Create: `test-results/spine_bundle_probe_report.mjs`
+- Create: `test-results/spine_bundle_probe_report.js`
 
 - [ ] **Step 1: Extend tests for generated report files**
 
@@ -135,11 +136,12 @@ export async function buildSpineBundleProbeReport({ bundleRoot, outputRoot }) {
 }
 ```
 
-- [ ] **Step 4: Write both JSON and ESM outputs**
+- [ ] **Step 4: Write JSON, ESM, and classic script outputs**
 
 ```js
 await fs.writeFile(jsonFile, JSON.stringify(report, null, 2), 'utf8');
 await fs.writeFile(moduleFile, `export const probeReport = ${JSON.stringify(report, null, 2)};\n`, 'utf8');
+await fs.writeFile(classicScriptFile, `globalThis.__SPINE_BUNDLE_PROBE_REPORT__ = ${JSON.stringify(report, null, 2)};\n`, 'utf8');
 ```
 
 - [ ] **Step 5: Run targeted test**
@@ -170,8 +172,9 @@ assert.equal(probeReport.bundle.bundleId, 'b1_official_samples');
 - [ ] **Step 2: Implement the HTML page**
 
 ```html
-<script type="module">
-  import { probeReport } from '../test-results/spine_bundle_probe_report.mjs';
+<script src="../test-results/spine_bundle_probe_report.js"></script>
+<script>
+  const probeReport = globalThis.__SPINE_BUNDLE_PROBE_REPORT__;
 </script>
 ```
 
@@ -226,7 +229,8 @@ Expected: Screenshot clearly shows source path, bundle summary, character cards,
 1. 读取兄弟仓库真实 bundle
 2. 生成 `test-results/spine_bundle_probe_report.json`
 3. 生成 `test-results/spine_bundle_probe_report.mjs`
-4. probe 页面展示 bundle 与降级结论
+4. 生成 `test-results/spine_bundle_probe_report.js`
+5. probe 页面展示 bundle 与降级结论
 ```
 
 - [ ] **Step 4: Final workspace check**

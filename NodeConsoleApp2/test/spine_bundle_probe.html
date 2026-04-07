@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spine Bundle Probe</title>
+    <style>
+        :root {
+            --bg: #f4efe7;
+            --surface: rgba(255, 255, 255, 0.88);
+            --line: #d7d0c5;
+            --ink: #1b2538;
+            --muted: #586273;
+            --accent: #b25c39;
+            --ok: #2f7d5c;
+            --warn: #b7791f;
+            --bad: #b13c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 28px;
+            font-family: "Segoe UI", "PingFang SC", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, #fff3d9 0, transparent 28%),
+                linear-gradient(180deg, #f3eee7 0%, #eeebe6 100%);
+        }
+
+        .page {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            gap: 18px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: var(--surface);
+            padding: 22px;
+            box-shadow: 0 14px 36px rgba(23, 32, 54, 0.08);
+        }
+
+        h1, h2, h3, p {
+            margin-top: 0;
+        }
+
+        .hero h1 {
+            margin-bottom: 10px;
+            font-size: 34px;
+        }
+
+        .meta-grid,
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .meta-card,
+        .summary-card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        code {
+            font-family: "JetBrains Mono", "Fira Code", monospace;
+            word-break: break-all;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status.ok {
+            background: rgba(47, 125, 92, 0.12);
+            color: var(--ok);
+        }
+
+        .status.warn {
+            background: rgba(183, 121, 31, 0.12);
+            color: var(--warn);
+        }
+
+        .status.bad {
+            background: rgba(177, 60, 60, 0.12);
+            color: var(--bad);
+        }
+
+        .characters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .character-card {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+            background: #fff;
+            display: grid;
+            gap: 12px;
+        }
+
+        .character-card header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 12px;
+        }
+
+        .eyebrow {
+            color: var(--accent);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        dl {
+            margin: 0;
+            display: grid;
+            gap: 10px;
+        }
+
+        dt {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        dd {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--muted);
+        }
+
+        .empty-state {
+            border: 1px dashed var(--line);
+            border-radius: 16px;
+            padding: 16px;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+<div class="page" id="app">
+    <section class="panel hero">
+        <h1>Spine Bundle Probe</h1>
+        <p>本页用于主工程侧验证 `bundle_manifest / character_manifest` 的导入结果、错误分类与降级结论，不接入真实主战斗流程。</p>
+    </section>
+</div>
+
+<script src="../test-results/spine_bundle_probe_report.js"></script>
+<script>
+    const app = document.getElementById('app');
+    const probeReport = globalThis.__SPINE_BUNDLE_PROBE_REPORT__;
+
+    function createStatus(decision) {
+        if (decision === 'use_bundle') return { className: 'ok', text: 'use_bundle' };
+        if (decision === 'fallback_static_character') return { className: 'warn', text: 'fallback_static_character' };
+        return { className: 'bad', text: decision || 'unknown' };
+    }
+
+    function renderErrors(errors = []) {
+        if (!Array.isArray(errors) || errors.length === 0) {
+            return '<div class="empty-state">无错误</div>';
+        }
+
+        return `
+            <ul>
+                ${errors.map(error => `<li><code>${error.code}</code> ${error.message}</li>`).join('')}
+            </ul>
+        `;
+    }
+
+    if (!probeReport) {
+        app.insertAdjacentHTML('beforeend', `
+            <section class="panel">
+                <h2>Probe Report Missing</h2>
+                <div class="empty-state">未加载到 <code>spine_bundle_probe_report.js</code>，请先运行构建脚本生成报告产物。</div>
+            </section>
+        `);
+        throw new Error('SPINE_BUNDLE_PROBE_REPORT_MISSING');
+    }
+
+    const overallStatus = createStatus(probeReport.fallback?.decision);
+
+    app.insertAdjacentHTML('beforeend', `
+        <section class="panel">
+            <h2>Bundle Source</h2>
+            <div class="meta-grid">
+                <div class="meta-card">
+                    <span class="label">Mode</span>
+                    <div>${probeReport.source.mode}</div>
+                </div>
+                <div class="meta-card">
+                    <span class="label">Bundle Root</span>
+                    <code>${probeReport.source.bundleRoot}</code>
+                </div>
+                <div class="meta-card">
+                    <span class="label">Generated At</span>
+                    <div>${probeReport.generatedAt}</div>
+                </div>
+                <div class="meta-card">
+                    <span class="label">Fallback Decision</span>
+                    <span class="status ${overallStatus.className}">${overallStatus.text}</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Bundle Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <span class="label">Bundle Id</span>
+                    <div>${probeReport.bundle.bundleId ?? 'null'}</div>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Bundle Version</span>
+                    <div>${probeReport.bundle.bundleVersion ?? 'null'}</div>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Schema Version</span>
+                    <div>${probeReport.bundle.schemaVersion ?? 'null'}</div>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Characters</span>
+                    <div>${probeReport.bundle.charactersCount ?? probeReport.characters.length}</div>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Bundle Status</span>
+                    <span class="status ${probeReport.bundle.ok ? 'ok' : 'bad'}">${probeReport.bundle.ok ? 'ok' : 'invalid'}</span>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Bundle Manifest</span>
+                    <code>${probeReport.bundle.manifestPath}</code>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Failure Diagnostics</h2>
+            ${renderErrors(probeReport.bundle.errors)}
+        </section>
+
+        <section class="panel">
+            <h2>Characters</h2>
+            <div class="characters">
+                ${probeReport.characters.map(character => {
+                    const status = createStatus(character.fallback?.decision);
+                    const manifest = character.manifest;
+                    return `
+                        <article class="character-card">
+                            <header>
+                                <div>
+                                    <div class="eyebrow">presentationId</div>
+                                    <h3>${character.presentationId}</h3>
+                                </div>
+                                <span class="status ${status.className}">${status.text}</span>
+                            </header>
+                            <dl>
+                                <div>
+                                    <dt>Assets OK</dt>
+                                    <dd>${character.assetsOk ? 'true' : 'false'}</dd>
+                                </div>
+                                <div>
+                                    <dt>Skeleton</dt>
+                                    <dd>${manifest?.skeletonFile ?? 'missing'}</dd>
+                                </div>
+                                <div>
+                                    <dt>Atlas</dt>
+                                    <dd>${manifest?.atlasFile ?? 'missing'}</dd>
+                                </div>
+                                <div>
+                                    <dt>Textures</dt>
+                                    <dd>${manifest?.texturePages?.join(', ') ?? 'missing'}</dd>
+                                </div>
+                                <div>
+                                    <dt>Animations</dt>
+                                    <dd>${manifest?.animations?.join(', ') ?? 'missing'}</dd>
+                                </div>
+                                <div>
+                                    <dt>Slots</dt>
+                                    <dd>${manifest?.slots?.join(', ') ?? 'missing'}</dd>
+                                </div>
+                                <div>
+                                    <dt>Anchor / Scale</dt>
+                                    <dd>x=${manifest?.anchorProfile?.x ?? 'null'}, y=${manifest?.anchorProfile?.y ?? 'null'}, scale=${manifest?.scaleProfile?.baseScale ?? 'null'}</dd>
+                                </div>
+                            </dl>
+                            <div>
+                                <div class="label">Character Errors</div>
+                                ${renderErrors(character.errors)}
+                            </div>
+                        </article>
+                    `;
+                }).join('')}
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Fallback Decision</h2>
+            <p>主工程当前整体降级结论：<span class="status ${overallStatus.className}">${overallStatus.text}</span></p>
+            <p>语义说明：</p>
+            <ul>
+                <li><code>use_bundle</code>：当前 bundle 可被主工程消费。</li>
+                <li><code>fallback_static_character</code>：仅部分角色失败，应回退到现有静态展示层。</li>
+                <li><code>fallback_static_all</code>：整包不可用，应整体回退到现有静态展示层。</li>
+            </ul>
+        </section>
+    `);
+</script>
+</body>
+</html>
