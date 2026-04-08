@@ -40,8 +40,9 @@
 
     <div class="panel guide-panel" id="pageGuide">
         <h2>本页用途</h2>
-        <p><span class="guide-tag">产物注入页</span>本页是“产物注入页”，负责把 <code>关卡 pack</code> 载入当前工具页，并在你确认后把当前内存里的 pack 写入本地 <code>runtime override</code> 存储。</p>
+        <p><span class="guide-tag">产物注入页</span><span class="guide-tag">作者样本工具页</span>本页是“产物注入页”，负责把 <code>关卡 pack</code> 载入当前工具页，并在你确认后把当前内存里的 pack 写入本地 <code>runtime override</code> 存储。</p>
         <p>它<strong>不直接证明运行时实例化成功</strong>。真正验证“运行时是否吃到这份关卡配置并能实例化敌人”的页面是 <code>level_runtime_probe.html</code>。</p>
+        <p>它不属于故事推进关卡，也不属于验收样本入口；它只服务于作者验证“编辑结果如何变成运行时可消费产物”。</p>
         <div class="guide-grid">
             <div class="guide-card">
                 <h3>验证链路</h3>
@@ -71,6 +72,7 @@
                     <li><code>level_editor_io_test.html</code> 本身是一个单页工具。点击加载、注入样本这类操作，只会修改当前页面内存。</li>
                     <li>它不会直接修改 <code>mock_ui_v11.html</code> 当前已打开页面的内存状态。因为已经打开的主流程页不会自动同步本页内存。</li>
                     <li>只有点击 <code>Apply Runtime Override</code> 后，才会写入本地 override 存储。此后只会影响通过 <code>DataManager</code> 重新装载关卡 pack 的页面，例如 <code>level_runtime_probe.html</code>，以及刷新或重新进入运行时后的 <code>mock_ui_v11.html</code>。</li>
+                    <li>它不属于验收样本入口。验收样本入口仍在 <code>mock_ui_v11.html</code> 的运行时菜单里。</li>
                     <li>这就是为什么验收步骤会在不同页面之间跳转。目的不是跨页拼操作，而是证明“这一页写入，另一页独立重载后仍能实例化”。</li>
                 </ul>
             </div>

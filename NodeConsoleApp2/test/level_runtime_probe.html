@@ -47,8 +47,9 @@
 
     <div class="panel guide-panel" id="pageGuide">
         <h2>本页用途</h2>
-        <p><span class="guide-tag">运行时消费页</span>本页是“运行时消费页”，会重新加载 <code>DataManagerV2.js</code>，再基于当前关卡 pack 解析 <code>level_1_1</code>，并验证运行时是否真的消费了 override 后的关卡配置。</p>
+        <p><span class="guide-tag">运行时消费页</span><span class="guide-tag">作者样本工具页</span>本页是“运行时消费页”，会重新加载 <code>DataManagerV2.js</code>，再基于当前关卡 pack 解析 <code>level_1_1</code>，并验证运行时是否真的消费了 override 后的关卡配置。</p>
         <p>它和 <code>level_editor_io_test.html</code> 的职责不同：I/O 页负责写入 override，本页负责在一个独立运行时里读出 override，并进一步实例化关卡敌人。</p>
+        <p>它不属于故事推进关卡，也不属于验收样本入口；它只负责验证作者写入的关卡产物，是否被全新运行时正确消费。</p>
         <div class="guide-grid">
             <div class="guide-card">
                 <h3>字段怎么读</h3>

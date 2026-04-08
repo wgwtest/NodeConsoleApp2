@@ -568,6 +568,10 @@ export class UI_SystemModal {
         if (growthSummary) {
             this.dom.body.appendChild(growthSummary);
         }
+        const contentSourceGuide = this._buildContentSourceGuide();
+        if (contentSourceGuide) {
+            this.dom.body.appendChild(contentSourceGuide);
+        }
         this.dom.body.appendChild(menu);
         this.clearFooter(); // 主菜单通常不需要 Footer 按钮
     }
@@ -652,6 +656,80 @@ export class UI_SystemModal {
 
         summary.appendChild(detailStack);
         return summary;
+    }
+
+    _buildContentSourceGuide() {
+        const overview = (this.engine?.data?.getLevelContentSourceOverview)
+            ? this.engine.data.getLevelContentSourceOverview()
+            : [];
+        if (!Array.isArray(overview) || overview.length === 0) {
+            return null;
+        }
+
+        const section = document.createElement('section');
+        section.className = 'menu-content-source-guide';
+        section.style.padding = '14px 16px';
+        section.style.marginBottom = '14px';
+        section.style.borderRadius = '10px';
+        section.style.border = '1px solid rgba(124, 245, 217, 0.22)';
+        section.style.background = 'rgba(18, 23, 38, 0.88)';
+        section.style.color = '#dfe7ff';
+
+        const title = document.createElement('div');
+        title.textContent = '内容入口说明';
+        title.style.fontSize = '0.96rem';
+        title.style.fontWeight = '700';
+        title.style.marginBottom = '8px';
+
+        const tip = document.createElement('p');
+        tip.textContent = '正式游戏菜单只承载 story 与验收样本入口；作者样本工具页保留在独立测试页，不直接进入主流程运行时。';
+        tip.style.margin = '0 0 12px';
+        tip.style.fontSize = '0.88rem';
+        tip.style.lineHeight = '1.6';
+        tip.style.color = '#cfe8ff';
+
+        const list = document.createElement('div');
+        list.style.display = 'grid';
+        list.style.gap = '10px';
+
+        overview.forEach(item => {
+            const card = document.createElement('div');
+            card.style.padding = '10px 12px';
+            card.style.borderRadius = '8px';
+            card.style.background = 'rgba(255, 255, 255, 0.04)';
+            card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+
+            const heading = document.createElement('div');
+            heading.textContent = item?.title || item?.kind || '来源';
+            heading.style.fontSize = '0.82rem';
+            heading.style.color = '#8fb0d6';
+            heading.style.marginBottom = '4px';
+
+            const entry = document.createElement('div');
+            const countText = Number.isFinite(item?.count) ? ` · ${item.count} 项` : '';
+            entry.textContent = item?.isRuntimeEntry
+                ? `${item?.entryLabel || '入口'}${countText}`
+                : `${item?.entryLabel || '入口'} · 不在游戏菜单`;
+            entry.style.fontSize = '0.94rem';
+            entry.style.fontWeight = '700';
+
+            const desc = document.createElement('div');
+            desc.textContent = item?.description || '';
+            desc.style.marginTop = '6px';
+            desc.style.fontSize = '0.84rem';
+            desc.style.lineHeight = '1.55';
+            desc.style.color = '#dfe7ff';
+
+            card.appendChild(heading);
+            card.appendChild(entry);
+            card.appendChild(desc);
+            list.appendChild(card);
+        });
+
+        section.appendChild(title);
+        section.appendChild(tip);
+        section.appendChild(list);
+        return section;
     }
 
     _createGrowthSummaryDetail(label, text) {
@@ -1161,6 +1239,15 @@ export class UI_SystemModal {
             ? this.engine.data.getAcceptanceLevelSelectEntries()
             : [];
         console.log('[UI_SystemModal] Loaded acceptance levels from DataManager:', levels);
+        const contentOverview = (this.engine?.data?.getLevelContentSourceOverview)
+            ? this.engine.data.getLevelContentSourceOverview()
+            : [];
+        const authoringSource = Array.isArray(contentOverview)
+            ? contentOverview.find(item => item?.kind === 'authoring')
+            : null;
+        const authoringHint = authoringSource?.entryLabel
+            ? `作者样本链路请使用 ${authoringSource.entryLabel}：${(authoringSource.pages || []).join(' / ')}。`
+            : '';
 
         this._renderLevelCardsView(levels, {
             view: 'ACCEPTANCE_LEVEL_SELECT',
@@ -1169,7 +1256,8 @@ export class UI_SystemModal {
                 '本页用于人工验收样本，不影响故事推进。',
                 '敌人行为样本建议优先不部署攻击技能，或只部署“等待”，再提交规划并执行。',
                 '修甲 / 回血 / 弱点追击分别对应：先补残甲、先回低血量、先压迫玩家头部弱点。',
-                '这些样本是对 story 关卡敌人行为的稳定复核入口，不替代正常推进。'
+                '这些样本是对 story 关卡敌人行为的稳定复核入口，不替代正常推进。',
+                authoringHint
             ].join('\n'),
             emptyText: '当前没有可用的验收样本'
         });

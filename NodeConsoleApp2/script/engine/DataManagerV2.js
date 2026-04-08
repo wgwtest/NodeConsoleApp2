@@ -1155,6 +1155,45 @@ class DataManager {
         }));
     }
 
+    getLevelContentSourceOverview() {
+        const storyCount = this._getStoryLevelsList().length;
+        const acceptanceCount = this._getAcceptanceLevelsList().length;
+
+        return [
+            {
+                kind: 'story',
+                title: '故事关卡',
+                entryLabel: '关卡选择',
+                count: storyCount,
+                isRuntimeEntry: true,
+                description: '正式推进内容，会进入成长、结算与解锁闭环。',
+                source: 'levels.json flow.kind=story'
+            },
+            {
+                kind: 'acceptance',
+                title: '验收样本',
+                entryLabel: '验收样本',
+                count: acceptanceCount,
+                isRuntimeEntry: true,
+                description: '人工复核入口，用于稳定观察敌人行为与验收样本链路，不推进故事主线。',
+                source: 'levels.json flow.kind=acceptance'
+            },
+            {
+                kind: 'authoring',
+                title: '作者样本',
+                entryLabel: '作者样本工具页',
+                count: 2,
+                isRuntimeEntry: false,
+                description: '只存在于工具页，用于作者验证关卡 pack 覆写注入与运行时消费；不属于故事推进关卡，也不属于验收样本入口。',
+                source: 'test/level_editor_io_test.html + test/level_runtime_probe.html',
+                pages: [
+                    'test/level_editor_io_test.html',
+                    'test/level_runtime_probe.html'
+                ]
+            }
+        ];
+    }
+
     getSkillConfig(skillId) {
         const skillsMap = this.getSkillCatalog()?.skillsMap;
         if (!skillsMap) return null;

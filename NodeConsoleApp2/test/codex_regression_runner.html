@@ -2415,6 +2415,9 @@
         '为什么这能证明',
         '与其他页面关系',
         '本页是“产物注入页”',
+        '作者样本工具页',
+        '不属于故事推进关卡',
+        '不属于验收样本入口',
         '把当前内存 pack 写入本地 override 存储',
         '不会直接修改 mock_ui_v11.html 当前已打开页面的内存状态',
         '只会影响通过 DataManager 重新装载关卡 pack 的页面'
@@ -2436,6 +2439,9 @@
         '按钮说明',
         '为什么这能证明',
         '本页是“运行时消费页”',
+        '作者样本工具页',
+        '不属于故事推进关卡',
+        '不属于验收样本入口',
         '会重新加载',
         'DataManagerV2.js'
       ]) {
@@ -4058,6 +4064,45 @@
       assert(entries.every(entry => entry.flow?.kind === 'acceptance'), '验收样本入口不应混入 story 关卡');
     }
 
+    function testDataManagerBuildsLevelContentSourceOverview() {
+      assert(typeof DataManager.getLevelContentSourceOverview === 'function', 'DataManagerV2 缺少 getLevelContentSourceOverview()');
+
+      const dm = Object.create(Object.getPrototypeOf(DataManager));
+      dm.gameConfig = {
+        levels: {
+          level_1_1: {
+            id: 'level_1_1',
+            flow: { kind: 'story', order: 1 }
+          },
+          level_1_2_story: {
+            id: 'level_1_2_story',
+            flow: { kind: 'story', order: 2 }
+          },
+          level_1_2_acceptance: {
+            id: 'level_1_2_acceptance',
+            flow: { kind: 'acceptance', order: 101 }
+          }
+        }
+      };
+
+      const overview = DataManager.getLevelContentSourceOverview.call(dm);
+      assert(Array.isArray(overview) && overview.length === 3, `内容来源摘要数量错误: ${overview?.length}`);
+      const story = overview.find(item => item.kind === 'story');
+      const acceptance = overview.find(item => item.kind === 'acceptance');
+      const authoring = overview.find(item => item.kind === 'authoring');
+
+      assert(story?.entryLabel === '关卡选择', `story.entryLabel 错误: ${story?.entryLabel}`);
+      assert(story?.count === 2, `story.count 错误: ${story?.count}`);
+      assert(story?.isRuntimeEntry === true, 'story 应属于运行时入口');
+      assert(acceptance?.entryLabel === '验收样本', `acceptance.entryLabel 错误: ${acceptance?.entryLabel}`);
+      assert(acceptance?.count === 1, `acceptance.count 错误: ${acceptance?.count}`);
+      assert(acceptance?.isRuntimeEntry === true, 'acceptance 应属于运行时入口');
+      assert(authoring?.entryLabel === '作者样本工具页', `authoring.entryLabel 错误: ${authoring?.entryLabel}`);
+      assert(authoring?.isRuntimeEntry === false, 'authoring 不应属于运行时入口');
+      assert(Array.isArray(authoring?.pages) && authoring.pages.includes('test/level_editor_io_test.html'), 'authoring 缺少 level_editor_io_test.html');
+      assert(Array.isArray(authoring?.pages) && authoring.pages.includes('test/level_runtime_probe.html'), 'authoring 缺少 level_runtime_probe.html');
+    }
+
     function testDataManagerFirstClearUnlocksNextStoryLevel() {
       const dm = Object.create(Object.getPrototypeOf(DataManager));
       dm.dataConfig = {
@@ -4921,6 +4966,69 @@
       assert(!(document.getElementById('modalBody')?.textContent || '').includes('人工验收样本'), '故事关卡选择不应混入验收样本');
     }
 
+    function testSystemModalRendersContentSourceGuideWithoutMixingAuthoringEntry() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const modal = new UI_SystemModal();
+      modal.engine = {
+        fsm: {
+          currentState: 'MAIN_MENU'
+        },
+        data: {
+          playerData: {
+            skills: {
+              skillTreeId: 'player1',
+              skillPoints: 7,
+              learned: ['skill_heal']
+            }
+          },
+          getAcceptanceLevelSelectEntries() {
+            return [
+              {
+                id: 'level_1_2_acceptance',
+                name: '人工验收样本',
+                description: 'acceptance',
+                isUnlocked: true,
+                isCompleted: false,
+                flow: { kind: 'acceptance', order: 101 }
+              }
+            ];
+          },
+          getLevelContentSourceOverview() {
+            return [
+              { kind: 'story', title: '故事关卡', entryLabel: '关卡选择', isRuntimeEntry: true, description: '正式推进内容。' },
+              { kind: 'acceptance', title: '验收样本', entryLabel: '验收样本', isRuntimeEntry: true, description: '人工复核内容。' },
+              { kind: 'authoring', title: '作者样本', entryLabel: '作者样本工具页', isRuntimeEntry: false, description: '只存在于工具页，不在游戏菜单。' }
+            ];
+          }
+        },
+        eventBus: {
+          emit() {}
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderMainMenu();
+
+      const bodyText = document.getElementById('modalBody')?.textContent || '';
+      const menuButtons = Array.from(document.querySelectorAll('#modalBody .menu-btn')).map(btn => btn.textContent.trim());
+      assert(bodyText.includes('内容入口说明'), '主菜单缺少内容入口说明');
+      assert(bodyText.includes('故事关卡'), '主菜单缺少故事关卡来源说明');
+      assert(bodyText.includes('验收样本'), '主菜单缺少验收样本来源说明');
+      assert(bodyText.includes('作者样本工具页'), '主菜单缺少作者样本来源说明');
+      assert(bodyText.includes('不在游戏菜单'), '主菜单未解释作者样本不在游戏菜单');
+      assert(menuButtons.includes('关卡选择'), '主菜单缺少故事关卡入口按钮');
+      assert(menuButtons.includes('验收样本'), '主菜单缺少验收样本入口按钮');
+      assert(!menuButtons.includes('作者样本工具页'), '主菜单不应把作者样本工具页渲染成运行时按钮');
+    }
+
     function testSystemModalRendersGrowthSummaryAndSkillTreeEntry() {
       resetRegressionFixture(`
         <div id="systemModal" hidden aria-hidden="true"></div>
@@ -5452,6 +5560,7 @@
       ['DataManager 透出故事关卡内容元数据与奖励预览', testDataManagerBuildsStoryLevelSelectionMetaAndRewardPreview],
       ['DataManager 透出故事关卡首次通关与重复通关差异说明', testDataManagerBuildsStoryLevelClearFeedbackComparison],
       ['DataManager 构建独立验收样本选择入口', testDataManagerBuildsAcceptanceLevelEntriesForManualVerification],
+      ['DataManager 构建关卡内容来源分层摘要', testDataManagerBuildsLevelContentSourceOverview],
       ['DataManager 首次通关会解锁下一故事关卡', testDataManagerFirstClearUnlocksNextStoryLevel],
       ['DataManager 会保留最近学习结果进度字段', testDataManagerNormalizeProgressKeepsLastLearnAction],
       ['CoreEngine.endBattle 会发出带 settlement 的结算事件', testCoreEngineEndBattleEmitsSettlementPayload],
@@ -5467,6 +5576,7 @@
       ['UI_SystemModal 会渲染章节推进总览与节点关系', testSystemModalRendersStoryChapterOverviewAndNodeRelation],
       ['UI_SystemModal 会渲染故事关卡首次通关与重复通关差异', testSystemModalRendersStoryLevelClearFeedbackComparison],
       ['UI_SystemModal 提供独立验收样本入口', testSystemModalProvidesAcceptanceSampleEntryWithoutBreakingStorySelect],
+      ['UI_SystemModal 会解释 story/验收样本/作者样本入口分工', testSystemModalRendersContentSourceGuideWithoutMixingAuthoringEntry],
       ['UI_SystemModal 会渲染成长摘要并提供技能树入口', testSystemModalRendersGrowthSummaryAndSkillTreeEntry],
       ['UI_SystemModal 会展示最近成长来源与学习结果', testSystemModalRendersLatestGrowthSourceAndLearnAction],
       ['UI_SystemModal 登录页提供显式新游戏与读档入口', testSystemModalLoginProvidesExplicitNewGameAndLoadActions],
