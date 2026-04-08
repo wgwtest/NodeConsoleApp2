@@ -109,5 +109,5 @@ node tools/build_spine_bundle_probe_report.mjs
 
 1. [C1 设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明.md)
 2. [C1 实施计划](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/04_研发文档/2026-04-07-C1-Spine样本bundle导入probe实施计划.md)
-3. [C1 人工验收清单](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1-[待验收]-2026-04-07-235834-Spine样本bundle导入probe与降级壳-人工验收清单.md)
+3. [D3.2.1 人工验收清单](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.2.1-[待验收]-2026-04-07-235834-Spine样本bundle导入probe与降级壳-人工验收清单.md)
 4. [C1 会话交接记录](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/06_过程文档/01_会话交接/2026-04-07-235834-C1-Spine样本bundle导入probe与降级壳实现与自测记录.md)

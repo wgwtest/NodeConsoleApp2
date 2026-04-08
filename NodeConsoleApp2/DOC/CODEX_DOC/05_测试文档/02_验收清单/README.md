@@ -1,6 +1,6 @@
 # 验收清单 README
 
-最后整理时间：2026-04-08 17:35:05 +0800
+最后整理时间：2026-04-08 23:25:00 +0800
 
 状态：`当前有效`
 
@@ -41,47 +41,29 @@
 
 以下清单仍处于 `待验收` 或 `待重测` 状态，也是 [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md) 应该覆盖的对象：
 
-当前共有 `20` 个待验收节点：
+当前共有 `11` 个待验收节点：
 
-1. `#19 / A1.2`
-   - [A1.2-[待验收]-2026-04-06-012747-扩展Buff学习装配执行闭环-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A1.2-[待验收]-2026-04-06-012747-扩展Buff学习装配执行闭环-人工验收清单.md)
-2. `#20 / A2.1`
-   - [A2.1-[待验收]-2026-04-06-091958-故事关卡敌人策略样本-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A2.1-[待验收]-2026-04-06-091958-故事关卡敌人策略样本-人工验收清单.md)
-3. `#21 / A2.2`
-   - [A2.2-[待验收]-2026-04-06-093650-敌人行为人工验收路径-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A2.2-[待验收]-2026-04-06-093650-敌人行为人工验收路径-人工验收清单.md)
-4. `#66 / B3.1`
-   - [B3.1-[待验收]-2026-04-07-003900-自动存档槽位与入口语义收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B3.1-[待验收]-2026-04-07-003900-自动存档槽位与入口语义收口-人工验收清单.md)
-5. `#68 / B3.2`
-   - [B3.2-[待验收]-2026-04-07-003900-统一保存协调层与存档回归补强-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B3.2-[待验收]-2026-04-07-003900-统一保存协调层与存档回归补强-人工验收清单.md)
-6. `#63 / C1.1`
-   - [C1.1-[待验收]-2026-04-06-103705-主菜单成长摘要与技能树入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.1-[待验收]-2026-04-06-103705-主菜单成长摘要与技能树入口-人工验收清单.md)
-7. `#64 / C1.2`
-   - [C1.2-[待验收]-2026-04-06-110954-学习提交后主菜单成长摘要即时刷新-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.2-[待验收]-2026-04-06-110954-学习提交后主菜单成长摘要即时刷新-人工验收清单.md)
-8. `#65 / C1.3`
-   - [C1.3-[待验收]-2026-04-06-111002-结算页直达技能树与构筑入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.3-[待验收]-2026-04-06-111002-结算页直达技能树与构筑入口-人工验收清单.md)
-9. `#69 / C2.1`
+1. `#69 / C2.1`
    - [C2.1-[待验收]-2026-04-07-013344-故事关卡内容元数据与选择页提示收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C2.1-[待验收]-2026-04-07-013344-故事关卡内容元数据与选择页提示收口-人工验收清单.md)
-10. `#71 / D3.1`
-   - [D3.1-[待验收]-2026-04-07-024354-动画展示驱动与验证页基线-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.1-[待验收]-2026-04-07-024354-动画展示驱动与验证页基线-人工验收清单.md)
-11. `#72 / D3.2`
-   - [D3.2-[待验收]-2026-04-07-145702-SpineAssets协作规则与导入契约基线-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.2-[待验收]-2026-04-07-145702-SpineAssets协作规则与导入契约基线-人工验收清单.md)
-12. `#74 / C1.4`
+2. `#73 / D3.2.1`
+   - [D3.2.1-[待验收]-2026-04-07-235834-Spine样本bundle导入probe与降级壳-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.2.1-[待验收]-2026-04-07-235834-Spine样本bundle导入probe与降级壳-人工验收清单.md)
+3. `#74 / C1.4`
    - [C1.4-[待验收]-2026-04-08-143159-成长资源来源与最近学习结果可视化-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.4-[待验收]-2026-04-08-143159-成长资源来源与最近学习结果可视化-人工验收清单.md)
-13. `#75 / C1.5`
+4. `#75 / C1.5`
    - [C1.5-[待验收]-2026-04-08-151153-关前构筑摘要与技能池差异预览-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.5-[待验收]-2026-04-08-151153-关前构筑摘要与技能池差异预览-人工验收清单.md)
-14. `#76 / C1.6`
+5. `#76 / C1.6`
    - [C1.6-[待验收]-2026-04-08-154007-学习结果驱动的下一局可见反馈闭环-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.6-[待验收]-2026-04-08-154007-学习结果驱动的下一局可见反馈闭环-人工验收清单.md)
-15. `#77 / C2.2`
+6. `#77 / C2.2`
    - [C2.2-[待验收]-2026-04-08-143159-故事关卡奖励节奏与首次通关反馈可视化-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C2.2-[待验收]-2026-04-08-143159-故事关卡奖励节奏与首次通关反馈可视化-人工验收清单.md)
-16. `#78 / C2.3`
+7. `#78 / C2.3`
    - [C2.3-[待验收]-2026-04-08-162942-关卡章节组织与连续推进信息补足-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C2.3-[待验收]-2026-04-08-162942-关卡章节组织与连续推进信息补足-人工验收清单.md)
-17. `#79 / C2.4`
+8. `#79 / C2.4`
    - [C2.4-[待验收]-2026-04-08-171326-story-acceptance-编辑器样本层级口径清理-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C2.4-[待验收]-2026-04-08-171326-story-acceptance-编辑器样本层级口径清理-人工验收清单.md)
-18. `#80 / D3.3`
+9. `#80 / D3.3`
    - [D3.3-[待验收]-2026-04-08-143159-场景节奏强化与镜头感补足-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.3-[待验收]-2026-04-08-143159-场景节奏强化与镜头感补足-人工验收清单.md)
-19. `#81 / D3.4`
+10. `#81 / D3.4`
    - [D3.4-[待验收]-2026-04-08-151153-更多角色与技能类别的表现模板扩展-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.4-[待验收]-2026-04-08-151153-更多角色与技能类别的表现模板扩展-人工验收清单.md)
-20. `#82 / D3.5`
+11. `#82 / D3.5`
    - [D3.5-[待验收]-2026-04-08-173505-演出配置化与内容驱动边界-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.5-[待验收]-2026-04-08-173505-演出配置化与内容驱动边界-人工验收清单.md)
 
 ## 3. 已通过节点索引
@@ -116,10 +98,30 @@
    - [A3.3-[已通过]-2026-04-04-013552-恢复后继续执行回归-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A3.3-[已通过]-2026-04-04-013552-恢复后继续执行回归-人工验收清单.md)
 14. `#18 / A1.1`
    - [A1.1-[已通过]-2026-04-06-015347-验收样本独立入口与手验链路-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A1.1-[已通过]-2026-04-06-015347-验收样本独立入口与手验链路-人工验收清单.md)
-15. `#26 / B1`
+15. `#19 / A1.2`
+   - [A1.2-[已通过]-2026-04-06-012747-扩展Buff学习装配执行闭环-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A1.2-[已通过]-2026-04-06-012747-扩展Buff学习装配执行闭环-人工验收清单.md)
+16. `#20 / A2.1`
+   - [A2.1-[已通过]-2026-04-06-091958-故事关卡敌人策略样本-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A2.1-[已通过]-2026-04-06-091958-故事关卡敌人策略样本-人工验收清单.md)
+17. `#21 / A2.2`
+   - [A2.2-[已通过]-2026-04-06-093650-敌人行为人工验收路径-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A2.2-[已通过]-2026-04-06-093650-敌人行为人工验收路径-人工验收清单.md)
+18. `#26 / B1`
    - [B1-[已通过]-2026-04-04-015615-战斗结算奖励入账与展示-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B1-[已通过]-2026-04-04-015615-战斗结算奖励入账与展示-人工验收清单.md)
-16. `#27 / B2`
+19. `#27 / B2`
    - [B2-[已通过]-2026-04-04-080951-故事关卡流转与结算去向-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B2-[已通过]-2026-04-04-080951-故事关卡流转与结算去向-人工验收清单.md)
+20. `#66 / B3.1`
+   - [B3.1-[已通过]-2026-04-07-003900-自动存档槽位与入口语义收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B3.1-[已通过]-2026-04-07-003900-自动存档槽位与入口语义收口-人工验收清单.md)
+21. `#68 / B3.2`
+   - [B3.2-[已通过]-2026-04-07-003900-统一保存协调层与存档回归补强-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/B3.2-[已通过]-2026-04-07-003900-统一保存协调层与存档回归补强-人工验收清单.md)
+22. `#63 / C1.1`
+   - [C1.1-[已通过]-2026-04-06-103705-主菜单成长摘要与技能树入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.1-[已通过]-2026-04-06-103705-主菜单成长摘要与技能树入口-人工验收清单.md)
+23. `#64 / C1.2`
+   - [C1.2-[已通过]-2026-04-06-110954-学习提交后主菜单成长摘要即时刷新-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.2-[已通过]-2026-04-06-110954-学习提交后主菜单成长摘要即时刷新-人工验收清单.md)
+24. `#65 / C1.3`
+   - [C1.3-[已通过]-2026-04-06-111002-结算页直达技能树与构筑入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.3-[已通过]-2026-04-06-111002-结算页直达技能树与构筑入口-人工验收清单.md)
+25. `#71 / D3.1`
+   - [D3.1-[已通过]-2026-04-07-024354-动画展示驱动与验证页基线-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.1-[已通过]-2026-04-07-024354-动画展示驱动与验证页基线-人工验收清单.md)
+26. `#72 / D3.2`
+   - [D3.2-[已通过]-2026-04-07-145702-SpineAssets协作规则与导入契约基线-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.2-[已通过]-2026-04-07-145702-SpineAssets协作规则与导入契约基线-人工验收清单.md)
 
 ## 4. 当前不再放在这里的清单
 
