@@ -1,6 +1,6 @@
 # 研制计划 README
 
-最后整理时间：2026-04-07
+最后整理时间：2026-04-08
 
 状态：`当前有效`
 
@@ -43,6 +43,7 @@
    - `#72 / D3.2`
 10. 当前阶段计划文档：
    - [06-WBS-L2-B3-本地存档与读档系统收口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/06-WBS-L2-B3-本地存档与读档系统收口.md)
+   - [10-WBS-L2-C1-技能树与构筑](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/10-WBS-L2-C1-技能树与构筑.md)
    - [07-WBS-L2-C2-内容扩充](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/07-WBS-L2-C2-内容扩充.md)
    - [08-WBS-L2-D3-对战演出与动画展示层](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/08-WBS-L2-D3-对战演出与动画展示层.md)
    - [09-WBS-L3-D3.2-SpineAssets协作规则与导入契约基线](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/09-WBS-L3-D3.2-SpineAssets协作规则与导入契约基线.md)
@@ -62,9 +63,20 @@
    - `#65 / C1.3 结算页直达技能树与构筑入口`
 15. 阶段 C 当前进行中的内容叶子：
    - `#69 / C2.1 故事关卡内容元数据与选择页提示收口`
-16. 阶段 D 当前进行中的表现层叶子：
+16. 阶段 C 当前已拆分待启动的后续叶子：
+   - `#74 / C1.4 成长资源来源与最近学习结果可视化`
+   - `#75 / C1.5 关前构筑摘要与技能池差异预览`
+   - `#76 / C1.6 学习结果驱动的下一局可见反馈闭环`
+   - `#77 / C2.2 故事关卡奖励节奏与首次通关反馈可视化`
+   - `#78 / C2.3 关卡章节组织与连续推进信息补足`
+   - `#79 / C2.4 story / acceptance / 编辑器样本层级口径清理`
+17. 阶段 D 当前进行中的表现层叶子：
    - `#71 / D3.1 动画展示驱动与验证页基线`
    - `#72 / D3.2 SpineAssets协作规则与导入契约基线`
+18. 阶段 D 当前已拆分待启动的后续叶子：
+   - `#80 / D3.3 场景节奏强化与镜头感补足`
+   - `#81 / D3.4 更多角色 / 技能类别的表现模板扩展`
+   - `#82 / D3.5 演出配置化与内容驱动边界`
 
 ## 2. 当前目录内的正式计划文件
 
@@ -75,8 +87,10 @@
 5. [06-WBS-L2-B3-本地存档与读档系统收口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/06-WBS-L2-B3-本地存档与读档系统收口.md)
 6. [07-WBS-L2-C2-内容扩充](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/07-WBS-L2-C2-内容扩充.md)
 7. [08-WBS-L2-D3-对战演出与动画展示层](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/08-WBS-L2-D3-对战演出与动画展示层.md)
-8. [04-CODEX_DOC文档根深度迁移设计](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/04-CODEX_DOC文档根深度迁移设计.md)
-9. [05-CODEX_DOC文档根迁移实施计划](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/05-CODEX_DOC文档根迁移实施计划.md)
+8. [09-WBS-L3-D3.2-SpineAssets协作规则与导入契约基线](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/09-WBS-L3-D3.2-SpineAssets协作规则与导入契约基线.md)
+9. [10-WBS-L2-C1-技能树与构筑](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/10-WBS-L2-C1-技能树与构筑.md)
+10. [04-CODEX_DOC文档根深度迁移设计](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/04-CODEX_DOC文档根深度迁移设计.md)
+11. [05-CODEX_DOC文档根迁移实施计划](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/05-CODEX_DOC文档根迁移实施计划.md)
 
 ## 3. 协作规则
 
@@ -132,9 +146,12 @@
 4. 当前主执行包 `#67 / B3` 启动时间：`2026-04-07`
 5. 当前并行 Prep 包 `#29` 已进入叶子执行：`2026-04-06`
 6. `#29 / C1` 当前已落地叶子：`#63 ~ #65`
-7. `#30 / C2` 当前已进入叶子执行：`2026-04-07（#69）`
-8. `#70 / D3` 当前已进入叶子执行：`2026-04-07（#71）`
-9. GitHub Project Roadmap 地址：
+7. `#29 / C1` 当前已拆分后续叶子：`#74 ~ #76`
+8. `#30 / C2` 当前已进入叶子执行：`2026-04-07（#69）`
+9. `#30 / C2` 当前已拆分后续叶子：`#77 ~ #79`
+10. `#70 / D3` 当前已进入叶子执行：`2026-04-07（#71）`
+11. `#70 / D3` 当前已拆分后续叶子：`#80 ~ #82`
+12. GitHub Project Roadmap 地址：
    - <https://github.com/users/wgwtest/projects/1>
 
 ## 7. 状态语义
