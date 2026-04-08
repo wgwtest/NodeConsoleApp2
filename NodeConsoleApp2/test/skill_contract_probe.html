@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Contract Probe</title>
+    <style>
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #eef2f7; color: #243447; }
+        .container { max-width: 1280px; margin: 0 auto; }
+        .panel { background: #fff; border: 1px solid #d9e1ec; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05); }
+        .guide-panel { background: #f8fbff; border-color: #cfe1ff; }
+        .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        .guide-card { background: #fff; border: 1px solid #dbe7f6; border-radius: 8px; padding: 12px; }
+        .guide-card h3 { margin-top: 0; margin-bottom: 8px; font-size: 16px; }
+        .guide-card p, .guide-card li { color: #334155; line-height: 1.6; }
+        .guide-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #dbeafe; color: #1d4ed8; margin-right: 8px; }
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+        button { padding: 8px 14px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; }
+        button.secondary { background: #475569; }
+        button:hover { opacity: 0.92; }
+        .status { font-weight: 700; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        .summary-card { background: linear-gradient(135deg, #f8fbff, #eef5ff); border: 1px solid #d7e6ff; border-radius: 8px; padding: 12px; }
+        .summary-label { color: #64748b; font-size: 13px; margin-bottom: 6px; }
+        .summary-value { font-size: 28px; font-weight: 700; color: #0f172a; }
+        .summary-note { color: #334155; font-size: 13px; line-height: 1.5; }
+        .issue-list { display: grid; gap: 12px; }
+        .issue-card { border: 1px solid #fecaca; background: #fff7f7; border-radius: 8px; padding: 14px; }
+        .issue-card h3 { margin: 0 0 6px; font-size: 18px; color: #991b1b; }
+        .issue-card p, .issue-card li { line-height: 1.6; color: #334155; }
+        .code-badge, .flag-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; margin-right: 8px; margin-bottom: 8px; }
+        .code-badge { background: #fee2e2; color: #991b1b; }
+        .flag-badge { background: #e2e8f0; color: #334155; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #dbe7f6; padding: 10px; text-align: left; vertical-align: top; }
+        th { background: #edf4ff; color: #1e3a8a; }
+        td { line-height: 1.6; color: #334155; }
+        .muted { color: #64748b; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        pre { margin: 0; padding: 12px; background: #0f172a; color: #e2e8f0; border-radius: 8px; min-height: 160px; white-space: pre-wrap; }
+        .empty { color: #64748b; font-style: italic; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="panel">
+        <h1>Skill Contract Probe</h1>
+        <p>独立的技能运行时一致性批量校核入口。本页会重新加载 <code>DataManagerV2.js</code>，调用 <code>getSkillContractCatalog()</code> 与 <code>getSkillContractIssues()</code>，批量列出技能契约摘要与异常。</p>
+        <div id="status" class="status">Initializing...</div>
+        <div class="controls">
+            <button onclick="reloadContractMatrix()">Reload Contract Matrix</button>
+            <button class="secondary" onclick="openRegressionRunner()">Open codex_regression_runner.html</button>
+            <button class="secondary" onclick="openMockUi()">Open mock_ui_v11.html</button>
+        </div>
+    </div>
+
+    <div class="panel guide-panel" id="pageGuide">
+        <h2>本页用途</h2>
+        <p><span class="guide-tag">批量校核页</span>本页是“批量校核页”，职责不是试玩主流程，而是把当前运行时真正能读到的技能契约一次性摊开，帮助快速判断“技能说明写了什么、配置声明了什么、运行时可直接推导出什么”。</p>
+        <p>这里的批量校核基于 <code>DataManagerV2.js</code> 的 <code>getSkillContractCatalog()</code> 与 <code>getSkillContractIssues()</code>。它会批量列出技能契约摘要与异常，但不会直接修改技能配置，也不会替代 <code>mock_ui_v11.html</code> 的主流程观察。</p>
+        <div class="guide-grid">
+            <div class="guide-card">
+                <h3>你在本页应该先看什么</h3>
+                <ol>
+                    <li>先看顶部摘要卡：尤其是 <code>问题技能数</code>、<code>别名条目数</code>、<code>问题总数</code>。</li>
+                    <li>再看“首批异常技能”列表，优先处理每个技能的 issue code。</li>
+                    <li>最后看下方“技能契约矩阵”，确认 alias、目标范围、直接动作效果和 buff 引用是否符合预期。</li>
+                </ol>
+            </div>
+            <div class="guide-card">
+                <h3>为什么这能证明</h3>
+                <p>因为本页不复用技能编辑器内存，也不靠手工猜测，而是直接走运行时的数据装载边界。如果这里能稳定列出相同的异常，就说明问题已经从“主观感觉”变成了“可重复读取的结构事实”。</p>
+            </div>
+            <div class="guide-card">
+                <h3>与其他页面关系</h3>
+                <ul>
+                    <li><code>mock_ui_v11.html</code>：验证玩家在主流程里是否真的能看到效果。</li>
+                    <li><code>codex_regression_runner.html</code>：验证自动回归是否持续通过。</li>
+                    <li>本页：批量收口“哪些技能天然存在契约冲突”。</li>
+                </ul>
+            </div>
+            <div class="guide-card">
+                <h3>为什么它不能单独证明数值平衡正确</h3>
+                <p>本页能证明的是“契约是否一致、异常是否可归类”，不能单独证明战斗数值一定合理，更不能替代真实战斗观察。所以它是结构校核页，不是最终平衡结论页。</p>
+            </div>
+        </div>
+
+        <h3>问题码说明</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Issue Code</th>
+                        <th>含义</th>
+                        <th>为什么值得先看</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="mono">selection_count_exceeds_candidates</td>
+                        <td>选择数量超过了可选部位数量。</td>
+                        <td>这类问题通常意味着技能配置本身已越界，运行时再怎么消费都存在歧义。</td>
+                    </tr>
+                    <tr>
+                        <td class="mono">single_selection_count_invalid</td>
+                        <td><code>single</code> 模式却给了不等于 1 的数量。</td>
+                        <td>这会直接破坏 UI 选择语义与规划阶段的理解。</td>
+                    </tr>
+                    <tr>
+                        <td class="mono">tag_scope_mismatch</td>
+                        <td>标签里的 <code>SCOPE_*</code> 与真实 <code>target.scope</code> 不一致。</td>
+                        <td>说明文档、检索、平衡统计都会被带偏。</td>
+                    </tr>
+                    <tr>
+                        <td class="mono">unexpected_effect_tag</td>
+                        <td>标签声明了某种效果，但 <code>actions / buffRefs</code> 无法直接推导出来。</td>
+                        <td>这类问题常见于说明漂移或旧标签残留。</td>
+                    </tr>
+                    <tr>
+                        <td class="mono">missing_effect_tag</td>
+                        <td><code>actions / buffRefs</code> 已经体现某种效果，但 <code>tags</code> 没写出来。</td>
+                        <td>这会让后续检索、设计分析和异常归类失真。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>摘要卡</h2>
+        <div id="summaryGrid" class="summary-grid"></div>
+    </div>
+
+    <div class="panel">
+        <h2>首批异常技能</h2>
+        <div id="issueList" class="issue-list"></div>
+    </div>
+
+    <div class="panel">
+        <h2>技能契约矩阵</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Skill</th>
+                        <th>Target</th>
+                        <th>Direct Effects</th>
+                        <th>Buff Refs</th>
+                        <th>Flags</th>
+                        <th>Issues</th>
+                    </tr>
+                </thead>
+                <tbody id="contractRows"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Runtime Logs</h2>
+        <pre id="logs"></pre>
+    </div>
+</div>
+
+<script type="module">
+    import DataManager from '../script/engine/DataManagerV2.js';
+
+    const statusEl = document.getElementById('status');
+    const summaryGridEl = document.getElementById('summaryGrid');
+    const issueListEl = document.getElementById('issueList');
+    const contractRowsEl = document.getElementById('contractRows');
+    const logsEl = document.getElementById('logs');
+
+    let logs = [];
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function setStatus(text, isError = false) {
+        statusEl.textContent = text;
+        statusEl.style.color = isError ? '#b91c1c' : '#166534';
+    }
+
+    function appendLog(text) {
+        logs.push(text);
+        logsEl.textContent = logs.join('\n');
+    }
+
+    function renderSummary(summaryItems) {
+        summaryGridEl.innerHTML = summaryItems.map(item => `
+            <div class="summary-card">
+                <div class="summary-label">${escapeHtml(item.label)}</div>
+                <div class="summary-value">${escapeHtml(item.value)}</div>
+                <div class="summary-note">${escapeHtml(item.note)}</div>
+            </div>
+        `).join('');
+    }
+
+    function formatTarget(entry) {
+        const selection = entry?.target?.selection || {};
+        const parts = Array.isArray(selection.candidateParts) ? selection.candidateParts.join(', ') : '-';
+        return [
+            `<div><strong>subject</strong>: <span class="mono">${escapeHtml(entry?.target?.subject || '-')}</span></div>`,
+            `<div><strong>scope</strong>: <span class="mono">${escapeHtml(entry?.target?.scope || '-')}</span></div>`,
+            `<div><strong>selection</strong>: <span class="mono">${escapeHtml(selection.mode || '-')}</span> / count=${escapeHtml(selection.selectCount ?? '-')}</div>`,
+            `<div><strong>parts</strong>: <span class="mono">${escapeHtml(parts)}</span></div>`
+        ].join('');
+    }
+
+    function formatBuffRefs(entry) {
+        const apply = Array.isArray(entry?.buffRefs?.apply) ? entry.buffRefs.apply : [];
+        const remove = Array.isArray(entry?.buffRefs?.remove) ? entry.buffRefs.remove : [];
+        if (!apply.length && !remove.length) {
+            return '<span class="empty">无</span>';
+        }
+
+        const rows = [];
+        if (apply.length) {
+            rows.push(`<div><strong>apply</strong>: <span class="mono">${escapeHtml(apply.map(item => `${item.buffId || 'unknown'} -> ${item.target || 'unknown'}`).join('; '))}</span></div>`);
+        }
+        if (remove.length) {
+            rows.push(`<div><strong>remove</strong>: <span class="mono">${escapeHtml(remove.map(item => `${item.buffId || 'unknown'} -> ${item.target || 'unknown'}`).join('; '))}</span></div>`);
+        }
+        return rows.join('');
+    }
+
+    function formatFlags(entry) {
+        const flags = Object.entries(entry?.runtimeFlags || {})
+            .filter(([, value]) => Boolean(value))
+            .map(([key]) => `<span class="flag-badge">${escapeHtml(key)}</span>`);
+        return flags.length ? flags.join('') : '<span class="empty">无</span>';
+    }
+
+    function renderIssueList(entriesWithIssues) {
+        if (!entriesWithIssues.length) {
+            issueListEl.innerHTML = '<div class="empty">当前没有检测到技能契约问题。</div>';
+            return;
+        }
+
+        issueListEl.innerHTML = entriesWithIssues.map(({ entry, issues }) => `
+            <div class="issue-card">
+                <h3>${escapeHtml(entry.name)} <span class="mono">(${escapeHtml(entry.id)})</span></h3>
+                <p>${escapeHtml(entry.description || '无描述')}</p>
+                <p class="muted">${entry.runtimeAliasOf ? `runtimeAliasOf: ${entry.runtimeAliasOf}` : 'canonical skill'}</p>
+                <div>${issues.map(issue => `<span class="code-badge">${escapeHtml(issue.code)}</span>`).join('')}</div>
+                <ul>
+                    ${issues.map(issue => `<li><strong class="mono">${escapeHtml(issue.code)}</strong>：${escapeHtml(issue.message)}</li>`).join('')}
+                </ul>
+            </div>
+        `).join('');
+    }
+
+    function renderContractRows(entries, issuesMap) {
+        contractRowsEl.innerHTML = entries.map(entry => {
+            const issues = issuesMap.get(entry.id) || [];
+            const actionEffectTypes = Array.isArray(entry.actionEffectTypes) && entry.actionEffectTypes.length > 0
+                ? entry.actionEffectTypes.join(', ')
+                : '无';
+            return `
+                <tr>
+                    <td>
+                        <div><strong>${escapeHtml(entry.name)}</strong></div>
+                        <div class="mono">${escapeHtml(entry.id)}</div>
+                        <div class="muted">${entry.runtimeAliasOf ? `alias of ${entry.runtimeAliasOf}` : 'canonical'}</div>
+                    </td>
+                    <td>${formatTarget(entry)}</td>
+                    <td class="mono">${escapeHtml(actionEffectTypes)}</td>
+                    <td>${formatBuffRefs(entry)}</td>
+                    <td>${formatFlags(entry)}</td>
+                    <td>
+                        ${issues.length
+                            ? issues.map(issue => `<div><span class="code-badge">${escapeHtml(issue.code)}</span></div>`).join('')
+                            : '<span class="empty">无</span>'}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function reloadContractMatrix() {
+        logs = [];
+        logsEl.textContent = '';
+        try {
+            await DataManager.loadConfigs();
+            const catalog = DataManager.getSkillContractCatalog({ includeAliases: true });
+            const entries = Array.isArray(catalog?.entries) ? catalog.entries : [];
+            const issuesMap = new Map();
+            const entriesWithIssues = [];
+            const issueCodeCounts = new Map();
+
+            entries.forEach(entry => {
+                const issues = DataManager.getSkillContractIssues(entry.id);
+                issuesMap.set(entry.id, issues);
+                if (issues.length > 0) {
+                    entriesWithIssues.push({ entry, issues });
+                }
+                issues.forEach(issue => {
+                    issueCodeCounts.set(issue.code, (issueCodeCounts.get(issue.code) || 0) + 1);
+                });
+            });
+
+            entriesWithIssues.sort((a, b) => b.issues.length - a.issues.length || a.entry.id.localeCompare(b.entry.id));
+
+            const aliasCount = entries.filter(entry => entry.runtimeFlags?.isAlias).length;
+            const issueCount = entriesWithIssues.reduce((sum, item) => sum + item.issues.length, 0);
+            const issueCodeSummary = Array.from(issueCodeCounts.entries())
+                .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+                .map(([code, count]) => `${code}=${count}`)
+                .join(', ');
+
+            renderSummary([
+                {
+                    label: '总技能数',
+                    value: entries.length,
+                    note: '包含 canonical 与 alias 条目'
+                },
+                {
+                    label: '别名条目数',
+                    value: aliasCount,
+                    note: '用于反映敌人技能 alias 是否已进入统一契约口径'
+                },
+                {
+                    label: '问题技能数',
+                    value: entriesWithIssues.length,
+                    note: '至少包含 1 条 issue code 的技能数量'
+                },
+                {
+                    label: '问题总数',
+                    value: issueCount,
+                    note: '用于快速衡量当前批量校核的异常规模'
+                }
+            ]);
+
+            renderIssueList(entriesWithIssues);
+            renderContractRows(entries, issuesMap);
+
+            appendLog(`[catalog] selectedTreeId=${catalog?.selectedTreeId || '-'} schema=${catalog?.schemaVersion || '-'}`);
+            appendLog(`[summary] entries=${entries.length} alias=${aliasCount} skillsWithIssues=${entriesWithIssues.length} issueCount=${issueCount}`);
+            appendLog(`[issue_codes] ${issueCodeSummary || 'none'}`);
+            entriesWithIssues.slice(0, 10).forEach(({ entry, issues }) => {
+                appendLog(`[issue] ${entry.id}: ${issues.map(issue => issue.code).join(', ')}`);
+            });
+
+            setStatus(`Loaded ${entries.length} contract entries. skillsWithIssues=${entriesWithIssues.length}, issueCount=${issueCount}`);
+        } catch (error) {
+            console.error(error);
+            setStatus(`Load failed: ${error.message}`, true);
+            appendLog(`[error] ${error.stack || error.message}`);
+        }
+    }
+
+    function openRegressionRunner() {
+        window.open('./codex_regression_runner.html', '_blank', 'noopener');
+    }
+
+    function openMockUi() {
+        window.open('../mock_ui_v11.html', '_blank', 'noopener');
+    }
+
+    window.reloadContractMatrix = reloadContractMatrix;
+    window.openRegressionRunner = openRegressionRunner;
+    window.openMockUi = openMockUi;
+
+    reloadContractMatrix();
+</script>
+</body>
+</html>

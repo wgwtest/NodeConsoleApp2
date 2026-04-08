@@ -1,6 +1,6 @@
 # 研制计划 README
 
-最后整理时间：2026-04-08
+最后整理时间：2026-04-09
 
 状态：`当前有效`
 
@@ -20,7 +20,10 @@
 3. 当前正式未关闭工作包：
    - `#29 / C1`
    - `#30 / C2`
-4. 当前主执行节点：`#29 / C1（#63 / #64 / #65 已验收，#74 / #75 / #76 待人工验收）`
+   - `#83 / C3`
+4. 当前主执行节点：
+   - `#83 / C3（#84 / #85 已自测待人工验收）`
+   - `#29 / C1（#63 / #64 / #65 已验收，#74 / #75 / #76 待人工验收）`
 5. 当前并行 Prep 工作包：
    - `#70 / D3 对战演出与动画展示层`
 6. 当前待人工验收节点：
@@ -31,10 +34,13 @@
    - `#77 / C2.2`
    - `#78 / C2.3`
    - `#79 / C2.4`
+   - `#84 / C3.1`
+   - `#85 / C3.2`
    - `#73 / D3.2.1`
    - `#80 / D3.3`
    - `#81 / D3.4`
    - `#82 / D3.5`
+   - `#86 / D3.6`
 7. 当前正式关闭门 Gate：`M3`
 8. 当前并行 Prep Gate：`M4`
 9. 当前跨阶段表现层 Prep：
@@ -43,9 +49,11 @@
    - `#80 / D3.3`
    - `#81 / D3.4`
    - `#82 / D3.5`
+   - `#86 / D3.6`
 10. 当前阶段计划文档：
    - [10-WBS-L2-C1-技能树与构筑](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/10-WBS-L2-C1-技能树与构筑.md)
    - [07-WBS-L2-C2-内容扩充](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/07-WBS-L2-C2-内容扩充.md)
+   - [11-WBS-L2-C3-技能运行时一致性与说明校核](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/11-WBS-L2-C3-技能运行时一致性与说明校核.md)
    - [08-WBS-L2-D3-对战演出与动画展示层](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/08-WBS-L2-D3-对战演出与动画展示层.md)
    - [09-WBS-L3-D3.2-SpineAssets协作规则与导入契约基线](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/09-WBS-L3-D3.2-SpineAssets协作规则与导入契约基线.md)
 11. 当前主执行拆分：
@@ -56,8 +64,11 @@
    - `#77 / C2.2 故事关卡奖励节奏与首次通关反馈可视化`
    - `#78 / C2.3 关卡章节组织与连续推进信息补足`
    - `#79 / C2.4 story / acceptance / 编辑器样本层级口径清理`
+   - `#84 / C3.1 技能效果矩阵与说明契约收口`
+   - `#85 / C3.2 技能运行时批量回归与异常归档`
 12. 当前并行启动线：
    - `#70 / D3 对战演出与动画展示层`
+   - `#86 / D3.6 HUD比例与动作可观察性校准`
 13. 阶段 B 当前已完成且已验收的工作包：
    - `#26 / B1`
    - `#27 / B2`
@@ -74,6 +85,8 @@
    - `#77 / C2.2 故事关卡奖励节奏与首次通关反馈可视化`
    - `#78 / C2.3 关卡章节组织与连续推进信息补足`
    - `#79 / C2.4 story / acceptance / 编辑器样本层级口径清理`
+   - `#84 / C3.1 技能效果矩阵与说明契约收口`
+   - `#85 / C3.2 技能运行时批量回归与异常归档`
 16. 阶段 D 当前已完成并已验收的表现层叶子：
    - `#71 / D3.1 动画展示驱动与验证页基线`
    - `#72 / D3.2 SpineAssets协作规则与导入契约基线`
@@ -82,6 +95,12 @@
    - `#80 / D3.3 场景节奏强化与镜头感补足`
    - `#81 / D3.4 更多角色 / 技能类别的表现模板扩展`
    - `#82 / D3.5 演出配置化与内容驱动边界`
+   - `#86 / D3.6 HUD比例与动作可观察性校准`
+18. 当前新启动执行线：
+   - `#83 / C3 技能运行时一致性与说明校核`
+   - `#84 / C3.1 技能效果矩阵与说明契约收口`
+   - `#85 / C3.2 技能运行时批量回归与异常归档`
+   - `#86 / D3.6 HUD比例与动作可观察性校准`
 
 ## 2. 当前目录内的正式计划文件
 
@@ -94,8 +113,9 @@
 7. [08-WBS-L2-D3-对战演出与动画展示层](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/08-WBS-L2-D3-对战演出与动画展示层.md)
 8. [09-WBS-L3-D3.2-SpineAssets协作规则与导入契约基线](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/09-WBS-L3-D3.2-SpineAssets协作规则与导入契约基线.md)
 9. [10-WBS-L2-C1-技能树与构筑](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/10-WBS-L2-C1-技能树与构筑.md)
-10. [04-CODEX_DOC文档根深度迁移设计](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/04-CODEX_DOC文档根深度迁移设计.md)
-11. [05-CODEX_DOC文档根迁移实施计划](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/05-CODEX_DOC文档根迁移实施计划.md)
+10. [11-WBS-L2-C3-技能运行时一致性与说明校核](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/11-WBS-L2-C3-技能运行时一致性与说明校核.md)
+11. [04-CODEX_DOC文档根深度迁移设计](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/04-CODEX_DOC文档根深度迁移设计.md)
+12. [05-CODEX_DOC文档根迁移实施计划](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/05-CODEX_DOC文档根迁移实施计划.md)
 
 ## 3. 协作规则
 
@@ -153,9 +173,10 @@
 6. `#29 / C1` 已验收叶子：`#63 ~ #65`
 7. `#29 / C1` 当前待验收叶子：`#74 ~ #76`
 8. `#30 / C2` 当前待验收叶子：`#69、#77 ~ #79`
-9. `#70 / D3` 已验收叶子：`#71 ~ #72`
-10. `#70 / D3` 当前待验收叶子：`#73、#80 ~ #82`
-11. GitHub Project Roadmap 地址：
+9. `#83 / C3` 已进入正式执行：`#84 ~ #85`
+10. `#70 / D3` 已验收叶子：`#71 ~ #72`
+11. `#70 / D3` 当前待验收叶子：`#73、#80 ~ #82、#86`
+12. GitHub Project Roadmap 地址：
    - <https://github.com/users/wgwtest/projects/1>
 
 ## 7. 状态语义

@@ -1222,9 +1222,13 @@ class CoreEngine {
     }
 
     _freezePlannerToQueue() {
-        this.playerSkillQueue = this.turnPlanner.getPlannedActions().map(a => ({
-            ...a
-        }));
+        this.playerSkillQueue = this.turnPlanner.getPlannedActions().map(a => {
+            const skillConfig = this.data?.getSkillConfig ? this.data.getSkillConfig(a.skillId) : null;
+            return {
+                ...a,
+                skillName: skillConfig?.name || a.skillName || a.skillId
+            };
+        });
     }
 
     _syncPlannerToRuntime() {

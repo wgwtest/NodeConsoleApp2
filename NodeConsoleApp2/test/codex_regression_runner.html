@@ -661,6 +661,39 @@
       assert(floats.some(el => (el.textContent || '').includes('-18')), '伤害飘字未显示正确数值');
     }
 
+    async function testBattlePresentationControllerShowsReadableActionLabelOnTimelineEntry() {
+      const host = resetRegressionFixture('');
+      setupBattleRowDom(host);
+
+      const { BattlePresentationController } = await importBattlePresentationControllerModule();
+      const eventBus = createMiniEventBus();
+      const controller = new BattlePresentationController({
+        root: host.querySelector('.battle-row'),
+        eventBus
+      });
+      if (typeof controller.connect === 'function') {
+        controller.connect();
+      }
+
+      eventBus.emit('BATTLE_START', {
+        player: { id: 'player', name: '玩家', stats: { hp: 120, maxHp: 120 }, buffs: [] },
+        enemies: [{ id: 'enemy_1', name: '敌人', hp: 90, maxHp: 90, buffs: [] }]
+      });
+      eventBus.emit('TIMELINE_ENTRY_START', {
+        entry: {
+          side: 'enemy',
+          actorId: 'enemy_1',
+          skillId: 'skill_bone_repair',
+          sourceAction: { bodyPart: 'chest' },
+          meta: { label: '骨片修复' }
+        },
+        index: 0
+      });
+
+      const floats = Array.from(host.querySelectorAll('.fx-layer .battle-float-text'));
+      assert(floats.some(el => (el.textContent || '').includes('骨片修复')), '时间线启动时未显示动作标签飘字');
+    }
+
     async function testBattlePresentationControllerClearsTransientStateOnBattleStart() {
       const host = resetRegressionFixture('');
       setupBattleRowDom(host);
@@ -929,6 +962,69 @@
       assert(catalog.meta?.displayName === 'Melee V4.5', 'meta 未透出');
       assert(DataManager.getCurrentSkillTreeId.call(dm) === 'melee_v4_5', 'getCurrentSkillTreeId 返回错误');
       assert(DataManager.getSkillPackMeta.call(dm)?.schemaVersion === 'skills_melee_v3', 'getSkillPackMeta 返回错误');
+    }
+
+    async function testDataManagerBuildsSkillContractSummary() {
+      assert(typeof DataManager.getSkillContractSummary === 'function', 'DataManagerV2 缺少 getSkillContractSummary()');
+      assert(typeof DataManager.getSkillContractCatalog === 'function', 'DataManagerV2 缺少 getSkillContractCatalog()');
+
+      await DataManager.loadConfigs();
+
+      const summary = DataManager.getSkillContractSummary('skill_block');
+      assert(summary && typeof summary === 'object', 'skill_block 契约摘要未返回对象');
+      assert(summary.id === 'skill_block', `skill_block 摘要 id 错误: ${summary?.id}`);
+      assert(summary.name === '修理护甲', `skill_block 摘要 name 错误: ${summary?.name}`);
+      assert(summary.target?.subject === 'SUBJECT_SELF', `skill_block target.subject 错误: ${summary?.target?.subject}`);
+      assert(summary.target?.scope === 'SCOPE_PART', `skill_block target.scope 错误: ${summary?.target?.scope}`);
+      assert(summary.target?.selection?.mode === 'single', `skill_block selection.mode 错误: ${summary?.target?.selection?.mode}`);
+      assert(summary.target?.selection?.selectCount === 6, `skill_block selectCount 错误: ${summary?.target?.selection?.selectCount}`);
+      assert(Array.isArray(summary.actionEffectTypes) && summary.actionEffectTypes.includes('ARMOR_ADD'), 'skill_block actionEffectTypes 未包含 ARMOR_ADD');
+      assert(summary.runtimeFlags?.isPartTargeted === true, 'skill_block 未标记为部位目标技能');
+      assert(summary.runtimeFlags?.isBuffDriven === false, 'skill_block 不应被标记为纯 buff 驱动');
+
+      const aliasSummary = DataManager.getSkillContractSummary('skill_bone_repair');
+      assert(aliasSummary?.id === 'skill_bone_repair', `alias 摘要 id 错误: ${aliasSummary?.id}`);
+      assert(aliasSummary?.runtimeAliasOf === 'skill_block', `alias 摘要 runtimeAliasOf 错误: ${aliasSummary?.runtimeAliasOf}`);
+      assert(aliasSummary?.name === '修理护甲', `alias 摘要 name 错误: ${aliasSummary?.name}`);
+      assert(aliasSummary?.runtimeFlags?.isAlias === true, 'alias 摘要未标记为 alias');
+
+      const catalog = DataManager.getSkillContractCatalog({ includeAliases: true });
+      assert(Array.isArray(catalog?.entries) && catalog.entries.length > 0, '技能契约目录缺少 entries');
+      assert(catalog.entries.some(entry => entry.id === 'skill_block'), '技能契约目录缺少 skill_block');
+      assert(catalog.entries.some(entry => entry.id === 'skill_bone_repair' && entry.runtimeAliasOf === 'skill_block'), '技能契约目录缺少 alias 条目 skill_bone_repair');
+    }
+
+    async function testDataManagerDetectsSkillContractIssues() {
+      assert(typeof DataManager.getSkillContractIssues === 'function', 'DataManagerV2 缺少 getSkillContractIssues()');
+
+      await DataManager.loadConfigs();
+
+      const blockIssues = DataManager.getSkillContractIssues('skill_block');
+      assert(Array.isArray(blockIssues) && blockIssues.length > 0, 'skill_block 契约问题列表为空');
+      assert(blockIssues.some(issue => issue.code === 'selection_count_exceeds_candidates'), 'skill_block 未标记 selectCount 越界');
+      assert(blockIssues.some(issue => issue.code === 'single_selection_count_invalid'), 'skill_block 未标记 single 模式计数错误');
+      assert(blockIssues.some(issue => issue.code === 'tag_scope_mismatch'), 'skill_block 未标记 SCOPE 标签冲突');
+
+      const shockwaveIssues = DataManager.getSkillContractIssues('skill_shockwave');
+      assert(Array.isArray(shockwaveIssues) && shockwaveIssues.length > 0, 'skill_shockwave 契约问题列表为空');
+      assert(shockwaveIssues.some(issue => issue.code === 'unexpected_effect_tag' && issue.tag === 'DMG_HP'), 'skill_shockwave 未标记多余的 DMG_HP 标签');
+      assert(shockwaveIssues.some(issue => issue.code === 'missing_effect_tag' && issue.tag === 'DMG_ARMOR'), 'skill_shockwave 未标记缺少的 DMG_ARMOR 标签');
+      assert(shockwaveIssues.some(issue => issue.code === 'missing_effect_tag' && issue.tag === 'BUFF_REMOVE'), 'skill_shockwave 未标记缺少的 BUFF_REMOVE 标签');
+    }
+
+    async function testDataManagerSummarizesBuffDrivenSkillContracts() {
+      await DataManager.loadConfigs();
+
+      const summary = DataManager.getSkillContractSummary('skill_regroup');
+      assert(summary && typeof summary === 'object', 'skill_regroup 契约摘要未返回对象');
+      assert(summary.runtimeFlags?.isBuffDriven === true, 'skill_regroup 应标记为纯 buff 驱动技能');
+      assert(summary.runtimeFlags?.isConditional === false, 'skill_regroup 不应被标记为条件技能');
+      assert(Array.isArray(summary.buffRefs?.apply) && summary.buffRefs.apply.length === 1, 'skill_regroup 应暴露 buffRefs.apply');
+      assert(Array.isArray(summary.actionEffectTypes) && summary.actionEffectTypes.length === 0, 'skill_regroup 不应暴露直接 actionEffectTypes');
+
+      const issues = DataManager.getSkillContractIssues('skill_regroup');
+      assert(Array.isArray(issues), 'skill_regroup 契约问题列表未返回数组');
+      assert(issues.some(issue => issue.code === 'unexpected_effect_tag' && issue.tag === 'BUFF_REMOVE'), 'skill_regroup 未标记多余的 BUFF_REMOVE 标签');
     }
 
     async function testDataManagerSupportsRuntimeSkillPackOverrideBridge() {
@@ -2478,6 +2574,45 @@
       }
     }
 
+    async function testSkillContractProbePageProvidesBatchConsistencyGuide() {
+      const probePage = await fetch('../test/skill_contract_probe.html').then(r => r.text());
+      for (const requiredText of [
+        'Skill Contract Probe',
+        'Reload Contract Matrix',
+        'Open codex_regression_runner.html',
+        'Open mock_ui_v11.html',
+        'DataManagerV2.js',
+        'getSkillContractCatalog',
+        'getSkillContractIssues',
+        '本页用途',
+        '为什么这能证明',
+        '与其他页面关系',
+        '本页是“批量校核页”',
+        '批量列出技能契约摘要与异常',
+        '不会直接修改技能配置',
+        '不会替代 mock_ui_v11.html 的主流程观察'
+      ]) {
+        assertPageIncludesText(probePage, requiredText, 'skill_contract_probe.html 缺少批量校核页说明');
+      }
+    }
+
+    async function testSkillContractProbePageExplainsIssueCodesAndReadingOrder() {
+      const probePage = await fetch('../test/skill_contract_probe.html').then(r => r.text());
+      for (const requiredText of [
+        'selection_count_exceeds_candidates',
+        'single_selection_count_invalid',
+        'tag_scope_mismatch',
+        'unexpected_effect_tag',
+        'missing_effect_tag',
+        '你在本页应该先看什么',
+        '问题技能数',
+        '别名条目数',
+        '为什么它不能单独证明数值平衡正确'
+      ]) {
+        assertPageIncludesText(probePage, requiredText, 'skill_contract_probe.html 缺少读数说明');
+      }
+    }
+
     function testRegressionRunnerProvidesHumanUsageGuide() {
       const guide = document.getElementById('usageGuide');
       assert(guide, 'codex_regression_runner.html 缺少人工使用说明面板 #usageGuide');
@@ -3174,6 +3309,50 @@
       assert(plan.targetId === 'enemy_1', `回血技能目标错误: ${plan.targetId}`);
     }
 
+    function testEnemyPlannerReturnsReadableSkillNameInPlan() {
+      const skills = {
+        skill_recover: {
+          id: 'skill_recover',
+          name: '紧急包扎',
+          target: {
+            subject: 'SUBJECT_SELF',
+            scope: 'SCOPE_ENTITY',
+            selection: {}
+          },
+          actions: [{ effect: { effectType: 'HEAL', amount: 18 } }],
+          costs: { ap: 1 },
+          speed: 2
+        }
+      };
+
+      const planner = new EnemyActionPlanner({
+        getSkillConfig: (skillId) => skills[skillId]
+      });
+
+      const enemy = {
+        id: 'enemy_1',
+        stats: { hp: 18, maxHp: 100, speed: 5, ap: 3 },
+        bodyParts: {
+          head: { current: 10, max: 10, weakness: 1 },
+          chest: { current: 20, max: 20, weakness: 1 }
+        },
+        skills: ['skill_recover']
+      };
+
+      const player = {
+        id: 'player_1',
+        stats: { hp: 100, maxHp: 100 },
+        bodyParts: {
+          head: { current: 15, max: 15, weakness: 1.4 },
+          chest: { current: 20, max: 20, weakness: 1 }
+        }
+      };
+
+      const plan = planner.planTurn({ enemy, player, playerBodyParts: player.bodyParts });
+      assert(plan, 'EnemyActionPlanner 未返回规划结果');
+      assert(plan.skillName === '紧急包扎', `EnemyActionPlanner 未返回可读技能名: ${plan?.skillName}`);
+    }
+
     function testTurnPlannerUsesSlotPartForMultiSelect() {
       const planner = new TurnPlanner({
         getSlotLayout: () => ({
@@ -3721,6 +3900,12 @@
       assert(cssText.includes('.status-icon::after'), 'mock_ui_v11.css 缺少 status-icon tooltip 规则');
       assert(!cssText.includes('��'), 'status tooltip 仍包含乱码分隔符');
       assert(cssText.includes('content: attr(data-name) " · " attr(data-desc);'), 'status tooltip 未使用可读分隔符');
+    }
+
+    async function testMockUiHpBarFillDoesNotInheritHudTextMinWidth() {
+      const cssText = await fetch('../mock_ui_v11.css', { cache: 'no-store' }).then(r => r.text());
+      assert(!cssText.includes('.hud-stat span {'), 'mock_ui_v11.css 仍使用 .hud-stat span 宽泛选择器，低血量时会把血条填充条强行撑宽');
+      assert(cssText.includes('.hud-stat > span {'), 'mock_ui_v11.css 未把 HUD 文本选择器限制为直接子元素');
     }
 
     function testDataManagerAppliesBattleSettlementRewards() {
@@ -5513,6 +5698,7 @@
       ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
       ['BattlePresentationController 会在时间线启动时标记攻击态', testBattlePresentationControllerMarksActorOnTimelineEntry],
       ['BattlePresentationController 会在受击时生成伤害飘字', testBattlePresentationControllerCreatesFloatTextOnDamage],
+      ['BattlePresentationController 会在时间线启动时显示动作标签', testBattlePresentationControllerShowsReadableActionLabelOnTimelineEntry],
       ['BattlePresentationController 会在新战斗开始时清理上一轮瞬态演出', testBattlePresentationControllerClearsTransientStateOnBattleStart],
       ['BattlePresentationController 会在回合与时间线启动时触发场景节奏脉冲', testBattlePresentationControllerPulsesSceneOnTurnAndTimelineBeat],
       ['BattlePresentationController 会在受击时触发场景冲击脉冲', testBattlePresentationControllerPulsesSceneOnDamageImpact],
@@ -5526,6 +5712,9 @@
       ['CoreEngine 战斗保存同步 currentScene/battleState', testCoreEngineBattleSaveSyncContract],
       ['config registry 与 DataManager 装载边界统一', testContentRegistryProvidesUnifiedLoaderBoundary],
       ['DataManager 暴露技能目录边界 API', testDataManagerProvidesSkillCatalogBoundary],
+      ['DataManager 暴露技能契约摘要与矩阵目录', testDataManagerBuildsSkillContractSummary],
+      ['DataManager 能识别技能契约中的结构与标签冲突', testDataManagerDetectsSkillContractIssues],
+      ['DataManager 能识别纯 buff 驱动技能的契约摘要', testDataManagerSummarizesBuffDrivenSkillContracts],
       ['DataManager 支持技能 pack 运行时覆写桥', testDataManagerSupportsRuntimeSkillPackOverrideBridge],
       ['DataManager 暴露 Buff 目录边界 API', testDataManagerProvidesBuffCatalogBoundary],
       ['DataManager 支持 Buff pack 运行时覆写桥', testDataManagerSupportsRuntimeBuffPackOverrideBridge],
@@ -5558,12 +5747,15 @@
       ['buff_runtime_probe 提供运行时消费入口', testBuffRuntimeProbePageProvidesRuntimeConsumptionEntry],
       ['level_editor_io_test 提供 runtime bridge 验证入口', testLevelEditorIoPageProvidesRuntimeBridgeEntry],
       ['level_runtime_probe 提供运行时消费入口', testLevelRuntimeProbePageProvidesRuntimeConsumptionEntry],
+      ['skill_contract_probe 提供批量一致性校核入口', testSkillContractProbePageProvidesBatchConsistencyGuide],
+      ['skill_contract_probe 会解释问题码与读数顺序', testSkillContractProbePageExplainsIssueCodesAndReadingOrder],
       ['CoreEngine 在战斗开始时注入关卡验收技能', testCoreEngineInjectsLevelBattleSkillsIntoBattleStartPayload],
       ['CoreEngine 在战斗开始时应用关卡玩家战斗态覆盖', testCoreEngineAppliesLevelBattlePlayerStateOverridesAtBattleStart],
       ['CoreEngine 在战斗开始时应用关卡玩家战斗数值覆盖', testCoreEngineAppliesLevelBattlePlayerStatOverridesAtBattleStart],
       ['DataManager.instantiateLevel 保留验收敌人的残甲状态', testDataManagerInstantiateLevelPreservesConfiguredEnemyCurrentArmor],
       ['EnemyActionPlanner 受损时优先修甲', testEnemyPlannerPrefersArmorRepairWhenDamaged],
       ['EnemyActionPlanner 低血量时优先回血', testEnemyPlannerPrefersHealWhenLowHp],
+      ['EnemyActionPlanner 返回规划时会附带可读技能名', testEnemyPlannerReturnsReadableSkillNameInPlan],
       ['故事关卡已接入三类真实敌人策略样本', testStoryLevelsExposeDistinctEnemyStrategySamples],
       ['EnemyActionPlanner 会在故事关卡样本中选出对应策略', testEnemyPlannerUsesDistinctStrategyOnStoryLevels],
       ['CoreEngine Buff 执行日志显示 Buff 名称', testCoreEngineSkillBuffLogsUseBuffDisplayNames],
@@ -5583,6 +5775,7 @@
       ['UI_SkillTreeModal 提交后会记录最近学习结果', testSkillTreeCommitStoresLastLearnActionInProgress],
       ['UI_BattleRow 会分离 Buff 与 Debuff 图标', testBattleRowSeparatesBuffAndDebuffIconsFromRuntimeStatuses],
       ['mock_ui_v11 状态 tooltip 使用可读分隔符', testMockUiStatusTooltipUsesReadableSeparator],
+      ['mock_ui_v11 低血量时血条填充不受 HUD 文本最小宽度影响', testMockUiHpBarFillDoesNotInheritHudTextMinWidth],
       ['DataManager 结算奖励会入账到玩家与进度', testDataManagerAppliesBattleSettlementRewards],
       ['DataManager 结算会记录 settledAt 时间戳', testDataManagerBattleSettlementStoresSettledAt],
       ['故事关卡提供连续推进路径', testStoryLevelsProvideSequentialProgressionPath],

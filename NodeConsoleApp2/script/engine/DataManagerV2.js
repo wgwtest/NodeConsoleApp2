@@ -1214,6 +1214,234 @@ class DataManager {
         };
     }
 
+    _normalizeSkillSelection(selection) {
+        const source = (selection && typeof selection === 'object' && !Array.isArray(selection))
+            ? selection
+            : {};
+        const normalizeParts = (parts) => Array.isArray(parts)
+            ? parts
+                .map(part => (typeof part === 'string' ? part.trim() : ''))
+                .filter(Boolean)
+            : [];
+        const parsedCount = Number(source.selectCount);
+
+        return {
+            mode: typeof source.mode === 'string' && source.mode.trim()
+                ? source.mode.trim()
+                : null,
+            candidateParts: normalizeParts(source.candidateParts),
+            selectedParts: normalizeParts(source.selectedParts),
+            selectCount: Number.isFinite(parsedCount) ? parsedCount : null
+        };
+    }
+
+    _normalizeSkillBuffRefs(buffRefs) {
+        const source = (buffRefs && typeof buffRefs === 'object' && !Array.isArray(buffRefs))
+            ? buffRefs
+            : {};
+        const normalizeList = (items) => Array.isArray(items)
+            ? items
+                .filter(item => item && typeof item === 'object')
+                .map(item => JSON.parse(JSON.stringify(item)))
+            : [];
+
+        return {
+            apply: normalizeList(source.apply),
+            remove: normalizeList(source.remove)
+        };
+    }
+
+    _collectSkillActionEffectTypes(actions) {
+        const source = Array.isArray(actions) ? actions : [];
+        const seen = new Set();
+        const effectTypes = [];
+
+        source.forEach(action => {
+            const effectType = typeof action?.effect?.effectType === 'string'
+                ? action.effect.effectType.trim()
+                : '';
+            if (!effectType || seen.has(effectType)) return;
+            seen.add(effectType);
+            effectTypes.push(effectType);
+        });
+
+        return effectTypes;
+    }
+
+    _buildSkillRuntimeFlags(summary) {
+        const requirementKeys = Object.keys(summary?.requirements || {});
+        const selection = summary?.target?.selection || {};
+        const buffApplyCount = Array.isArray(summary?.buffRefs?.apply) ? summary.buffRefs.apply.length : 0;
+        const buffRemoveCount = Array.isArray(summary?.buffRefs?.remove) ? summary.buffRefs.remove.length : 0;
+        const actionEffectTypes = Array.isArray(summary?.actionEffectTypes) ? summary.actionEffectTypes : [];
+
+        return {
+            isAlias: Boolean(summary?.runtimeAliasOf),
+            isPartTargeted: summary?.target?.scope === 'SCOPE_PART',
+            isMultiParts: summary?.target?.scope === 'SCOPE_MULTI_PARTS'
+                || selection.mode === 'multiple'
+                || (Number(selection.selectCount) > 1),
+            isBuffDriven: actionEffectTypes.length === 0 && (buffApplyCount > 0 || buffRemoveCount > 0),
+            isConditional: requirementKeys.length > 0,
+            consumesPartSlot: Boolean(summary?.costs?.partSlot?.part)
+        };
+    }
+
+    getSkillContractSummary(skillId) {
+        const skill = this.getSkillConfig(skillId);
+        if (!skill) return null;
+
+        const target = (skill.target && typeof skill.target === 'object') ? skill.target : {};
+        const selection = this._normalizeSkillSelection(target.selection);
+        const buffRefs = this._normalizeSkillBuffRefs(skill.buffRefs);
+        const actionEffectTypes = this._collectSkillActionEffectTypes(skill.actions);
+        const tags = Array.isArray(skill.tags)
+            ? skill.tags
+                .map(tag => (typeof tag === 'string' ? tag.trim() : ''))
+                .filter(Boolean)
+            : [];
+
+        const summary = {
+            id: skill.id,
+            runtimeAliasOf: skill.runtimeAliasOf || null,
+            name: typeof skill.name === 'string' ? skill.name : skill.id,
+            description: typeof skill.description === 'string' ? skill.description : '',
+            tags,
+            target: {
+                subject: typeof target.subject === 'string' ? target.subject : null,
+                scope: typeof target.scope === 'string' ? target.scope : null,
+                selection
+            },
+            requirements: (skill.requirements && typeof skill.requirements === 'object' && !Array.isArray(skill.requirements))
+                ? JSON.parse(JSON.stringify(skill.requirements))
+                : {},
+            costs: (skill.costs && typeof skill.costs === 'object' && !Array.isArray(skill.costs))
+                ? JSON.parse(JSON.stringify(skill.costs))
+                : {},
+            actionEffectTypes,
+            buffRefs
+        };
+
+        summary.runtimeFlags = this._buildSkillRuntimeFlags(summary);
+        return summary;
+    }
+
+    getSkillContractCatalog(options = {}) {
+        const includeAliases = options && options.includeAliases === true;
+        const catalog = this.getSkillCatalog() || {};
+        const entries = [];
+        const seen = new Set();
+        const pushSummary = (skillId) => {
+            if (!skillId || seen.has(skillId)) return;
+            const summary = this.getSkillContractSummary(skillId);
+            if (!summary) return;
+            seen.add(skillId);
+            entries.push(summary);
+        };
+
+        (catalog.skillsList || []).forEach(skill => pushSummary(skill?.id));
+
+        if (includeAliases) {
+            Object.keys(this._enemySkillAliases || {}).forEach(aliasId => pushSummary(aliasId));
+        }
+
+        return {
+            selectedTreeId: catalog.selectedTreeId || null,
+            schemaVersion: catalog.schemaVersion || null,
+            meta: catalog.meta || null,
+            entries,
+            entriesMap: Object.fromEntries(entries.map(entry => [entry.id, entry]))
+        };
+    }
+
+    getSkillContractIssues(skillId) {
+        const summary = typeof skillId === 'string' ? this.getSkillContractSummary(skillId) : skillId;
+        if (!summary || typeof summary !== 'object') return [];
+
+        const issues = [];
+        const selection = summary.target?.selection || {};
+        const candidateCount = Array.isArray(selection.candidateParts) ? selection.candidateParts.length : 0;
+        const selectCount = Number.isFinite(selection.selectCount) ? selection.selectCount : null;
+        const tagSet = new Set(Array.isArray(summary.tags) ? summary.tags : []);
+        const subjectTags = ['SUBJECT_SELF', 'SUBJECT_ENEMY', 'SUBJECT_BOTH']
+            .filter(tag => tagSet.has(tag));
+        const scopeTags = ['SCOPE_ENTITY', 'SCOPE_PART', 'SCOPE_MULTI_PARTS']
+            .filter(tag => tagSet.has(tag));
+        const comparableEffectTags = new Set(['DMG_HP', 'DMG_ARMOR', 'HEAL', 'AP_GAIN', 'SPEED', 'BUFF_APPLY', 'BUFF_REMOVE']);
+        const derivedEffectTags = new Set();
+
+        (summary.actionEffectTypes || []).forEach(effectType => {
+            if (comparableEffectTags.has(effectType)) {
+                derivedEffectTags.add(effectType);
+            }
+        });
+        if ((summary.buffRefs?.apply || []).length > 0) {
+            derivedEffectTags.add('BUFF_APPLY');
+        }
+        if ((summary.buffRefs?.remove || []).length > 0) {
+            derivedEffectTags.add('BUFF_REMOVE');
+        }
+
+        if (selectCount !== null && candidateCount > 0 && selectCount > candidateCount) {
+            issues.push({
+                code: 'selection_count_exceeds_candidates',
+                message: `selectCount(${selectCount}) 超过 candidateParts(${candidateCount})。`,
+                selectCount,
+                candidateCount
+            });
+        }
+
+        if (selection.mode === 'single' && selectCount !== null && selectCount !== 1) {
+            issues.push({
+                code: 'single_selection_count_invalid',
+                message: `single 模式的 selectCount 应为 1，当前为 ${selectCount}。`,
+                selectCount
+            });
+        }
+
+        if (subjectTags.length > 0 && summary.target?.subject && !subjectTags.includes(summary.target.subject)) {
+            issues.push({
+                code: 'tag_subject_mismatch',
+                message: `SUBJECT 标签与 target.subject 不一致：tags=${subjectTags.join(',')} target=${summary.target.subject}`,
+                targetSubject: summary.target.subject,
+                tags: subjectTags
+            });
+        }
+
+        if (scopeTags.length > 0 && summary.target?.scope && !scopeTags.includes(summary.target.scope)) {
+            issues.push({
+                code: 'tag_scope_mismatch',
+                message: `SCOPE 标签与 target.scope 不一致：tags=${scopeTags.join(',')} target=${summary.target.scope}`,
+                targetScope: summary.target.scope,
+                tags: scopeTags
+            });
+        }
+
+        Array.from(tagSet)
+            .filter(tag => comparableEffectTags.has(tag))
+            .forEach(tag => {
+                if (!derivedEffectTags.has(tag)) {
+                    issues.push({
+                        code: 'unexpected_effect_tag',
+                        tag,
+                        message: `标签 ${tag} 无法从 actions / buffRefs 中直接推导。`
+                    });
+                }
+            });
+
+        Array.from(derivedEffectTags).forEach(tag => {
+            if (!tagSet.has(tag)) {
+                issues.push({
+                    code: 'missing_effect_tag',
+                    tag,
+                    message: `actions / buffRefs 已体现 ${tag}，但 tags 中缺失。`
+                });
+            }
+        });
+
+        return issues;
+    }
+
     // Instantiate a level from config, creating runtime enemy instances
     instantiateLevel(levelId) {
         const levelConfig = typeof this.getLevelConfig === 'function'

@@ -31,7 +31,7 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
 .player-hud .sub-area-tag { color: #57c2ff; }
 .hud-panel h2 { margin: 0; font-size: 1.1rem; }
 .hud-stat { width: 100%; display: flex; align-items: center; gap: 10px; }
-.hud-stat span { font-size: 0.88rem; color: #cbd6ff; min-width: 140px; }
+.hud-stat > span { font-size: 0.88rem; color: #cbd6ff; min-width: 140px; }
 .hud-stat .bar { flex: 1; margin: 0; }
 .status-row { display: flex; align-items: center; gap: 12px; font-size: 0.78rem; color: #cbd6ff; }
 .status-label { width: 64px; letter-spacing: 0.05em; color: rgba(255,255,255,0.6); }
@@ -45,7 +45,7 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
 .player-hud { align-items: flex-start; text-align: left; }
 .enemy-hud { align-items: flex-end; text-align: right; }
 .enemy-hud .hud-stat { flex-direction: row-reverse; }
-.enemy-hud .hud-stat span { text-align: right; }
+.enemy-hud .hud-stat > span { text-align: right; }
 .enemy-hud .bar span { right: 0; left: auto; }
 .enemy-hud .status-row { flex-direction: row-reverse; }
 .enemy-hud .status-label { text-align: right; }

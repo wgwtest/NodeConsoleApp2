@@ -2,6 +2,14 @@ import { BattleAnimationDriver } from './BattleAnimationDriver.js';
 import { resolveActionPresentation, resolveNamedPresentation } from './BattlePresentationConfig.js';
 import { FighterPresenter } from './FighterPresenter.js';
 
+const BODY_PART_LABELS = Object.freeze({
+    head: '头部',
+    chest: '胸部',
+    abdomen: '腹部',
+    arm: '手部',
+    leg: '腿部'
+});
+
 function readNumericStat(entity, key) {
     const direct = entity?.[key];
     if (direct !== undefined) return Number(direct) || 0;
@@ -65,6 +73,24 @@ function normalizeCombatant(entity, fallbackId) {
         debuffsCount: debuffs.length,
         bodyParts: normalizeBodyParts(entity)
     };
+}
+
+function formatActionLabel(entry = null) {
+    if (!entry || typeof entry !== 'object') return '';
+
+    const rawLabel = entry?.meta?.label
+        || entry?.sourceAction?.skillName
+        || entry?.skillName
+        || entry?.skillId
+        || '';
+    const normalized = String(rawLabel || '').trim();
+    if (!normalized) return '';
+
+    const bodyPart = entry?.sourceAction?.bodyPart || entry?.bodyPart || null;
+    const bodyPartLabel = bodyPart ? (BODY_PART_LABELS[bodyPart] || bodyPart) : '';
+    if (!bodyPartLabel) return normalized;
+
+    return `${normalized} · ${bodyPartLabel}`;
 }
 
 export class BattlePresentationController {
@@ -190,6 +216,7 @@ export class BattlePresentationController {
             payload,
             statusKind: presentation.statusKind
         });
+        this._showActionLabel(presentation.side, entry);
         this.animationDriver?.pulseSceneDirective?.(presentation.scenePulse, presentation.side);
         this._recordResolvedPresentation(presentation);
     }
@@ -299,6 +326,7 @@ export class BattlePresentationController {
                 const delta = Number(partState?.current ?? 0) - Number(prevState?.current ?? 0);
                 if (delta > 0) {
                     this.presenters[side]?.pulseArmor(partKey, 'heal');
+                    this.presenters[side]?.showFloatText(`护甲 +${delta}`, 'heal');
                 }
             }
         }
@@ -327,6 +355,15 @@ export class BattlePresentationController {
         this.sceneRoot.dataset.lastTemplateFallback = presentation.fallback || 'default';
         this.sceneRoot.dataset.lastScenePulse = presentation.scenePulse || 'self-beat';
         this.sceneRoot.dataset.lastStatusKind = presentation.statusKind || 'buff';
+    }
+
+    _showActionLabel(side, entry) {
+        const label = formatActionLabel(entry);
+        if (!label) return;
+        this.presenters[side]?.showFloatText(label, 'status');
+        if (this.sceneRoot) {
+            this.sceneRoot.dataset.lastActionLabel = label;
+        }
     }
 
     _resolveSide(entity, explicitId = null) {

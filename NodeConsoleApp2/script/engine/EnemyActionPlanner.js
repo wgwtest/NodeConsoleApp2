@@ -29,6 +29,7 @@ export default class EnemyActionPlanner {
             source: 'ENEMY',
             sourceId: enemy.id,
             skillId: best.skill.id,
+            skillName: best.skill.name || best.skill.id,
             targetId: best.target.targetId,
             bodyPart: best.target.bodyPart,
             cost,
