@@ -4,7 +4,7 @@
 
 最后整理时间：2026-04-08
 
-状态：`当前有效，对应 #70；#71 / D3.1、#72 / D3.2 已自测待验收，#80 / #81 已实现并自测，后续已拆分 #82`
+状态：`当前有效，对应 #70；#71 / D3.1、#72 / D3.2 已自测待验收，#80 / #81 / #82 已实现并自测`
 
 ## 1. 节点定位
 
@@ -22,6 +22,7 @@
 2. `#72 WBS L3: D3.2 SpineAssets协作规则与导入契约基线`
 3. `#80 WBS L3: D3.3 场景节奏强化与镜头感补足`
 4. `#81 WBS L3: D3.4 更多角色 / 技能类别的表现模板扩展`
+5. `#82 WBS L3: D3.5 演出配置化与内容驱动边界`
 
 ## 2. 为什么阶段 D 现在就要启动 D3
 
@@ -99,10 +100,11 @@
 3. `script/ui/UI_BattleRow.js`
 4. `script/ui/presentation/BattleAnimationDriver.js`
 5. `script/ui/presentation/FighterPresenter.js`
-6. `script/ui/presentation/BattlePresentationController.js`
-7. `mock_ui_v11.css`
-8. `test/battle_presentation_probe.html`
-9. `test/codex_regression_runner.html`
+6. `script/ui/presentation/BattlePresentationConfig.js`
+7. `script/ui/presentation/BattlePresentationController.js`
+8. `mock_ui_v11.css`
+9. `test/battle_presentation_probe.html`
+10. `test/codex_regression_runner.html`
 
 ## 7. 验收口径
 
@@ -160,6 +162,18 @@
 目标：
 
 1. 固定展示层配置入口、映射边界和缺失资源降级语义
+
+当前结论：
+
+1. 已实现
+2. 已自测
+3. 待人工验收
+
+本轮证据：
+
+1. `DOC/CODEX_DOC/05_测试文档/01_自测报告/2026-04-08-173505-D3.5-演出配置化与内容驱动边界自测报告.md`
+2. `DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.5-[待验收]-2026-04-08-173505-演出配置化与内容驱动边界-人工验收清单.md`
+3. `DOC/CODEX_DOC/06_过程文档/01_会话交接/2026-04-08-173505-D3.5-演出配置化与内容驱动边界实现与自测记录.md`
 
 Roadmap 时间：
 

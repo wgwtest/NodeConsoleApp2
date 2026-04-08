@@ -2,7 +2,7 @@
 
 创建时间：2026-04-07
 
-最后整理时间：2026-04-07
+最后整理时间：2026-04-08
 
 状态：`当前有效`
 
@@ -112,6 +112,50 @@
 1. 展示层优先依赖结构化事件
 2. 不建议依赖解析 `BATTLE_LOG.text` 文案来驱动关键动画
 3. 对治疗、Buff 增减等缺少专用事件的场景，可通过 `BATTLE_UPDATE` 前后快照差异推导
+
+### 5.1 演出配置化边界
+
+从 `D3.5` 开始，展示层必须把“模板映射、场景脉冲和状态语义”收口为统一配置入口，而不是散落在控制器、driver 和 probe 页里各写一份。
+
+推荐正式输入形态：
+
+1. `entry.presentation.template`
+2. `entry.presentation.scenePulse`
+3. `entry.presentation.statusKind`
+
+兼容旧输入形态：
+
+1. `presentationTemplate`
+2. `template`
+3. `skillCategory`
+4. `meta.statusKind / statusType`
+
+边界约束：
+
+1. 规则层和内容层只负责提供只读提示，不直接控制 DOM class。
+2. 展示层统一把这些提示解析成内部语义：
+   - `template`
+   - `presenterTemplate`
+   - `scenePulse`
+   - `statusKind`
+   - `fallback`
+3. 缺失配置、旧别名和未知模板，都必须走同一处解析逻辑。
+4. probe 页与主流程页都必须复用这套解析结果，不能各自维护一份模板白名单。
+
+当前最低支持模板：
+
+1. `default`
+2. `melee`
+3. `guard`
+4. `heal`
+5. `status`
+
+当前最低降级语义：
+
+1. 已知别名，例如 `block`，统一转成正式模板 `guard`
+2. 未知模板，例如 `arcane_unknown`，统一降级到 `default`
+3. 缺失场景脉冲时，回退到模板默认脉冲
+4. 即使发生降级，也只影响视觉表达，不影响时间线推进
 
 ## 6. DOM 契约
 
@@ -276,4 +320,4 @@ probe 页还应额外遵守：
 3. `D3.4`
    - 对更多角色和更多技能类别扩展分层动作
 4. `D3.5`
-   - 在不改规则层的前提下补齐可配置的演出模板
+   - 固定统一的演出配置入口、配置来源读数和降级元数据

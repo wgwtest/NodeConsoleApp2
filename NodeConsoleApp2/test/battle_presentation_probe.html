@@ -244,6 +244,11 @@
                 <h3>节奏与镜头语义</h3>
                 <p>本页也验证展现层是否可以借 <code>scene-turn-announce</code>、<code>scene-beat-* / scene-impact</code> 这样的类名，独立营造“回合亮起 → 行动连击 → 受击晃动”的节奏感，而不依赖真正的战斗结算。</p>
             </div>
+            <div class="guide-card">
+                <h3>演出配置边界</h3>
+                <p>本页默认用结构化 <code>presentation</code> 配置来描述“该动作想走什么模板、什么场景脉冲、什么状态语义”。规则层和内容层只提供这些只读提示，真正怎么表现、如何降级，仍由展示层统一决定。</p>
+                <p><code>最近模板 / 最近配置来源 / 最近降级语义 / 最近场景脉冲</code> 这组读数，就是用来验证配置入口与降级策略是不是稳定成立。</p>
+            </div>
         </div>
         <table class="explain-table">
             <thead>
@@ -276,13 +281,13 @@
                 </tr>
                 <tr>
                     <td><code>模板：近战 / 防御 / 治疗 / 状态上身</code></td>
-                    <td>只发 <code>TIMELINE_ENTRY_START</code>，并在 <code>entry</code> 中显式带模板类别。</td>
-                    <td>证明展示层支持“按类别路由表现模板”，而不是写死某个技能 ID。</td>
+                    <td>只发 <code>TIMELINE_ENTRY_START</code>，并在 <code>entry.presentation</code> 中显式带模板类别与状态语义。</td>
+                    <td>证明展示层支持“按配置路由表现模板”，而不是写死某个技能 ID 或按钮回调。</td>
                 </tr>
                 <tr>
                     <td><code>模板：未知类别（降级）</code></td>
-                    <td>发送一个不在白名单里的模板值，例如 <code>arcane_unknown</code>。</td>
-                    <td>证明未知类别会稳定回退到默认模板（前冲节奏），不会抛错或卡死。</td>
+                    <td>发送一个不在白名单里的模板值，例如 <code>arcane_unknown</code>，再读取“最近降级语义”。</td>
+                    <td>证明未知类别会稳定回退到默认模板（前冲节奏），不会抛错或卡死，而且降级原因可观察。</td>
                 </tr>
                 <tr>
                     <td><code>切换动画</code></td>
@@ -318,6 +323,7 @@
             <button type="button" class="warn" id="btnResetState">重置状态</button>
         </div>
         <p id="templateProbeState">最近模板：无</p>
+        <p id="presentationSourceState">最近配置来源：无</p>
     </section>
 
     <section class="panel probe-shell">
@@ -484,6 +490,10 @@
         const template = sceneRoot?.dataset?.lastTemplate || '无';
         const side = sceneRoot?.dataset?.lastTemplateSide || '-';
         document.getElementById('templateProbeState').textContent = `最近模板：${template}（side: ${side}）`;
+        const source = sceneRoot?.dataset?.lastTemplateSource || '无';
+        const fallback = sceneRoot?.dataset?.lastTemplateFallback || '无';
+        const scenePulse = sceneRoot?.dataset?.lastScenePulse || '无';
+        document.getElementById('presentationSourceState').textContent = `最近配置来源：${source}；最近降级语义：${fallback}；最近场景脉冲：${scenePulse}`;
     }
 
     function renderStatusIcons(containerId, rows, mode) {
@@ -572,13 +582,14 @@
             side,
             actorId: side === 'enemy' ? state.enemy.id : state.player.id,
             skillId: `probe_${template || 'default'}`,
-            meta: { label: label || '模板探针' }
+            meta: { label: label || '模板探针' },
+            presentation: {}
         };
         if (template) {
-            entry.presentationTemplate = template;
+            entry.presentation.template = template;
         }
         if (statusKind) {
-            entry.meta.statusKind = statusKind;
+            entry.presentation.statusKind = statusKind;
         }
         eventBus.emit('TIMELINE_ENTRY_START', { entry });
         refreshTemplateReadout();

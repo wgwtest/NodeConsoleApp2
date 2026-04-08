@@ -1,3 +1,5 @@
+import { resolveScenePulseClass } from './BattlePresentationConfig.js';
+
 export class BattleAnimationDriver {
     constructor({ sceneRoot = null, fxLayer = null, enabled = true } = {}) {
         this.sceneRoot = sceneRoot;
@@ -41,27 +43,10 @@ export class BattleAnimationDriver {
         this.pulseClass(this.sceneRoot, className, durationMs);
     }
 
-    pulseSceneTemplate(template = 'default', side = 'self', durationMs = 520) {
+    pulseSceneDirective(scenePulse = 'self-beat', side = 'self', durationMs = 520) {
         if (!this.enabled) return;
-        const normalizedTemplate = this._normalizeTemplate(template);
-        const normalizedSide = this._normalizeSide(side);
-
-        if (normalizedTemplate === 'melee' || normalizedTemplate === 'default') {
-            this.pulseScene(normalizedSide === 'enemy' ? 'scene-beat-enemy' : 'scene-beat-self', durationMs);
-            return;
-        }
-
-        if (normalizedTemplate === 'guard') {
-            this.pulseScene('scene-impact', durationMs);
-            return;
-        }
-
-        if (normalizedTemplate === 'heal' || normalizedTemplate === 'status') {
-            this.pulseScene('scene-turn-announce', durationMs);
-            return;
-        }
-
-        this.pulseScene(normalizedSide === 'enemy' ? 'scene-beat-enemy' : 'scene-beat-self', durationMs);
+        const className = resolveScenePulseClass(scenePulse, side);
+        this.pulseScene(className, durationMs);
     }
 
     createFloatText({ text, kind = 'damage', side = 'self', anchorEl = null } = {}) {
@@ -106,14 +91,6 @@ export class BattleAnimationDriver {
         }
 
         el.dataset.floatSide = side;
-    }
-
-    _normalizeTemplate(template) {
-        const value = String(template || '').trim().toLowerCase();
-        if (value === 'melee' || value === 'guard' || value === 'heal' || value === 'status') {
-            return value;
-        }
-        return 'default';
     }
 
     _normalizeFloatKind(kind) {

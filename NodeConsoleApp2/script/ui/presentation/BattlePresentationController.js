@@ -1,24 +1,6 @@
 import { BattleAnimationDriver } from './BattleAnimationDriver.js';
+import { resolveActionPresentation, resolveNamedPresentation } from './BattlePresentationConfig.js';
 import { FighterPresenter } from './FighterPresenter.js';
-
-const TEMPLATE_ALIASES = Object.freeze({
-    melee: 'melee',
-    attack: 'melee',
-    strike: 'melee',
-    physical: 'melee',
-    guard: 'guard',
-    defend: 'guard',
-    defense: 'guard',
-    block: 'guard',
-    parry: 'guard',
-    heal: 'heal',
-    recovery: 'heal',
-    support_heal: 'heal',
-    status: 'status',
-    buff: 'status',
-    debuff: 'status',
-    support: 'status'
-});
 
 function readNumericStat(entity, key) {
     const direct = entity?.[key];
@@ -85,54 +67,6 @@ function normalizeCombatant(entity, fallbackId) {
     };
 }
 
-function normalizeTemplateValue(rawTemplate) {
-    const normalized = String(rawTemplate || '').trim().toLowerCase();
-    if (!normalized) return 'default';
-    return TEMPLATE_ALIASES[normalized] || 'default';
-}
-
-function resolveTemplateFromEntry(entry, payload) {
-    if (!entry && !payload) return 'default';
-    const candidates = [
-        entry?.presentationTemplate,
-        entry?.template,
-        entry?.skillCategory,
-        entry?.category,
-        entry?.meta?.presentationTemplate,
-        entry?.meta?.template,
-        entry?.meta?.skillCategory,
-        entry?.meta?.category,
-        payload?.presentationTemplate,
-        payload?.template,
-        payload?.skillCategory,
-        payload?.category
-    ];
-    for (const candidate of candidates) {
-        const key = normalizeTemplateValue(candidate);
-        if (key !== 'default') return key;
-    }
-    return 'default';
-}
-
-function resolveStatusKindFromEntry(entry, payload) {
-    const candidates = [
-        entry?.statusKind,
-        entry?.meta?.statusKind,
-        entry?.meta?.statusType,
-        payload?.statusKind,
-        payload?.statusType
-    ];
-    for (const candidate of candidates) {
-        if (String(candidate || '').toLowerCase() === 'debuff') {
-            return 'debuff';
-        }
-        if (String(candidate || '').toLowerCase() === 'buff') {
-            return 'buff';
-        }
-    }
-    return 'buff';
-}
-
 export class BattlePresentationController {
     constructor({ root = null, sceneRoot = null, eventBus = null, enabled = true } = {}) {
         this.root = root || sceneRoot?.closest?.('.battle-row') || null;
@@ -172,13 +106,17 @@ export class BattlePresentationController {
         }
     }
 
-    _announceScenePulse(className) {
+    _announceScenePulse(scenePulse, side = 'self') {
         if (!this.enabled) return;
-        this.animationDriver?.pulseScene?.(className);
+        this.animationDriver?.pulseSceneDirective?.(scenePulse, side);
     }
 
     static resolveActionTemplate(entry, payload = null) {
-        return resolveTemplateFromEntry(entry, payload);
+        return resolveActionPresentation(entry, payload).template;
+    }
+
+    static resolveActionPresentation(entry, payload = null) {
+        return resolveActionPresentation(entry, payload);
     }
 
     setEnabled(enabled) {
@@ -240,21 +178,20 @@ export class BattlePresentationController {
         for (const presenter of Object.values(this.presenters)) {
             presenter?.fighterRoot?.classList?.add('is-idle');
         }
-        this._announceScenePulse('scene-turn-announce');
+        this._announceScenePulse('turn-announce', 'self');
     }
 
     handleTimelineEntryStart(payload) {
         if (!this.enabled) return;
         const entry = payload?.entry;
-        const side = entry?.side === 'enemy' ? 'enemy' : 'self';
-        const template = BattlePresentationController.resolveActionTemplate(entry, payload);
-        const statusKind = resolveStatusKindFromEntry(entry, payload);
-        this.presenters[side]?.playTemplate(template, { entry, payload, statusKind });
-        this.animationDriver?.pulseSceneTemplate?.(template, side);
-        if (this.sceneRoot) {
-            this.sceneRoot.dataset.lastTemplate = template;
-            this.sceneRoot.dataset.lastTemplateSide = side;
-        }
+        const presentation = BattlePresentationController.resolveActionPresentation(entry, payload);
+        this.presenters[presentation.side]?.playTemplate(presentation.presenterTemplate, {
+            entry,
+            payload,
+            statusKind: presentation.statusKind
+        });
+        this.animationDriver?.pulseSceneDirective?.(presentation.scenePulse, presentation.side);
+        this._recordResolvedPresentation(presentation);
     }
 
     handleTimelineEntryEnd(_payload) {
@@ -267,25 +204,28 @@ export class BattlePresentationController {
         if (!side) return;
 
         const presenter = this.presenters[side];
-        const template = BattlePresentationController.resolveActionTemplate(payload?.entry, payload);
+        const presentation = BattlePresentationController.resolveActionPresentation(payload?.entry, payload);
         const damage = Number(payload?.damageDealt ?? payload?.damage ?? 0) || 0;
         const armorDamage = Number(payload?.armorDamage ?? 0) || 0;
         const armorPart = payload?.targetPart || payload?.bodyPart || null;
         const blocked = payload?.isBlocked === true
             || payload?.result === 'blocked'
-            || (template === 'guard' && damage <= 0);
+            || (presentation.template === 'guard' && damage <= 0);
 
         if (blocked) {
-            presenter?.playTemplate('guard', {
+            const blockedPresentation = resolveNamedPresentation('guard', {
+                side,
+                scenePulse: 'impact',
+                templateSource: 'damage.blocked.guard',
+                scenePulseSource: 'damage.blocked.impact'
+            });
+            presenter?.playTemplate(blockedPresentation.presenterTemplate, {
                 armorPart,
                 text: payload?.blockText || '格挡',
                 showFloatText: true
             });
-            this.animationDriver?.pulseSceneTemplate?.('guard', side);
-            if (this.sceneRoot) {
-                this.sceneRoot.dataset.lastTemplate = 'guard';
-                this.sceneRoot.dataset.lastTemplateSide = side;
-            }
+            this.animationDriver?.pulseSceneDirective?.(blockedPresentation.scenePulse, side);
+            this._recordResolvedPresentation(blockedPresentation);
             return;
         }
 
@@ -299,7 +239,7 @@ export class BattlePresentationController {
             presenter?.showFloatText(`护甲 -${armorDamage}`, 'armor');
             presenter?.pulseArmor(armorPart, 'hit');
         }
-        this.animationDriver?.pulseSceneTemplate?.('guard', side);
+        this.animationDriver?.pulseSceneDirective?.('impact', side);
     }
 
     _syncPayload(payload, animateDiff) {
@@ -323,18 +263,35 @@ export class BattlePresentationController {
         if (animateDiff && prev) {
             const hpDelta = next.hp - prev.hp;
             if (hpDelta > 0) {
-                this.presenters[side]?.playTemplate('heal', { amount: hpDelta });
-                this.animationDriver?.pulseSceneTemplate?.('heal', side);
+                const healPresentation = resolveNamedPresentation('heal', {
+                    side,
+                    templateSource: 'diff.heal'
+                });
+                this.presenters[side]?.playTemplate(healPresentation.presenterTemplate, { amount: hpDelta });
+                this.animationDriver?.pulseSceneDirective?.(healPresentation.scenePulse, side);
+                this._recordResolvedPresentation(healPresentation);
             }
 
             if (next.buffsCount > prev.buffsCount) {
-                this.presenters[side]?.playTemplate('status', { statusKind: 'buff' });
-                this.animationDriver?.pulseSceneTemplate?.('status', side);
+                const buffPresentation = resolveNamedPresentation('status', {
+                    side,
+                    statusKind: 'buff',
+                    templateSource: 'diff.buff'
+                });
+                this.presenters[side]?.playTemplate(buffPresentation.presenterTemplate, { statusKind: 'buff' });
+                this.animationDriver?.pulseSceneDirective?.(buffPresentation.scenePulse, side);
+                this._recordResolvedPresentation(buffPresentation);
             }
 
             if (next.debuffsCount > prev.debuffsCount) {
-                this.presenters[side]?.playTemplate('status', { statusKind: 'debuff' });
-                this.animationDriver?.pulseSceneTemplate?.('status', side);
+                const debuffPresentation = resolveNamedPresentation('status', {
+                    side,
+                    statusKind: 'debuff',
+                    templateSource: 'diff.debuff'
+                });
+                this.presenters[side]?.playTemplate(debuffPresentation.presenterTemplate, { statusKind: 'debuff' });
+                this.animationDriver?.pulseSceneDirective?.(debuffPresentation.scenePulse, side);
+                this._recordResolvedPresentation(debuffPresentation);
             }
 
             for (const [partKey, partState] of Object.entries(next.bodyParts || {})) {
@@ -360,6 +317,16 @@ export class BattlePresentationController {
             presenter?.clearTransientState();
         }
         this.animationDriver.clearFloatTexts();
+    }
+
+    _recordResolvedPresentation(presentation) {
+        if (!this.sceneRoot || !presentation) return;
+        this.sceneRoot.dataset.lastTemplate = presentation.template || 'default';
+        this.sceneRoot.dataset.lastTemplateSide = presentation.side || 'self';
+        this.sceneRoot.dataset.lastTemplateSource = presentation.templateSource || 'default';
+        this.sceneRoot.dataset.lastTemplateFallback = presentation.fallback || 'default';
+        this.sceneRoot.dataset.lastScenePulse = presentation.scenePulse || 'self-beat';
+        this.sceneRoot.dataset.lastStatusKind = presentation.statusKind || 'buff';
     }
 
     _resolveSide(entity, explicitId = null) {

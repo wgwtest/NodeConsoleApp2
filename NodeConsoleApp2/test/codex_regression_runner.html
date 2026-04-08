@@ -792,6 +792,23 @@
       assert(BattlePresentationController.resolveActionTemplate({ template: 'recovery' }) === 'heal', 'recovery 未映射到 heal 模板');
     }
 
+    async function testBattlePresentationControllerResolvesStructuredPresentationConfig() {
+      const { BattlePresentationController } = await importBattlePresentationControllerModule();
+      const resolved = BattlePresentationController.resolveActionPresentation({
+        presentation: {
+          template: 'block',
+          scenePulse: 'impact',
+          statusKind: 'debuff'
+        }
+      });
+
+      assert(resolved.template === 'guard', `结构化 presentation.template 未映射到 guard: ${resolved.template}`);
+      assert(resolved.presenterTemplate === 'guard', `结构化 presenterTemplate 不正确: ${resolved.presenterTemplate}`);
+      assert(resolved.scenePulse === 'impact', `结构化 scenePulse 不正确: ${resolved.scenePulse}`);
+      assert(resolved.statusKind === 'debuff', `结构化 statusKind 不正确: ${resolved.statusKind}`);
+      assert(resolved.templateSource === 'entry.presentation.template', `结构化 templateSource 不正确: ${resolved.templateSource}`);
+    }
+
     async function testBattlePresentationControllerFallsBackUnknownTemplateToDefault() {
       const host = resetRegressionFixture('');
       setupBattleRowDom(host);
@@ -822,6 +839,9 @@
       const scene = host.querySelector('.battle-scene');
       assert(scene?.dataset?.lastTemplate === 'default', `未知模板未降级到 default: ${scene?.dataset?.lastTemplate}`);
       assert(scene?.classList?.contains('scene-beat-self'), '未知模板降级后未复用默认近战节奏脉冲');
+      assert(scene?.dataset?.lastTemplateFallback === 'default', `未知模板未记录 default 降级语义: ${scene?.dataset?.lastTemplateFallback}`);
+      assert(scene?.dataset?.lastTemplateSource === 'entry.presentationTemplate', `未知模板未记录配置来源: ${scene?.dataset?.lastTemplateSource}`);
+      assert(scene?.dataset?.lastScenePulse === 'self-beat', `未知模板未记录场景脉冲语义: ${scene?.dataset?.lastScenePulse}`);
     }
 
     async function testBattlePresentationProbeProvidesReadableGuide() {
@@ -832,6 +852,15 @@
       assertPageIncludesText(html, '为什么这能证明', 'battle_presentation_probe 缺少“为什么这能证明”说明');
       assertPageIncludesText(html, '攻击前冲', 'battle_presentation_probe 缺少攻击前冲验证入口');
       assertPageIncludesText(html, '轻量纸娃娃', 'battle_presentation_probe 缺少轻量纸娃娃试验说明');
+    }
+
+    async function testBattlePresentationProbeExplainsConfiguredBoundary() {
+      const response = await fetch('./battle_presentation_probe.html', { cache: 'no-store' });
+      assert(response.ok, `battle_presentation_probe.html 加载失败: ${response.status}`);
+      const html = await response.text();
+      assertPageIncludesText(html, '演出配置边界', 'battle_presentation_probe 缺少演出配置边界说明');
+      assertPageIncludesText(html, '最近配置来源', 'battle_presentation_probe 缺少最近配置来源读数');
+      assertPageIncludesText(html, '模板：未知类别（降级）', 'battle_presentation_probe 缺少未知模板降级验证入口');
     }
 
     async function testBattlePresentationProbeProvidesHealableBaseline() {
@@ -5488,8 +5517,10 @@
       ['BattlePresentationController 会在回合与时间线启动时触发场景节奏脉冲', testBattlePresentationControllerPulsesSceneOnTurnAndTimelineBeat],
       ['BattlePresentationController 会在受击时触发场景冲击脉冲', testBattlePresentationControllerPulsesSceneOnDamageImpact],
       ['BattlePresentationController 会按别名解析表现模板类别', testBattlePresentationControllerResolvesTemplateAliases],
+      ['BattlePresentationController 会消费结构化演出配置并归一化', testBattlePresentationControllerResolvesStructuredPresentationConfig],
       ['BattlePresentationController 会把未知模板降级到 default', testBattlePresentationControllerFallsBackUnknownTemplateToDefault],
       ['battle_presentation_probe 提供可理解的展示层验证说明', testBattlePresentationProbeProvidesReadableGuide],
+      ['battle_presentation_probe 会解释演出配置边界与降级读数', testBattlePresentationProbeExplainsConfiguredBoundary],
       ['battle_presentation_probe 提供一键可验证的治疗演示基线', testBattlePresentationProbeProvidesHealableBaseline],
       ['codex_regression_runner 提供人工使用说明', testRegressionRunnerProvidesHumanUsageGuide],
       ['CoreEngine 战斗保存同步 currentScene/battleState', testCoreEngineBattleSaveSyncContract],
