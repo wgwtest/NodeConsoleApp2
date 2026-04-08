@@ -262,6 +262,47 @@ class DataManager {
         };
     }
 
+    _normalizeLastLearnAction(lastLearnAction) {
+        const source = (lastLearnAction && typeof lastLearnAction === 'object' && !Array.isArray(lastLearnAction))
+            ? lastLearnAction
+            : null;
+        if (!source) return null;
+
+        const normalizeStringList = (input) => Array.isArray(input)
+            ? input
+                .map(value => (typeof value === 'string' ? value.trim() : ''))
+                .filter(Boolean)
+            : [];
+
+        const learnedSkillIds = normalizeStringList(source.learnedSkillIds);
+        const learnedSkillNames = normalizeStringList(source.learnedSkillNames);
+        const skillTreeId = (typeof source.skillTreeId === 'string' && source.skillTreeId.trim().length > 0)
+            ? source.skillTreeId.trim()
+            : null;
+        const learnedCount = Number.isFinite(source.learnedCount)
+            ? Math.max(0, Number(source.learnedCount) || 0)
+            : Math.max(learnedSkillIds.length, learnedSkillNames.length);
+        const spentKp = Number.isFinite(source.spentKp) ? Number(source.spentKp) || 0 : 0;
+        const remainingKp = Number.isFinite(source.remainingKp) ? Number(source.remainingKp) || 0 : 0;
+        const committedAt = (typeof source.committedAt === 'string' && source.committedAt.trim().length > 0)
+            ? source.committedAt.trim()
+            : null;
+
+        if (!skillTreeId && learnedCount === 0 && learnedSkillIds.length === 0 && learnedSkillNames.length === 0 && spentKp === 0 && remainingKp === 0 && !committedAt) {
+            return null;
+        }
+
+        return {
+            skillTreeId,
+            learnedSkillIds,
+            learnedSkillNames,
+            learnedCount,
+            spentKp,
+            remainingKp,
+            committedAt
+        };
+    }
+
     _normalizeProgress(progress) {
         const source = (progress && typeof progress === 'object' && !Array.isArray(progress)) ? progress : {};
         const unlockedLevels = Array.isArray(source.unlockedLevels) && source.unlockedLevels.length > 0
@@ -278,8 +319,17 @@ class DataManager {
             completedQuests,
             completedLevels,
             flags,
-            lastSettlement: source.lastSettlement ? JSON.parse(JSON.stringify(source.lastSettlement)) : null
+            lastSettlement: source.lastSettlement ? JSON.parse(JSON.stringify(source.lastSettlement)) : null,
+            lastLearnAction: this._normalizeLastLearnAction(source.lastLearnAction)
         };
+    }
+
+    recordSkillTreeLearnAction(lastLearnAction) {
+        if (!this.dataConfig.global) return null;
+        this.dataConfig.global.progress = this._normalizeProgress(this.dataConfig.global.progress);
+        const progress = this.dataConfig.global.progress;
+        progress.lastLearnAction = this._normalizeLastLearnAction(lastLearnAction);
+        return progress.lastLearnAction;
     }
 
     _normalizeBattleRewards(rewards) {
@@ -926,6 +976,24 @@ class DataManager {
         return storyLevels[currentIndex + 1]?.id || null;
     }
 
+    _buildLevelClearFeedback(level, { isCompleted = false } = {}) {
+        const levelId = level?.id || null;
+        const nextLevelId = this.getNextStoryLevelId(levelId);
+        const nextLevelConfig = nextLevelId ? this.getLevelConfig(nextLevelId) : null;
+        const nextLevelName = nextLevelConfig?.name || nextLevelId || null;
+        const firstClearText = nextLevelName
+            ? `首次通关将解锁下一关：${nextLevelName}。`
+            : '首次通关将完成当前章节，不再有新的故事关卡解锁。';
+
+        return {
+            currentMode: isCompleted ? 'repeat' : 'first_clear',
+            firstClearText,
+            repeatClearText: '重复通关仍获得常规资源奖励，但不再解锁新章节。',
+            nextLevelId,
+            nextLevelName
+        };
+    }
+
     getLevelSelectEntries() {
         if (this.dataConfig.global) {
             this.dataConfig.global.progress = this._normalizeProgress(this.dataConfig.global.progress);
@@ -935,16 +1003,20 @@ class DataManager {
         const unlockedLevels = Array.isArray(progress?.unlockedLevels) ? progress.unlockedLevels : [];
         const completedLevels = Array.isArray(progress?.completedLevels) ? progress.completedLevels : [];
 
-        return this._getStoryLevelsList().map(level => ({
-            id: level.id,
-            name: level.name || level.id,
-            description: level.description || '',
-            flow: this._getLevelFlow(level),
-            selectionMeta: this._normalizeLevelSelectionMeta(level.selectionMeta),
-            rewards: this._normalizeBattleRewards(level.rewards),
-            isUnlocked: unlockedLevels.includes(level.id),
-            isCompleted: completedLevels.includes(level.id)
-        }));
+        return this._getStoryLevelsList().map(level => {
+            const isCompleted = completedLevels.includes(level.id);
+            return {
+                id: level.id,
+                name: level.name || level.id,
+                description: level.description || '',
+                flow: this._getLevelFlow(level),
+                selectionMeta: this._normalizeLevelSelectionMeta(level.selectionMeta),
+                rewards: this._normalizeBattleRewards(level.rewards),
+                clearFeedback: this._buildLevelClearFeedback(level, { isCompleted }),
+                isUnlocked: unlockedLevels.includes(level.id),
+                isCompleted
+            };
+        });
     }
 
     getAcceptanceLevelSelectEntries() {
@@ -1118,6 +1190,7 @@ class DataManager {
             levelId,
             levelName: levelConfig?.name || levelId || '未知关卡',
             victory: Boolean(victory),
+            settledAt: new Date().toISOString(),
             rewards: baseRewards,
             firstClear: Boolean(victory && levelId && !alreadyCompleted),
             nextLevelId: nextStoryLevelId,

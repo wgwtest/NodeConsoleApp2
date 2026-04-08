@@ -238,6 +238,34 @@ export class UI_SystemModal {
             container.appendChild(rewardPanel);
         }
 
+        const settlementFeedback = this._describeSettlementProgressFeedback(settlement);
+        if (settlementFeedback) {
+            const feedbackPanel = document.createElement('div');
+            feedbackPanel.style.width = '100%';
+            feedbackPanel.style.maxWidth = '420px';
+            feedbackPanel.style.padding = '14px 16px';
+            feedbackPanel.style.border = '1px solid rgba(124,245,217,0.2)';
+            feedbackPanel.style.borderRadius = '8px';
+            feedbackPanel.style.background = 'rgba(10, 16, 29, 0.9)';
+
+            const feedbackTitle = document.createElement('div');
+            feedbackTitle.style.fontSize = '0.92rem';
+            feedbackTitle.style.fontWeight = '700';
+            feedbackTitle.style.marginBottom = '8px';
+            feedbackTitle.textContent = settlementFeedback.label;
+
+            const feedbackText = document.createElement('p');
+            feedbackText.style.margin = '0';
+            feedbackText.style.fontSize = '0.9rem';
+            feedbackText.style.lineHeight = '1.6';
+            feedbackText.style.color = '#dfe7ff';
+            feedbackText.textContent = settlementFeedback.text;
+
+            feedbackPanel.appendChild(feedbackTitle);
+            feedbackPanel.appendChild(feedbackText);
+            container.appendChild(feedbackPanel);
+        }
+
         const actionRow = document.createElement('div');
         actionRow.style.display = 'flex';
         actionRow.style.flexWrap = 'wrap';
@@ -400,6 +428,12 @@ export class UI_SystemModal {
         // 主菜单需要在技能学习提交后立即刷新成长摘要
         if (this.currentView === 'MAIN_MENU' && type === 'PLAYER_SKILLS') {
             this.renderMainMenu();
+            return;
+        }
+
+        // 关卡选择页需要在学习后立即刷新关前构筑摘要
+        if (this.currentView === 'LEVEL_SELECT' && type === 'PLAYER_SKILLS') {
+            this.renderLevelSelect();
         }
     }
 
@@ -540,6 +574,9 @@ export class UI_SystemModal {
 
     _buildMainMenuGrowthSummary() {
         const playerSkills = this.engine?.data?.playerData?.skills;
+        const progress = this.engine?.data?.dataConfig?.global?.progress;
+        const lastSettlement = progress?.lastSettlement;
+        const lastLearnAction = progress?.lastLearnAction;
         const learned = Array.isArray(playerSkills?.learned) ? playerSkills.learned : [];
         const skillPoints = Number(playerSkills?.skillPoints);
         const summary = document.createElement('section');
@@ -598,7 +635,219 @@ export class UI_SystemModal {
         summary.appendChild(title);
         summary.appendChild(tip);
         summary.appendChild(statGrid);
+
+        const detailStack = document.createElement('div');
+        detailStack.style.display = 'grid';
+        detailStack.style.gap = '10px';
+        detailStack.style.marginTop = '12px';
+
+        detailStack.appendChild(this._createGrowthSummaryDetail(
+            '最近成长来源',
+            this._describeLastSettlement(lastSettlement)
+        ));
+        detailStack.appendChild(this._createGrowthSummaryDetail(
+            '最近学习结果',
+            this._describeLastLearnAction(lastLearnAction)
+        ));
+
+        summary.appendChild(detailStack);
         return summary;
+    }
+
+    _createGrowthSummaryDetail(label, text) {
+        const card = document.createElement('div');
+        card.style.padding = '10px 12px';
+        card.style.borderRadius = '8px';
+        card.style.background = 'rgba(255, 255, 255, 0.04)';
+        card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+
+        const labelEl = document.createElement('div');
+        labelEl.textContent = label;
+        labelEl.style.fontSize = '0.8rem';
+        labelEl.style.color = '#8fb0d6';
+        labelEl.style.marginBottom = '4px';
+
+        const valueEl = document.createElement('div');
+        valueEl.textContent = text;
+        valueEl.style.fontSize = '0.9rem';
+        valueEl.style.lineHeight = '1.6';
+        valueEl.style.color = '#dfe7ff';
+
+        card.appendChild(labelEl);
+        card.appendChild(valueEl);
+        return card;
+    }
+
+    _describeLastSettlement(lastSettlement) {
+        if (!lastSettlement || typeof lastSettlement !== 'object') {
+            return '暂无最近结算记录';
+        }
+
+        const levelName = lastSettlement.levelName || lastSettlement.levelId || '未知关卡';
+        const rewards = lastSettlement.rewards || {};
+        const rewardParts = [];
+        if (Number.isFinite(rewards.kp)) rewardParts.push(`${rewards.kp >= 0 ? '+' : ''}${rewards.kp} KP`);
+        if (Number.isFinite(rewards.exp)) rewardParts.push(`${rewards.exp >= 0 ? '+' : ''}${rewards.exp} 经验`);
+        if (Number.isFinite(rewards.gold)) rewardParts.push(`${rewards.gold >= 0 ? '+' : ''}${rewards.gold} 金币`);
+        const rewardText = rewardParts.length > 0 ? rewardParts.join(' / ') : '无奖励变动';
+        const firstClearText = lastSettlement.firstClear ? '，首次通关' : '';
+        return `${levelName}：${rewardText}${firstClearText}`;
+    }
+
+    _describeLastLearnAction(lastLearnAction) {
+        if (!lastLearnAction || typeof lastLearnAction !== 'object') {
+            return '暂无最近学习记录';
+        }
+
+        const learnedNames = Array.isArray(lastLearnAction.learnedSkillNames)
+            ? lastLearnAction.learnedSkillNames.filter(name => typeof name === 'string' && name.trim().length > 0)
+            : [];
+        const learnedCount = Number(lastLearnAction.learnedCount) || learnedNames.length;
+        const learnedText = learnedNames.length > 0
+            ? learnedNames.join('、')
+            : `新学 ${learnedCount} 项`;
+        const spentKp = Number.isFinite(lastLearnAction.spentKp) ? lastLearnAction.spentKp : 0;
+        const remainingKp = Number.isFinite(lastLearnAction.remainingKp) ? lastLearnAction.remainingKp : 0;
+        return `${learnedText}，消耗 ${spentKp} KP，剩余 ${remainingKp} KP`;
+    }
+
+    _describeSettlementProgressFeedback(settlement) {
+        if (!settlement || typeof settlement !== 'object') {
+            return null;
+        }
+
+        if (settlement.firstClear) {
+            const nextLabel = settlement.nextLevelName || settlement.nextLevelId || '';
+            const text = nextLabel
+                ? `本次为首次通关，已解锁下一关：${nextLabel}。`
+                : '本次为首次通关，当前章节推进已更新。';
+            return {
+                label: '首次通关反馈',
+                text
+            };
+        }
+
+        if (settlement.victory === false) {
+            return null;
+        }
+
+        return {
+            label: '重复通关收益',
+            text: '本次仍获得常规资源奖励，但不再解锁新章节。'
+        };
+    }
+
+    _resolveSkillDisplayName(skillId) {
+        if (typeof skillId !== 'string' || skillId.trim().length === 0) {
+            return '';
+        }
+        const normalizedId = skillId.trim();
+        const skillConfig = this.engine?.data?.getSkillConfig
+            ? this.engine.data.getSkillConfig(normalizedId)
+            : null;
+        const skillName = typeof skillConfig?.name === 'string' ? skillConfig.name.trim() : '';
+        return skillName || normalizedId;
+    }
+
+    _buildPreBattleBuildSummaryData() {
+        const playerSkills = this.engine?.data?.playerData?.skills;
+        const progress = this.engine?.data?.dataConfig?.global?.progress;
+        const learnedSkillIds = Array.isArray(playerSkills?.learned)
+            ? playerSkills.learned.filter(skillId => typeof skillId === 'string' && skillId.trim().length > 0)
+            : [];
+        const learnedSkillNames = learnedSkillIds.map(skillId => this._resolveSkillDisplayName(skillId));
+        const previewNames = learnedSkillNames.slice(0, 4).filter(Boolean);
+        const remainingCount = Math.max(0, learnedSkillNames.length - previewNames.length);
+
+        const lastLearnAction = (progress && typeof progress.lastLearnAction === 'object')
+            ? progress.lastLearnAction
+            : null;
+        const recentSkillIds = Array.isArray(lastLearnAction?.learnedSkillIds)
+            ? lastLearnAction.learnedSkillIds.filter(skillId => typeof skillId === 'string' && skillId.trim().length > 0)
+            : [];
+        const recentSkillNames = Array.isArray(lastLearnAction?.learnedSkillNames)
+            ? lastLearnAction.learnedSkillNames
+                .filter(name => typeof name === 'string' && name.trim().length > 0)
+                .map(name => name.trim())
+            : [];
+        const resolvedRecentNames = recentSkillNames.length > 0
+            ? recentSkillNames
+            : recentSkillIds.map(skillId => this._resolveSkillDisplayName(skillId)).filter(Boolean);
+
+        return {
+            skillPoints: Number.isFinite(playerSkills?.skillPoints) ? Number(playerSkills.skillPoints) : 0,
+            learnedSkillIds,
+            learnedSkillNames,
+            totalCount: learnedSkillIds.length,
+            previewNames,
+            remainingCount,
+            lastLearnAction,
+            recentSkillNames: resolvedRecentNames
+        };
+    }
+
+    _buildPreBattleBuildSummarySection() {
+        const summaryData = this._buildPreBattleBuildSummaryData();
+        const section = document.createElement('section');
+        section.className = 'prebattle-build-summary';
+        section.style.padding = '14px 16px';
+        section.style.marginBottom = '16px';
+        section.style.borderRadius = '10px';
+        section.style.border = '1px solid rgba(124, 245, 217, 0.25)';
+        section.style.background = 'rgba(18, 23, 38, 0.92)';
+        section.style.color = '#dfe7ff';
+
+        const title = document.createElement('div');
+        title.textContent = '关前构筑摘要';
+        title.style.fontSize = '0.96rem';
+        title.style.fontWeight = '700';
+        title.style.marginBottom = '8px';
+
+        const tip = document.createElement('p');
+        tip.textContent = '当前版本会在进入本局时自动带入全部已学技能；这里的重点是先确认当前技能池和最近学习带来的新增差异。';
+        tip.style.margin = '0 0 12px';
+        tip.style.fontSize = '0.88rem';
+        tip.style.lineHeight = '1.6';
+        tip.style.color = '#cfe8ff';
+
+        const detailStack = document.createElement('div');
+        detailStack.style.display = 'grid';
+        detailStack.style.gap = '10px';
+
+        const skillPoolText = summaryData.previewNames.length > 0
+            ? `${summaryData.totalCount} 项：${summaryData.previewNames.join('、')}${summaryData.remainingCount > 0 ? ` 等 ${summaryData.totalCount} 项` : ''}`
+            : `${summaryData.totalCount} 项`;
+
+        detailStack.appendChild(this._createGrowthSummaryDetail(
+            '当前技能池',
+            skillPoolText
+        ));
+        detailStack.appendChild(this._createGrowthSummaryDetail(
+            '预装配说明',
+            '本版本无单独预装配步骤，进入关卡后会自动带入全部已学技能。'
+        ));
+        detailStack.appendChild(this._createGrowthSummaryDetail(
+            '最近学习带来的技能池差异',
+            this._describePreBattleSkillDiff(summaryData)
+        ));
+
+        section.appendChild(title);
+        section.appendChild(tip);
+        section.appendChild(detailStack);
+        return section;
+    }
+
+    _describePreBattleSkillDiff(summaryData) {
+        const data = (summaryData && typeof summaryData === 'object') ? summaryData : this._buildPreBattleBuildSummaryData();
+        const recentNames = Array.isArray(data.recentSkillNames) ? data.recentSkillNames.filter(Boolean) : [];
+        const spentKp = Number.isFinite(data?.lastLearnAction?.spentKp) ? Number(data.lastLearnAction.spentKp) : 0;
+        const remainingKp = Number.isFinite(data?.lastLearnAction?.remainingKp) ? Number(data.lastLearnAction.remainingKp) : 0;
+
+        if (recentNames.length === 0) {
+            return '暂无最近学习差异；当前技能池会直接沿用全部已学技能。';
+        }
+
+        return `最近学习新增：${recentNames.join('、')}。本轮无额外预装配步骤，进入关卡后即可在技能池中使用；本次学习消耗 ${spentKp} KP，剩余 ${remainingKp} KP。`;
     }
 
     openSkillTreeFromMainMenu() {
@@ -679,6 +928,22 @@ export class UI_SystemModal {
             `);
         }
 
+        if (level?.clearFeedback) {
+            const clearFeedback = level.clearFeedback;
+            const modeText = clearFeedback.currentMode === 'repeat' ? '当前已进入重复通关阶段' : '当前仍处于首次通关阶段';
+            sections.push(`
+                <div class="level-card-block">
+                    <div class="level-card-block-title">首次通关反馈</div>
+                    <p class="level-card-hint">${this._escapeHtml(clearFeedback.firstClearText || '首次通关会更新章节推进。')}</p>
+                </div>
+                <div class="level-card-block">
+                    <div class="level-card-block-title">重复通关收益</div>
+                    <p class="level-card-hint">${this._escapeHtml(clearFeedback.repeatClearText || '重复通关仍获得常规资源奖励。')}</p>
+                    <div class="level-card-inline" style="margin-top:8px;">${this._escapeHtml(modeText)}</div>
+                </div>
+            `);
+        }
+
         if (selectionMeta?.buildHint) {
             sections.push(`
                 <div class="level-card-block">
@@ -698,7 +963,8 @@ export class UI_SystemModal {
             view = 'LEVEL_SELECT',
             title = '选择关卡',
             introText = '',
-            emptyText = '暂无可用关卡'
+            emptyText = '暂无可用关卡',
+            buildSummary = null
         } = options;
 
         this.currentView = view;
@@ -713,6 +979,10 @@ export class UI_SystemModal {
             hint.style.whiteSpace = 'pre-line';
             hint.textContent = introText;
             this.dom.body.appendChild(hint);
+        }
+
+        if (buildSummary instanceof HTMLElement) {
+            this.dom.body.appendChild(buildSummary);
         }
 
         if (!Array.isArray(levels) || levels.length === 0) {
@@ -802,7 +1072,8 @@ export class UI_SystemModal {
         this._renderLevelCardsView(levels, {
             view: 'LEVEL_SELECT',
             title: '选择关卡',
-            emptyText: '暂无可用关卡'
+            emptyText: '暂无可用关卡',
+            buildSummary: this._buildPreBattleBuildSummarySection()
         });
     }
 

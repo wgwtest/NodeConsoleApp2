@@ -133,6 +133,18 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
 }
 .battle-scene { background: #1a1e2e; border-radius: 20px; border: 2px solid #ffd266; position: relative; overflow: hidden; box-shadow: inset 0 0 50px rgba(5,8,25,0.6); padding: 0; height: 100%; box-sizing: border-box; }
 .battle-scene .sub-area-tag { color: #ffd266; z-index: 10; }
+.battle-scene.scene-turn-announce {
+  animation: sceneTurnPulse 0.52s ease-out;
+}
+.battle-scene.scene-beat-self {
+  animation: sceneBeatFocusSelf 0.48s ease-out;
+}
+.battle-scene.scene-beat-enemy {
+  animation: sceneBeatFocusEnemy 0.48s ease-out;
+}
+.battle-scene.scene-impact {
+  animation: sceneImpactShake 0.46s ease-out;
+}
 .stage-background {
   position: absolute;
   top: 0;
@@ -428,6 +440,79 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
   100% {
     opacity: 0;
     transform: translate(-50%, -56px) scale(1.02);
+  }
+}
+
+@keyframes sceneTurnPulse {
+  0% {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+  40% {
+    transform: scale(1.01);
+    filter: saturate(1.18);
+  }
+  100% {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+}
+
+@keyframes sceneBeatFocusSelf {
+  0% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+  35% {
+    transform: translateX(6px) scale(1.01);
+    filter: brightness(1.12);
+  }
+  75% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes sceneBeatFocusEnemy {
+  0% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+  35% {
+    transform: translateX(-6px) scale(1.01);
+    filter: brightness(1.12);
+  }
+  75% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes sceneImpactShake {
+  0% {
+    transform: translate(0, 0);
+    filter: brightness(1);
+  }
+  20% {
+    transform: translate(4px, -2px);
+    filter: brightness(1.08);
+  }
+  40% {
+    transform: translate(-3px, 1px);
+  }
+  60% {
+    transform: translate(2px, -1px);
+  }
+  80% {
+    transform: translate(-1px, 0);
+  }
+  100% {
+    transform: translate(0, 0);
+    filter: brightness(1);
   }
 }
 

@@ -1,6 +1,6 @@
 # 验收清单 README
 
-最后整理时间：2026-04-07 14:57:02 +0800
+最后整理时间：2026-04-08 15:40:07 +0800
 
 状态：`当前有效`
 
@@ -41,7 +41,7 @@
 
 以下清单仍处于 `待验收` 或 `待重测` 状态，也是 [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md) 应该覆盖的对象：
 
-当前共有 `10` 个待验收节点：
+当前共有 `17` 个待验收节点：
 
 1. `#19 / A1.2`
    - [A1.2-[待验收]-2026-04-06-012747-扩展Buff学习装配执行闭环-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/A1.2-[待验收]-2026-04-06-012747-扩展Buff学习装配执行闭环-人工验收清单.md)
@@ -59,10 +59,24 @@
    - [C1.2-[待验收]-2026-04-06-110954-学习提交后主菜单成长摘要即时刷新-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.2-[待验收]-2026-04-06-110954-学习提交后主菜单成长摘要即时刷新-人工验收清单.md)
 8. `#65 / C1.3`
    - [C1.3-[待验收]-2026-04-06-111002-结算页直达技能树与构筑入口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.3-[待验收]-2026-04-06-111002-结算页直达技能树与构筑入口-人工验收清单.md)
-9. `#71 / D3.1`
+9. `#69 / C2.1`
+   - [C2.1-[待验收]-2026-04-07-013344-故事关卡内容元数据与选择页提示收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C2.1-[待验收]-2026-04-07-013344-故事关卡内容元数据与选择页提示收口-人工验收清单.md)
+10. `#71 / D3.1`
    - [D3.1-[待验收]-2026-04-07-024354-动画展示驱动与验证页基线-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.1-[待验收]-2026-04-07-024354-动画展示驱动与验证页基线-人工验收清单.md)
-10. `#72 / D3.2`
+11. `#72 / D3.2`
    - [D3.2-[待验收]-2026-04-07-145702-SpineAssets协作规则与导入契约基线-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.2-[待验收]-2026-04-07-145702-SpineAssets协作规则与导入契约基线-人工验收清单.md)
+12. `#74 / C1.4`
+   - [C1.4-[待验收]-2026-04-08-143159-成长资源来源与最近学习结果可视化-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.4-[待验收]-2026-04-08-143159-成长资源来源与最近学习结果可视化-人工验收清单.md)
+13. `#75 / C1.5`
+   - [C1.5-[待验收]-2026-04-08-151153-关前构筑摘要与技能池差异预览-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.5-[待验收]-2026-04-08-151153-关前构筑摘要与技能池差异预览-人工验收清单.md)
+14. `#76 / C1.6`
+   - [C1.6-[待验收]-2026-04-08-154007-学习结果驱动的下一局可见反馈闭环-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C1.6-[待验收]-2026-04-08-154007-学习结果驱动的下一局可见反馈闭环-人工验收清单.md)
+15. `#77 / C2.2`
+   - [C2.2-[待验收]-2026-04-08-143159-故事关卡奖励节奏与首次通关反馈可视化-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C2.2-[待验收]-2026-04-08-143159-故事关卡奖励节奏与首次通关反馈可视化-人工验收清单.md)
+16. `#80 / D3.3`
+   - [D3.3-[待验收]-2026-04-08-143159-场景节奏强化与镜头感补足-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.3-[待验收]-2026-04-08-143159-场景节奏强化与镜头感补足-人工验收清单.md)
+17. `#81 / D3.4`
+   - [D3.4-[待验收]-2026-04-08-151153-更多角色与技能类别的表现模板扩展-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.4-[待验收]-2026-04-08-151153-更多角色与技能类别的表现模板扩展-人工验收清单.md)
 
 ## 3. 已通过节点索引
 

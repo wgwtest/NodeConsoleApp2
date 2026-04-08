@@ -1,6 +1,25 @@
 import { BattleAnimationDriver } from './BattleAnimationDriver.js';
 import { FighterPresenter } from './FighterPresenter.js';
 
+const TEMPLATE_ALIASES = Object.freeze({
+    melee: 'melee',
+    attack: 'melee',
+    strike: 'melee',
+    physical: 'melee',
+    guard: 'guard',
+    defend: 'guard',
+    defense: 'guard',
+    block: 'guard',
+    parry: 'guard',
+    heal: 'heal',
+    recovery: 'heal',
+    support_heal: 'heal',
+    status: 'status',
+    buff: 'status',
+    debuff: 'status',
+    support: 'status'
+});
+
 function readNumericStat(entity, key) {
     const direct = entity?.[key];
     if (direct !== undefined) return Number(direct) || 0;
@@ -66,6 +85,54 @@ function normalizeCombatant(entity, fallbackId) {
     };
 }
 
+function normalizeTemplateValue(rawTemplate) {
+    const normalized = String(rawTemplate || '').trim().toLowerCase();
+    if (!normalized) return 'default';
+    return TEMPLATE_ALIASES[normalized] || 'default';
+}
+
+function resolveTemplateFromEntry(entry, payload) {
+    if (!entry && !payload) return 'default';
+    const candidates = [
+        entry?.presentationTemplate,
+        entry?.template,
+        entry?.skillCategory,
+        entry?.category,
+        entry?.meta?.presentationTemplate,
+        entry?.meta?.template,
+        entry?.meta?.skillCategory,
+        entry?.meta?.category,
+        payload?.presentationTemplate,
+        payload?.template,
+        payload?.skillCategory,
+        payload?.category
+    ];
+    for (const candidate of candidates) {
+        const key = normalizeTemplateValue(candidate);
+        if (key !== 'default') return key;
+    }
+    return 'default';
+}
+
+function resolveStatusKindFromEntry(entry, payload) {
+    const candidates = [
+        entry?.statusKind,
+        entry?.meta?.statusKind,
+        entry?.meta?.statusType,
+        payload?.statusKind,
+        payload?.statusType
+    ];
+    for (const candidate of candidates) {
+        if (String(candidate || '').toLowerCase() === 'debuff') {
+            return 'debuff';
+        }
+        if (String(candidate || '').toLowerCase() === 'buff') {
+            return 'buff';
+        }
+    }
+    return 'buff';
+}
+
 export class BattlePresentationController {
     constructor({ root = null, sceneRoot = null, eventBus = null, enabled = true } = {}) {
         this.root = root || sceneRoot?.closest?.('.battle-row') || null;
@@ -103,6 +170,15 @@ export class BattlePresentationController {
             this.sceneRoot.classList.add('is-presentation-ready');
             this.sceneRoot.dataset.presentationEnabled = this.enabled ? '1' : '0';
         }
+    }
+
+    _announceScenePulse(className) {
+        if (!this.enabled) return;
+        this.animationDriver?.pulseScene?.(className);
+    }
+
+    static resolveActionTemplate(entry, payload = null) {
+        return resolveTemplateFromEntry(entry, payload);
     }
 
     setEnabled(enabled) {
@@ -164,13 +240,21 @@ export class BattlePresentationController {
         for (const presenter of Object.values(this.presenters)) {
             presenter?.fighterRoot?.classList?.add('is-idle');
         }
+        this._announceScenePulse('scene-turn-announce');
     }
 
     handleTimelineEntryStart(payload) {
         if (!this.enabled) return;
         const entry = payload?.entry;
         const side = entry?.side === 'enemy' ? 'enemy' : 'self';
-        this.presenters[side]?.playAction();
+        const template = BattlePresentationController.resolveActionTemplate(entry, payload);
+        const statusKind = resolveStatusKindFromEntry(entry, payload);
+        this.presenters[side]?.playTemplate(template, { entry, payload, statusKind });
+        this.animationDriver?.pulseSceneTemplate?.(template, side);
+        if (this.sceneRoot) {
+            this.sceneRoot.dataset.lastTemplate = template;
+            this.sceneRoot.dataset.lastTemplateSide = side;
+        }
     }
 
     handleTimelineEntryEnd(_payload) {
@@ -183,9 +267,27 @@ export class BattlePresentationController {
         if (!side) return;
 
         const presenter = this.presenters[side];
+        const template = BattlePresentationController.resolveActionTemplate(payload?.entry, payload);
         const damage = Number(payload?.damageDealt ?? payload?.damage ?? 0) || 0;
         const armorDamage = Number(payload?.armorDamage ?? 0) || 0;
         const armorPart = payload?.targetPart || payload?.bodyPart || null;
+        const blocked = payload?.isBlocked === true
+            || payload?.result === 'blocked'
+            || (template === 'guard' && damage <= 0);
+
+        if (blocked) {
+            presenter?.playTemplate('guard', {
+                armorPart,
+                text: payload?.blockText || '格挡',
+                showFloatText: true
+            });
+            this.animationDriver?.pulseSceneTemplate?.('guard', side);
+            if (this.sceneRoot) {
+                this.sceneRoot.dataset.lastTemplate = 'guard';
+                this.sceneRoot.dataset.lastTemplateSide = side;
+            }
+            return;
+        }
 
         presenter?.playHit({ armorPart, damage, armorDamage });
 
@@ -197,6 +299,7 @@ export class BattlePresentationController {
             presenter?.showFloatText(`护甲 -${armorDamage}`, 'armor');
             presenter?.pulseArmor(armorPart, 'hit');
         }
+        this.animationDriver?.pulseSceneTemplate?.('guard', side);
     }
 
     _syncPayload(payload, animateDiff) {
@@ -220,16 +323,18 @@ export class BattlePresentationController {
         if (animateDiff && prev) {
             const hpDelta = next.hp - prev.hp;
             if (hpDelta > 0) {
-                this.presenters[side]?.playHeal();
-                this.presenters[side]?.showFloatText(`+${hpDelta}`, 'heal');
+                this.presenters[side]?.playTemplate('heal', { amount: hpDelta });
+                this.animationDriver?.pulseSceneTemplate?.('heal', side);
             }
 
             if (next.buffsCount > prev.buffsCount) {
-                this.presenters[side]?.pulseStatus('buff');
+                this.presenters[side]?.playTemplate('status', { statusKind: 'buff' });
+                this.animationDriver?.pulseSceneTemplate?.('status', side);
             }
 
             if (next.debuffsCount > prev.debuffsCount) {
-                this.presenters[side]?.pulseStatus('debuff');
+                this.presenters[side]?.playTemplate('status', { statusKind: 'debuff' });
+                this.animationDriver?.pulseSceneTemplate?.('status', side);
             }
 
             for (const [partKey, partState] of Object.entries(next.bodyParts || {})) {
