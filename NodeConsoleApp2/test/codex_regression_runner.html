@@ -3789,6 +3789,9 @@
       assert(storyLevels[0]?.id === 'level_1_1', `首关应为 level_1_1，实际 ${storyLevels[0]?.id}`);
       assert(storyLevels[1]?.id === 'level_1_2_story', `第二关缺失或顺序错误: ${storyLevels[1]?.id}`);
       assert(storyLevels[2]?.id === 'level_1_3_story', `第三关缺失或顺序错误: ${storyLevels[2]?.id}`);
+      assert(storyLevels.every(level => level?.flow?.chapterLabel === '第一章'), '故事关卡缺少统一章节标签');
+      assert(storyLevels.every(level => typeof level?.flow?.nodeLabel === 'string' && level.flow.nodeLabel.length > 0), '故事关卡缺少节点标签');
+      assert(storyLevels.every(level => typeof level?.flow?.objectiveText === 'string' && level.flow.objectiveText.length > 0), '故事关卡缺少连续推进目标说明');
     }
 
     function testDataManagerBuildsLevelSelectEntriesFromStoryProgress() {
@@ -3836,6 +3839,86 @@
       assert(entries[1]?.id === 'level_1_2_story', `第二项错误: ${entries[1]?.id}`);
       assert(entries[1]?.isUnlocked === false, '未解锁故事关卡错误标记为已解锁');
       assert(entries[1]?.isCompleted === false, '未完成故事关卡错误标记为已完成');
+    }
+
+    function testDataManagerBuildsStoryChapterOverviewAndRecommendation() {
+      assert(typeof DataManager.getLevelSelectOverview === 'function', 'DataManagerV2 缺少 getLevelSelectOverview()');
+
+      const dm = Object.create(Object.getPrototypeOf(DataManager));
+      dm.dataConfig = {
+        global: {
+          progress: {
+            unlockedLevels: ['level_1_1', 'level_1_2_story'],
+            completedLevels: ['level_1_1'],
+            flags: {}
+          }
+        }
+      };
+      dm.gameConfig = {
+        levels: {
+          level_1_1: {
+            id: 'level_1_1',
+            name: '幽暗森林边缘',
+            description: '第一节点',
+            flow: {
+              kind: 'story',
+              order: 1,
+              chapterId: 'chapter_forest',
+              chapterOrder: 1,
+              chapterLabel: '第一章',
+              chapterTitle: '幽暗森林',
+              nodeLabel: '1-1',
+              objectiveText: '突破森林边缘的追击。'
+            }
+          },
+          level_1_2_story: {
+            id: 'level_1_2_story',
+            name: '密林前哨',
+            description: '第二节点',
+            flow: {
+              kind: 'story',
+              order: 2,
+              chapterId: 'chapter_forest',
+              chapterOrder: 1,
+              chapterLabel: '第一章',
+              chapterTitle: '幽暗森林',
+              nodeLabel: '1-2',
+              objectiveText: '穿过前哨，向废墟推进。'
+            }
+          },
+          level_1_3_story: {
+            id: 'level_1_3_story',
+            name: '废墟关隘',
+            description: '第三节点',
+            flow: {
+              kind: 'story',
+              order: 3,
+              chapterId: 'chapter_forest',
+              chapterOrder: 1,
+              chapterLabel: '第一章',
+              chapterTitle: '幽暗森林',
+              nodeLabel: '1-3',
+              objectiveText: '突破废墟守军。'
+            }
+          }
+        }
+      };
+
+      const overview = DataManager.getLevelSelectOverview.call(dm);
+      assert(overview?.chapterLabel === '第一章', `chapterLabel 错误: ${overview?.chapterLabel}`);
+      assert(overview?.chapterTitle === '幽暗森林', `chapterTitle 错误: ${overview?.chapterTitle}`);
+      assert(overview?.completedCount === 1, `completedCount 错误: ${overview?.completedCount}`);
+      assert(overview?.totalCount === 3, `totalCount 错误: ${overview?.totalCount}`);
+      assert(overview?.unlockedCount === 2, `unlockedCount 错误: ${overview?.unlockedCount}`);
+      assert(overview?.recommendedLevelId === 'level_1_2_story', `recommendedLevelId 错误: ${overview?.recommendedLevelId}`);
+      assert(overview?.recommendedLevelName === '密林前哨', `recommendedLevelName 错误: ${overview?.recommendedLevelName}`);
+      assert(overview?.currentNodeLabel === '1-2', `currentNodeLabel 错误: ${overview?.currentNodeLabel}`);
+      assert(overview?.currentObjectiveText?.includes('前哨'), `currentObjectiveText 未透出当前推进目标: ${overview?.currentObjectiveText}`);
+      assert(overview?.nextLockedLevelId === 'level_1_3_story', `nextLockedLevelId 错误: ${overview?.nextLockedLevelId}`);
+      assert(Array.isArray(overview?.chapterNodes) && overview.chapterNodes.length === 3, 'chapterNodes 未返回完整章节节点列表');
+      assert(overview.chapterNodes[0]?.status === 'completed', `chapterNodes[0] 状态错误: ${overview.chapterNodes[0]?.status}`);
+      assert(overview.chapterNodes[1]?.status === 'recommended', `chapterNodes[1] 状态错误: ${overview.chapterNodes[1]?.status}`);
+      assert(overview.chapterNodes[2]?.status === 'locked', `chapterNodes[2] 状态错误: ${overview.chapterNodes[2]?.status}`);
     }
 
     function testDataManagerBuildsStoryLevelSelectionMetaAndRewardPreview() {
@@ -4603,6 +4686,110 @@
       assert(bodyText.includes('优先补头部防御，再找机会反打。'), '故事关卡卡片缺少构筑提示正文');
     }
 
+    function testSystemModalRendersStoryChapterOverviewAndNodeRelation() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const modal = new UI_SystemModal();
+      modal.engine = {
+        data: {
+          getLevelSelectOverview() {
+            return {
+              chapterLabel: '第一章',
+              chapterTitle: '幽暗森林',
+              completedCount: 1,
+              totalCount: 3,
+              unlockedCount: 2,
+              recommendedLevelId: 'level_1_2_story',
+              recommendedLevelName: '密林前哨',
+              currentNodeLabel: '1-2',
+              currentObjectiveText: '穿过前哨，向废墟推进。',
+              nextLockedLevelId: 'level_1_3_story',
+              nextLockedLevelName: '废墟关隘'
+            };
+          },
+          getLevelSelectEntries() {
+            return [
+              {
+                id: 'level_1_1',
+                name: '幽暗森林边缘',
+                description: '第一节点',
+                isUnlocked: true,
+                isCompleted: true,
+                flow: {
+                  kind: 'story',
+                  chapterLabel: '第一章',
+                  chapterTitle: '幽暗森林',
+                  nodeLabel: '1-1'
+                },
+                progression: {
+                  stateLabel: '已完成节点',
+                  unlockHint: '已完成，可重复挑战补资源。'
+                }
+              },
+              {
+                id: 'level_1_2_story',
+                name: '密林前哨',
+                description: '第二节点',
+                isUnlocked: true,
+                isCompleted: false,
+                flow: {
+                  kind: 'story',
+                  chapterLabel: '第一章',
+                  chapterTitle: '幽暗森林',
+                  nodeLabel: '1-2'
+                },
+                progression: {
+                  stateLabel: '当前推荐',
+                  unlockHint: '当前已解锁，建议优先推进。'
+                }
+              },
+              {
+                id: 'level_1_3_story',
+                name: '废墟关隘',
+                description: '第三节点',
+                isUnlocked: false,
+                isCompleted: false,
+                flow: {
+                  kind: 'story',
+                  chapterLabel: '第一章',
+                  chapterTitle: '幽暗森林',
+                  nodeLabel: '1-3'
+                },
+                progression: {
+                  stateLabel: '后续节点',
+                  unlockHint: '完成 密林前哨 后解锁。'
+                }
+              }
+            ];
+          }
+        },
+        input: {
+          selectLevel() {}
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderLevelSelect();
+
+      const bodyText = document.getElementById('modalBody').textContent || '';
+      assert(bodyText.includes('章节推进总览'), '关卡选择页缺少章节推进总览');
+      assert(bodyText.includes('第一章'), '关卡选择页缺少章节标签');
+      assert(bodyText.includes('幽暗森林'), '关卡选择页缺少章节标题');
+      assert(bodyText.includes('已完成 1 / 3'), `关卡选择页缺少章节完成进度: ${bodyText}`);
+      assert(bodyText.includes('当前推荐'), '关卡选择页缺少当前推荐提示');
+      assert(bodyText.includes('密林前哨'), '关卡选择页缺少当前推荐关卡名');
+      assert(bodyText.includes('章节节点'), '关卡卡片缺少章节节点说明');
+      assert(bodyText.includes('1-3'), '关卡卡片缺少节点标签');
+      assert(bodyText.includes('完成 密林前哨 后解锁'), '关卡卡片缺少后续解锁关系说明');
+    }
+
     function testSystemModalRendersStoryLevelClearFeedbackComparison() {
       resetRegressionFixture(`
         <div id="systemModal" hidden aria-hidden="true"></div>
@@ -5261,6 +5448,7 @@
       ['DataManager 结算会记录 settledAt 时间戳', testDataManagerBattleSettlementStoresSettledAt],
       ['故事关卡提供连续推进路径', testStoryLevelsProvideSequentialProgressionPath],
       ['DataManager 构建故事关卡选择入口', testDataManagerBuildsLevelSelectEntriesFromStoryProgress],
+      ['DataManager 构建故事关卡章节总览与当前推荐', testDataManagerBuildsStoryChapterOverviewAndRecommendation],
       ['DataManager 透出故事关卡内容元数据与奖励预览', testDataManagerBuildsStoryLevelSelectionMetaAndRewardPreview],
       ['DataManager 透出故事关卡首次通关与重复通关差异说明', testDataManagerBuildsStoryLevelClearFeedbackComparison],
       ['DataManager 构建独立验收样本选择入口', testDataManagerBuildsAcceptanceLevelEntriesForManualVerification],
@@ -5276,6 +5464,7 @@
       ['UI_SystemModal 会在胜利结算后直达技能树入口', testSystemModalOpensSkillTreeFromVictorySettlement],
       ['UI_SystemModal 关卡选择遵守解锁状态', testSystemModalLevelSelectHonorsUnlockedState],
       ['UI_SystemModal 会渲染故事关卡内容提示', testSystemModalRendersStoryLevelContentHints],
+      ['UI_SystemModal 会渲染章节推进总览与节点关系', testSystemModalRendersStoryChapterOverviewAndNodeRelation],
       ['UI_SystemModal 会渲染故事关卡首次通关与重复通关差异', testSystemModalRendersStoryLevelClearFeedbackComparison],
       ['UI_SystemModal 提供独立验收样本入口', testSystemModalProvidesAcceptanceSampleEntryWithoutBreakingStorySelect],
       ['UI_SystemModal 会渲染成长摘要并提供技能树入口', testSystemModalRendersGrowthSummaryAndSkillTreeEntry],

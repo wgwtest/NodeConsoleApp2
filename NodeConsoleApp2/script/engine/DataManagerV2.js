@@ -942,10 +942,45 @@ class DataManager {
     _getLevelFlow(levelConfig, fallbackOrder = null) {
         const source = (levelConfig && typeof levelConfig.flow === 'object') ? levelConfig.flow : {};
         const parsedOrder = Number(source.order);
+        const normalizedKind = source.kind || 'story';
+        const parsedChapterOrder = Number(source.chapterOrder);
+        const chapterOrder = Number.isFinite(parsedChapterOrder)
+            ? parsedChapterOrder
+            : (normalizedKind === 'story' ? 1 : null);
+        const chapterLabel = typeof source.chapterLabel === 'string'
+            ? source.chapterLabel.trim()
+            : '';
+        const chapterTitle = typeof source.chapterTitle === 'string'
+            ? source.chapterTitle.trim()
+            : '';
+        const nodeLabel = typeof source.nodeLabel === 'string'
+            ? source.nodeLabel.trim()
+            : '';
+        const objectiveText = typeof source.objectiveText === 'string'
+            ? source.objectiveText.trim()
+            : '';
         return {
-            kind: source.kind || 'story',
-            order: Number.isFinite(parsedOrder) ? parsedOrder : fallbackOrder
+            kind: normalizedKind,
+            order: Number.isFinite(parsedOrder) ? parsedOrder : fallbackOrder,
+            chapterId: typeof source.chapterId === 'string' && source.chapterId.trim()
+                ? source.chapterId.trim()
+                : '',
+            chapterOrder,
+            chapterLabel: chapterLabel || (normalizedKind === 'story' && Number.isFinite(chapterOrder) ? `第${chapterOrder}章` : ''),
+            chapterTitle,
+            nodeLabel: nodeLabel || (normalizedKind === 'story' && Number.isFinite(chapterOrder) && Number.isFinite(Number.isFinite(parsedOrder) ? parsedOrder : fallbackOrder)
+                ? `${chapterOrder}-${Number.isFinite(parsedOrder) ? parsedOrder : fallbackOrder}`
+                : ''),
+            objectiveText
         };
+    }
+
+    _getStoryChapterKey(flow) {
+        const source = (flow && typeof flow === 'object') ? flow : {};
+        if (source.chapterId) return source.chapterId;
+        const chapterOrder = Number(source.chapterOrder);
+        if (Number.isFinite(chapterOrder)) return `story_chapter_${chapterOrder}`;
+        return 'story_chapter_1';
     }
 
     _getLevelsListByKind(kind) {
@@ -994,7 +1029,7 @@ class DataManager {
         };
     }
 
-    getLevelSelectEntries() {
+    _buildStoryLevelSelectModel() {
         if (this.dataConfig.global) {
             this.dataConfig.global.progress = this._normalizeProgress(this.dataConfig.global.progress);
         }
@@ -1002,8 +1037,7 @@ class DataManager {
         const progress = this.dataConfig.global?.progress;
         const unlockedLevels = Array.isArray(progress?.unlockedLevels) ? progress.unlockedLevels : [];
         const completedLevels = Array.isArray(progress?.completedLevels) ? progress.completedLevels : [];
-
-        return this._getStoryLevelsList().map(level => {
+        const baseEntries = this._getStoryLevelsList().map(level => {
             const isCompleted = completedLevels.includes(level.id);
             return {
                 id: level.id,
@@ -1017,6 +1051,97 @@ class DataManager {
                 isCompleted
             };
         });
+
+        if (baseEntries.length === 0) {
+            return {
+                entries: [],
+                overview: null
+            };
+        }
+
+        const recommendedEntry = baseEntries.find(entry => entry.isUnlocked && !entry.isCompleted) || null;
+        const lastUnlockedEntry = [...baseEntries].reverse().find(entry => entry.isUnlocked) || baseEntries[0];
+        const nextLockedEntry = baseEntries.find(entry => !entry.isUnlocked) || null;
+        const currentFocusEntry = recommendedEntry || lastUnlockedEntry || baseEntries[0];
+        const currentChapterKey = this._getStoryChapterKey(currentFocusEntry?.flow);
+        const chapterEntries = baseEntries.filter(entry => this._getStoryChapterKey(entry.flow) === currentChapterKey);
+        const completedCount = chapterEntries.filter(entry => entry.isCompleted).length;
+        const unlockedCount = chapterEntries.filter(entry => entry.isUnlocked).length;
+        const resolveEntryStatus = entry => {
+            if (entry.isCompleted) return 'completed';
+            if (recommendedEntry && entry.id === recommendedEntry.id) return 'recommended';
+            if (entry.isUnlocked) return 'unlocked';
+            return 'locked';
+        };
+
+        const entries = baseEntries.map((entry, index) => {
+            const previousEntry = baseEntries[index - 1] || null;
+            const status = resolveEntryStatus(entry);
+            let stateLabel = '后续节点';
+            let unlockHint = '完成上一节点后解锁。';
+
+            if (status === 'completed') {
+                stateLabel = '已完成节点';
+                unlockHint = '已完成；可重复挑战补资源。';
+            } else if (status === 'recommended') {
+                stateLabel = '当前推荐';
+                unlockHint = '当前已解锁，建议优先推进章节主线。';
+            } else if (status === 'unlocked') {
+                stateLabel = '已解锁节点';
+                unlockHint = '当前已解锁，可自由挑战。';
+            } else if (previousEntry?.name) {
+                unlockHint = `完成 ${previousEntry.name} 后解锁。`;
+            }
+
+            return {
+                ...entry,
+                progression: {
+                    status,
+                    stateLabel,
+                    unlockHint
+                }
+            };
+        });
+
+        const focusFlow = (currentFocusEntry && currentFocusEntry.flow) ? currentFocusEntry.flow : {};
+        const currentObjectiveText = recommendedEntry?.flow?.objectiveText
+            || recommendedEntry?.selectionMeta?.buildHint
+            || (nextLockedEntry
+                ? `完成 ${lastUnlockedEntry?.name || '上一节点'} 后解锁 ${nextLockedEntry.name}。`
+                : '当前章节已全部完成，可重复挑战补资源。');
+        const overview = {
+            chapterId: currentChapterKey,
+            chapterLabel: focusFlow.chapterLabel || '第一章',
+            chapterTitle: focusFlow.chapterTitle || '',
+            completedCount,
+            totalCount: chapterEntries.length,
+            unlockedCount,
+            recommendedLevelId: recommendedEntry?.id || null,
+            recommendedLevelName: recommendedEntry?.name || null,
+            currentNodeLabel: (recommendedEntry?.flow?.nodeLabel || focusFlow.nodeLabel || ''),
+            currentObjectiveText,
+            nextLockedLevelId: nextLockedEntry?.id || null,
+            nextLockedLevelName: nextLockedEntry?.name || null,
+            chapterNodes: chapterEntries.map(entry => ({
+                id: entry.id,
+                name: entry.name,
+                nodeLabel: entry.flow?.nodeLabel || '',
+                status: resolveEntryStatus(entry)
+            }))
+        };
+
+        return {
+            entries,
+            overview
+        };
+    }
+
+    getLevelSelectEntries() {
+        return this._buildStoryLevelSelectModel().entries;
+    }
+
+    getLevelSelectOverview() {
+        return this._buildStoryLevelSelectModel().overview;
     }
 
     getAcceptanceLevelSelectEntries() {

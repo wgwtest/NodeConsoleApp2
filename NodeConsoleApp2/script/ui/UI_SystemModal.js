@@ -889,11 +889,37 @@ export class UI_SystemModal {
     }
 
     _buildLevelCardExtraHtml(level) {
+        const flow = (level && typeof level.flow === 'object' && level.flow)
+            ? level.flow
+            : null;
         const selectionMeta = (level && typeof level.selectionMeta === 'object' && level.selectionMeta)
             ? level.selectionMeta
             : null;
+        const progression = (level && typeof level.progression === 'object' && level.progression)
+            ? level.progression
+            : null;
         const rewardPreview = this._buildLevelRewardPreview(level?.rewards);
         const sections = [];
+
+        if (flow?.chapterLabel || flow?.chapterTitle || flow?.nodeLabel) {
+            const chapterParts = [flow.chapterLabel, flow.chapterTitle, flow.nodeLabel].filter(Boolean);
+            sections.push(`
+                <div class="level-card-block">
+                    <div class="level-card-block-title">章节节点</div>
+                    <div class="level-card-inline">${this._escapeHtml(chapterParts.join(' · '))}</div>
+                </div>
+            `);
+        }
+
+        if (progression?.stateLabel || progression?.unlockHint) {
+            sections.push(`
+                <div class="level-card-block">
+                    <div class="level-card-block-title">推进关系</div>
+                    ${progression?.stateLabel ? `<div class="level-card-inline">${this._escapeHtml(progression.stateLabel)}</div>` : ''}
+                    ${progression?.unlockHint ? `<p class="level-card-hint">${this._escapeHtml(progression.unlockHint)}</p>` : ''}
+                </div>
+            `);
+        }
 
         if (selectionMeta?.difficultyLabel) {
             sections.push(`
@@ -958,13 +984,55 @@ export class UI_SystemModal {
             : '';
     }
 
+    _buildLevelSelectOverviewSection(overview) {
+        const data = (overview && typeof overview === 'object') ? overview : null;
+        if (!data) return null;
+
+        const section = document.createElement('section');
+        section.className = 'story-progress-panel';
+        const heading = [data.chapterLabel, data.chapterTitle].filter(Boolean).join(' · ');
+        const recommendedText = data.recommendedLevelName
+            ? `${data.currentNodeLabel ? `${data.currentNodeLabel} ` : ''}${data.recommendedLevelName}`
+            : '当前章节已无未完成节点';
+        const nextUnlockText = data.nextLockedLevelName
+            ? `后续解锁：${data.nextLockedLevelName}`
+            : '后续解锁：当前章节已全部可见';
+        const nodeChipsHtml = Array.isArray(data.chapterNodes)
+            ? data.chapterNodes
+                .map(node => {
+                    const labelParts = [node?.nodeLabel, node?.name].filter(Boolean);
+                    const statusClass = typeof node?.status === 'string' ? node.status : 'locked';
+                    return `<span class="story-progress-node is-${this._escapeHtml(statusClass)}">${this._escapeHtml(labelParts.join(' '))}</span>`;
+                })
+                .join('')
+            : '';
+
+        section.innerHTML = `
+            <div class="story-progress-eyebrow">章节推进总览</div>
+            <h3>${this._escapeHtml(heading || '故事推进')}</h3>
+            <div class="story-progress-metrics">
+                <span class="story-progress-metric">已完成 ${this._escapeHtml(data.completedCount)} / ${this._escapeHtml(data.totalCount)}</span>
+                <span class="story-progress-metric">已解锁 ${this._escapeHtml(data.unlockedCount)} / ${this._escapeHtml(data.totalCount)}</span>
+            </div>
+            <div class="story-progress-focus">
+                <div class="story-progress-focus-title">当前推荐</div>
+                <div class="story-progress-focus-value">${this._escapeHtml(recommendedText)}</div>
+                <p class="story-progress-focus-hint">${this._escapeHtml(data.currentObjectiveText || '')}</p>
+                <div class="story-progress-focus-next">${this._escapeHtml(nextUnlockText)}</div>
+            </div>
+            ${nodeChipsHtml ? `<div class="story-progress-node-row">${nodeChipsHtml}</div>` : ''}
+        `;
+        return section;
+    }
+
     _renderLevelCardsView(levels, options = {}) {
         const {
             view = 'LEVEL_SELECT',
             title = '选择关卡',
             introText = '',
             emptyText = '暂无可用关卡',
-            buildSummary = null
+            buildSummary = null,
+            overview = null
         } = options;
 
         this.currentView = view;
@@ -979,6 +1047,11 @@ export class UI_SystemModal {
             hint.style.whiteSpace = 'pre-line';
             hint.textContent = introText;
             this.dom.body.appendChild(hint);
+        }
+
+        const overviewSection = this._buildLevelSelectOverviewSection(overview);
+        if (overviewSection instanceof HTMLElement) {
+            this.dom.body.appendChild(overviewSection);
         }
 
         if (buildSummary instanceof HTMLElement) {
@@ -1049,10 +1122,14 @@ export class UI_SystemModal {
         console.log('[UI_SystemModal] Rendering Level Select');
         // 获取关卡数据 (假设 DataManager 有同步接口，或者通过 Engine 获取)
         let levels = [];
+        let overview = null;
         // 修正：CoreEngine 中挂载的是 this.data
         if (this.engine.data && this.engine.data.getLevelSelectEntries) {
             levels = this.engine.data.getLevelSelectEntries();
             console.log('[UI_SystemModal] Loaded selectable levels from DataManager:', levels);
+            if (this.engine.data.getLevelSelectOverview) {
+                overview = this.engine.data.getLevelSelectOverview();
+            }
         } else if (this.engine.data && this.engine.data.getLevels) {
             levels = this.engine.data.getLevels().map(level => ({
                 ...level,
@@ -1073,6 +1150,7 @@ export class UI_SystemModal {
             view: 'LEVEL_SELECT',
             title: '选择关卡',
             emptyText: '暂无可用关卡',
+            overview,
             buildSummary: this._buildPreBattleBuildSummarySection()
         });
     }

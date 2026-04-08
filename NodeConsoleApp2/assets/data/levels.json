@@ -96,7 +96,13 @@
       "description": "森林外围的哥布林追猎手会优先压迫玩家最脆弱的部位。",
       "flow": {
         "kind": "story",
-        "order": 1
+        "order": 1,
+        "chapterId": "chapter_forest",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-1",
+        "objectiveText": "稳住前线防御，突破森林边缘的追击。"
       },
       "selectionMeta": {
         "difficultyLabel": "标准",
@@ -135,7 +141,13 @@
       "description": "前哨内的医护斥候会在低血量时优先自疗，再重新投入战斗。",
       "flow": {
         "kind": "story",
-        "order": 2
+        "order": 2,
+        "chapterId": "chapter_forest",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-2",
+        "objectiveText": "穿过前哨的续航封锁，保持推进节奏。"
       },
       "selectionMeta": {
         "difficultyLabel": "进阶",
@@ -165,7 +177,13 @@
       "description": "残甲骷髅卫士会先修补破损胸甲，再用重击继续压迫玩家。",
       "flow": {
         "kind": "story",
-        "order": 3
+        "order": 3,
+        "chapterId": "chapter_forest",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-3",
+        "objectiveText": "在废墟关隘前打破守军补甲节奏，完成章节收口。"
       },
       "selectionMeta": {
         "difficultyLabel": "高压",
