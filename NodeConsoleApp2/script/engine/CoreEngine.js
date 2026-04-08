@@ -523,7 +523,12 @@ class CoreEngine {
         player.skills.learned.push(skillId);
 
         this.eventBus.emit('DATA_UPDATE', { type: 'PLAYER_SKILLS', data: player.skills });
-        this.data.saveGame();
+        this.requestSave({
+            reason: 'learn-skill',
+            slotId: null,
+            emitSaveList: false,
+            emitLog: false
+        });
     }
 
     async init() {
@@ -551,10 +556,15 @@ class CoreEngine {
         if (this.fsm.currentState !== 'LOGIN') return;
 
         console.log(`User logging in: ${username}`);
-        // 尝试先加载现有游戏
-        if (!this.data.loadGame()) {
-            this.data.createNewGame(username);
-        }
+        this.data.createNewGame(username);
+        this.requestSave({
+            reason: 'new-game',
+            slotId: null,
+            captureBattleRuntime: false,
+            sceneOverride: 'MAIN_MENU',
+            emitSaveList: false,
+            emitLog: false
+        });
         
         // 统一行为：登录后总是进入主菜单
         // 仅切换状态，具体显示逻辑（如是否显示“继续游戏”）由 UI 层根据数据决定
@@ -566,6 +576,14 @@ class CoreEngine {
     resetGame(username) {
         console.log(`Resetting game for user: ${username}`);
         this.data.createNewGame(username);
+        this.requestSave({
+            reason: 'reset-game',
+            slotId: null,
+            captureBattleRuntime: false,
+            sceneOverride: 'MAIN_MENU',
+            emitSaveList: false,
+            emitLog: false
+        });
         
         // 如果我们在登录状态，转换到主菜单
         // 如果我们已经在游戏中，只需更新数据
@@ -863,32 +881,48 @@ class CoreEngine {
         }
     }
 
-    saveGame(slotId) {
-        // 保存前将当前战斗状态同步到 DataManager
-        if (this.fsm.currentState === 'BATTLE_LOOP') {
+    _prepareNonBattleSave({ sceneOverride = null } = {}) {
+        if (!this.data.dataConfig) this.data.dataConfig = {};
+        if (!this.data.dataConfig.runtime) this.data.dataConfig.runtime = {};
+        const runtime = this.data.dataConfig.runtime;
+        runtime.currentScene = sceneOverride || runtime.currentScene || this.fsm.currentState || 'MAIN_MENU';
+        runtime.battleState = null;
+        delete runtime.levelData;
+        delete runtime.turn;
+        delete runtime.phase;
+        delete runtime.initialState;
+        delete runtime.history;
+        delete runtime.queues;
+        delete runtime.planning;
+        delete runtime.battleRules;
+        delete runtime.playerBattleState;
+        delete runtime.playerTempState;
+        this.data.currentLevelData = null;
+    }
+
+    requestSave({
+        reason = 'auto-save',
+        slotId = null,
+        captureBattleRuntime = (this.fsm.currentState === 'BATTLE_LOOP'),
+        sceneOverride = null,
+        emitSaveList = Boolean(slotId),
+        emitLog = Boolean(slotId)
+    } = {}) {
+        if (captureBattleRuntime) {
             this.saveBattleState();
         } else {
-            if (!this.data.dataConfig.runtime) this.data.dataConfig.runtime = {};
-            // 如果不在战斗中，清除战斗运行时数据
-            this.data.dataConfig.runtime.currentScene = this.fsm.currentState || 'MAIN_MENU';
-            this.data.dataConfig.runtime.battleState = null;
-            delete this.data.dataConfig.runtime.levelData;
-            delete this.data.dataConfig.runtime.turn;
-            delete this.data.dataConfig.runtime.phase;
-            delete this.data.dataConfig.runtime.initialState;
-            delete this.data.dataConfig.runtime.history;
-            delete this.data.dataConfig.runtime.queues;
-            delete this.data.dataConfig.runtime.playerTempState;
-            this.data.currentLevelData = null;
+            this._prepareNonBattleSave({ sceneOverride });
         }
 
         const saved = this.data.saveGame(slotId);
         if (!saved) {
-            this.eventBus.emit('BATTLE_LOG', { text: 'Game Save Failed.' });
-            return;
+            if (emitLog) {
+                this.eventBus.emit('BATTLE_LOG', { text: 'Game Save Failed.' });
+            }
+            return false;
         }
 
-        if (typeof this.data.getSaveList === 'function') {
+        if (emitSaveList && typeof this.data.getSaveList === 'function') {
             this.eventBus.emit('DATA_UPDATE', {
                 type: 'SAVE_LIST',
                 data: this.data.getSaveList(),
@@ -896,7 +930,23 @@ class CoreEngine {
             });
         }
 
-        this.eventBus.emit('BATTLE_LOG', { text: slotId ? `Game Saved to slot ${slotId}.` : 'Game Saved.' });
+        if (emitLog) {
+            const message = slotId
+                ? `Game Saved to slot ${slotId}.`
+                : `Game Saved (${reason}).`;
+            this.eventBus.emit('BATTLE_LOG', { text: message });
+        }
+
+        return true;
+    }
+
+    saveGame(slotId) {
+        return this.requestSave({
+            reason: slotId ? 'manual-slot-save' : 'auto-save',
+            slotId,
+            emitSaveList: Boolean(slotId),
+            emitLog: Boolean(slotId)
+        });
     }
 
     startTurn() {
@@ -1842,21 +1892,14 @@ class CoreEngine {
                 rewards: { exp: 0, gold: 0, kp: 0 }
             };
         this.eventBus.emit('DATA_UPDATE', this.data.playerData);
-        
-        //  DataManager ???
-        if (this.data.dataConfig.runtime) {
-            this.data.dataConfig.runtime.currentScene = 'MAIN_MENU';
-            this.data.dataConfig.runtime.battleState = null;
-            delete this.data.dataConfig.runtime.levelData;
-            delete this.data.dataConfig.runtime.turn;
-            delete this.data.dataConfig.runtime.phase;
-            delete this.data.dataConfig.runtime.initialState;
-            delete this.data.dataConfig.runtime.history;
-            delete this.data.dataConfig.runtime.queues;
-            delete this.data.dataConfig.runtime.playerTempState;
-        }
-        this.data.currentLevelData = null;
-        this.data.saveGame(); // ???
+        this.requestSave({
+            reason: 'battle-settlement',
+            slotId: null,
+            captureBattleRuntime: false,
+            sceneOverride: 'MAIN_MENU',
+            emitSaveList: false,
+            emitLog: false
+        });
 
         this.fsm.changeState('BATTLE_SETTLEMENT', { victory: isVictory, settlement });
         this.eventBus.emit('BATTLE_END', { victory: isVictory, settlement });

@@ -187,7 +187,7 @@
       "arm": { "max": 10, "current": 10, "weakness": 1.0 },
       "leg": { "max": 10, "current": 10, "weakness": 1.0 }
     },
-    "skills": ["skill_bite", "skill_block", "skill_heal"]
+    "skills": ["skill_demo_enemy_head_break"]
   },
   "enemy_acceptance_repair": {
     "id": "enemy_acceptance_repair",

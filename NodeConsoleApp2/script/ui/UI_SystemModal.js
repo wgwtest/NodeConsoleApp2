@@ -23,6 +23,8 @@ export class UI_SystemModal {
         // 当前视图状态
         this.currentView = null;
         this.saveLoadStatusMessage = '';
+        this.saveLoadReturnView = 'MAIN_MENU';
+        this.saveLoadTitle = '存档 / 读档';
 
         // 引擎引用 (仅用于发送指令和监听事件)
         this.engine = null;
@@ -324,22 +326,57 @@ export class UI_SystemModal {
         input.style.border = '1px solid #7cf5d9';
         input.style.borderRadius = '4px';
 
-        const btn = document.createElement('button');
-        btn.className = 'btn-primary'; // 假设 CSS 中有此样式，或者复用 menu-btn
-        btn.textContent = '开始冒险';
-        btn.style.padding = '10px 30px';
-        btn.style.fontSize = '1.2rem';
-        btn.style.cursor = 'pointer';
+        const actionRow = document.createElement('div');
+        actionRow.style.display = 'flex';
+        actionRow.style.gap = '12px';
+        actionRow.style.flexWrap = 'wrap';
+        actionRow.style.justifyContent = 'center';
+
+        const hasAnySave = Boolean(this.engine?.data?.hasAnySave && this.engine.data.hasAnySave());
+
+        const newGameBtn = document.createElement('button');
+        newGameBtn.className = 'btn-primary';
+        newGameBtn.textContent = '新游戏';
+        newGameBtn.style.padding = '10px 30px';
+        newGameBtn.style.fontSize = '1.2rem';
+        newGameBtn.style.cursor = 'pointer';
         
-        btn.onclick = () => {
+        newGameBtn.onclick = () => {
             const username = input.value.trim();
             if (username && this.engine.input && this.engine.input.login) {
                 this.engine.input.login(username);
             }
         };
 
+        const loadBtn = document.createElement('button');
+        loadBtn.className = 'btn-primary';
+        loadBtn.textContent = '读取存档';
+        loadBtn.style.padding = '10px 30px';
+        loadBtn.style.fontSize = '1.2rem';
+        loadBtn.style.cursor = 'pointer';
+        loadBtn.disabled = !hasAnySave;
+        loadBtn.onclick = () => {
+            if (!hasAnySave) return;
+            this.renderSaveLoad(undefined, '', {
+                returnView: 'LOGIN',
+                title: '读取存档'
+            });
+        };
+
+        const tip = document.createElement('p');
+        tip.style.margin = '0';
+        tip.style.fontSize = '0.88rem';
+        tip.style.color = '#cfe8ff';
+        tip.style.textAlign = 'center';
+        tip.textContent = hasAnySave
+            ? '“新游戏”会创建新的自动存档；“读取存档”用于读取自动存档或手动槽位。'
+            : '当前没有可读取的本地存档，请先创建新游戏。';
+
         container.appendChild(input);
-        container.appendChild(btn);
+        actionRow.appendChild(newGameBtn);
+        actionRow.appendChild(loadBtn);
+        container.appendChild(actionRow);
+        container.appendChild(tip);
         this.dom.body.appendChild(container);
     }
 
@@ -353,7 +390,10 @@ export class UI_SystemModal {
 
         // 如果当前正在显示存档/读档界面，且收到了存档列表更新
         if (this.currentView === 'SAVE_LOAD' && type === 'SAVE_LIST') {
-            this.renderSaveLoad(data, message || '');
+            this.renderSaveLoad(data, message || '', {
+                returnView: this.saveLoadReturnView,
+                title: this.saveLoadTitle
+            });
             return;
         }
 
@@ -436,12 +476,12 @@ export class UI_SystemModal {
         this.setTitle('游戏菜单');
         this.clearContent();
 
-        // 检查是否可以继续游戏（在战斗中，或有存档）
+        // 检查是否可以返回当前战斗（在战斗中，或当前内存已带战斗 runtime）
         const isInBattle = this.engine.fsm && (this.engine.fsm.currentState === 'BATTLE_LOOP' || this.engine.fsm.currentState === 'BATTLE_PREPARE');
         const hasSavedBattle = this.engine.data && this.engine.data.dataConfig && this.engine.data.dataConfig.runtime && this.engine.data.dataConfig.runtime.levelData;
         const canResume = isInBattle || hasSavedBattle;
 
-        // 如果不能继续游戏，隐藏关闭按钮
+        // 如果不能返回战斗，隐藏关闭按钮
         if (this.dom.closeBtn) {
             this.dom.closeBtn.style.display = canResume ? '' : 'none';
         }
@@ -456,7 +496,7 @@ export class UI_SystemModal {
             : [];
 
         if (canResume) {
-            items.push({ label: '继续游戏', action: () => this.handleClose() });
+            items.push({ label: '返回战斗', action: () => this.handleClose() });
         }
 
         items.push(
@@ -474,7 +514,7 @@ export class UI_SystemModal {
                 label: '验收样本',
                 action: () => this.renderAcceptanceLevelSelect()
             }] : []),
-            { label: '存档 / 读档', action: () => this.renderSaveLoad() },
+            { label: '存档 / 读档', action: () => this.renderSaveLoad(undefined, '', { returnView: 'MAIN_MENU', title: '存档 / 读档' }) },
             { label: '设置', action: () => this.renderSettings() },
             { label: '注销', action: () => {
                 if (this.engine.input && this.engine.input.backToTitle) {
@@ -580,6 +620,79 @@ export class UI_SystemModal {
         }
     }
 
+    _escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    _buildLevelRewardPreview(rewards) {
+        const source = (rewards && typeof rewards === 'object') ? rewards : {};
+        const entries = [
+            ['EXP', Number(source.exp) || 0],
+            ['GOLD', Number(source.gold) || 0],
+            ['KP', Number(source.kp) || 0]
+        ];
+        return entries.filter(([, value]) => value > 0);
+    }
+
+    _buildLevelCardExtraHtml(level) {
+        const selectionMeta = (level && typeof level.selectionMeta === 'object' && level.selectionMeta)
+            ? level.selectionMeta
+            : null;
+        const rewardPreview = this._buildLevelRewardPreview(level?.rewards);
+        const sections = [];
+
+        if (selectionMeta?.difficultyLabel) {
+            sections.push(`
+                <div class="level-card-block">
+                    <div class="level-card-block-title">难度</div>
+                    <div class="level-card-inline">${this._escapeHtml(selectionMeta.difficultyLabel)}</div>
+                </div>
+            `);
+        }
+
+        if (Array.isArray(selectionMeta?.enemyStyleTags) && selectionMeta.enemyStyleTags.length > 0) {
+            const tagsHtml = selectionMeta.enemyStyleTags
+                .map(tag => `<span class="level-chip">${this._escapeHtml(tag)}</span>`)
+                .join('');
+            sections.push(`
+                <div class="level-card-block">
+                    <div class="level-card-block-title">敌人风格</div>
+                    <div class="level-chip-row">${tagsHtml}</div>
+                </div>
+            `);
+        }
+
+        if (rewardPreview.length > 0) {
+            const rewardsHtml = rewardPreview
+                .map(([label, value]) => `<span class="level-chip level-chip-reward">${label} ${this._escapeHtml(value)}</span>`)
+                .join('');
+            sections.push(`
+                <div class="level-card-block">
+                    <div class="level-card-block-title">奖励预览</div>
+                    <div class="level-chip-row">${rewardsHtml}</div>
+                </div>
+            `);
+        }
+
+        if (selectionMeta?.buildHint) {
+            sections.push(`
+                <div class="level-card-block">
+                    <div class="level-card-block-title">构筑提示</div>
+                    <p class="level-card-hint">${this._escapeHtml(selectionMeta.buildHint)}</p>
+                </div>
+            `);
+        }
+
+        return sections.length > 0
+            ? `<div class="level-card-extra">${sections.join('')}</div>`
+            : '';
+    }
+
     _renderLevelCardsView(levels, options = {}) {
         const {
             view = 'LEVEL_SELECT',
@@ -625,7 +738,13 @@ export class UI_SystemModal {
             const stateLine = stateTags.length > 0
                 ? `<div class="level-card-state" style="margin-top:8px; font-size:0.82rem; color:${lvl.isUnlocked === false ? '#ff9dbb' : '#7cf5d9'};">${stateTags.join(' · ')}</div>`
                 : '';
-            card.innerHTML = `<h4>${lvl.name || lvl.id}</h4><p>${levelDesc}</p>${stateLine}`;
+            const extraHtml = this._buildLevelCardExtraHtml(lvl);
+            card.innerHTML = `
+                <h4>${this._escapeHtml(lvl.name || lvl.id)}</h4>
+                <p>${this._escapeHtml(levelDesc)}</p>
+                ${stateLine}
+                ${extraHtml}
+            `;
 
             if (lvl.isUnlocked === false) {
                 card.setAttribute('aria-disabled', 'true');
@@ -711,17 +830,20 @@ export class UI_SystemModal {
      * 渲染存档/读档视图
      * @param {Array} [saveList] - 可选的存档列表数据，若不传则尝试获取
      */
-    renderSaveLoad(saveList, statusMessage = '') {
+    renderSaveLoad(saveList, statusMessage = '', options = {}) {
         console.log('[UI_SystemModal] Rendering Save/Load');
         this.currentView = 'SAVE_LOAD';
         this.saveLoadStatusMessage = statusMessage || '';
-        this.setTitle('存档 / 读档');
+        this.saveLoadReturnView = options.returnView || this.saveLoadReturnView || 'MAIN_MENU';
+        this.saveLoadTitle = options.title || this.saveLoadTitle || '存档 / 读档';
+        this.setTitle(this.saveLoadTitle);
         this.clearContent();
 
         const slots = saveList || (this.engine.data && this.engine.data.getSaveList ? this.engine.data.getSaveList() : [
-            { id: 1, date: '空', level: '-', turn: '-', isEmpty: true },
-            { id: 2, date: '空', level: '-', turn: '-', isEmpty: true },
-            { id: 3, date: '空', level: '-', turn: '-', isEmpty: true }
+            { id: 'auto', slotType: 'auto', title: '自动存档', date: '空', level: '-', turn: '-', isEmpty: true },
+            { id: 1, slotType: 'manual', title: '手动槽位 1', date: '空', level: '-', turn: '-', isEmpty: true },
+            { id: 2, slotType: 'manual', title: '手动槽位 2', date: '空', level: '-', turn: '-', isEmpty: true },
+            { id: 3, slotType: 'manual', title: '手动槽位 3', date: '空', level: '-', turn: '-', isEmpty: true }
         ]);
 
         if (this.saveLoadStatusMessage) {
@@ -741,26 +863,31 @@ export class UI_SystemModal {
         slots.forEach(slot => {
             const el = document.createElement('div');
             el.className = 'save-slot';
+            const isAutoSlot = slot?.slotType === 'auto' || slot?.id === 'auto';
+            const slotTitle = slot?.title || (isAutoSlot ? '自动存档' : `手动槽位 ${slot.id}`);
 
             const info = document.createElement('div');
             info.className = 'save-slot-info';
             const turnSuffix = slot.turn !== undefined && slot.turn !== null && slot.turn !== '-'
                 ? ` | 回合: ${slot.turn}`
                 : '';
-            info.innerHTML = `<h4>存档位 ${slot.id}</h4><div class="save-slot-meta">${slot.date} | 关卡: ${slot.level}${turnSuffix}</div>`;
+            info.innerHTML = `<h4>${slotTitle}</h4><div class="save-slot-meta">${slot.date} | 关卡: ${slot.level}${turnSuffix}</div>`;
 
             const actions = document.createElement('div');
             actions.className = 'slot-actions';
 
-            const saveBtn = document.createElement('button');
-            saveBtn.className = 'btn-primary';
-            saveBtn.textContent = '保存';
-            saveBtn.onclick = () => {
-                if (this.engine.input && this.engine.input.saveGame) {
-                    this.engine.input.saveGame(slot.id);
-                }
-                // 保存后通常会触发 DATA_UPDATE，从而刷新列表
-            };
+            if (!isAutoSlot) {
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'btn-primary';
+                saveBtn.textContent = '保存';
+                saveBtn.onclick = () => {
+                    if (this.engine.input && this.engine.input.saveGame) {
+                        this.engine.input.saveGame(slot.id);
+                    }
+                    // 保存后通常会触发 DATA_UPDATE，从而刷新列表
+                };
+                actions.appendChild(saveBtn);
+            }
 
             const loadBtn = document.createElement('button');
             loadBtn.className = 'btn-primary';
@@ -773,7 +900,6 @@ export class UI_SystemModal {
                 // 不再手动 hide，等待引擎状态变更或事件
             };
 
-            actions.appendChild(saveBtn);
             actions.appendChild(loadBtn);
 
             el.appendChild(info);
@@ -781,7 +907,13 @@ export class UI_SystemModal {
             this.dom.body.appendChild(el);
         });
 
-        this.renderFooterBackBtn(() => this.openMainMenu());
+        this.renderFooterBackBtn(() => {
+            if (this.saveLoadReturnView === 'LOGIN') {
+                this.renderLogin();
+                return;
+            }
+            this.openMainMenu();
+        });
     }
 
     /**

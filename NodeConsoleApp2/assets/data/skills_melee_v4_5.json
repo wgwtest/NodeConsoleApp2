@@ -3764,6 +3764,85 @@
       ]
     },
     {
+      "id": "skill_demo_enemy_head_break",
+      "name": "验收重击",
+      "rarity": "Common",
+      "description": "固定重击头部，用于人工验收 HP免伤与护甲免伤样本。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1320,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done"
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "tags": [
+        "DMG_HP",
+        "ABS",
+        "INSTANT",
+        "ONE_SHOT",
+        "DEMO"
+      ],
+      "tagMeta": {},
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amount": 20,
+            "amountType": "ABS",
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "id": "skill_demo_wait",
       "name": "等待",
       "rarity": "Common",

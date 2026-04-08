@@ -4,6 +4,7 @@ const LEGACY_SAVE_STORAGE_KEY = 'save_game';
 const LAST_SAVE_SLOT_STORAGE_KEY = 'save_game_last_slot';
 const SAVE_SLOT_STORAGE_PREFIX = 'save_game_slot_';
 const SAVE_SLOT_COUNT = 3;
+const AUTO_SAVE_SLOT_ID = 'auto';
 
 class DataManager {
     constructor() {
@@ -290,6 +291,28 @@ class DataManager {
         };
     }
 
+    _normalizeLevelSelectionMeta(selectionMeta) {
+        const source = (selectionMeta && typeof selectionMeta === 'object' && !Array.isArray(selectionMeta))
+            ? selectionMeta
+            : {};
+        const enemyStyleTags = Array.isArray(source.enemyStyleTags)
+            ? source.enemyStyleTags
+                .map(tag => (typeof tag === 'string' ? tag.trim() : ''))
+                .filter(Boolean)
+            : [];
+        const normalized = {
+            difficultyLabel: typeof source.difficultyLabel === 'string' ? source.difficultyLabel.trim() : '',
+            enemyStyleTags,
+            buildHint: typeof source.buildHint === 'string' ? source.buildHint.trim() : ''
+        };
+
+        if (!normalized.difficultyLabel && normalized.enemyStyleTags.length === 0 && !normalized.buildHint) {
+            return null;
+        }
+
+        return normalized;
+    }
+
     _buildSkillCatalog(skillsMap, options = {}) {
         const map = (skillsMap && typeof skillsMap === 'object') ? skillsMap : Object.create(null);
         const list = Object.values(map);
@@ -356,6 +379,12 @@ class DataManager {
         return numeric;
     }
 
+    _isAutoSaveSlot(slotId) {
+        if (slotId === null || slotId === undefined) return true;
+        if (typeof slotId === 'string' && slotId.toLowerCase() === AUTO_SAVE_SLOT_ID) return true;
+        return false;
+    }
+
     _getSlotStorageKey(slotId) {
         const normalized = this._normalizeSaveSlotId(slotId);
         return normalized ? `${SAVE_SLOT_STORAGE_PREFIX}${normalized}` : null;
@@ -372,17 +401,18 @@ class DataManager {
     }
 
     _readSaveJson(slotId = null) {
+        if (this._isAutoSaveSlot(slotId)) {
+            return localStorage.getItem(LEGACY_SAVE_STORAGE_KEY);
+        }
+
         const normalized = this._normalizeSaveSlotId(slotId);
         if (normalized) {
             const slotKey = this._getSlotStorageKey(normalized);
             const slotJson = slotKey ? localStorage.getItem(slotKey) : null;
             if (slotJson) return slotJson;
-            if (normalized === 1 && !this._hasDedicatedSlotSave()) {
-                return localStorage.getItem(LEGACY_SAVE_STORAGE_KEY);
-            }
             return null;
         }
-        return localStorage.getItem(LEGACY_SAVE_STORAGE_KEY);
+        return null;
     }
 
     _formatSaveTimestamp(timestamp) {
@@ -395,10 +425,15 @@ class DataManager {
     }
 
     _extractSaveSlotMeta(slotId) {
+        const isAuto = this._isAutoSaveSlot(slotId);
         const json = this._readSaveJson(slotId);
+        const normalizedId = isAuto ? AUTO_SAVE_SLOT_ID : this._normalizeSaveSlotId(slotId);
+        const title = isAuto ? '自动存档' : `手动槽位 ${normalizedId}`;
         if (!json) {
             return {
-                id: slotId,
+                id: normalizedId,
+                slotType: isAuto ? 'auto' : 'manual',
+                title,
                 date: '空',
                 level: '-',
                 scene: '-',
@@ -413,7 +448,9 @@ class DataManager {
             const levelName = runtime?.levelData?.name || runtime?.levelData?.id || (runtime?.currentScene === 'MAIN_MENU' ? '主菜单' : '-');
             const turn = Number.isFinite(runtime?.turn) ? runtime.turn : '-';
             return {
-                id: slotId,
+                id: normalizedId,
+                slotType: isAuto ? 'auto' : 'manual',
+                title,
                 date: this._formatSaveTimestamp(Number(parsed?.timestamp)),
                 level: levelName,
                 scene: runtime?.currentScene || '-',
@@ -422,7 +459,9 @@ class DataManager {
             };
         } catch {
             return {
-                id: slotId,
+                id: normalizedId,
+                slotType: isAuto ? 'auto' : 'manual',
+                title,
                 date: '损坏',
                 level: '-',
                 scene: '-',
@@ -433,14 +472,27 @@ class DataManager {
     }
 
     getSaveList() {
-        const list = [];
+        const list = [this._extractSaveSlotMeta(AUTO_SAVE_SLOT_ID)];
         for (let slotId = 1; slotId <= SAVE_SLOT_COUNT; slotId++) {
             list.push(this._extractSaveSlotMeta(slotId));
         }
         return list;
     }
 
+    hasAnySave() {
+        if (localStorage.getItem(LEGACY_SAVE_STORAGE_KEY)) {
+            return true;
+        }
+        return this._hasDedicatedSlotSave();
+    }
+
     saveGame(slotId = null) {
+        const isAutoSlot = this._isAutoSaveSlot(slotId);
+        const normalizedSlotId = isAutoSlot ? null : this._normalizeSaveSlotId(slotId);
+        if (!isAutoSlot && slotId !== null && slotId !== undefined && !normalizedSlotId) {
+            return false;
+        }
+
         if (this.dataConfig.global) {
             // Sync runtime data before saving
             if (!this.dataConfig.runtime) {
@@ -461,7 +513,6 @@ class DataManager {
             const json = JSON.stringify(this.dataConfig);
             localStorage.setItem(LEGACY_SAVE_STORAGE_KEY, json);
 
-            const normalizedSlotId = this._normalizeSaveSlotId(slotId);
             if (normalizedSlotId) {
                 const slotKey = this._getSlotStorageKey(normalizedSlotId);
                 if (slotKey) {
@@ -477,7 +528,11 @@ class DataManager {
     }
 
     loadGame(slotId = null) {
-        const normalizedSlotId = this._normalizeSaveSlotId(slotId);
+        const isAutoSlot = this._isAutoSaveSlot(slotId);
+        const normalizedSlotId = isAutoSlot ? null : this._normalizeSaveSlotId(slotId);
+        if (!isAutoSlot && slotId !== null && slotId !== undefined && !normalizedSlotId) {
+            return false;
+        }
         const json = this._readSaveJson(normalizedSlotId);
         if (json) {
             try {
@@ -516,7 +571,7 @@ class DataManager {
                 }
 
                 localStorage.setItem(LEGACY_SAVE_STORAGE_KEY, json);
-                if (normalizedSlotId) {
+                if (!isAutoSlot && normalizedSlotId) {
                     localStorage.setItem(LAST_SAVE_SLOT_STORAGE_KEY, String(normalizedSlotId));
                 }
                 
@@ -561,7 +616,6 @@ class DataManager {
             battleState: null
         };
 
-        this.saveGame();
         console.log('New game created.');
         return this.playerData;
     }
@@ -886,6 +940,8 @@ class DataManager {
             name: level.name || level.id,
             description: level.description || '',
             flow: this._getLevelFlow(level),
+            selectionMeta: this._normalizeLevelSelectionMeta(level.selectionMeta),
+            rewards: this._normalizeBattleRewards(level.rewards),
             isUnlocked: unlockedLevels.includes(level.id),
             isCompleted: completedLevels.includes(level.id)
         }));

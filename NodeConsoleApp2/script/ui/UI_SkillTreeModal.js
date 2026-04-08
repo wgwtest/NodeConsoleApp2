@@ -33,6 +33,10 @@ function safeGet(obj, path, fallback) {
 	return cur === undefined ? fallback : cur;
 }
 
+function hasTag(skill, tag) {
+	return Array.isArray(skill?.tags) && skill.tags.includes(tag);
+}
+
 /**
  * @typedef {Object} SkillTreeStatus
  * @property {'LEARNED'|'LEARNABLE'|'LOCKED'|'INSUFFICIENT_KP'|'EXCLUSIVE_LOCK'} kind
@@ -151,13 +155,24 @@ export class UI_SkillTreeModal {
 			? this.engine.data.getSkillCatalog()
 			: null;
 		const skillsMap = catalog?.skillsMap || safeGet(this.engine, ['data', 'gameConfig', 'skills'], Object.create(null));
-		const skillsList = Array.isArray(catalog?.skillsList) ? catalog.skillsList : Object.values(skillsMap || Object.create(null));
+		const rawSkillsList = Array.isArray(catalog?.skillsList) ? catalog.skillsList : Object.values(skillsMap || Object.create(null));
+		const skillsList = rawSkillsList.filter(skill => this._shouldRenderSkillNode(skill));
 		this._skillsMap = skillsMap || Object.create(null);
 		this._skillsList = skillsList;
 
 		// Default selection: first learned, else first skill
 		const learned = this._getLearned();
 		this._selectedSkillId = learned[0] || (this._skillsList[0] ? this._skillsList[0].id : null);
+		if (this._selectedSkillId && !this._skillsList.some(skill => skill.id === this._selectedSkillId)) {
+			this._selectedSkillId = this._skillsList[0] ? this._skillsList[0].id : null;
+		}
+	}
+
+	_shouldRenderSkillNode(skill) {
+		if (!skill || typeof skill !== 'object') return false;
+		if (skill.editorMeta?.hiddenInSkillTree === true) return false;
+		if (hasTag(skill, 'DEMO')) return false;
+		return true;
 	}
 
 	_initSessionState() {
