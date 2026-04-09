@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spine Bundle Probe</title>
+    <link rel="stylesheet" href="../node_modules/@esotericsoftware/spine-player/dist/spine-player.css">
     <style>
         :root {
             --bg: #f4efe7;
@@ -166,6 +167,81 @@
             padding: 16px;
             color: var(--muted);
         }
+
+        .runtime-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 16px;
+        }
+
+        .runtime-card {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+            background: #fff;
+            display: grid;
+            gap: 12px;
+        }
+
+        .runtime-player {
+            min-height: 320px;
+            border-radius: 14px;
+            border: 1px solid #eadfce;
+            background:
+                radial-gradient(circle at top, rgba(255,255,255,0.95), rgba(245, 234, 220, 0.72)),
+                linear-gradient(180deg, rgba(250,245,239,0.92), rgba(236,228,217,0.92));
+            overflow: hidden;
+        }
+
+        .runtime-note {
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .runtime-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .runtime-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .runtime-controls select,
+        .runtime-controls button {
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--ink);
+            padding: 8px 12px;
+            font: inherit;
+        }
+
+        .runtime-controls button {
+            cursor: pointer;
+        }
+
+        .runtime-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .runtime-presets .label {
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .js-preset-button.is-active {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -176,10 +252,27 @@
     </section>
 </div>
 
+<script src="../node_modules/@esotericsoftware/spine-player/dist/iife/spine-player.js"></script>
 <script src="../test-results/spine_bundle_probe_report.js"></script>
 <script>
     const app = document.getElementById('app');
     const probeReport = globalThis.__SPINE_BUNDLE_PROBE_REPORT__;
+    const playerRegistry = new Map();
+    const playbackReturnTimers = new Map();
+    const searchParams = new URLSearchParams(window.location.search);
+    const playbackPresetCatalog = {
+        spineboy: [
+            { key: 'walk', label: 'Walk', animation: 'walk', loop: true },
+            { key: 'run', label: 'Run', animation: 'run', loop: true },
+            { key: 'shoot', label: 'Shoot', animation: 'shoot', loop: false, fallbackAnimation: 'walk' },
+            { key: 'jump', label: 'Jump', animation: 'jump', loop: false, fallbackAnimation: 'walk' }
+        ],
+        raptor: [
+            { key: 'walk', label: 'Walk', animation: 'walk', loop: true },
+            { key: 'roar', label: 'Roar', animation: 'roar', loop: false, fallbackAnimation: 'walk' },
+            { key: 'jump', label: 'Jump', animation: 'jump', loop: false, fallbackAnimation: 'walk' }
+        ]
+    };
 
     function createStatus(decision) {
         if (decision === 'use_bundle') return { className: 'ok', text: 'use_bundle' };
@@ -197,6 +290,358 @@
                 ${errors.map(error => `<li><code>${error.code}</code> ${error.message}</li>`).join('')}
             </ul>
         `;
+    }
+
+    function createRuntimeStatus(runtimeReady, reason) {
+        if (runtimeReady) return { className: 'ok', text: 'runtime_ready' };
+        return { className: 'warn', text: reason || 'runtime_unavailable' };
+    }
+
+    function toPlayerAssetUrl(relativePath) {
+        return `../test-results/${relativePath}`;
+    }
+
+    function getEntryAnimations(entry) {
+        return Array.isArray(entry?.animations) ? entry.animations : [];
+    }
+
+    function getInitialAnimation(entry) {
+        const requestedAnimation = searchParams.get(`animation_${entry.presentationId}`);
+        const animations = getEntryAnimations(entry);
+        if (requestedAnimation && animations.includes(requestedAnimation)) {
+            return requestedAnimation;
+        }
+
+        return entry.defaultAnimation || animations[0] || '';
+    }
+
+    function getPlaybackPresets(entry) {
+        const declaredPresets = playbackPresetCatalog[entry?.presentationId] || [];
+        const animations = new Set(getEntryAnimations(entry));
+
+        return declaredPresets
+            .filter(preset => animations.has(preset.animation))
+            .map(preset => ({
+                ...preset,
+                fallbackAnimation: animations.has(preset.fallbackAnimation)
+                    ? preset.fallbackAnimation
+                    : entry.defaultAnimation || preset.animation
+            }));
+    }
+
+    function getRuntimeCard(presentationId) {
+        return app.querySelector(`.runtime-card[data-presentation-id="${presentationId}"]`);
+    }
+
+    function syncAnimationLabel(card, animationLabel) {
+        const currentAnimation = card?.querySelector('.js-current-animation');
+        if (currentAnimation) {
+            currentAnimation.textContent = animationLabel || 'none';
+        }
+    }
+
+    function syncAnimationSelect(card, animation) {
+        const select = card?.querySelector('.js-animation-select');
+        if (!select) return;
+
+        const option = [...select.options].find(item => item.value === animation);
+        if (option) {
+            select.value = animation;
+        }
+    }
+
+    function syncActivePresetButton(card, presetKey) {
+        const buttons = card?.querySelectorAll('.js-preset-button') || [];
+        buttons.forEach(button => {
+            button.classList.toggle('is-active', button.dataset.presetKey === presetKey);
+        });
+    }
+
+    function clearPlaybackReturnTimer(presentationId) {
+        const timerId = playbackReturnTimers.get(presentationId);
+        if (timerId) {
+            window.clearTimeout(timerId);
+            playbackReturnTimers.delete(presentationId);
+        }
+    }
+
+    function estimateAnimationDurationMs(player, animation) {
+        const durationSeconds = player?.skeleton?.data?.findAnimation(animation)?.duration;
+        if (typeof durationSeconds !== 'number' || Number.isNaN(durationSeconds) || durationSeconds <= 0) {
+            return 800;
+        }
+
+        return Math.max(250, Math.round(durationSeconds * 1000));
+    }
+
+    function findLoopPreset(presets, animation) {
+        return presets.find(preset => preset.loop && preset.animation === animation) || null;
+    }
+
+    function resolvePresetFallbackAnimation(entry, card, preset, presets) {
+        const select = card?.querySelector('.js-animation-select');
+        const selectedLoopPreset = findLoopPreset(presets, select?.value);
+        if (selectedLoopPreset && selectedLoopPreset.animation !== preset.animation) {
+            return selectedLoopPreset.animation;
+        }
+
+        const defaultLoopPreset = findLoopPreset(presets, entry.defaultAnimation);
+        if (defaultLoopPreset && defaultLoopPreset.animation !== preset.animation) {
+            return defaultLoopPreset.animation;
+        }
+
+        if (preset.fallbackAnimation && preset.fallbackAnimation !== preset.animation) {
+            return preset.fallbackAnimation;
+        }
+
+        return entry.defaultAnimation || preset.animation;
+    }
+
+    function applyPlaybackPreset(presentationId, presetKey) {
+        const player = playerRegistry.get(presentationId);
+        const entry = probeReport.runtimePreview?.characters?.find(
+            item => item.presentationId === presentationId
+        );
+        const card = getRuntimeCard(presentationId);
+        const presets = getPlaybackPresets(entry);
+        const preset = presets.find(item => item.key === presetKey);
+        const toggle = card?.querySelector('.js-playback-toggle');
+
+        if (!player || !entry || !card || !preset) return;
+
+        clearPlaybackReturnTimer(presentationId);
+
+        if (preset.loop) {
+            player.setAnimation(preset.animation, true);
+            syncAnimationSelect(card, preset.animation);
+            syncAnimationLabel(card, preset.animation);
+            syncActivePresetButton(card, preset.key);
+        } else {
+            const fallbackAnimation = resolvePresetFallbackAnimation(entry, card, preset, presets);
+            player.setAnimation(preset.animation, false);
+            if (fallbackAnimation) {
+                player.addAnimation(fallbackAnimation, true, 0);
+            }
+
+            syncAnimationLabel(
+                card,
+                fallbackAnimation && fallbackAnimation !== preset.animation
+                    ? `${preset.animation} -> ${fallbackAnimation}`
+                    : preset.animation
+            );
+            syncActivePresetButton(card, preset.key);
+
+            const durationMs = estimateAnimationDurationMs(player, preset.animation);
+            const timerId = window.setTimeout(() => {
+                if (fallbackAnimation) {
+                    syncAnimationSelect(card, fallbackAnimation);
+                    syncAnimationLabel(card, fallbackAnimation);
+                }
+
+                const fallbackPreset = findLoopPreset(presets, fallbackAnimation);
+                syncActivePresetButton(card, fallbackPreset?.key || null);
+                playbackReturnTimers.delete(presentationId);
+            }, durationMs);
+            playbackReturnTimers.set(presentationId, timerId);
+        }
+
+        player.play();
+        if (toggle) {
+            toggle.textContent = 'Pause';
+        }
+    }
+
+    function renderDynamicPlayback(runtimePreview) {
+        const entries = Array.isArray(runtimePreview?.characters) ? runtimePreview.characters : [];
+        if (entries.length === 0) {
+            return `
+                <section class="panel">
+                    <h2>Dynamic Playback</h2>
+                    <div class="empty-state">当前报告未提供可播放角色。</div>
+                </section>
+            `;
+        }
+
+        return `
+            <section class="panel" id="dynamic-playback-section">
+                <h2>Dynamic Playback</h2>
+                <p class="runtime-note">本区直接从 <code>probeReport.runtimePreview</code> 指向的 staged bundle 资产播放样本角色，不接入主战斗流程。即使播放器缺失或个别角色加载失败，上方导入诊断仍保持有效。</p>
+                <div class="runtime-grid">
+                    ${entries.map(entry => {
+                        const status = createRuntimeStatus(entry.runtimeReady, entry.reason);
+                        const initialAnimation = getInitialAnimation(entry);
+                        const animations = getEntryAnimations(entry);
+                        const presets = getPlaybackPresets(entry);
+                        if (!entry.runtimeReady) {
+                            return `
+                                <article class="runtime-card" data-presentation-id="${entry.presentationId}">
+                                    <header>
+                                        <div>
+                                            <div class="eyebrow">runtime fallback</div>
+                                            <h3>${entry.presentationId}</h3>
+                                        </div>
+                                        <span class="status ${status.className}">${status.text}</span>
+                                    </header>
+                                    <div class="empty-state">该角色未进入动态播放区，原因：<code>${entry.reason || 'unknown'}</code></div>
+                                </article>
+                            `;
+                        }
+
+                        return `
+                            <article class="runtime-card" data-presentation-id="${entry.presentationId}">
+                                <header>
+                                    <div>
+                                        <div class="eyebrow">runtime preview</div>
+                                        <h3>${entry.presentationId}</h3>
+                                    </div>
+                                    <span class="status ${status.className}">${status.text}</span>
+                                </header>
+                                <div
+                                    class="runtime-player js-spine-player"
+                                    id="spine-player-${entry.presentationId}"
+                                    data-presentation-id="${entry.presentationId}"
+                                    data-skeleton-url="${toPlayerAssetUrl(entry.skeletonUrl)}"
+                                    data-atlas-url="${toPlayerAssetUrl(entry.atlasUrl)}"
+                                    data-animation="${initialAnimation}"
+                                    data-skin="${entry.defaultSkin || ''}"
+                                    data-scale="${entry.scale || 1}"
+                                ></div>
+                                <div class="runtime-controls" data-controls-for="${entry.presentationId}">
+                                    <label>
+                                        <span class="label">Animation</span>
+                                        <select class="js-animation-select" data-presentation-id="${entry.presentationId}">
+                                            ${animations.map(animation => `
+                                                <option value="${animation}" ${animation === initialAnimation ? 'selected' : ''}>${animation}</option>
+                                            `).join('')}
+                                        </select>
+                                    </label>
+                                    <button class="js-playback-toggle" data-presentation-id="${entry.presentationId}" type="button">Pause</button>
+                                </div>
+                                <div class="runtime-presets">
+                                    <span class="label">Quick Actions</span>
+                                    ${presets.map(preset => `
+                                        <button
+                                            class="js-preset-button"
+                                            data-presentation-id="${entry.presentationId}"
+                                            data-preset-key="${preset.key}"
+                                            type="button"
+                                        >${preset.label}</button>
+                                    `).join('')}
+                                </div>
+                                <div class="runtime-meta">
+                                    <div class="meta-card">
+                                        <span class="label">Animation</span>
+                                        <div class="js-current-animation">${initialAnimation || 'none'}</div>
+                                    </div>
+                                    <div class="meta-card">
+                                        <span class="label">Skin</span>
+                                        <div>${entry.defaultSkin || 'default'}</div>
+                                    </div>
+                                    <div class="meta-card">
+                                        <span class="label">Scale</span>
+                                        <div>${entry.scale || 1}</div>
+                                    </div>
+                                </div>
+                            </article>
+                        `;
+                    }).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    function bindRuntimePlaybackControls(root, player, entry) {
+        const presentationId = entry.presentationId;
+        const card = root.closest('.runtime-card');
+        const select = card?.querySelector(`.js-animation-select[data-presentation-id="${presentationId}"]`);
+        const toggle = card?.querySelector(`.js-playback-toggle[data-presentation-id="${presentationId}"]`);
+        const presetButtons = card?.querySelectorAll(`.js-preset-button[data-presentation-id="${presentationId}"]`) || [];
+        const initialAnimation = getInitialAnimation(entry);
+        const presets = getPlaybackPresets(entry);
+
+        syncAnimationLabel(card, initialAnimation);
+        syncActivePresetButton(card, findLoopPreset(presets, initialAnimation)?.key || null);
+
+        if (select) {
+            select.addEventListener('change', () => {
+                if (!select.value) return;
+                clearPlaybackReturnTimer(presentationId);
+                player.setAnimation(select.value, true);
+                syncAnimationLabel(card, select.value);
+                syncActivePresetButton(card, findLoopPreset(presets, select.value)?.key || null);
+                player.play();
+                if (toggle) {
+                    toggle.textContent = 'Pause';
+                }
+            });
+        }
+
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                if (player.paused) {
+                    player.play();
+                    toggle.textContent = 'Pause';
+                    return;
+                }
+
+                player.pause();
+                toggle.textContent = 'Play';
+            });
+        }
+
+        presetButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                applyPlaybackPreset(presentationId, button.dataset.presetKey);
+            });
+        });
+    }
+
+    function mountDynamicPlayback(runtimePreview) {
+        if (!runtimePreview || !Array.isArray(runtimePreview.characters)) return;
+
+        if (!globalThis.spine || typeof globalThis.spine.SpinePlayer !== 'function') {
+            const unavailable = document.createElement('section');
+            unavailable.className = 'panel';
+            unavailable.innerHTML = `
+                <h2>Dynamic Playback</h2>
+                <div class="empty-state">未加载到官方 Spine player。请先在 <code>NodeConsoleApp2/package.json</code> 所在目录执行 <code>npm install</code>。</div>
+            `;
+            app.appendChild(unavailable);
+            return;
+        }
+
+        const playerRoots = app.querySelectorAll('.js-spine-player');
+        playerRoots.forEach(root => {
+            const presentationId = root.dataset.presentationId;
+            const skeletonUrl = root.dataset.skeletonUrl;
+            const atlasUrl = root.dataset.atlasUrl;
+            const animation = root.dataset.animation || undefined;
+            const skin = root.dataset.skin || undefined;
+            const scale = Number(root.dataset.scale || '1');
+            const entry = runtimePreview.characters.find(item => item.presentationId === presentationId);
+
+            new globalThis.spine.SpinePlayer(root, {
+                jsonUrl: skeletonUrl,
+                atlasUrl,
+                animation,
+                skin,
+                scale,
+                alpha: true,
+                backgroundColor: '#00000000',
+                preserveDrawingBuffer: false,
+                showControls: true,
+                showLoading: true,
+                success(player) {
+                    playerRegistry.set(presentationId, player);
+                    root.dataset.runtimeMounted = 'true';
+                    bindRuntimePlaybackControls(root, player, entry);
+                    player.play();
+                },
+                error(player, message) {
+                    root.innerHTML = `<div class="empty-state">动态播放加载失败：${message}</div>`;
+                }
+            });
+        });
     }
 
     if (!probeReport) {
@@ -269,9 +714,9 @@
             ${renderErrors(probeReport.bundle.errors)}
         </section>
 
-        <section class="panel">
-            <h2>Characters</h2>
-            <div class="characters">
+            <section class="panel">
+                <h2>Characters</h2>
+                <div class="characters">
                 ${probeReport.characters.map(character => {
                     const status = createStatus(character.fallback?.decision);
                     const manifest = character.manifest;
@@ -320,21 +765,25 @@
                             </div>
                         </article>
                     `;
-                }).join('')}
-            </div>
-        </section>
+                    }).join('')}
+                </div>
+            </section>
 
-        <section class="panel">
-            <h2>Fallback Decision</h2>
-            <p>主工程当前整体降级结论：<span class="status ${overallStatus.className}">${overallStatus.text}</span></p>
+            ${renderDynamicPlayback(probeReport.runtimePreview)}
+
+            <section class="panel">
+                <h2>Fallback Decision</h2>
+                <p>主工程当前整体降级结论：<span class="status ${overallStatus.className}">${overallStatus.text}</span></p>
             <p>语义说明：</p>
             <ul>
                 <li><code>use_bundle</code>：当前 bundle 可被主工程消费。</li>
                 <li><code>fallback_static_character</code>：仅部分角色失败，应回退到现有静态展示层。</li>
                 <li><code>fallback_static_all</code>：整包不可用，应整体回退到现有静态展示层。</li>
-            </ul>
-        </section>
-    `);
-</script>
+                </ul>
+            </section>
+        `);
+
+        mountDynamicPlayback(probeReport.runtimePreview);
+    </script>
 </body>
 </html>

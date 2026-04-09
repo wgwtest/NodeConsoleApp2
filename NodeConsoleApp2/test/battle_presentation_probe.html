@@ -113,7 +113,7 @@
             margin-bottom: 10px;
         }
 
-        .probe-shell .hud-stat span,
+        .probe-shell .hud-stat > span,
         .probe-shell .armor-value,
         .probe-shell .status-label {
             color: #dbe7ff;
@@ -240,6 +240,15 @@
                     <li><code>codex_regression_runner.html</code>：验证关键契约没有被后续修改打坏。</li>
                 </ul>
             </div>
+            <div class="guide-card">
+                <h3>节奏与镜头语义</h3>
+                <p>本页也验证展现层是否可以借 <code>scene-turn-announce</code>、<code>scene-beat-* / scene-impact</code> 这样的类名，独立营造“回合亮起 → 行动连击 → 受击晃动”的节奏感，而不依赖真正的战斗结算。</p>
+            </div>
+            <div class="guide-card">
+                <h3>演出配置边界</h3>
+                <p>本页默认用结构化 <code>presentation</code> 配置来描述“该动作想走什么模板、什么场景脉冲、什么状态语义”。规则层和内容层只提供这些只读提示，真正怎么表现、如何降级，仍由展示层统一决定。</p>
+                <p><code>最近模板 / 最近配置来源 / 最近降级语义 / 最近场景脉冲</code> 这组读数，就是用来验证配置入口与降级策略是不是稳定成立。</p>
+            </div>
         </div>
         <table class="explain-table">
             <thead>
@@ -271,9 +280,24 @@
                     <td>证明状态提示可以通过新旧快照差异驱动。</td>
                 </tr>
                 <tr>
+                    <td><code>模板：近战 / 防御 / 治疗 / 状态上身</code></td>
+                    <td>只发 <code>TIMELINE_ENTRY_START</code>，并在 <code>entry.presentation</code> 中显式带模板类别与状态语义。</td>
+                    <td>证明展示层支持“按配置路由表现模板”，而不是写死某个技能 ID 或按钮回调。</td>
+                </tr>
+                <tr>
+                    <td><code>模板：未知类别（降级）</code></td>
+                    <td>发送一个不在白名单里的模板值，例如 <code>arcane_unknown</code>，再读取“最近降级语义”。</td>
+                    <td>证明未知类别会稳定回退到默认模板（前冲节奏），不会抛错或卡死，而且降级原因可观察。</td>
+                </tr>
+                <tr>
                     <td><code>切换动画</code></td>
                     <td>关闭或重新启用展示层控制器。</td>
                     <td>证明动画关闭后不会影响状态刷新，展示层只是增强层。</td>
+                </tr>
+                <tr>
+                    <td><code>节奏 / 镜头</code></td>
+                    <td>每次 <code>TURN_START</code>、<code>TIMELINE_ENTRY_START</code> 与 <code>BATTLE_TAKE_DAMAGE</code> 都会触发新的类（<code>scene-turn-announce</code> / <code>scene-beat-*</code> / <code>scene-impact</code>），来测试是否能给全景带来短促的亮度/位移/抖动。</td>
+                    <td>展示层是不是能自己承接节奏语义：只要有事件输入，就能把“镜头”强度叠加注册在场景上，而不会修改回合、伤害等核心逻辑。</td>
                 </tr>
             </tbody>
         </table>
@@ -290,9 +314,16 @@
             <button type="button" id="btnPlayerHeal">玩家治疗</button>
             <button type="button" id="btnPlayerBuff">玩家加 Buff</button>
             <button type="button" id="btnEnemyDebuff">敌人加 Debuff</button>
+            <button type="button" class="secondary" id="btnTplMelee">模板：近战</button>
+            <button type="button" class="secondary" id="btnTplGuard">模板：防御/格挡</button>
+            <button type="button" class="secondary" id="btnTplHeal">模板：治疗</button>
+            <button type="button" class="secondary" id="btnTplStatus">模板：Buff 上身</button>
+            <button type="button" class="warn" id="btnTplUnknown">模板：未知类别（降级）</button>
             <button type="button" class="secondary" id="btnTogglePresentation">切换动画：开</button>
             <button type="button" class="warn" id="btnResetState">重置状态</button>
         </div>
+        <p id="templateProbeState">最近模板：无</p>
+        <p id="presentationSourceState">最近配置来源：无</p>
     </section>
 
     <section class="panel probe-shell">
@@ -439,6 +470,7 @@
 
     const eventBus = createMiniEventBus();
     const root = document.querySelector('.battle-row');
+    const sceneRoot = root.querySelector('.battle-scene');
     const controller = new BattlePresentationController({ root, eventBus });
     controller.connect();
 
@@ -452,6 +484,16 @@
     function appendLog(text) {
         const current = logEl.textContent ? `${logEl.textContent}\n` : '';
         logEl.textContent = `${current}${text}`;
+    }
+
+    function refreshTemplateReadout() {
+        const template = sceneRoot?.dataset?.lastTemplate || '无';
+        const side = sceneRoot?.dataset?.lastTemplateSide || '-';
+        document.getElementById('templateProbeState').textContent = `最近模板：${template}（side: ${side}）`;
+        const source = sceneRoot?.dataset?.lastTemplateSource || '无';
+        const fallback = sceneRoot?.dataset?.lastTemplateFallback || '无';
+        const scenePulse = sceneRoot?.dataset?.lastScenePulse || '无';
+        document.getElementById('presentationSourceState').textContent = `最近配置来源：${source}；最近降级语义：${fallback}；最近场景脉冲：${scenePulse}`;
     }
 
     function renderStatusIcons(containerId, rows, mode) {
@@ -532,17 +574,29 @@
             enemies: [state.enemy]
         });
         appendLog('[RESET] 状态已重置，展示层已重新绑定初始快照。');
+        refreshTemplateReadout();
+    }
+
+    function emitTemplateEvent({ side = 'self', template = null, statusKind = null, label = '' } = {}) {
+        const entry = {
+            side,
+            actorId: side === 'enemy' ? state.enemy.id : state.player.id,
+            skillId: `probe_${template || 'default'}`,
+            meta: { label: label || '模板探针' },
+            presentation: {}
+        };
+        if (template) {
+            entry.presentation.template = template;
+        }
+        if (statusKind) {
+            entry.presentation.statusKind = statusKind;
+        }
+        eventBus.emit('TIMELINE_ENTRY_START', { entry });
+        refreshTemplateReadout();
     }
 
     function runPlayerAttackOnly() {
-        eventBus.emit('TIMELINE_ENTRY_START', {
-            entry: {
-                side: 'self',
-                actorId: state.player.id,
-                skillId: 'probe_attack',
-                meta: { label: '攻击前冲' }
-            }
-        });
+        emitTemplateEvent({ side: 'self', template: 'melee', label: '攻击前冲' });
         appendLog('[EVENT] TIMELINE_ENTRY_START self');
     }
 
@@ -563,14 +617,7 @@
     }
 
     function applyEnemyHitPlayer() {
-        eventBus.emit('TIMELINE_ENTRY_START', {
-            entry: {
-                side: 'enemy',
-                actorId: state.enemy.id,
-                skillId: 'probe_enemy_strike',
-                meta: { label: '敌方突刺' }
-            }
-        });
+        emitTemplateEvent({ side: 'enemy', template: 'melee', label: '敌方突刺' });
         state.player.stats.hp = Math.max(0, state.player.stats.hp - 14);
         state.player.bodyParts.chest.current = Math.max(0, state.player.bodyParts.chest.current - 3);
         eventBus.emit('BATTLE_TAKE_DAMAGE', {
@@ -611,6 +658,48 @@
         appendLog('[EVENT] 敌人新增 Debuff，验证减益提示脉冲。');
     }
 
+    function runTemplateMelee() {
+        emitTemplateEvent({ side: 'self', template: 'melee', label: '模板近战' });
+        appendLog('[TPL] 近战模板：应看到前冲节奏（scene-beat-self）。');
+    }
+
+    function runTemplateGuard() {
+        emitTemplateEvent({ side: 'self', template: 'guard', label: '模板防御' });
+        eventBus.emit('BATTLE_TAKE_DAMAGE', {
+            target: { id: state.player.id },
+            damageDealt: 0,
+            armorDamage: 0,
+            targetPart: 'chest',
+            isBlocked: true,
+            blockText: '格挡成功',
+            template: 'guard'
+        });
+        appendLog('[TPL] 防御模板：应看到格挡提示与护甲脉冲（scene-impact）。');
+    }
+
+    function runTemplateHeal() {
+        emitTemplateEvent({ side: 'self', template: 'heal', label: '模板治疗' });
+        state.player.stats.hp = Math.min(state.player.stats.maxHp, state.player.stats.hp + 8);
+        emitBattleUpdate();
+        appendLog('[TPL] 治疗模板：应看到治疗光效/飘字与血条回升。');
+    }
+
+    function runTemplateStatus() {
+        emitTemplateEvent({ side: 'self', template: 'status', statusKind: 'buff', label: '模板Buff上身' });
+        state.player.buffs.push({
+            id: `buff_tpl_${state.player.buffs.length + 1}`,
+            name: '模板祝福',
+            desc: '通过模板事件触发'
+        });
+        emitBattleUpdate();
+        appendLog('[TPL] 状态模板：应看到 BUFF 上身提示脉冲。');
+    }
+
+    function runTemplateUnknown() {
+        emitTemplateEvent({ side: 'self', template: 'arcane_unknown', label: '模板未知类别' });
+        appendLog('[TPL] 未知模板：应稳定降级为 default（通常等效近战前冲），且无报错。');
+    }
+
     function togglePresentation() {
         presentationEnabled = !presentationEnabled;
         controller.setEnabled(presentationEnabled);
@@ -625,6 +714,11 @@
     document.getElementById('btnPlayerHeal').addEventListener('click', applyPlayerHeal);
     document.getElementById('btnPlayerBuff').addEventListener('click', applyPlayerBuff);
     document.getElementById('btnEnemyDebuff').addEventListener('click', applyEnemyDebuff);
+    document.getElementById('btnTplMelee').addEventListener('click', runTemplateMelee);
+    document.getElementById('btnTplGuard').addEventListener('click', runTemplateGuard);
+    document.getElementById('btnTplHeal').addEventListener('click', runTemplateHeal);
+    document.getElementById('btnTplStatus').addEventListener('click', runTemplateStatus);
+    document.getElementById('btnTplUnknown').addEventListener('click', runTemplateUnknown);
     document.getElementById('btnTogglePresentation').addEventListener('click', togglePresentation);
     document.getElementById('btnResetState').addEventListener('click', resetState);
 

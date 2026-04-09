@@ -262,6 +262,47 @@ class DataManager {
         };
     }
 
+    _normalizeLastLearnAction(lastLearnAction) {
+        const source = (lastLearnAction && typeof lastLearnAction === 'object' && !Array.isArray(lastLearnAction))
+            ? lastLearnAction
+            : null;
+        if (!source) return null;
+
+        const normalizeStringList = (input) => Array.isArray(input)
+            ? input
+                .map(value => (typeof value === 'string' ? value.trim() : ''))
+                .filter(Boolean)
+            : [];
+
+        const learnedSkillIds = normalizeStringList(source.learnedSkillIds);
+        const learnedSkillNames = normalizeStringList(source.learnedSkillNames);
+        const skillTreeId = (typeof source.skillTreeId === 'string' && source.skillTreeId.trim().length > 0)
+            ? source.skillTreeId.trim()
+            : null;
+        const learnedCount = Number.isFinite(source.learnedCount)
+            ? Math.max(0, Number(source.learnedCount) || 0)
+            : Math.max(learnedSkillIds.length, learnedSkillNames.length);
+        const spentKp = Number.isFinite(source.spentKp) ? Number(source.spentKp) || 0 : 0;
+        const remainingKp = Number.isFinite(source.remainingKp) ? Number(source.remainingKp) || 0 : 0;
+        const committedAt = (typeof source.committedAt === 'string' && source.committedAt.trim().length > 0)
+            ? source.committedAt.trim()
+            : null;
+
+        if (!skillTreeId && learnedCount === 0 && learnedSkillIds.length === 0 && learnedSkillNames.length === 0 && spentKp === 0 && remainingKp === 0 && !committedAt) {
+            return null;
+        }
+
+        return {
+            skillTreeId,
+            learnedSkillIds,
+            learnedSkillNames,
+            learnedCount,
+            spentKp,
+            remainingKp,
+            committedAt
+        };
+    }
+
     _normalizeProgress(progress) {
         const source = (progress && typeof progress === 'object' && !Array.isArray(progress)) ? progress : {};
         const unlockedLevels = Array.isArray(source.unlockedLevels) && source.unlockedLevels.length > 0
@@ -278,8 +319,17 @@ class DataManager {
             completedQuests,
             completedLevels,
             flags,
-            lastSettlement: source.lastSettlement ? JSON.parse(JSON.stringify(source.lastSettlement)) : null
+            lastSettlement: source.lastSettlement ? JSON.parse(JSON.stringify(source.lastSettlement)) : null,
+            lastLearnAction: this._normalizeLastLearnAction(source.lastLearnAction)
         };
+    }
+
+    recordSkillTreeLearnAction(lastLearnAction) {
+        if (!this.dataConfig.global) return null;
+        this.dataConfig.global.progress = this._normalizeProgress(this.dataConfig.global.progress);
+        const progress = this.dataConfig.global.progress;
+        progress.lastLearnAction = this._normalizeLastLearnAction(lastLearnAction);
+        return progress.lastLearnAction;
     }
 
     _normalizeBattleRewards(rewards) {
@@ -892,10 +942,45 @@ class DataManager {
     _getLevelFlow(levelConfig, fallbackOrder = null) {
         const source = (levelConfig && typeof levelConfig.flow === 'object') ? levelConfig.flow : {};
         const parsedOrder = Number(source.order);
+        const normalizedKind = source.kind || 'story';
+        const parsedChapterOrder = Number(source.chapterOrder);
+        const chapterOrder = Number.isFinite(parsedChapterOrder)
+            ? parsedChapterOrder
+            : (normalizedKind === 'story' ? 1 : null);
+        const chapterLabel = typeof source.chapterLabel === 'string'
+            ? source.chapterLabel.trim()
+            : '';
+        const chapterTitle = typeof source.chapterTitle === 'string'
+            ? source.chapterTitle.trim()
+            : '';
+        const nodeLabel = typeof source.nodeLabel === 'string'
+            ? source.nodeLabel.trim()
+            : '';
+        const objectiveText = typeof source.objectiveText === 'string'
+            ? source.objectiveText.trim()
+            : '';
         return {
-            kind: source.kind || 'story',
-            order: Number.isFinite(parsedOrder) ? parsedOrder : fallbackOrder
+            kind: normalizedKind,
+            order: Number.isFinite(parsedOrder) ? parsedOrder : fallbackOrder,
+            chapterId: typeof source.chapterId === 'string' && source.chapterId.trim()
+                ? source.chapterId.trim()
+                : '',
+            chapterOrder,
+            chapterLabel: chapterLabel || (normalizedKind === 'story' && Number.isFinite(chapterOrder) ? `第${chapterOrder}章` : ''),
+            chapterTitle,
+            nodeLabel: nodeLabel || (normalizedKind === 'story' && Number.isFinite(chapterOrder) && Number.isFinite(Number.isFinite(parsedOrder) ? parsedOrder : fallbackOrder)
+                ? `${chapterOrder}-${Number.isFinite(parsedOrder) ? parsedOrder : fallbackOrder}`
+                : ''),
+            objectiveText
         };
+    }
+
+    _getStoryChapterKey(flow) {
+        const source = (flow && typeof flow === 'object') ? flow : {};
+        if (source.chapterId) return source.chapterId;
+        const chapterOrder = Number(source.chapterOrder);
+        if (Number.isFinite(chapterOrder)) return `story_chapter_${chapterOrder}`;
+        return 'story_chapter_1';
     }
 
     _getLevelsListByKind(kind) {
@@ -926,7 +1011,25 @@ class DataManager {
         return storyLevels[currentIndex + 1]?.id || null;
     }
 
-    getLevelSelectEntries() {
+    _buildLevelClearFeedback(level, { isCompleted = false } = {}) {
+        const levelId = level?.id || null;
+        const nextLevelId = this.getNextStoryLevelId(levelId);
+        const nextLevelConfig = nextLevelId ? this.getLevelConfig(nextLevelId) : null;
+        const nextLevelName = nextLevelConfig?.name || nextLevelId || null;
+        const firstClearText = nextLevelName
+            ? `首次通关将解锁下一关：${nextLevelName}。`
+            : '首次通关将完成当前章节，不再有新的故事关卡解锁。';
+
+        return {
+            currentMode: isCompleted ? 'repeat' : 'first_clear',
+            firstClearText,
+            repeatClearText: '重复通关仍获得常规资源奖励，但不再解锁新章节。',
+            nextLevelId,
+            nextLevelName
+        };
+    }
+
+    _buildStoryLevelSelectModel() {
         if (this.dataConfig.global) {
             this.dataConfig.global.progress = this._normalizeProgress(this.dataConfig.global.progress);
         }
@@ -934,17 +1037,111 @@ class DataManager {
         const progress = this.dataConfig.global?.progress;
         const unlockedLevels = Array.isArray(progress?.unlockedLevels) ? progress.unlockedLevels : [];
         const completedLevels = Array.isArray(progress?.completedLevels) ? progress.completedLevels : [];
+        const baseEntries = this._getStoryLevelsList().map(level => {
+            const isCompleted = completedLevels.includes(level.id);
+            return {
+                id: level.id,
+                name: level.name || level.id,
+                description: level.description || '',
+                flow: this._getLevelFlow(level),
+                selectionMeta: this._normalizeLevelSelectionMeta(level.selectionMeta),
+                rewards: this._normalizeBattleRewards(level.rewards),
+                clearFeedback: this._buildLevelClearFeedback(level, { isCompleted }),
+                isUnlocked: unlockedLevels.includes(level.id),
+                isCompleted
+            };
+        });
 
-        return this._getStoryLevelsList().map(level => ({
-            id: level.id,
-            name: level.name || level.id,
-            description: level.description || '',
-            flow: this._getLevelFlow(level),
-            selectionMeta: this._normalizeLevelSelectionMeta(level.selectionMeta),
-            rewards: this._normalizeBattleRewards(level.rewards),
-            isUnlocked: unlockedLevels.includes(level.id),
-            isCompleted: completedLevels.includes(level.id)
-        }));
+        if (baseEntries.length === 0) {
+            return {
+                entries: [],
+                overview: null
+            };
+        }
+
+        const recommendedEntry = baseEntries.find(entry => entry.isUnlocked && !entry.isCompleted) || null;
+        const lastUnlockedEntry = [...baseEntries].reverse().find(entry => entry.isUnlocked) || baseEntries[0];
+        const nextLockedEntry = baseEntries.find(entry => !entry.isUnlocked) || null;
+        const currentFocusEntry = recommendedEntry || lastUnlockedEntry || baseEntries[0];
+        const currentChapterKey = this._getStoryChapterKey(currentFocusEntry?.flow);
+        const chapterEntries = baseEntries.filter(entry => this._getStoryChapterKey(entry.flow) === currentChapterKey);
+        const completedCount = chapterEntries.filter(entry => entry.isCompleted).length;
+        const unlockedCount = chapterEntries.filter(entry => entry.isUnlocked).length;
+        const resolveEntryStatus = entry => {
+            if (entry.isCompleted) return 'completed';
+            if (recommendedEntry && entry.id === recommendedEntry.id) return 'recommended';
+            if (entry.isUnlocked) return 'unlocked';
+            return 'locked';
+        };
+
+        const entries = baseEntries.map((entry, index) => {
+            const previousEntry = baseEntries[index - 1] || null;
+            const status = resolveEntryStatus(entry);
+            let stateLabel = '后续节点';
+            let unlockHint = '完成上一节点后解锁。';
+
+            if (status === 'completed') {
+                stateLabel = '已完成节点';
+                unlockHint = '已完成；可重复挑战补资源。';
+            } else if (status === 'recommended') {
+                stateLabel = '当前推荐';
+                unlockHint = '当前已解锁，建议优先推进章节主线。';
+            } else if (status === 'unlocked') {
+                stateLabel = '已解锁节点';
+                unlockHint = '当前已解锁，可自由挑战。';
+            } else if (previousEntry?.name) {
+                unlockHint = `完成 ${previousEntry.name} 后解锁。`;
+            }
+
+            return {
+                ...entry,
+                progression: {
+                    status,
+                    stateLabel,
+                    unlockHint
+                }
+            };
+        });
+
+        const focusFlow = (currentFocusEntry && currentFocusEntry.flow) ? currentFocusEntry.flow : {};
+        const currentObjectiveText = recommendedEntry?.flow?.objectiveText
+            || recommendedEntry?.selectionMeta?.buildHint
+            || (nextLockedEntry
+                ? `完成 ${lastUnlockedEntry?.name || '上一节点'} 后解锁 ${nextLockedEntry.name}。`
+                : '当前章节已全部完成，可重复挑战补资源。');
+        const overview = {
+            chapterId: currentChapterKey,
+            chapterLabel: focusFlow.chapterLabel || '第一章',
+            chapterTitle: focusFlow.chapterTitle || '',
+            completedCount,
+            totalCount: chapterEntries.length,
+            unlockedCount,
+            recommendedLevelId: recommendedEntry?.id || null,
+            recommendedLevelName: recommendedEntry?.name || null,
+            currentNodeLabel: (recommendedEntry?.flow?.nodeLabel || focusFlow.nodeLabel || ''),
+            currentObjectiveText,
+            nextLockedLevelId: nextLockedEntry?.id || null,
+            nextLockedLevelName: nextLockedEntry?.name || null,
+            chapterNodes: chapterEntries.map(entry => ({
+                id: entry.id,
+                name: entry.name,
+                nodeLabel: entry.flow?.nodeLabel || '',
+                status: resolveEntryStatus(entry)
+            }))
+        };
+
+        return {
+            entries,
+            overview
+        };
+    }
+
+    getLevelSelectEntries() {
+        return this._buildStoryLevelSelectModel().entries;
+    }
+
+    getLevelSelectOverview() {
+        return this._buildStoryLevelSelectModel().overview;
     }
 
     getAcceptanceLevelSelectEntries() {
@@ -956,6 +1153,45 @@ class DataManager {
             isUnlocked: true,
             isCompleted: false
         }));
+    }
+
+    getLevelContentSourceOverview() {
+        const storyCount = this._getStoryLevelsList().length;
+        const acceptanceCount = this._getAcceptanceLevelsList().length;
+
+        return [
+            {
+                kind: 'story',
+                title: '故事关卡',
+                entryLabel: '关卡选择',
+                count: storyCount,
+                isRuntimeEntry: true,
+                description: '正式推进内容，会进入成长、结算与解锁闭环。',
+                source: 'levels.json flow.kind=story'
+            },
+            {
+                kind: 'acceptance',
+                title: '验收样本',
+                entryLabel: '验收样本',
+                count: acceptanceCount,
+                isRuntimeEntry: true,
+                description: '人工复核入口，用于稳定观察敌人行为与验收样本链路，不推进故事主线。',
+                source: 'levels.json flow.kind=acceptance'
+            },
+            {
+                kind: 'authoring',
+                title: '作者样本',
+                entryLabel: '作者样本工具页',
+                count: 2,
+                isRuntimeEntry: false,
+                description: '只存在于工具页，用于作者验证关卡 pack 覆写注入与运行时消费；不属于故事推进关卡，也不属于验收样本入口。',
+                source: 'test/level_editor_io_test.html + test/level_runtime_probe.html',
+                pages: [
+                    'test/level_editor_io_test.html',
+                    'test/level_runtime_probe.html'
+                ]
+            }
+        ];
     }
 
     getSkillConfig(skillId) {
@@ -976,6 +1212,234 @@ class DataManager {
             id: skillId,
             runtimeAliasOf: aliasId
         };
+    }
+
+    _normalizeSkillSelection(selection) {
+        const source = (selection && typeof selection === 'object' && !Array.isArray(selection))
+            ? selection
+            : {};
+        const normalizeParts = (parts) => Array.isArray(parts)
+            ? parts
+                .map(part => (typeof part === 'string' ? part.trim() : ''))
+                .filter(Boolean)
+            : [];
+        const parsedCount = Number(source.selectCount);
+
+        return {
+            mode: typeof source.mode === 'string' && source.mode.trim()
+                ? source.mode.trim()
+                : null,
+            candidateParts: normalizeParts(source.candidateParts),
+            selectedParts: normalizeParts(source.selectedParts),
+            selectCount: Number.isFinite(parsedCount) ? parsedCount : null
+        };
+    }
+
+    _normalizeSkillBuffRefs(buffRefs) {
+        const source = (buffRefs && typeof buffRefs === 'object' && !Array.isArray(buffRefs))
+            ? buffRefs
+            : {};
+        const normalizeList = (items) => Array.isArray(items)
+            ? items
+                .filter(item => item && typeof item === 'object')
+                .map(item => JSON.parse(JSON.stringify(item)))
+            : [];
+
+        return {
+            apply: normalizeList(source.apply),
+            remove: normalizeList(source.remove)
+        };
+    }
+
+    _collectSkillActionEffectTypes(actions) {
+        const source = Array.isArray(actions) ? actions : [];
+        const seen = new Set();
+        const effectTypes = [];
+
+        source.forEach(action => {
+            const effectType = typeof action?.effect?.effectType === 'string'
+                ? action.effect.effectType.trim()
+                : '';
+            if (!effectType || seen.has(effectType)) return;
+            seen.add(effectType);
+            effectTypes.push(effectType);
+        });
+
+        return effectTypes;
+    }
+
+    _buildSkillRuntimeFlags(summary) {
+        const requirementKeys = Object.keys(summary?.requirements || {});
+        const selection = summary?.target?.selection || {};
+        const buffApplyCount = Array.isArray(summary?.buffRefs?.apply) ? summary.buffRefs.apply.length : 0;
+        const buffRemoveCount = Array.isArray(summary?.buffRefs?.remove) ? summary.buffRefs.remove.length : 0;
+        const actionEffectTypes = Array.isArray(summary?.actionEffectTypes) ? summary.actionEffectTypes : [];
+
+        return {
+            isAlias: Boolean(summary?.runtimeAliasOf),
+            isPartTargeted: summary?.target?.scope === 'SCOPE_PART',
+            isMultiParts: summary?.target?.scope === 'SCOPE_MULTI_PARTS'
+                || selection.mode === 'multiple'
+                || (Number(selection.selectCount) > 1),
+            isBuffDriven: actionEffectTypes.length === 0 && (buffApplyCount > 0 || buffRemoveCount > 0),
+            isConditional: requirementKeys.length > 0,
+            consumesPartSlot: Boolean(summary?.costs?.partSlot?.part)
+        };
+    }
+
+    getSkillContractSummary(skillId) {
+        const skill = this.getSkillConfig(skillId);
+        if (!skill) return null;
+
+        const target = (skill.target && typeof skill.target === 'object') ? skill.target : {};
+        const selection = this._normalizeSkillSelection(target.selection);
+        const buffRefs = this._normalizeSkillBuffRefs(skill.buffRefs);
+        const actionEffectTypes = this._collectSkillActionEffectTypes(skill.actions);
+        const tags = Array.isArray(skill.tags)
+            ? skill.tags
+                .map(tag => (typeof tag === 'string' ? tag.trim() : ''))
+                .filter(Boolean)
+            : [];
+
+        const summary = {
+            id: skill.id,
+            runtimeAliasOf: skill.runtimeAliasOf || null,
+            name: typeof skill.name === 'string' ? skill.name : skill.id,
+            description: typeof skill.description === 'string' ? skill.description : '',
+            tags,
+            target: {
+                subject: typeof target.subject === 'string' ? target.subject : null,
+                scope: typeof target.scope === 'string' ? target.scope : null,
+                selection
+            },
+            requirements: (skill.requirements && typeof skill.requirements === 'object' && !Array.isArray(skill.requirements))
+                ? JSON.parse(JSON.stringify(skill.requirements))
+                : {},
+            costs: (skill.costs && typeof skill.costs === 'object' && !Array.isArray(skill.costs))
+                ? JSON.parse(JSON.stringify(skill.costs))
+                : {},
+            actionEffectTypes,
+            buffRefs
+        };
+
+        summary.runtimeFlags = this._buildSkillRuntimeFlags(summary);
+        return summary;
+    }
+
+    getSkillContractCatalog(options = {}) {
+        const includeAliases = options && options.includeAliases === true;
+        const catalog = this.getSkillCatalog() || {};
+        const entries = [];
+        const seen = new Set();
+        const pushSummary = (skillId) => {
+            if (!skillId || seen.has(skillId)) return;
+            const summary = this.getSkillContractSummary(skillId);
+            if (!summary) return;
+            seen.add(skillId);
+            entries.push(summary);
+        };
+
+        (catalog.skillsList || []).forEach(skill => pushSummary(skill?.id));
+
+        if (includeAliases) {
+            Object.keys(this._enemySkillAliases || {}).forEach(aliasId => pushSummary(aliasId));
+        }
+
+        return {
+            selectedTreeId: catalog.selectedTreeId || null,
+            schemaVersion: catalog.schemaVersion || null,
+            meta: catalog.meta || null,
+            entries,
+            entriesMap: Object.fromEntries(entries.map(entry => [entry.id, entry]))
+        };
+    }
+
+    getSkillContractIssues(skillId) {
+        const summary = typeof skillId === 'string' ? this.getSkillContractSummary(skillId) : skillId;
+        if (!summary || typeof summary !== 'object') return [];
+
+        const issues = [];
+        const selection = summary.target?.selection || {};
+        const candidateCount = Array.isArray(selection.candidateParts) ? selection.candidateParts.length : 0;
+        const selectCount = Number.isFinite(selection.selectCount) ? selection.selectCount : null;
+        const tagSet = new Set(Array.isArray(summary.tags) ? summary.tags : []);
+        const subjectTags = ['SUBJECT_SELF', 'SUBJECT_ENEMY', 'SUBJECT_BOTH']
+            .filter(tag => tagSet.has(tag));
+        const scopeTags = ['SCOPE_ENTITY', 'SCOPE_PART', 'SCOPE_MULTI_PARTS']
+            .filter(tag => tagSet.has(tag));
+        const comparableEffectTags = new Set(['DMG_HP', 'DMG_ARMOR', 'HEAL', 'AP_GAIN', 'SPEED', 'BUFF_APPLY', 'BUFF_REMOVE']);
+        const derivedEffectTags = new Set();
+
+        (summary.actionEffectTypes || []).forEach(effectType => {
+            if (comparableEffectTags.has(effectType)) {
+                derivedEffectTags.add(effectType);
+            }
+        });
+        if ((summary.buffRefs?.apply || []).length > 0) {
+            derivedEffectTags.add('BUFF_APPLY');
+        }
+        if ((summary.buffRefs?.remove || []).length > 0) {
+            derivedEffectTags.add('BUFF_REMOVE');
+        }
+
+        if (selectCount !== null && candidateCount > 0 && selectCount > candidateCount) {
+            issues.push({
+                code: 'selection_count_exceeds_candidates',
+                message: `selectCount(${selectCount}) 超过 candidateParts(${candidateCount})。`,
+                selectCount,
+                candidateCount
+            });
+        }
+
+        if (selection.mode === 'single' && selectCount !== null && selectCount !== 1) {
+            issues.push({
+                code: 'single_selection_count_invalid',
+                message: `single 模式的 selectCount 应为 1，当前为 ${selectCount}。`,
+                selectCount
+            });
+        }
+
+        if (subjectTags.length > 0 && summary.target?.subject && !subjectTags.includes(summary.target.subject)) {
+            issues.push({
+                code: 'tag_subject_mismatch',
+                message: `SUBJECT 标签与 target.subject 不一致：tags=${subjectTags.join(',')} target=${summary.target.subject}`,
+                targetSubject: summary.target.subject,
+                tags: subjectTags
+            });
+        }
+
+        if (scopeTags.length > 0 && summary.target?.scope && !scopeTags.includes(summary.target.scope)) {
+            issues.push({
+                code: 'tag_scope_mismatch',
+                message: `SCOPE 标签与 target.scope 不一致：tags=${scopeTags.join(',')} target=${summary.target.scope}`,
+                targetScope: summary.target.scope,
+                tags: scopeTags
+            });
+        }
+
+        Array.from(tagSet)
+            .filter(tag => comparableEffectTags.has(tag))
+            .forEach(tag => {
+                if (!derivedEffectTags.has(tag)) {
+                    issues.push({
+                        code: 'unexpected_effect_tag',
+                        tag,
+                        message: `标签 ${tag} 无法从 actions / buffRefs 中直接推导。`
+                    });
+                }
+            });
+
+        Array.from(derivedEffectTags).forEach(tag => {
+            if (!tagSet.has(tag)) {
+                issues.push({
+                    code: 'missing_effect_tag',
+                    tag,
+                    message: `actions / buffRefs 已体现 ${tag}，但 tags 中缺失。`
+                });
+            }
+        });
+
+        return issues;
     }
 
     // Instantiate a level from config, creating runtime enemy instances
@@ -1118,6 +1582,7 @@ class DataManager {
             levelId,
             levelName: levelConfig?.name || levelId || '未知关卡',
             victory: Boolean(victory),
+            settledAt: new Date().toISOString(),
             rewards: baseRewards,
             firstClear: Boolean(victory && levelId && !alreadyCompleted),
             nextLevelId: nextStoryLevelId,

@@ -113,6 +113,99 @@
 - 技能编辑、Buff 编辑、敌人配置、关卡配置可以并行演进；
 - 验证入口能在编辑器、测试页和主流程之间形成闭环。
 
+#### 2.2.6 技能说明契约与效果矩阵（Contract Matrix）
+
+一个合理的技能框架，不能只靠自由文本描述技能，也不能只靠执行器“碰巧能跑起来”来判断技能是否成立。
+在定义层与执行层之间，必须存在一层正式的 **技能说明契约与效果矩阵**。
+
+这层契约的职责是：
+
+1. 把技能说明、技能配置与运行时可直接推导出的事实固定到同一张矩阵里；
+2. 让技能树、技能编辑器、敌人 AI、日志、平衡分析、回归页消费的是同一份技能事实摘要；
+3. 在不改战斗逻辑的前提下，先识别“结构越界、标签漂移、说明失真”这类配置层问题。
+
+一条正式的 skill contract summary 至少应包含：
+
+1. **身份字段**
+   - `id`
+   - `name`
+   - `description`
+   - `runtimeAliasOf`（若该技能是运行时 alias）
+2. **目标与选择**
+   - `target.subject`
+   - `target.scope`
+   - `selection.mode`
+   - `candidateParts`
+   - `selectedParts`
+   - `selectCount`
+3. **资源与条件**
+   - `costs.ap`
+   - `costs.partSlot`
+   - `perTurnLimit`
+   - `requirements`
+4. **直接动作与 Buff 引用**
+   - `actionEffectTypes`
+   - `buffRefs.apply`
+   - `buffRefs.remove`
+5. **运行时读数标记**
+   - `isAlias`
+   - `isPartTargeted`
+   - `isMultiParts`
+   - `isBuffDriven`
+   - `isConditional`
+
+这里的重点是：
+
+- `actionEffectTypes` 只表达运行时从 `actions[]` 里能直接读出的动作语义；
+- `buffRefs` 负责表达“通过 Buff 间接生效”的部分；
+- `isBuffDriven` 用于标记“技能本身没有直接动作，主要靠 Buff 生效”的技能；
+- alias 技能不是第二套定义，而是 runtime contract 中的正式一等公民。
+
+#### 2.2.7 合理的契约校验规则（Validation Rules）
+
+技能说明契约不是只为了展示，更要支持**稳定自动校验**。
+
+推荐至少固化以下几类问题码：
+
+1. **选择范围越界**
+   - `selection_count_exceeds_candidates`
+   - 含义：`selectCount` 超过 `candidateParts.length`
+2. **选择模式自相矛盾**
+   - `single_selection_count_invalid`
+   - 含义：`selection.mode = single`，但 `selectCount != 1`
+3. **主体 / 范围标签漂移**
+   - `tag_subject_mismatch`
+   - `tag_scope_mismatch`
+   - 含义：`tags` 里的 `SUBJECT_* / SCOPE_*` 与真实 `target` 字段不一致
+4. **动作效果标签漂移**
+   - `unexpected_effect_tag`
+   - `missing_effect_tag`
+   - 含义：`tags` 声称存在某效果，但 `actions / buffRefs` 无法直接推导；或者反过来配置里已有动作效果，但 `tags` 未同步
+
+这些校验规则的意义不是替代引擎执行，而是确保：
+
+1. 设计文档、编辑器、技能树、回归工具能共享同一套词汇；
+2. 新技能进入主流程前，先通过结构层体检；
+3. 后续修复可以针对具体问题码分批推进，而不是反复依赖人工口述。
+
+#### 2.2.8 运行时批量校核入口（Probe / Regression）
+
+合理的技能系统应同时具备三个层次的验证入口：
+
+1. **主流程观察页**
+   - 验证玩家在真实战斗里“看到了什么”
+2. **自动回归页**
+   - 验证既有契约不会被后续修改破坏
+3. **批量校核页**
+   - 一次性列出 skill contract summary、issue code、alias 与首批异常归类
+
+其中“批量校核页”不是给玩家使用的游戏界面，而是作者与研发使用的结构核对工具。
+它的职责是：
+
+1. 批量列出所有技能契约摘要；
+2. 固定首轮异常的统计口径；
+3. 为后续的逐项修复、平衡分析和内容扩展提供稳定输入。
+
 ---
 
 ## 3. 技能设计约束 (Design Constraints)

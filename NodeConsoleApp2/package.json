@@ -12,5 +12,8 @@
   "type": "commonjs",
   "devDependencies": {
     "eslint": "^9.39.2"
+  },
+  "dependencies": {
+    "@esotericsoftware/spine-player": "4.2.109"
   }
 }

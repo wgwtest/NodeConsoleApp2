@@ -1,5 +1,5 @@
 export const probeReport = {
-  "generatedAt": "2026-04-07T16:01:04.329Z",
+  "generatedAt": "2026-04-09T00:02:54.616Z",
   "source": {
     "mode": "sibling_repo",
     "bundleRoot": "/home/wgw/CodexProject/NodeConsoleApp2-SpineAssets/workspace/exports/b1_official_samples"
@@ -180,5 +180,64 @@ export const probeReport = {
   "fallback": {
     "decision": "use_bundle",
     "reason": "OK"
+  },
+  "runtimePreview": {
+    "assetRoot": "spine_bundle_runtime_assets/characters",
+    "characters": [
+      {
+        "presentationId": "spineboy",
+        "runtimeReady": true,
+        "characterRoot": "spine_bundle_runtime_assets/characters/spineboy",
+        "skeletonUrl": "spine_bundle_runtime_assets/characters/spineboy/spineboy.json",
+        "atlasUrl": "spine_bundle_runtime_assets/characters/spineboy/spineboy.atlas",
+        "textureUrls": [
+          "spine_bundle_runtime_assets/characters/spineboy/spineboy-pma.png"
+        ],
+        "defaultAnimation": "walk",
+        "animations": [
+          "aim",
+          "death",
+          "hoverboard",
+          "idle",
+          "idle-turn",
+          "jump",
+          "portal",
+          "run",
+          "run-to-idle",
+          "shoot",
+          "walk"
+        ],
+        "defaultSkin": "default",
+        "scale": 1,
+        "anchorProfile": {
+          "x": 0.5,
+          "y": 1
+        }
+      },
+      {
+        "presentationId": "raptor",
+        "runtimeReady": true,
+        "characterRoot": "spine_bundle_runtime_assets/characters/raptor",
+        "skeletonUrl": "spine_bundle_runtime_assets/characters/raptor/raptor.json",
+        "atlasUrl": "spine_bundle_runtime_assets/characters/raptor/raptor.atlas",
+        "textureUrls": [
+          "spine_bundle_runtime_assets/characters/raptor/raptor-pma.png"
+        ],
+        "defaultAnimation": "walk",
+        "animations": [
+          "gun-grab",
+          "gun-holster",
+          "jump",
+          "roar",
+          "walk"
+        ],
+        "defaultSkin": "default",
+        "scale": 1,
+        "anchorProfile": {
+          "x": 0.5,
+          "y": 1
+        }
+      }
+    ]
   }
 };
