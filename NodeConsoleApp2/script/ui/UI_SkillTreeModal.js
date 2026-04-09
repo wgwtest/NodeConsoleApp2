@@ -63,8 +63,9 @@ export class UI_SkillTreeModal {
 			header: null,
 			title: null,
 			kp: null,
-          headerActions: null,
+			headerActions: null,
 			headerButtons: null,
+            ruleGuide: null,
 			btnResetAll: null,
             btnResetSelection: null,
 			btnStageLearn: null,
@@ -128,8 +129,9 @@ export class UI_SkillTreeModal {
 			header: null,
 			title: null,
 			kp: null,
-          headerActions: null,
+			headerActions: null,
 			headerButtons: null,
+            ruleGuide: null,
 			btnResetAll: null,
             btnResetSelection: null,
 			btnStageLearn: null,
@@ -295,6 +297,11 @@ export class UI_SkillTreeModal {
 		const header = el('div', 'ui-skilltree__header');
 		const title = el('div', 'ui-skilltree__title', titleText);
 		const kp = el('div', 'ui-skilltree__kp', '可用 KP: 0');
+      const ruleGuide = el(
+            'div',
+            'ui-skilltree__ruleGuide',
+            '提交并关闭会保存本次学习并返回上一页；直接关闭不提交未保存更改，只返回上一页。'
+        );
       const headerActions = el('div', 'ui-skilltree__headerActions');
 		const headerButtons = el('div', 'ui-skilltree__headerButtons');
 		const btnResetAll = el('button', 'ui-skilltree__headerBtn ui-skilltree__headerBtn--danger', '重置所有技能');
@@ -344,6 +351,7 @@ export class UI_SkillTreeModal {
         footer.style.display = 'none';
 
 		root.appendChild(header);
+      root.appendChild(ruleGuide);
 		root.appendChild(content);
 		root.appendChild(footer);
 
@@ -355,8 +363,9 @@ export class UI_SkillTreeModal {
 			header,
 			title,
 			kp,
-            headerActions,
+			headerActions,
 			headerButtons,
+            ruleGuide,
 			btnResetAll,
 			btnResetSelection,
             btnStageLearn: null,

@@ -34,6 +34,8 @@ export class UI_SkillTreeOverlay {
 		this.dom.closeBtn = document.getElementById('skillTreeCloseBtn');
 
 		if (this.dom.closeBtn) {
+			this.dom.closeBtn.setAttribute('aria-label', '直接关闭技能树并返回上一页');
+			this.dom.closeBtn.setAttribute('title', '直接关闭技能树并返回上一页');
 			this.dom.closeBtn.addEventListener('click', () => this.hide());
 		}
 
@@ -66,6 +68,7 @@ export class UI_SkillTreeOverlay {
 	show(payload = {}) {
 		if (!this.dom.backdrop || !this.dom.body) return;
 		this._lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+		this._syncCloseButtonLabel(payload?.source);
 
 		if (!this.view) {
 			this.view = new UI_SkillTreeModal();
@@ -120,5 +123,18 @@ export class UI_SkillTreeOverlay {
 		if (e.key === 'Escape') {
 			this.hide();
 		}
+	}
+
+	_syncCloseButtonLabel(source) {
+		if (!this.dom.closeBtn) return;
+		const sourceMap = {
+			MAIN_MENU: '直接关闭技能树并返回游戏菜单',
+			SETTLEMENT: '直接关闭技能树并返回游戏菜单',
+			BATTLE_LOOP: '直接关闭技能树并返回战斗',
+			BATTLE_PREPARE: '直接关闭技能树并返回战斗'
+		};
+		const label = sourceMap[source] || '直接关闭技能树并返回上一页';
+		this.dom.closeBtn.setAttribute('aria-label', label);
+		this.dom.closeBtn.setAttribute('title', label);
 	}
 }

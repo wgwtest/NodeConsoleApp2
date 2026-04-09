@@ -138,7 +138,7 @@ export class UI_SystemModal {
         this.clearFooter();
 
         // 隐藏关闭按钮，强制用户点击确认
-        if (this.dom.closeBtn) this.dom.closeBtn.style.display = 'none';
+        this._setCloseButtonState({ visible: false });
 
         const container = document.createElement('div');
         container.style.display = 'flex';
@@ -304,7 +304,7 @@ export class UI_SystemModal {
         this.clearFooter();
 
         // 隐藏关闭按钮，强制用户登录
-        if (this.dom.closeBtn) this.dom.closeBtn.style.display = 'none';
+        this._setCloseButtonState({ visible: false });
 
         const container = document.createElement('div');
         container.style.display = 'flex';
@@ -477,14 +477,12 @@ export class UI_SystemModal {
         this.clearContent();
 
         // 检查是否可以返回当前战斗（在战斗中，或当前内存已带战斗 runtime）
-        const isInBattle = this.engine.fsm && (this.engine.fsm.currentState === 'BATTLE_LOOP' || this.engine.fsm.currentState === 'BATTLE_PREPARE');
-        const hasSavedBattle = this.engine.data && this.engine.data.dataConfig && this.engine.data.dataConfig.runtime && this.engine.data.dataConfig.runtime.levelData;
-        const canResume = isInBattle || hasSavedBattle;
+        const canResume = this._canResumeBattle();
 
-        // 如果不能返回战斗，隐藏关闭按钮
-        if (this.dom.closeBtn) {
-            this.dom.closeBtn.style.display = canResume ? '' : 'none';
-        }
+        this._setCloseButtonState({
+            visible: canResume,
+            label: '关闭并返回战斗'
+        });
 
         const menu = document.createElement('div');
         menu.className = 'menu-list';
@@ -534,6 +532,11 @@ export class UI_SystemModal {
         if (growthSummary) {
             this.dom.body.appendChild(growthSummary);
         }
+        this._appendGuideBlock(
+            canResume
+                ? '这里用于选择下一步操作。右上角“关闭并返回战斗”会直接回到当前战斗，列表按钮会进入对应页面或执行对应操作。'
+                : '这里用于选择下一步操作。列表按钮会进入对应页面或执行对应操作，不会直接启动战斗以外的隐藏流程。'
+        );
         this.dom.body.appendChild(menu);
         this.clearFooter(); // 主菜单通常不需要 Footer 按钮
     }
@@ -698,21 +701,20 @@ export class UI_SystemModal {
             view = 'LEVEL_SELECT',
             title = '选择关卡',
             introText = '',
-            emptyText = '暂无可用关卡'
+            emptyText = '暂无可用关卡',
+            backLabel = '返回游戏菜单'
         } = options;
 
         this.currentView = view;
         this.setTitle(title);
         this.clearContent();
+        this._setCloseButtonState({
+            visible: this._canResumeBattle(),
+            label: '关闭并返回战斗'
+        });
 
         if (introText) {
-            const hint = document.createElement('p');
-            hint.style.margin = '0 0 16px';
-            hint.style.color = '#cfe8ff';
-            hint.style.fontSize = '0.92rem';
-            hint.style.whiteSpace = 'pre-line';
-            hint.textContent = introText;
-            this.dom.body.appendChild(hint);
+            this._appendGuideBlock(introText, { preserveLineBreaks: true });
         }
 
         if (!Array.isArray(levels) || levels.length === 0) {
@@ -721,7 +723,7 @@ export class UI_SystemModal {
             empty.style.color = '#888';
             empty.textContent = emptyText;
             this.dom.body.appendChild(empty);
-            this.renderFooterBackBtn(() => this.openMainMenu());
+            this.renderFooterBackBtn(backLabel, () => this.openMainMenu());
             return;
         }
 
@@ -769,7 +771,7 @@ export class UI_SystemModal {
         });
 
         this.dom.body.appendChild(grid);
-        this.renderFooterBackBtn(() => this.openMainMenu());
+        this.renderFooterBackBtn(backLabel, () => this.openMainMenu());
     }
 
     /**
@@ -802,6 +804,8 @@ export class UI_SystemModal {
         this._renderLevelCardsView(levels, {
             view: 'LEVEL_SELECT',
             title: '选择关卡',
+            introText: '点击关卡卡片会直接进入对应关卡；如果只是离开本页，请使用底部“返回游戏菜单”。',
+            backLabel: '返回游戏菜单',
             emptyText: '暂无可用关卡'
         });
     }
@@ -820,8 +824,10 @@ export class UI_SystemModal {
                 '本页用于人工验收样本，不影响故事推进。',
                 '敌人行为样本建议优先不部署攻击技能，或只部署“等待”，再提交规划并执行。',
                 '修甲 / 回血 / 弱点追击分别对应：先补残甲、先回低血量、先压迫玩家头部弱点。',
-                '这些样本是对 story 关卡敌人行为的稳定复核入口，不替代正常推进。'
+                '这些样本是对 story 关卡敌人行为的稳定复核入口，不替代正常推进。',
+                '如果只是离开本页，请使用底部“返回游戏菜单”。'
             ].join('\n'),
+            backLabel: '返回游戏菜单',
             emptyText: '当前没有可用的验收样本'
         });
     }
@@ -838,6 +844,13 @@ export class UI_SystemModal {
         this.saveLoadTitle = options.title || this.saveLoadTitle || '存档 / 读档';
         this.setTitle(this.saveLoadTitle);
         this.clearContent();
+        this._setCloseButtonState({
+            visible: this._canResumeBattle(),
+            label: '关闭并返回战斗'
+        });
+
+        const returnMeta = this._getReturnViewMeta(this.saveLoadReturnView);
+        this._appendGuideBlock(returnMeta.guideText);
 
         const slots = saveList || (this.engine.data && this.engine.data.getSaveList ? this.engine.data.getSaveList() : [
             { id: 'auto', slotType: 'auto', title: '自动存档', date: '空', level: '-', turn: '-', isEmpty: true },
@@ -907,7 +920,7 @@ export class UI_SystemModal {
             this.dom.body.appendChild(el);
         });
 
-        this.renderFooterBackBtn(() => {
+        this.renderFooterBackBtn(returnMeta.label, () => {
             if (this.saveLoadReturnView === 'LOGIN') {
                 this.renderLogin();
                 return;
@@ -924,10 +937,16 @@ export class UI_SystemModal {
         this.currentView = 'SETTINGS';
         this.setTitle('设置');
         this.clearContent();
+        this._setCloseButtonState({
+            visible: this._canResumeBattle(),
+            label: '关闭并返回战斗'
+        });
+
+        this._appendGuideBlock('这里用于调整系统选项。底部“返回游戏菜单”只回到菜单，右上角“关闭并返回战斗”会直接回到当前战斗。');
+
+        this.dom.body.innerHTML += '<p style="text-align:center; color:#888;">设置功能开发中...</p>';
         
-        this.dom.body.innerHTML = '<p style="text-align:center; color:#888;">设置功能开发中...</p>';
-        
-        this.renderFooterBackBtn(() => this.openMainMenu());
+        this.renderFooterBackBtn('返回游戏菜单', () => this.openMainMenu());
     }
 
     // --- Helper Methods ---
@@ -944,13 +963,59 @@ export class UI_SystemModal {
         if (this.dom.footer) this.dom.footer.innerHTML = '';
     }
 
-    renderFooterBackBtn(callback) {
+    _canResumeBattle() {
+        const isInBattle = this.engine?.fsm && (
+            this.engine.fsm.currentState === 'BATTLE_LOOP'
+            || this.engine.fsm.currentState === 'BATTLE_PREPARE'
+        );
+        const hasSavedBattle = this.engine?.data?.dataConfig?.runtime?.levelData;
+        return Boolean(isInBattle || hasSavedBattle);
+    }
+
+    _setCloseButtonState({ visible, label = '' } = {}) {
+        if (!this.dom.closeBtn) return;
+        this.dom.closeBtn.style.display = visible ? '' : 'none';
+        if (visible && label) {
+            this.dom.closeBtn.setAttribute('aria-label', label);
+            this.dom.closeBtn.setAttribute('title', label);
+        } else {
+            this.dom.closeBtn.removeAttribute('aria-label');
+            this.dom.closeBtn.removeAttribute('title');
+        }
+    }
+
+    _appendGuideBlock(text, options = {}) {
+        if (!this.dom.body || !text) return;
+        const guide = document.createElement('div');
+        guide.className = 'modal-guide';
+        guide.textContent = text;
+        if (options.preserveLineBreaks) {
+            guide.style.whiteSpace = 'pre-line';
+        }
+        this.dom.body.appendChild(guide);
+    }
+
+    _getReturnViewMeta(returnView) {
+        if (returnView === 'LOGIN') {
+            return {
+                label: '返回欢迎页',
+                guideText: '读取后会直接进入存档对应的页面；如果只是离开读档页，请使用底部“返回欢迎页”。'
+            };
+        }
+
+        return {
+            label: '返回游戏菜单',
+            guideText: '读取后会直接进入存档对应的页面；如果只是离开本页，请使用底部“返回游戏菜单”。'
+        };
+    }
+
+    renderFooterBackBtn(label, callback) {
         this.clearFooter();
         if (!this.dom.footer) return;
 
         const backBtn = document.createElement('button');
         backBtn.className = 'btn-primary';
-        backBtn.textContent = '返回';
+        backBtn.textContent = label;
         backBtn.onclick = callback;
         this.dom.footer.appendChild(backBtn);
     }

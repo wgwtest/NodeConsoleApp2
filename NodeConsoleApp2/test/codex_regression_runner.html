@@ -4902,6 +4902,154 @@
       assert(selected[0] === 'level_1_1', `已解锁关卡点击结果错误: ${selected[0]}`);
     }
 
+    function testSystemModalUsesExplicitReturnLabelsInNestedViews() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const modal = new UI_SystemModal();
+      modal.engine = {
+        fsm: {
+          currentState: 'MAIN_MENU'
+        },
+        data: {
+          dataConfig: {},
+          getLevelSelectEntries() {
+            return [
+              {
+                id: 'level_1_1',
+                name: '第一关',
+                description: 'story',
+                isUnlocked: true,
+                isCompleted: false
+              }
+            ];
+          },
+          getSaveList() {
+            return [
+              { id: 'auto', slotType: 'auto', title: '自动存档', date: '2026/04/09 10:00:00', level: '主菜单', turn: '-', isEmpty: false }
+            ];
+          }
+        },
+        input: {
+          selectLevel() {},
+          loadGame() {}
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderLevelSelect();
+      let footerText = document.getElementById('modalFooter')?.textContent || '';
+      let bodyText = document.getElementById('modalBody')?.textContent || '';
+      assert(footerText.includes('返回游戏菜单'), `关卡选择页脚仍缺少明确返回目标: ${footerText}`);
+      assert(bodyText.includes('点击关卡卡片会直接进入对应关卡'), '关卡选择页缺少进入与返回差异说明');
+
+      modal.renderSaveLoad(undefined, '', {
+        returnView: 'LOGIN',
+        title: '读取存档'
+      });
+
+      footerText = document.getElementById('modalFooter')?.textContent || '';
+      bodyText = document.getElementById('modalBody')?.textContent || '';
+      assert(footerText.includes('返回欢迎页'), `读档页脚仍缺少明确返回目标: ${footerText}`);
+      assert(bodyText.includes('读取后会直接进入存档对应的页面'), '读档页缺少读取结果说明');
+    }
+
+    function testSystemModalAnnotatesCloseButtonForBattleReturn() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true"></div>
+        <div id="modalTitle"></div>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
+        <button id="modalCloseBtn" type="button"></button>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const modal = new UI_SystemModal();
+      modal.engine = {
+        fsm: {
+          currentState: 'BATTLE_LOOP'
+        },
+        data: {
+          dataConfig: {
+            runtime: {
+              levelData: {
+                id: 'level_1_1'
+              }
+            }
+          },
+          getAcceptanceLevelSelectEntries() {
+            return [];
+          }
+        }
+      };
+      modal.bindDOM();
+
+      modal.renderMainMenu();
+
+      const closeBtn = document.getElementById('modalCloseBtn');
+      assert(closeBtn, '主菜单缺少关闭按钮');
+      assert((closeBtn.getAttribute('aria-label') || '').includes('关闭并返回战斗'), '关闭按钮 aria-label 未解释返回战斗语义');
+      assert((closeBtn.getAttribute('title') || '').includes('关闭并返回战斗'), '关闭按钮 title 未解释返回战斗语义');
+    }
+
+    function testSkillTreeModalExplainsCommitAndDirectCloseDifference() {
+      resetRegressionFixture('<div id="skillTreeMount"></div>');
+
+      const modal = new UI_SkillTreeModal();
+      modal.init({
+        data: {
+          playerData: {
+            skills: {
+              skillPoints: 3,
+              learned: []
+            }
+          },
+          getSkillCatalog() {
+            return {
+              skillsMap: {
+                skill_a: {
+                  id: 'skill_a',
+                  name: '样本技能',
+                  description: '用于 D1.2 回归。',
+                  unlock: { cost: { kp: 1 } },
+                  prerequisites: [],
+                  editorMeta: { x: 40, y: 40 }
+                }
+              },
+              skillsList: [
+                {
+                  id: 'skill_a',
+                  name: '样本技能',
+                  description: '用于 D1.2 回归。',
+                  unlock: { cost: { kp: 1 } },
+                  prerequisites: [],
+                  editorMeta: { x: 40, y: 40 }
+                }
+              ]
+            };
+          }
+        },
+        eventBus: {
+          emit() {}
+        }
+      });
+
+      modal.mountTo(document.getElementById('skillTreeMount'), {
+        title: '技能树 / 构筑',
+        onClose() {}
+      });
+
+      const text = document.getElementById('skillTreeMount')?.textContent || '';
+      assert(text.includes('提交并关闭会保存本次学习'), '技能树缺少“提交并关闭”语义说明');
+      assert(text.includes('直接关闭不提交未保存更改'), '技能树缺少“直接关闭”语义说明');
+    }
+
     function testSystemModalRendersStoryLevelContentHints() {
       resetRegressionFixture(`
         <div id="systemModal" hidden aria-hidden="true"></div>
@@ -5810,6 +5958,9 @@
       ['UI_SystemModal 会渲染结算去向按钮', testSystemModalRendersSettlementFlowActions],
       ['UI_SystemModal 会在胜利结算后直达技能树入口', testSystemModalOpensSkillTreeFromVictorySettlement],
       ['UI_SystemModal 关卡选择遵守解锁状态', testSystemModalLevelSelectHonorsUnlockedState],
+      ['UI_SystemModal 在嵌套页面使用明确返回目标语义', testSystemModalUsesExplicitReturnLabelsInNestedViews],
+      ['UI_SystemModal 为关闭按钮标注返回战斗语义', testSystemModalAnnotatesCloseButtonForBattleReturn],
+      ['UI_SkillTreeModal 会解释提交并关闭与直接关闭差别', testSkillTreeModalExplainsCommitAndDirectCloseDifference],
       ['UI_SystemModal 会渲染故事关卡内容提示', testSystemModalRendersStoryLevelContentHints],
       ['UI_SystemModal 会渲染章节推进总览与节点关系', testSystemModalRendersStoryChapterOverviewAndNodeRelation],
       ['UI_SystemModal 会渲染故事关卡首次通关与重复通关差异', testSystemModalRendersStoryLevelClearFeedbackComparison],

@@ -666,6 +666,17 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
   color: #dce6ff;
 }
 
+.modal-guide {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(129, 165, 255, 0.24);
+  background: rgba(129, 165, 255, 0.08);
+  color: #cfe8ff;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
 .modal-footer {
   padding: 16px 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -768,6 +779,17 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
   grid-template-columns: 1fr 320px;
   gap: 12px;
   min-height: 520px;
+}
+
+.ui-skilltree__ruleGuide {
+  margin-top: -2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 245, 217, 0.18);
+  background: rgba(124, 245, 217, 0.08);
+  color: #dffef6;
+  font-size: 0.84rem;
+  line-height: 1.5;
 }
 
 .ui-skilltree__canvasWrap {
