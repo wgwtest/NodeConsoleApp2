@@ -348,7 +348,7 @@ export class UI_TimelineBlock {
         const isExecution = this.engine.battlePhase === 'EXECUTION';
 
         if (this.dom.start) {
-            this.dom.start.textContent = isPlaying ? '暂停' : '开始';
+            this.dom.start.textContent = isPlaying ? '时间轴暂停' : '时间轴开始';
             this.dom.start.classList.toggle('is-paused', !isPlaying);
         }
 

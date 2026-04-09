@@ -596,6 +596,19 @@
       assert(/import\s+engine\s+from\s+['"]\.\.\/script\/engine\/CoreEngine\.js['"]/.test(html), 'mock_ui_v11.html 未改为导入默认 engine 单例');
     }
 
+    async function testMockUiUsesUnifiedMainFlowButtonLabels() {
+      const html = await fetch('../mock_ui_v11.html').then(r => r.text());
+      assert(/id="timelineStartBtn">时间轴开始</.test(html), 'mock_ui_v11.html 缺少“时间轴开始”按钮文案');
+      assert(!/id="timelineStartBtn">开始</.test(html), 'mock_ui_v11.html 仍保留语义过泛的“开始”按钮文案');
+      assert(/id="btnOpenSkillTree">技能树\s*\/\s*构筑</.test(html), 'mock_ui_v11.html 未统一技能树入口为“技能树 / 构筑”');
+      assert(!/id="btnOpenSkillTree">打开技能树</.test(html), 'mock_ui_v11.html 仍保留“打开技能树”旧文案');
+      assert(/id="btnExecute">执行回合</.test(html), 'mock_ui_v11.html 未统一主执行按钮为“执行回合”');
+      assert(!/id="btnExecute">执行</.test(html), 'mock_ui_v11.html 仍保留模糊的“执行”按钮文案');
+
+      const timelineSource = await fetch('../script/ui/UI_TimelineBlock.js').then(r => r.text());
+      assert(timelineSource.includes(`isPlaying ? '时间轴暂停' : '时间轴开始'`), 'UI_TimelineBlock 未统一时间轴按钮文案');
+    }
+
     async function testBattlePresentationControllerMarksActorOnTimelineEntry() {
       const host = resetRegressionFixture('');
       setupBattleRowDom(host);
@@ -5696,6 +5709,7 @@
 
     const tests = [
       ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
+      ['mock_ui_v11 使用统一的主流程按钮语言', testMockUiUsesUnifiedMainFlowButtonLabels],
       ['BattlePresentationController 会在时间线启动时标记攻击态', testBattlePresentationControllerMarksActorOnTimelineEntry],
       ['BattlePresentationController 会在受击时生成伤害飘字', testBattlePresentationControllerCreatesFloatTextOnDamage],
       ['BattlePresentationController 会在时间线启动时显示动作标签', testBattlePresentationControllerShowsReadableActionLabelOnTimelineEntry],
