@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正式关卡编辑器 v1</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #edf3fb;
+            --panel: #ffffff;
+            --panel-soft: #f7fbff;
+            --line: #d6e2f0;
+            --line-strong: #9cb4d1;
+            --ink: #17324d;
+            --ink-soft: #48637f;
+            --accent: #2563eb;
+            --accent-soft: #dbeafe;
+            --warn: #b45309;
+            --danger: #b91c1c;
+            --success: #166534;
+            --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(circle at top right, rgba(37, 99, 235, 0.10), transparent 32%),
+                linear-gradient(180deg, #f6faff 0%, var(--bg) 100%);
+            color: var(--ink);
+        }
+
+        .page {
+            width: min(1480px, calc(100vw - 32px));
+            margin: 24px auto 40px;
+        }
+
+        .hero,
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .hero {
+            padding: 24px 28px;
+            margin-bottom: 20px;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            color: var(--ink);
+        }
+
+        p, li, td, th, label {
+            line-height: 1.65;
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-bar {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: var(--panel-soft);
+            border: 1px solid var(--line);
+            color: var(--ink-soft);
+            font-weight: 600;
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .guide-card {
+            padding: 14px;
+            background: var(--panel-soft);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+        }
+
+        .explain-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+            background: var(--panel-soft);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .explain-table th,
+        .explain-table td {
+            border: 1px solid var(--line);
+            padding: 12px;
+            vertical-align: top;
+            text-align: left;
+        }
+
+        .explain-table th {
+            background: #eef5ff;
+            color: #1e3a8a;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 320px minmax(0, 1fr);
+            gap: 20px;
+        }
+
+        .panel {
+            padding: 20px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .controls,
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 120ms ease, opacity 120ms ease;
+        }
+
+        button:hover {
+            opacity: 0.94;
+            transform: translateY(-1px);
+        }
+
+        button.secondary { background: #475569; }
+        button.warn { background: var(--warn); }
+        button.danger { background: var(--danger); }
+        button.ghost {
+            background: #fff;
+            color: var(--ink);
+            border: 1px solid var(--line-strong);
+        }
+
+        .level-list,
+        .wave-list,
+        .validation-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 420px;
+            overflow: auto;
+            padding-right: 4px;
+        }
+
+        .level-list-item,
+        .wave-list-item {
+            width: 100%;
+            text-align: left;
+            background: #f8fbff;
+            color: var(--ink);
+            border: 1px solid var(--line);
+        }
+
+        .level-list-item[aria-current="true"],
+        .wave-list-item[aria-current="true"] {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+            color: #1d4ed8;
+        }
+
+        .editor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            padding: 16px;
+            background: var(--panel-soft);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px 14px;
+        }
+
+        .field-grid.single {
+            grid-template-columns: 1fr;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field span {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ink-soft);
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            border: 1px solid var(--line-strong);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font: inherit;
+            color: var(--ink);
+            background: #fff;
+        }
+
+        textarea {
+            min-height: 96px;
+            resize: vertical;
+        }
+
+        .readonly-note,
+        .hint {
+            color: var(--ink-soft);
+            font-size: 13px;
+        }
+
+        .next-level-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px 12px;
+            min-height: 92px;
+            border: 1px dashed var(--line-strong);
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .next-level-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        pre.output {
+            margin: 0;
+            padding: 14px;
+            min-height: 240px;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 14px;
+            overflow: auto;
+            font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .textarea-output {
+            min-height: 260px;
+            font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+        }
+
+        .footer-link-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        @media (max-width: 1180px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .editor-grid,
+            .field-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="hero">
+            <div class="hero-meta">
+                <span class="tag">正式编辑器入口</span>
+                <span class="tag">WBS-3.2.4</span>
+                <span class="tag">作者工具页</span>
+            </div>
+            <h1>正式关卡编辑器 v1</h1>
+            <p>本页是当前工程的<strong>正式关卡编辑器主入口</strong>，负责在浏览器内直接加载 `levels.json`，按“关卡列表 + 详情表单 + 波次 / 敌人池”方式编辑关卡内容，并把结果导出成运行时可消费的包产物。</p>
+            <p>它不是主流程页面，也不是故事关卡选择页。它的职责是<strong>编辑关卡内容</strong>、<strong>生成 JSON 产物</strong>、<strong>把产物写入 runtime override</strong>。真正验证运行时是否消费了这份产物，应跳转到 `level_runtime_probe.html` 或刷新 `mock_ui_v11.html`。</p>
+
+            <div id="status" class="status-bar">初始化中...</div>
+
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <h3>本页用来验证什么</h3>
+                    <ol>
+                        <li>能否直接从默认 `levels.json` 加载出完整关卡包。</li>
+                        <li>能否修改关卡基本字段、章节关系、波次、敌人池成员。</li>
+                        <li>能否导出新的关卡包 JSON。</li>
+                        <li>能否把导出产物写入 runtime override，供独立运行时消费。</li>
+                    </ol>
+                </div>
+                <div class="guide-card">
+                    <h3>和其他页面的关系</h3>
+                    <ul>
+                        <li>`level_editor_v1.html`：正式编辑器主入口。</li>
+                        <li>`level_runtime_probe.html`：独立运行时消费验证页。</li>
+                        <li>`mock_ui_v11.html`：主流程烟测页，验证 override 是否不破坏战斗流程。</li>
+                        <li>旧 `level_editor_io_test.html`：历史 I/O 注入页，不再作为正式入口。</li>
+                    </ul>
+                </div>
+                <div class="guide-card">
+                    <h3>关键字段怎么填</h3>
+                    <ul>
+                        <li>`nextLevelIds`：通过复选框显式维护故事关卡后继关系。</li>
+                        <li>`敌人风格标签`：用逗号或换行分隔多个标签。</li>
+                        <li>`敌人池成员`：每行一条，格式为 `templateId@position`。</li>
+                        <li>`关卡 ID`：当前版本只读展示，不支持直接改 ID。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <table class="explain-table">
+                <thead>
+                    <tr>
+                        <th>按钮</th>
+                        <th>会做什么</th>
+                        <th>为什么这能证明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>`重新加载默认关卡包`</td>
+                        <td>重新从 `../assets/data/levels.json` 生成一个全新的编辑工作区。</td>
+                        <td>证明编辑器依赖的是关卡包文件，而不是某次测试残留的内存对象。</td>
+                    </tr>
+                    <tr>
+                        <td>`保存当前关卡` / `保存波次与敌人池`</td>
+                        <td>把详情表单和波次表单写回工作区，再刷新列表与校验面板。</td>
+                        <td>证明编辑页本身具备结构化修改能力，而不是单纯展示 JSON。</td>
+                    </tr>
+                    <tr>
+                        <td>`导出 JSON` / `下载 JSON`</td>
+                        <td>把当前工作区重新封装成 wrapped `levels.json` 结构。</td>
+                        <td>证明编辑结果已经具备产物化能力，可交给运行时或其他工具消费。</td>
+                    </tr>
+                    <tr>
+                        <td>`应用 Runtime Override`</td>
+                        <td>把当前导出的关卡包写入浏览器 localStorage override。</td>
+                        <td>这是“编辑器产物 -> 运行时消费”的桥接步骤；之后由 runtime probe 读取并实例化。</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="footer-link-row">
+                <button id="loadDefaultBtn" type="button">重新加载默认关卡包</button>
+                <button id="openRuntimeProbeBtn" type="button" class="secondary">打开 Runtime Probe</button>
+                <button id="openMockUiBtn" type="button" class="ghost">打开 mock_ui_v11.html</button>
+            </div>
+        </section>
+
+        <section class="workspace">
+            <aside class="stack">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>关卡列表</h2>
+                        <div class="toolbar">
+                            <button id="addLevelBtn" type="button">新增关卡</button>
+                            <button id="removeLevelBtn" type="button" class="danger">删除当前关卡</button>
+                        </div>
+                    </div>
+                    <div id="levelList" class="level-list"></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>结构校验</h2>
+                    </div>
+                    <div id="validationList" class="validation-box"></div>
+                </div>
+            </aside>
+
+            <main class="stack">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>当前关卡详情</h2>
+                            <div id="selectedLevelId" class="hint">当前关卡：-</div>
+                        </div>
+                        <div class="toolbar">
+                            <button id="saveLevelBtn" type="button">保存当前关卡</button>
+                        </div>
+                    </div>
+
+                    <div class="editor-grid">
+                        <div class="card">
+                            <h3>基础字段</h3>
+                            <div class="field-grid">
+                                <label class="field">
+                                    <span>关卡 ID</span>
+                                    <input id="levelIdInput" readonly>
+                                </label>
+                                <label class="field">
+                                    <span>名称</span>
+                                    <input id="levelNameInput">
+                                </label>
+                                <label class="field">
+                                    <span>类型</span>
+                                    <select id="levelKindSelect">
+                                        <option value="story">story</option>
+                                        <option value="acceptance">acceptance</option>
+                                    </select>
+                                </label>
+                                <label class="field">
+                                    <span>顺序 order</span>
+                                    <input id="levelOrderInput" type="number" step="1">
+                                </label>
+                            </div>
+                            <label class="field" style="margin-top: 12px;">
+                                <span>描述</span>
+                                <textarea id="levelDescriptionInput"></textarea>
+                            </label>
+                            <p class="readonly-note">说明：当前版本不支持直接修改关卡 ID；如需新 ID，请新增关卡后再编辑内容。</p>
+                        </div>
+
+                        <div class="card">
+                            <h3>章节与关系</h3>
+                            <div class="field-grid">
+                                <label class="field">
+                                    <span>chapterId</span>
+                                    <input id="chapterIdInput">
+                                </label>
+                                <label class="field">
+                                    <span>chapterOrder</span>
+                                    <input id="chapterOrderInput" type="number" step="1">
+                                </label>
+                                <label class="field">
+                                    <span>chapterLabel</span>
+                                    <input id="chapterLabelInput">
+                                </label>
+                                <label class="field">
+                                    <span>chapterTitle</span>
+                                    <input id="chapterTitleInput">
+                                </label>
+                                <label class="field">
+                                    <span>nodeLabel</span>
+                                    <input id="nodeLabelInput">
+                                </label>
+                            </div>
+                            <label class="field" style="margin-top: 12px;">
+                                <span>objectiveText</span>
+                                <textarea id="objectiveTextInput"></textarea>
+                            </label>
+                            <div class="field" style="margin-top: 12px;">
+                                <span>nextLevelIds</span>
+                                <div id="nextLevelList" class="next-level-list"></div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>战斗与选择展示</h3>
+                            <div class="field-grid">
+                                <label class="field">
+                                    <span>background</span>
+                                    <input id="backgroundInput">
+                                </label>
+                                <label class="field">
+                                    <span>slotLayoutId</span>
+                                    <input id="slotLayoutIdInput">
+                                </label>
+                                <label class="field">
+                                    <span>difficultyLabel</span>
+                                    <input id="difficultyLabelInput">
+                                </label>
+                                <label class="field">
+                                    <span>enemyStyleTags</span>
+                                    <input id="enemyStyleTagsInput">
+                                </label>
+                            </div>
+                            <label class="field" style="margin-top: 12px;">
+                                <span>buildHint</span>
+                                <textarea id="buildHintInput"></textarea>
+                            </label>
+                        </div>
+
+                        <div class="card">
+                            <h3>奖励</h3>
+                            <div class="field-grid">
+                                <label class="field">
+                                    <span>EXP</span>
+                                    <input id="rewardExpInput" type="number" step="1">
+                                </label>
+                                <label class="field">
+                                    <span>Gold</span>
+                                    <input id="rewardGoldInput" type="number" step="1">
+                                </label>
+                                <label class="field">
+                                    <span>KP</span>
+                                    <input id="rewardKpInput" type="number" step="1">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>波次与敌人池</h2>
+                            <div id="selectedWaveId" class="hint">当前波次：-</div>
+                        </div>
+                        <div class="toolbar">
+                            <button id="addWaveBtn" type="button">新增波次</button>
+                            <button id="removeWaveBtn" type="button" class="warn">删除当前波次</button>
+                            <button id="saveWaveBtn" type="button">保存波次与敌人池</button>
+                        </div>
+                    </div>
+
+                    <div class="editor-grid">
+                        <div class="card">
+                            <h3>波次列表</h3>
+                            <div id="waveList" class="wave-list"></div>
+                        </div>
+
+                        <div class="card">
+                            <h3>当前波次编辑</h3>
+                            <div class="field-grid">
+                                <label class="field">
+                                    <span>waveId</span>
+                                    <input id="waveIdInput">
+                                </label>
+                                <label class="field">
+                                    <span>waveType</span>
+                                    <input id="waveTypeInput">
+                                </label>
+                                <label class="field">
+                                    <span>enemyPoolId</span>
+                                    <input id="waveEnemyPoolIdInput">
+                                </label>
+                                <label class="field">
+                                    <span>enemyPoolName</span>
+                                    <input id="enemyPoolNameInput">
+                                </label>
+                            </div>
+                            <label class="field" style="margin-top: 12px;">
+                                <span>敌人池成员</span>
+                                <textarea id="enemyMembersInput" placeholder="enemy_template_id@1&#10;enemy_template_id_2@2"></textarea>
+                            </label>
+                            <p class="hint">敌人池成员格式：每行一条 `templateId@position`。例如：`enemy_acceptance_guard@1`。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>导出与 Runtime Override</h2>
+                        <div class="toolbar">
+                            <button id="exportBtn" type="button">导出 JSON</button>
+                            <button id="downloadBtn" type="button" class="secondary">下载 JSON</button>
+                            <button id="applyOverrideBtn" type="button">应用 Runtime Override</button>
+                            <button id="clearOverrideBtn" type="button" class="ghost">清除 Runtime Override</button>
+                        </div>
+                    </div>
+
+                    <p class="hint">说明：`应用 Runtime Override` 只把当前导出产物写入浏览器存储；要验证运行时是否真正消费这份产物，请打开 `level_runtime_probe.html` 或刷新 `mock_ui_v11.html`。</p>
+                    <div id="overrideStatus" class="status-bar" style="margin-bottom: 14px;">尚未写入 Runtime Override。</div>
+                    <textarea id="exportOutput" class="textarea-output" spellcheck="false"></textarea>
+                </div>
+            </main>
+        </section>
+    </div>
+
+    <script type="module">
+        import { bootLevelEditorPage } from '../script/editor/level/index.js';
+
+        const page = bootLevelEditorPage({
+            defaultSourceUrl: '../assets/data/levels.json'
+        });
+
+        document.getElementById('openRuntimeProbeBtn')?.addEventListener('click', () => {
+            window.open('../test/level_runtime_probe.html', '_blank');
+        });
+
+        document.getElementById('openMockUiBtn')?.addEventListener('click', () => {
+            window.open('../mock_ui_v11.html', '_blank');
+        });
+
+        window.__CODEX_LEVEL_EDITOR_PAGE__ = page;
+    </script>
+</body>
+</html>

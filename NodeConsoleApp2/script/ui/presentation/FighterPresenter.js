@@ -50,6 +50,23 @@ export class FighterPresenter {
         this.animationDriver.pulseClass(this.shadow, 'is-shadow-surge', 420);
     }
 
+    playTemplate(template = 'default', context = {}) {
+        const key = String(template || '').trim().toLowerCase();
+        if (key === 'guard') {
+            this._playGuardTemplate(context);
+            return;
+        }
+        if (key === 'heal') {
+            this._playHealTemplate(context);
+            return;
+        }
+        if (key === 'status') {
+            this._playStatusTemplate(context);
+            return;
+        }
+        this.playAction();
+    }
+
     playHit({ armorPart = null, damage = 0, armorDamage = 0 } = {}) {
         if (!damage && !armorDamage) return;
         this.animationDriver.pulseClass(this.fighterRoot, 'is-hit', 420);
@@ -123,5 +140,48 @@ export class FighterPresenter {
                 bar.dataset.max = String(max);
             }
         }
+    }
+
+    _playGuardTemplate(context = {}) {
+        this.animationDriver.pulseClass(this.fighterRoot, 'is-hit', 320);
+        this.animationDriver.pulseClass(this.spriteContainer, 'is-hit-flash', 280);
+        const armorPart = context.armorPart || this._firstArmorPartKey();
+        if (armorPart) {
+            this.pulseArmor(armorPart, 'hit');
+        }
+        const guardText = context.text || context.floatText || '格挡';
+        if (context.showFloatText !== false) {
+            this.showFloatText(guardText, 'guard');
+        }
+    }
+
+    _playHealTemplate(context = {}) {
+        this.playHeal();
+        const amount = Number(context.amount ?? context.value ?? 0) || 0;
+        if (context.showFloatText === false) {
+            return;
+        }
+        if (amount > 0) {
+            this.showFloatText(`+${amount}`, 'heal');
+            return;
+        }
+        this.showFloatText(context.text || '治疗', 'heal');
+    }
+
+    _playStatusTemplate(context = {}) {
+        const statusKind = context.statusKind === 'debuff' ? 'debuff' : 'buff';
+        this.pulseStatus(statusKind);
+        if (context.showFloatText === false) {
+            return;
+        }
+        const text = context.text || (statusKind === 'debuff' ? 'DEBUFF +' : 'BUFF +');
+        this.showFloatText(text, statusKind);
+    }
+
+    _firstArmorPartKey() {
+        for (const key of this.armorRows.keys()) {
+            return key;
+        }
+        return null;
     }
 }

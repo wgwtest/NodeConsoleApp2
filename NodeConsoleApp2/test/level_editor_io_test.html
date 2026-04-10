@@ -37,11 +37,14 @@
 <div class="container">
     <h1>Level Editor I/O Test Module</h1>
     <p>Tests loading wrapped level pack JSON, exporting as pack, and verifying the runtime override bridge independently from battle UI memory state.</p>
+    <p><strong>作者样本工具页：</strong>本页属于作者样本工具页，用于验证关卡 pack 产物注入与 runtime override 桥接，不属于故事推进关卡，也不属于验收样本入口。</p>
+    <p><strong>历史页说明：</strong>当前工程的正式关卡编辑入口已经迁移到 <code>level_editor_v1.html</code>。本页保留为历史 I/O 样本页，用于对照旧链路，不再作为正式编辑器主入口。</p>
 
     <div class="panel guide-panel" id="pageGuide">
         <h2>本页用途</h2>
-        <p><span class="guide-tag">产物注入页</span>本页是“产物注入页”，负责把 <code>关卡 pack</code> 载入当前工具页，并在你确认后把当前内存里的 pack 写入本地 <code>runtime override</code> 存储。</p>
+        <p><span class="guide-tag">产物注入页</span>本页是“产物注入页”，也是一个<strong>作者样本工具页</strong>，负责把 <code>关卡 pack</code> 载入当前工具页，并在你确认后把当前内存里的 pack 写入本地 <code>runtime override</code> 存储。</p>
         <p>它<strong>不直接证明运行时实例化成功</strong>。真正验证“运行时是否吃到这份关卡配置并能实例化敌人”的页面是 <code>level_runtime_probe.html</code>。</p>
+        <p>边界说明：本页<strong>不属于故事推进关卡</strong>，也<strong>不属于验收样本入口</strong>；它只负责作者侧的关卡包注入与覆写验证。</p>
         <div class="guide-grid">
             <div class="guide-card">
                 <h3>验证链路</h3>
@@ -117,6 +120,7 @@
     <div class="panel">
         <h2>1. Import Data</h2>
         <div class="controls">
+            <button onclick="openFormalEditor()">Open level_editor_v1.html</button>
             <button onclick="loadFromUrl()">Load from ../assets/data/levels.json</button>
             <input type="file" id="fileInput" accept=".json" onchange="loadFromFile(this)">
         </div>
@@ -391,6 +395,10 @@
         window.open('../test/level_runtime_probe.html', '_blank');
     }
 
+    function openFormalEditor() {
+        window.open('../test/level_editor_v1.html', '_blank');
+    }
+
     renderList();
     renderRuntimeOverrideStatus();
 
@@ -404,6 +412,7 @@
     window.applyRuntimeOverride = applyRuntimeOverride;
     window.clearRuntimeOverride = clearRuntimeOverride;
     window.openRuntimePreview = openRuntimePreview;
+    window.openFormalEditor = openFormalEditor;
 </script>
 </body>
 </html>

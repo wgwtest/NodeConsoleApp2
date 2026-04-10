@@ -1,6 +1,6 @@
 # 设计说明 README
 
-最后整理时间：2026-04-07
+最后整理时间：2026-04-10
 
 状态：`当前有效 / 已完成 design 目录迁移与命名规范化`
 
@@ -26,6 +26,7 @@
    - `09-Buff系统(buff_design)-设计说明.md`
    - `11-敌人系统(enemy_design)-设计说明.md`
    - `12-关卡系统(level_design)-设计说明.md`
+   - `24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md`
    - `19-关卡选择内容元数据(level_select_content)-设计说明.md`
    - `13-道具系统(item_design)-设计说明.md`
 3. 作者工具与验证设计：
@@ -72,6 +73,7 @@
 | `21` | `21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明.md` | Spine 独立素材工程、导入边界与可行性分析 |
 | `22` | `22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md` | 主工程侧双仓库协作规则、消费边界与降级策略 |
 | `23` | `23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明.md` | 主工程侧 bundle 导入 probe、失败分类与降级壳 |
+| `24` | `24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md` | 关卡节点、章节组织、正式关卡编辑器与装载边界的上位设计 |
 
 ## 4. 当前使用规则
 

@@ -1,6 +1,6 @@
 # 执行 Issue 任务契约与验收口径
 
-最后整理时间：2026-04-07
+最后整理时间：2026-04-10
 
 状态：`当前有效`
 
@@ -43,9 +43,10 @@ Project 不负责：
 2. 用户明确通过后，对应条目应从待验收语义切换到 `Done`
 3. 没有用户明确通过前，不得把 Project 状态提前记为 `Done`
 4. 当前 Project 中：
-   - `Layer` 承担 `WBS Level` 语义
+   - `Layer` 承担 `WBS 层级投影` 语义
    - `Parent issue` 承担 `Parent Node` 语义
-   - issue 标题中的 `WBS Lx: 节点编号` 承担 `WBS Node` 语义
+   - issue 标题中的 `WBS-编号` 承担 `WBS Node` 语义
+   - issue 标题必须使用纯数字 WBS 编码，不再使用 `Lx + A/B/C` 的混合写法
 
 ### 2.2 GitHub Issue
 
@@ -101,6 +102,7 @@ Issue 应该做到：
 2. 文档中写“详细说明与证据”
 3. Issue 必须回链到关键文档
 4. 当前本地文档根入口以 [CODEX_DOC README](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/README.md) 和 [00-本地工程策略映射](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/00-本地工程策略映射.md) 为准
+5. 当前有效计划正文统一以 `WBS-数字编号` 为准；历史编号引用统一回链到 [16-WBS-编号迁移映射表](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/16-WBS-编号迁移映射表.md)
 
 ## 3. 执行 issue 的固定模板
 

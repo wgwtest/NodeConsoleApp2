@@ -2,18 +2,18 @@
 
 创建时间：2026-04-07
 
-最后整理时间：2026-04-07
+最后整理时间：2026-04-10
 
 状态：`当前有效`
 
 关联节点：
 
-1. `#30 WBS L2: C2 内容扩充`
-2. `#69 WBS L3: C2.1 故事关卡内容元数据与选择页提示收口`
+1. `#30 WBS-3.2 关卡管理与关卡编辑链`
+2. `#69 WBS-3.2.1 关卡内容元数据、通关状态与选择页提示基线`
 
 ## 1. 文档定位
 
-本文件是对 [12-关卡系统(level_design)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/12-关卡系统(level_design)-设计说明.md) 的运行时补充。
+本文件是对 [12-关卡系统(level_design)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/12-关卡系统(level_design)-设计说明.md) 和 [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md) 的运行时补充。
 
 它不重写战斗规则，也不重写关卡实例化逻辑，只回答一个问题：
 
@@ -34,7 +34,7 @@
 4. `构筑提示`
    - 让玩家知道当前构筑应优先准备什么能力
 
-这样做的目的不是剧透战斗细节，而是让阶段 C 的内容扩充开始形成“可感知差异”，避免三个 story 关卡在 UI 上看起来只是换了名字。
+这样做的目的不是剧透战斗细节，而是让 `WBS-3.2` 的关卡管理链开始形成“可感知差异”，避免三个 story 关卡在 UI 上看起来只是换了名字。
 
 ## 3. 数据契约
 
@@ -144,7 +144,7 @@ story 关卡卡片展示顺序如下：
 
 ## 8. 后续扩展
 
-本契约为阶段 C 后续内容扩充预留了稳定入口，后续可继续叠加：
+本契约为 `WBS-3.2` 后续关卡管理链预留了稳定入口，后续可继续叠加：
 
 1. 章节主题标签
 2. 首通奖励高亮

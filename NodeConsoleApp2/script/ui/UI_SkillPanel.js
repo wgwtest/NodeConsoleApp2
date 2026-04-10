@@ -36,6 +36,7 @@ export default class UI_SkillPanel {
         this.apMeter = document.getElementById('apMeter');
         this.apMeterSlots = document.getElementById('apMeterSlots');
         this.apMeterValue = document.getElementById('apMeterValue');
+        this.learnFeedbackBanner = null;
 
         // -- State --
         this.selectedSkill = null; // Object or ID
@@ -61,6 +62,7 @@ export default class UI_SkillPanel {
 
         this._ensureEditModeToggle();
         this._ensurePlanningCommitButton();
+        this._ensureLearnFeedbackBanner();
         this._emitArmedState();
 
         console.log('UI_SkillPanel initialized.');
@@ -150,6 +152,121 @@ export default class UI_SkillPanel {
                 this.engine.input.commitPlanning({ planningDraftBySkill: this.planningDraftBySkill });
             }
         });
+    }
+
+    _ensureLearnFeedbackBanner() {
+        const host = this.root?.querySelector('.skill-pool-column') || this.root;
+        if (!host) return null;
+
+        let banner = host.querySelector('.skill-learn-feedback');
+        if (!banner) {
+            banner = document.createElement('section');
+            banner.className = 'skill-learn-feedback';
+            banner.hidden = true;
+            banner.style.padding = '10px 12px';
+            banner.style.marginBottom = '10px';
+            banner.style.borderRadius = '12px';
+            banner.style.border = '1px solid rgba(124, 245, 217, 0.32)';
+            banner.style.background = 'linear-gradient(180deg, rgba(20, 30, 48, 0.94), rgba(16, 22, 38, 0.82))';
+            banner.style.boxShadow = '0 8px 18px rgba(0, 0, 0, 0.22)';
+
+            const title = document.createElement('div');
+            title.className = 'skill-learn-feedback__title';
+            title.style.fontSize = '0.82rem';
+            title.style.fontWeight = '700';
+            title.style.color = '#d8fff2';
+            title.style.marginBottom = '4px';
+
+            const body = document.createElement('div');
+            body.className = 'skill-learn-feedback__body';
+            body.style.fontSize = '0.78rem';
+            body.style.lineHeight = '1.55';
+            body.style.color = '#dfe7ff';
+
+            banner.appendChild(title);
+            banner.appendChild(body);
+
+            const anchor = host.querySelector('.skill-grid-view') || host.firstChild;
+            host.insertBefore(banner, anchor || null);
+        }
+
+        this.learnFeedbackBanner = banner;
+        return banner;
+    }
+
+    _resolvePendingLearnBattleFeedback() {
+        const progress = this.engine?.data?.dataConfig?.global?.progress;
+        const lastLearnAction = (progress && typeof progress.lastLearnAction === 'object') ? progress.lastLearnAction : null;
+        if (!lastLearnAction) return null;
+
+        const learnAtRaw = typeof lastLearnAction.committedAt === 'string' ? lastLearnAction.committedAt : '';
+        const settlementAtRaw = typeof progress?.lastSettlement?.settledAt === 'string' ? progress.lastSettlement.settledAt : '';
+        const learnAt = Date.parse(learnAtRaw);
+        const settlementAt = Date.parse(settlementAtRaw);
+        const hasLearnTimestamp = Number.isFinite(learnAt);
+        const hasSettlementTimestamp = Number.isFinite(settlementAt);
+
+        if (hasLearnTimestamp && hasSettlementTimestamp && learnAt <= settlementAt) {
+            return null;
+        }
+
+        const learnedIds = Array.isArray(lastLearnAction.learnedSkillIds)
+            ? lastLearnAction.learnedSkillIds.filter(skillId => typeof skillId === 'string' && skillId.trim().length > 0)
+            : [];
+        const namedSkills = Array.isArray(lastLearnAction.learnedSkillNames)
+            ? lastLearnAction.learnedSkillNames
+                .filter(name => typeof name === 'string' && name.trim().length > 0)
+                .map(name => name.trim())
+            : [];
+        const availableSkillIds = new Set(
+            Array.isArray(this.cachedSkills)
+                ? this.cachedSkills
+                    .map(skill => (typeof skill?.id === 'string' ? skill.id.trim() : ''))
+                    .filter(Boolean)
+                : []
+        );
+        const visibleIds = learnedIds.filter(skillId => availableSkillIds.has(skillId));
+        const resolvedVisibleNames = visibleIds.map(skillId => {
+            const skill = this.engine?.data?.getSkillConfig ? this.engine.data.getSkillConfig(skillId) : null;
+            const name = typeof skill?.name === 'string' ? skill.name.trim() : '';
+            return name || skillId;
+        });
+        const names = (namedSkills.length > 0 ? namedSkills : resolvedVisibleNames).filter(Boolean);
+        const visibleNames = names.length > 0 ? names : resolvedVisibleNames;
+
+        if (visibleNames.length === 0 && learnedIds.length > 0 && namedSkills.length === 0) {
+            return null;
+        }
+        if (visibleNames.length === 0 && learnedIds.length === 0 && namedSkills.length === 0) {
+            return null;
+        }
+
+        const spentKp = Number.isFinite(lastLearnAction.spentKp) ? Number(lastLearnAction.spentKp) : 0;
+        const remainingKp = Number.isFinite(lastLearnAction.remainingKp) ? Number(lastLearnAction.remainingKp) : 0;
+
+        return {
+            title: '本局新增技能',
+            body: `${visibleNames.join('、')} 已自动加入技能池，本局可直接用于规划；最近学习消耗 ${spentKp} KP，当前剩余 ${remainingKp} KP。`
+        };
+    }
+
+    renderLearnFeedbackBanner() {
+        const banner = this._ensureLearnFeedbackBanner();
+        if (!banner) return;
+
+        const feedback = this._resolvePendingLearnBattleFeedback();
+        if (!feedback) {
+            banner.hidden = true;
+            banner.dataset.visible = '0';
+            return;
+        }
+
+        const titleEl = banner.querySelector('.skill-learn-feedback__title');
+        const bodyEl = banner.querySelector('.skill-learn-feedback__body');
+        if (titleEl) titleEl.textContent = feedback.title;
+        if (bodyEl) bodyEl.textContent = feedback.body;
+        banner.hidden = false;
+        banner.dataset.visible = '1';
     }
 
     _getSkillSlotLabel(skill) {
@@ -389,6 +506,7 @@ export default class UI_SkillPanel {
         this.clearMatrix();
         this.selectedSkill = null;
         this.renderApMeter();
+        this.renderLearnFeedbackBanner();
     }
 
     _getSlotSpecFromElement(slotElement) {
@@ -511,6 +629,7 @@ export default class UI_SkillPanel {
         this.refreshSkillsFromPlayer(player);
         this.renderSkillPool();
         this.renderApMeter();
+        this.renderLearnFeedbackBanner();
     }
 
     refreshSkillsFromPlayer(player) {

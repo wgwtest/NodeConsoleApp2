@@ -2564,6 +2564,25 @@
       }
     }
 
+    async function testLevelEditorV1PageProvidesFormalEditorEntry() {
+      const editorPage = await fetch('../test/level_editor_v1.html').then(r => r.text());
+      for (const requiredText of [
+        '正式关卡编辑器 v1',
+        '正式关卡编辑器主入口',
+        '重新加载默认关卡包',
+        '保存当前关卡',
+        '保存波次与敌人池',
+        '应用 Runtime Override',
+        '打开 Runtime Probe',
+        '与其他页面的关系',
+        '敌人池成员',
+        '每行一条 `templateId@position`',
+        '../script/editor/level/index.js'
+      ]) {
+        assertPageIncludesText(editorPage, requiredText, 'level_editor_v1.html 缺少正式编辑器入口文案');
+      }
+    }
+
     async function testLevelRuntimeProbePageProvidesRuntimeConsumptionEntry() {
       const probePage = await fetch('../test/level_runtime_probe.html').then(r => r.text());
       for (const requiredText of [
@@ -4326,6 +4345,8 @@
       assert(acceptance?.isRuntimeEntry === true, 'acceptance 应属于运行时入口');
       assert(authoring?.entryLabel === '作者样本工具页', `authoring.entryLabel 错误: ${authoring?.entryLabel}`);
       assert(authoring?.isRuntimeEntry === false, 'authoring 不应属于运行时入口');
+      assert(authoring?.count === 3, `authoring.count 错误: ${authoring?.count}`);
+      assert(Array.isArray(authoring?.pages) && authoring.pages.includes('test/level_editor_v1.html'), 'authoring 缺少 level_editor_v1.html');
       assert(Array.isArray(authoring?.pages) && authoring.pages.includes('test/level_editor_io_test.html'), 'authoring 缺少 level_editor_io_test.html');
       assert(Array.isArray(authoring?.pages) && authoring.pages.includes('test/level_runtime_probe.html'), 'authoring 缺少 level_runtime_probe.html');
     }
@@ -5908,6 +5929,7 @@
       ['buff_editor_io_test 提供 runtime bridge 验证入口', testBuffEditorIoPageProvidesRuntimeBridgeEntry],
       ['buff_runtime_probe 提供运行时消费入口', testBuffRuntimeProbePageProvidesRuntimeConsumptionEntry],
       ['level_editor_io_test 提供 runtime bridge 验证入口', testLevelEditorIoPageProvidesRuntimeBridgeEntry],
+      ['level_editor_v1 提供正式关卡编辑入口', testLevelEditorV1PageProvidesFormalEditorEntry],
       ['level_runtime_probe 提供运行时消费入口', testLevelRuntimeProbePageProvidesRuntimeConsumptionEntry],
       ['skill_contract_probe 提供批量一致性校核入口', testSkillContractProbePageProvidesBatchConsistencyGuide],
       ['skill_contract_probe 会解释问题码与读数顺序', testSkillContractProbePageExplainsIssueCodesAndReadingOrder],

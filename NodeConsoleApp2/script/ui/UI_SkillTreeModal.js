@@ -33,6 +33,11 @@ function safeGet(obj, path, fallback) {
 	return cur === undefined ? fallback : cur;
 }
 
+function cloneSerializable(value) {
+	if (value === undefined) return undefined;
+	return JSON.parse(JSON.stringify(value));
+}
+
 function hasTag(skill, tag) {
 	return Array.isArray(skill?.tags) && skill.tags.includes(tag);
 }
@@ -556,14 +561,24 @@ export class UI_SkillTreeModal {
 		const skillsObj = this._getPlayerSkillsObj();
 		if (!skillsObj) return;
 
+		const stagedSkillIds = Array.from(this._stagedLearned);
 		const basePoints = this._sessionSnapshot ? this._sessionSnapshot.skillPoints : this._getSkillPoints();
 		const baseLearned = this._sessionSnapshot ? this._sessionSnapshot.learned : this._getLearned();
 		const nextPoints = basePoints - this._getStagedCostKp();
 		if (nextPoints < 0) return;
 
-		const nextLearned = unique([...toArray(baseLearned), ...Array.from(this._stagedLearned)]);
+		const nextLearned = unique([...toArray(baseLearned), ...stagedSkillIds]);
 		skillsObj.learned = nextLearned;
 		skillsObj.skillPoints = nextPoints;
+		this._storeLastLearnAction({
+			skillTreeId: skillsObj.skillTreeId ?? null,
+			learnedSkillIds: stagedSkillIds,
+			learnedSkillNames: stagedSkillIds.map(skillId => this._getSkillById(skillId)?.name || skillId),
+			learnedCount: stagedSkillIds.length,
+			spentKp: this._getStagedCostKp(),
+			remainingKp: nextPoints,
+			committedAt: new Date().toISOString()
+		});
 
 		if (this.engine?.eventBus) {
 			this.engine.eventBus.emit('DATA_UPDATE', { type: 'PLAYER_SKILLS', data: skillsObj });
@@ -611,6 +626,30 @@ export class UI_SkillTreeModal {
 		}
 
 		this._renderAll();
+	}
+
+	_storeLastLearnAction(lastLearnAction) {
+		const dataManager = this.engine?.data;
+		if (!dataManager) return;
+
+		if (typeof dataManager.recordSkillTreeLearnAction === 'function') {
+			dataManager.recordSkillTreeLearnAction(lastLearnAction);
+			return;
+		}
+
+		if (!dataManager.dataConfig || typeof dataManager.dataConfig !== 'object') {
+			dataManager.dataConfig = {};
+		}
+		if (!dataManager.dataConfig.global || typeof dataManager.dataConfig.global !== 'object') {
+			dataManager.dataConfig.global = {};
+		}
+		const sourceProgress = (dataManager.dataConfig.global.progress && typeof dataManager.dataConfig.global.progress === 'object')
+			? dataManager.dataConfig.global.progress
+			: {};
+		dataManager.dataConfig.global.progress = {
+			...sourceProgress,
+			lastLearnAction: cloneSerializable(lastLearnAction)
+		};
 	}
 
 	_handleClose() {

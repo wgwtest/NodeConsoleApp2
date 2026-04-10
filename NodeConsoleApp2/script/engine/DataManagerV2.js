@@ -1182,11 +1182,12 @@ class DataManager {
                 kind: 'authoring',
                 title: '作者样本',
                 entryLabel: '作者样本工具页',
-                count: 2,
+                count: 3,
                 isRuntimeEntry: false,
-                description: '只存在于工具页，用于作者验证关卡 pack 覆写注入与运行时消费；不属于故事推进关卡，也不属于验收样本入口。',
-                source: 'test/level_editor_io_test.html + test/level_runtime_probe.html',
+                description: '只存在于工具页，用于作者编辑关卡 pack、验证覆写注入与运行时消费；不属于故事推进关卡，也不属于验收样本入口。',
+                source: 'test/level_editor_v1.html + test/level_editor_io_test.html + test/level_runtime_probe.html',
                 pages: [
+                    'test/level_editor_v1.html',
                     'test/level_editor_io_test.html',
                     'test/level_runtime_probe.html'
                 ]

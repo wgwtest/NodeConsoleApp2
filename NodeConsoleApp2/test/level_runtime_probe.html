@@ -36,19 +36,21 @@
     <div class="panel">
         <h1>Level Runtime Probe</h1>
         <p>Local runtime probe for the level pack bridge. This page reloads <code>DataManagerV2.js</code>, resolves <code>level_1_1</code>, and verifies that runtime consumes the active level pack artifact instead of relying on editor memory state.</p>
+        <p><strong>作者样本工具页：</strong>本页属于作者样本工具页，用于验证运行时消费 override 后的关卡 pack，不属于故事推进关卡，也不属于验收样本入口。</p>
         <div id="status" class="status">Initializing...</div>
         <div class="controls">
             <button onclick="reloadRuntime()">Reload Runtime</button>
             <button onclick="instantiateProbeLevel()">Instantiate Probe Level</button>
-            <button class="secondary" onclick="openIoPage()">Open level_editor_io_test.html</button>
+            <button class="secondary" onclick="openEditorPage()">Open level_editor_v1.html</button>
             <button class="warn" onclick="openMockUi()">Open mock_ui_v11.html</button>
         </div>
     </div>
 
     <div class="panel guide-panel" id="pageGuide">
         <h2>本页用途</h2>
-        <p><span class="guide-tag">运行时消费页</span>本页是“运行时消费页”，会重新加载 <code>DataManagerV2.js</code>，再基于当前关卡 pack 解析 <code>level_1_1</code>，并验证运行时是否真的消费了 override 后的关卡配置。</p>
-        <p>它和 <code>level_editor_io_test.html</code> 的职责不同：I/O 页负责写入 override，本页负责在一个独立运行时里读出 override，并进一步实例化关卡敌人。</p>
+        <p><span class="guide-tag">运行时消费页</span>本页是“运行时消费页”，也是一个<strong>作者样本工具页</strong>，会重新加载 <code>DataManagerV2.js</code>，再基于当前关卡 pack 解析 <code>level_1_1</code>，并验证运行时是否真的消费了 override 后的关卡配置。</p>
+        <p>它和 <code>level_editor_v1.html</code> 的职责不同：正式编辑器负责编辑关卡并写入 override，本页负责在一个独立运行时里读出 override，并进一步实例化关卡敌人。</p>
+        <p>边界说明：本页<strong>不属于故事推进关卡</strong>，也<strong>不属于验收样本入口</strong>；它只负责作者侧的运行时消费验证。</p>
         <div class="guide-grid">
             <div class="guide-card">
                 <h3>字段怎么读</h3>
@@ -94,9 +96,9 @@
                     <td>证明 override 不只是“能显示”，而是能驱动真实实例化流程。</td>
                 </tr>
                 <tr>
-                    <td><code>Open level_editor_io_test.html</code></td>
-                    <td>回到产物注入页继续写入或清除 override。</td>
-                    <td>用来和上一页配合，形成“写入 - 读取 - 实例化”的完整验证链路。</td>
+                    <td><code>Open level_editor_v1.html</code></td>
+                    <td>回到正式关卡编辑器继续编辑、导出或清除 override。</td>
+                    <td>用来和上一页配合，形成“编辑 - 导出 - 写入 - 读取 - 实例化”的完整验证链路。</td>
                 </tr>
                 <tr>
                     <td><code>Open mock_ui_v11.html</code></td>
@@ -204,8 +206,8 @@
         }
     }
 
-    function openIoPage() {
-        window.open('../test/level_editor_io_test.html', '_blank');
+    function openEditorPage() {
+        window.open('../test/level_editor_v1.html', '_blank');
     }
 
     function openMockUi() {
@@ -214,7 +216,7 @@
 
     window.reloadRuntime = reloadRuntime;
     window.instantiateProbeLevel = instantiateProbeLevel;
-    window.openIoPage = openIoPage;
+    window.openEditorPage = openEditorPage;
     window.openMockUi = openMockUi;
 
     reloadRuntime();
