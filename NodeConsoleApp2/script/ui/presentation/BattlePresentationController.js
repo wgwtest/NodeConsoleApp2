@@ -1,4 +1,8 @@
 import { BattleAnimationDriver } from './BattleAnimationDriver.js';
+import {
+    DEFAULT_BATTLE_PRESENTATION_PROFILE_DOCUMENT,
+    buildBattlePresentationCssVariables
+} from './BattlePresentationAssetStore.js';
 import { resolveActionPresentation, resolveNamedPresentation } from './BattlePresentationConfig.js';
 import { FighterPresenter } from './FighterPresenter.js';
 
@@ -99,6 +103,13 @@ export class BattlePresentationController {
         this.sceneRoot = sceneRoot || this.root?.querySelector?.('.battle-scene') || this.root || null;
         this.eventBus = eventBus;
         this.enabled = enabled !== false;
+        this.presentationProfile = DEFAULT_BATTLE_PRESENTATION_PROFILE_DOCUMENT.profiles[0];
+        this.presentationProfileMeta = {
+            source: 'embedded-default',
+            profileId: this.presentationProfile.id,
+            profileLabel: this.presentationProfile.label,
+            assetId: DEFAULT_BATTLE_PRESENTATION_PROFILE_DOCUMENT.meta.id
+        };
         this.snapshots = { self: null, enemy: null };
         this.sideByEntityId = new Map();
         this._connected = false;
@@ -108,7 +119,8 @@ export class BattlePresentationController {
         this.animationDriver = new BattleAnimationDriver({
             sceneRoot: this.sceneRoot,
             fxLayer,
-            enabled: this.enabled
+            enabled: this.enabled,
+            presentationProfile: this.presentationProfile
         });
 
         this.presenters = {
@@ -116,13 +128,15 @@ export class BattlePresentationController {
                 side: 'self',
                 fighterRoot: this.sceneRoot?.querySelector?.('.fighter.player-character') || this.root?.querySelector?.('.fighter.player-character') || null,
                 hudRoot: this.root?.querySelector?.('.player-hud') || null,
-                animationDriver: this.animationDriver
+                animationDriver: this.animationDriver,
+                presentationProfile: this.presentationProfile
             }),
             enemy: new FighterPresenter({
                 side: 'enemy',
                 fighterRoot: this.sceneRoot?.querySelector?.('.fighter.enemy-character') || this.root?.querySelector?.('.fighter.enemy-character') || null,
                 hudRoot: this.root?.querySelector?.('.enemy-hud') || null,
-                animationDriver: this.animationDriver
+                animationDriver: this.animationDriver,
+                presentationProfile: this.presentationProfile
             })
         };
 
@@ -130,6 +144,8 @@ export class BattlePresentationController {
             this.sceneRoot.classList.add('is-presentation-ready');
             this.sceneRoot.dataset.presentationEnabled = this.enabled ? '1' : '0';
         }
+
+        this.applyPresentationProfile(this.presentationProfile, this.presentationProfileMeta);
     }
 
     _announceScenePulse(scenePulse, side = 'self') {
@@ -143,6 +159,35 @@ export class BattlePresentationController {
 
     static resolveActionPresentation(entry, payload = null) {
         return resolveActionPresentation(entry, payload);
+    }
+
+    applyPresentationProfile(profile, meta = {}) {
+        this.presentationProfile = profile || DEFAULT_BATTLE_PRESENTATION_PROFILE_DOCUMENT.profiles[0];
+        this.presentationProfileMeta = {
+            source: meta.source || this.presentationProfileMeta?.source || 'embedded-default',
+            profileId: meta.profileId || this.presentationProfile?.id || 'default_balanced',
+            profileLabel: meta.profileLabel || this.presentationProfile?.label || '默认平衡',
+            assetId: meta.assetId || this.presentationProfileMeta?.assetId || DEFAULT_BATTLE_PRESENTATION_PROFILE_DOCUMENT.meta.id
+        };
+
+        this.animationDriver?.setPresentationProfile?.(this.presentationProfile);
+        Object.values(this.presenters).forEach(presenter => presenter?.setPresentationProfile?.(this.presentationProfile));
+
+        if (this.sceneRoot) {
+            const cssVariables = buildBattlePresentationCssVariables(this.presentationProfile);
+            Object.entries(cssVariables).forEach(([key, value]) => {
+                this.sceneRoot.style.setProperty(key, value);
+            });
+            this.sceneRoot.dataset.presentationProfileId = this.presentationProfileMeta.profileId;
+            this.sceneRoot.dataset.presentationProfileLabel = this.presentationProfileMeta.profileLabel;
+            this.sceneRoot.dataset.presentationProfileSource = this.presentationProfileMeta.source;
+            this.sceneRoot.dataset.presentationAssetId = this.presentationProfileMeta.assetId;
+        }
+
+        const metaEl = this.root?.querySelector?.('[data-role="battle-presentation-meta"]') || null;
+        if (metaEl) {
+            metaEl.textContent = `演出配置资产：${this.presentationProfileMeta.profileLabel}（${this.presentationProfileMeta.source}）`;
+        }
     }
 
     setEnabled(enabled) {

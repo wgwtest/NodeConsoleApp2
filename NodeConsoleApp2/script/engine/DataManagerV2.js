@@ -1443,6 +1443,73 @@ class DataManager {
         return issues;
     }
 
+    getSkillContractRemediationBatches(options = {}) {
+        const includeAliases = options && options.includeAliases === true;
+        const catalog = this.getSkillContractCatalog({ includeAliases });
+        const entries = Array.isArray(catalog?.entries) ? catalog.entries : [];
+        const batchDefinitions = [
+            {
+                id: 'batch_structure_selection',
+                title: '首批结构选择异常',
+                ownerNode: 'WBS-3.3.3',
+                issueCodes: ['selection_count_exceeds_candidates', 'single_selection_count_invalid'],
+                description: '优先关闭 selectCount 越界与 single 模式计数错误，避免污染 UI 选择语义与规划阶段。'
+            },
+            {
+                id: 'batch_target_tags',
+                title: '主体 / 范围标签一致性',
+                ownerNode: 'WBS-3.3.3',
+                issueCodes: ['tag_subject_mismatch', 'tag_scope_mismatch'],
+                description: '继续收口 SUBJECT / SCOPE 标签与 target 声明的一致性。'
+            },
+            {
+                id: 'batch_effect_tags',
+                title: '动作效果标签一致性',
+                ownerNode: 'WBS-3.3.3',
+                issueCodes: ['unexpected_effect_tag', 'missing_effect_tag'],
+                description: '最后清理 tags 与 actions / buffRefs 之间的效果标签漂移。'
+            }
+        ];
+
+        const issueRows = [];
+        entries.forEach(entry => {
+            const issues = this.getSkillContractIssues(entry);
+            issues.forEach(issue => {
+                issueRows.push({
+                    skillId: entry.id,
+                    skillName: entry.name,
+                    runtimeAliasOf: entry.runtimeAliasOf || null,
+                    code: issue.code,
+                    message: issue.message
+                });
+            });
+        });
+
+        const batches = batchDefinitions.map(definition => {
+            const rows = issueRows.filter(row => definition.issueCodes.includes(row.code));
+            const affectedSkills = Array.from(new Map(rows.map(row => [row.skillId, {
+                skillId: row.skillId,
+                skillName: row.skillName,
+                runtimeAliasOf: row.runtimeAliasOf || null
+            }])).values());
+            return {
+                ...definition,
+                status: rows.length === 0 ? 'closed' : 'open',
+                openIssueCount: rows.length,
+                affectedSkillCount: affectedSkills.length,
+                affectedSkills,
+                issues: rows
+            };
+        });
+
+        return {
+            ownerNode: 'WBS-3.3.3',
+            selectedTreeId: catalog?.selectedTreeId || null,
+            totalEntryCount: entries.length,
+            batches
+        };
+    }
+
     // Instantiate a level from config, creating runtime enemy instances
     instantiateLevel(levelId) {
         const levelConfig = typeof this.getLevelConfig === 'function'

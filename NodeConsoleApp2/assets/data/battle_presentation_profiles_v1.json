@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "id": "battle_presentation_profiles_v1",
+    "name": "NodeConsoleApp2 对战展示配置资产",
+    "description": "纯展示层配置资产。只驱动动作、场景节奏与飘字表现，不写回规则层。",
+    "defaultConsumers": [
+      "mock_ui_v11.html",
+      "test/battle_presentation_probe.html",
+      "test/battle_presentation_configurator.html"
+    ]
+  },
+  "activeProfileId": "default_balanced",
+  "profiles": [
+    {
+      "id": "default_balanced",
+      "label": "默认平衡",
+      "description": "主流程默认展示配置，优先保持可读性和轻量反馈。",
+      "bridge": {
+        "spineSlotProfile": "humanoid_balanced",
+        "notes": "供主工程与 SpineAssets 对齐“同一动作语义、不同素材实现”的桥接面。"
+      },
+      "motion": {
+        "durations": {
+          "idleMs": 2800,
+          "actionMs": 420,
+          "hitMs": 420,
+          "hitFlashMs": 420,
+          "healMs": 460,
+          "healGlowMs": 460,
+          "shadowMs": 420,
+          "statusMs": 560,
+          "armorMs": 560,
+          "sceneTurnMs": 520,
+          "sceneBeatMs": 480,
+          "sceneImpactMs": 460,
+          "floatTextMs": 950,
+          "floatTextCleanupMs": 1200
+        },
+        "values": {
+          "idleBobPx": 8,
+          "lungeDistancePx": 34,
+          "lungeLiftPx": 8,
+          "lungeScale": 1.02,
+          "weaponSwingXPx": 10,
+          "weaponSwingYPx": -14,
+          "weaponSwingDeg": 18,
+          "enemyWeaponSwingXPx": -10,
+          "enemyWeaponSwingYPx": -14,
+          "enemyWeaponSwingDeg": -18,
+          "bodyStrikeLiftPx": -4,
+          "bodyStrikeRotateDeg": -2,
+          "hitShakeLeftPx": -10,
+          "hitShakeRightPx": 12,
+          "hitShakeSettlePx": -8,
+          "healLiftPx": 14,
+          "healScale": 1.02,
+          "shadowScaleX": 1.08,
+          "shadowScaleY": 0.96,
+          "sceneTurnScale": 1.01,
+          "sceneTurnSaturate": 1.18,
+          "sceneBeatOffsetPx": 6,
+          "sceneBeatScale": 1.01,
+          "sceneBeatBrightness": 1.12,
+          "sceneImpactX1Px": 4,
+          "sceneImpactY1Px": -2,
+          "sceneImpactX2Px": -3,
+          "sceneImpactY2Px": 1,
+          "sceneImpactX3Px": 2,
+          "sceneImpactY3Px": -1,
+          "sceneImpactX4Px": -1,
+          "sceneImpactY4Px": 0,
+          "sceneImpactBrightness": 1.08,
+          "floatStartPx": 16,
+          "floatMidPx": -6,
+          "floatEndPx": -56,
+          "floatScaleStart": 0.92,
+          "floatScaleEnd": 1.02
+        }
+      }
+    },
+    {
+      "id": "impact_heavy",
+      "label": "冲击强化",
+      "description": "加强前冲、受击与场景冲击，适合重打击风格的展示实验。",
+      "bridge": {
+        "spineSlotProfile": "humanoid_impact",
+        "notes": "适合未来 SpineAssets 中偏重前摇与受击反馈的角色模板。"
+      },
+      "motion": {
+        "durations": {
+          "idleMs": 2800,
+          "actionMs": 460,
+          "hitMs": 480,
+          "hitFlashMs": 460,
+          "healMs": 460,
+          "healGlowMs": 460,
+          "shadowMs": 460,
+          "statusMs": 560,
+          "armorMs": 560,
+          "sceneTurnMs": 520,
+          "sceneBeatMs": 520,
+          "sceneImpactMs": 520,
+          "floatTextMs": 980,
+          "floatTextCleanupMs": 1260
+        },
+        "values": {
+          "idleBobPx": 9,
+          "lungeDistancePx": 42,
+          "lungeLiftPx": 10,
+          "lungeScale": 1.04,
+          "weaponSwingXPx": 14,
+          "weaponSwingYPx": -16,
+          "weaponSwingDeg": 22,
+          "enemyWeaponSwingXPx": -14,
+          "enemyWeaponSwingYPx": -16,
+          "enemyWeaponSwingDeg": -22,
+          "bodyStrikeLiftPx": -6,
+          "bodyStrikeRotateDeg": -3,
+          "hitShakeLeftPx": -14,
+          "hitShakeRightPx": 16,
+          "hitShakeSettlePx": -10,
+          "healLiftPx": 16,
+          "healScale": 1.03,
+          "shadowScaleX": 1.12,
+          "shadowScaleY": 0.95,
+          "sceneTurnScale": 1.015,
+          "sceneTurnSaturate": 1.22,
+          "sceneBeatOffsetPx": 8,
+          "sceneBeatScale": 1.015,
+          "sceneBeatBrightness": 1.14,
+          "sceneImpactX1Px": 6,
+          "sceneImpactY1Px": -2,
+          "sceneImpactX2Px": -5,
+          "sceneImpactY2Px": 1,
+          "sceneImpactX3Px": 3,
+          "sceneImpactY3Px": -1,
+          "sceneImpactX4Px": -1,
+          "sceneImpactY4Px": 0,
+          "sceneImpactBrightness": 1.1,
+          "floatStartPx": 18,
+          "floatMidPx": -8,
+          "floatEndPx": -64,
+          "floatScaleStart": 0.92,
+          "floatScaleEnd": 1.03
+        }
+      }
+    }
+  ]
+}

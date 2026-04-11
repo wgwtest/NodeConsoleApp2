@@ -4,7 +4,7 @@
 
 最后整理时间：2026-04-11
 
-状态：`当前有效，对应 #70 / WBS-4.3；既有叶子已覆盖展示驱动、Spine协作、节奏强化、模板扩展与配置边界；#97 已作为正式后续叶子挂入 issue tree`
+状态：`当前有效，对应 #70 / WBS-4.3；既有叶子已覆盖展示驱动、Spine协作、节奏强化、模板扩展与配置边界；#97 已完成实现与自测，待人工验收`
 
 编号口径：
 
@@ -26,6 +26,7 @@
 
 1. `#71 WBS-4.3.1 动画展示驱动与验证页基线`
 2. `#72 WBS-4.3.2 SpineAssets协作规则与导入契约基线`
+3. `#97 WBS-4.3.7 动画参数配置器与展示配置资产化工具`
 
 ## 2. 为什么现在就要启动 WBS-4.3
 
@@ -177,3 +178,30 @@ Roadmap 时间：
 2. 输出稳定的展示配置资产，而不是只保留页面内存态
 3. 允许 `mock_ui_v11.html` 在不改战斗规则的前提下加载配置
 4. 为 `SpineAssets` 后续接入预留明确的数据接口与配置管理边界
+
+### 8.5 `#97 / WBS-4.3.7` 当前实现结论
+
+当前结论：
+
+1. 已实现并已自测，待人工验收。
+2. 已补齐展示配置资产、独立配置器、probe 读数与主流程消费入口。
+
+当前产物：
+
+1. `assets/data/battle_presentation_profiles_v1.json`
+2. `script/ui/presentation/BattlePresentationAssetStore.js`
+3. `test/battle_presentation_configurator.html`
+4. `test/battle_presentation_probe.html`
+5. `mock_ui_v11.html`
+6. `mock_ui_v11.css`
+7. `DOC/CODEX_DOC/04_研发文档/09-WBS-4.3.7-动画参数配置器与展示配置资产化工具.md`
+8. `DOC/CODEX_DOC/05_测试文档/01_自测报告/2026-04-11-100901-WBS-4.3.7-动画参数配置器与展示配置资产化工具自测报告.md`
+9. `DOC/CODEX_DOC/05_测试文档/02_验收清单/WBS-4.3.7-[待验收]-2026-04-11-100901-动画参数配置器与展示配置资产化工具-人工验收清单.md`
+10. `DOC/CODEX_DOC/06_过程文档/01_会话交接/2026-04-11-100901-WBS-4.3.7-动画参数配置器与展示配置资产化工具实现与自测记录.md`
+
+当前验证口径：
+
+1. 配置器页负责证明“参数可编辑、可保存、可导出”。
+2. `battle_presentation_probe.html` 负责证明“probe 页能读取并解释当前演出配置资产”。
+3. `mock_ui_v11.html` 负责证明“主流程页会消费同一份展示配置，而不改规则链”。
+4. `test/codex_regression_runner.html?scope=WBS-4.3.7` 负责提供共享回归范围入口。

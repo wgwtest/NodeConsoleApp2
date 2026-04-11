@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Presentation Configurator</title>
+    <link rel="stylesheet" href="../mock_ui_v11.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            background: #edf2f7;
+            color: #243447;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .page {
+            max-width: 1540px;
+            margin: 0 auto;
+            display: grid;
+            gap: 16px;
+        }
+
+        .panel {
+            background: #ffffff;
+            border: 1px solid #d9e1ec;
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+        }
+
+        .guide-grid,
+        .layout-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .guide-grid {
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+
+        .layout-grid {
+            grid-template-columns: minmax(320px, 420px) minmax(420px, 1fr);
+            align-items: start;
+        }
+
+        .guide-card,
+        .tool-card {
+            background: #f8fbff;
+            border: 1px solid #dbe7f6;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .guide-card h3,
+        .tool-card h3 {
+            margin-top: 0;
+            color: #1e3a8a;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+
+        .toolbar,
+        .preview-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        button,
+        select,
+        input,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+            background: #2563eb;
+            color: #fff;
+        }
+
+        button.secondary {
+            background: #475569;
+        }
+
+        button.warn {
+            background: #b45309;
+        }
+
+        .meta-stack {
+            display: grid;
+            gap: 8px;
+        }
+
+        .meta-item {
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f8fbff;
+            border: 1px solid #dbe7f6;
+        }
+
+        .field-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 170px 1fr 92px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .field-row label {
+            font-weight: 600;
+            color: #1e3a8a;
+        }
+
+        .field-row small {
+            display: block;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        .field-row input[type="range"] {
+            width: 100%;
+        }
+
+        .field-row input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 220px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            padding: 12px;
+            box-sizing: border-box;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .probe-shell {
+            background: #f4f8ff;
+            border: 1px solid #d9e7f7;
+            border-radius: 18px;
+            padding: 16px;
+        }
+
+        .probe-shell .battle-row {
+            display: grid;
+            grid-template-columns: 260px 1fr 260px;
+            gap: 12px;
+        }
+
+        .probe-shell .hud-panel {
+            color: #eef4ff;
+            overflow: hidden;
+        }
+
+        .probe-shell .battle-scene {
+            min-height: 320px;
+        }
+
+        .probe-shell .player-character .sprite-layer.body {
+            background: radial-gradient(circle at 45% 25%, rgba(255,255,255,0.88), rgba(106,224,255,0.16) 30%, rgba(33,52,96,0.1) 31%),
+                linear-gradient(180deg, rgba(125,221,255,0.95), rgba(59,130,246,0.65));
+            border-radius: 48% 48% 40% 40%;
+            inset: 28px 58px 34px 58px;
+        }
+
+        .probe-shell .player-character .sprite-layer.armor {
+            inset: 88px 74px 62px 74px;
+            border-radius: 28px 28px 38px 38px;
+            background: linear-gradient(180deg, rgba(223, 239, 255, 0.95), rgba(125, 158, 214, 0.72));
+        }
+
+        .probe-shell .player-character .sprite-layer.weapon::before {
+            content: "";
+            position: absolute;
+            top: 74px;
+            right: 76px;
+            width: 18px;
+            height: 124px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #fff8cf, #9db9ff 68%, #6575a3);
+            transform: rotate(18deg);
+            transform-origin: center 88%;
+        }
+
+        .probe-shell .enemy-character .sprite-layer.body {
+            background: radial-gradient(circle at 45% 25%, rgba(255,255,255,0.74), rgba(255,92,92,0.12) 28%, rgba(33,14,14,0.12) 31%),
+                linear-gradient(180deg, rgba(255, 148, 148, 0.92), rgba(239, 68, 68, 0.62));
+            border-radius: 48% 48% 40% 40%;
+            inset: 30px 60px 34px 60px;
+        }
+
+        .probe-shell .enemy-character .sprite-layer.armor {
+            inset: 96px 82px 62px 82px;
+            border-radius: 28px 28px 38px 38px;
+            background: linear-gradient(180deg, rgba(252, 232, 232, 0.9), rgba(177, 100, 100, 0.76));
+        }
+
+        .probe-shell .enemy-character .sprite-layer.weapon::before {
+            content: "";
+            position: absolute;
+            top: 102px;
+            left: 78px;
+            width: 16px;
+            height: 98px;
+            border-radius: 8px;
+            background: linear-gradient(180deg, #ffe2e2, #c58f8f 70%, #7f4a4a);
+            transform: rotate(-28deg);
+            transform-origin: center 80%;
+        }
+
+        .log {
+            min-height: 120px;
+            white-space: pre-wrap;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 12px;
+            border-radius: 10px;
+            margin: 0;
+        }
+
+        @media (max-width: 1280px) {
+            .layout-grid,
+            .probe-shell .battle-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <section class="panel">
+        <h1>Battle Presentation Configurator</h1>
+        <p><span class="badge">动画参数配置器</span>本页是动画参数配置器。它只改展示参数，不改战斗规则；不会改伤害、Buff 结果或敌人行为。</p>
+        <p>配置器负责把前冲、受击、治疗、镜头节奏和飘字参数提升成可编辑资产。保存后，<code>battle_presentation_probe.html</code> 与 <code>mock_ui_v11.html</code> 都会优先读取同一份浏览器 workspace。</p>
+    </section>
+
+    <section class="panel">
+        <div class="guide-grid">
+            <div class="guide-card">
+                <h3>本页在验什么</h3>
+                <ul>
+                    <li>展示参数是否已成为独立资产，而不是写死在 CSS 和 JS 里的常量。</li>
+                    <li>配置是否可以在当前工程内完成编辑、预览、保存、加载。</li>
+                    <li>未来 SpineAssets 接入时，是否只需要消费同一套展示配置桥接面。</li>
+                </ul>
+            </div>
+            <div class="guide-card">
+                <h3>为什么这能证明</h3>
+                <p>你在这里调整的只有展示变量。预览区若随之改变，而主流程仍沿用同一套配置消费入口，就能证明动画已被抽象成纯展示层资产。</p>
+            </div>
+            <div class="guide-card">
+                <h3>与其他页面的关系</h3>
+                <ul>
+                    <li><code>battle_presentation_configurator.html</code>：编辑和保存资产。</li>
+                    <li><code>battle_presentation_probe.html</code>：验证展示层按钮和模板语义。</li>
+                    <li><code>mock_ui_v11.html</code>：验证展示配置接入真实主流程。</li>
+                </ul>
+            </div>
+            <div class="guide-card">
+                <h3>workspace 语义</h3>
+                <p>“写入浏览器 workspace” 指把当前展示配置写入浏览器 <code>localStorage</code>。它不会改磁盘上的规则数据文件，只影响当前浏览器环境里的展示层配置。</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel layout-grid">
+        <div class="tool-card">
+            <h3>资产与工作区</h3>
+            <div class="meta-stack">
+                <div class="meta-item" id="assetMetaState">资产：加载中</div>
+                <div class="meta-item" id="profileMetaState">当前 profile：-</div>
+                <div class="meta-item" id="workspaceMetaState">workspace：-</div>
+            </div>
+            <div class="toolbar">
+                <label>
+                    当前 profile：
+                    <select id="profileSelect"></select>
+                </label>
+            </div>
+            <div class="toolbar">
+                <button type="button" id="btnApplyPreview">应用到预览</button>
+                <button type="button" id="btnSaveWorkspace">写入浏览器 workspace</button>
+                <button type="button" class="secondary" id="btnLoadWorkspace">从 workspace 读取</button>
+                <button type="button" class="secondary" id="btnResetAsset">恢复资产默认</button>
+                <button type="button" class="warn" id="btnClearWorkspace">清空 workspace</button>
+                <button type="button" class="secondary" id="btnExportJson">导出 JSON</button>
+                <button type="button" class="secondary" id="btnImportJson">从下方 JSON 导入</button>
+            </div>
+            <p>建议使用顺序：选一个 profile → 调参数 → 应用到预览 → 写入浏览器 workspace → 打开 <code>battle_presentation_probe.html</code> 或 <code>mock_ui_v11.html</code> 验证。</p>
+        </div>
+
+        <div class="tool-card">
+            <h3>参数编辑</h3>
+            <div id="fieldGrid" class="field-grid"></div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>预览区</h2>
+        <p>下面的按钮只触发展示事件，帮助你确认参数改动是否产生可观察差异。</p>
+        <div class="probe-shell">
+            <div class="preview-controls">
+                <button type="button" id="btnPreviewAttack">攻击前冲</button>
+                <button type="button" id="btnPreviewHit">受击</button>
+                <button type="button" id="btnPreviewHeal">治疗</button>
+                <button type="button" id="btnPreviewStatus">Buff 提示</button>
+                <button type="button" class="secondary" id="btnPreviewImpact">镜头冲击</button>
+            </div>
+            <div class="battle-row">
+                <section class="hud-panel player-hud labeled-block">
+                    <h2>玩家：参数样本</h2>
+                    <div class="hud-stat">
+                        <span>HP 112 / 120</span>
+                        <div class="bar hp"><span style="width:93%"></span></div>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">BUFF</span>
+                        <div class="status-icons"></div>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">DEBUFF</span>
+                        <div class="status-icons"></div>
+                    </div>
+                    <div class="armor-list-wrapper">
+                        <div class="armor-row" data-key="head">
+                            <span class="armor-name">头部</span>
+                            <div class="armor-bar"><span style="width:100%"></span></div>
+                            <span class="armor-value">18 / 18</span>
+                        </div>
+                        <div class="armor-row" data-key="chest">
+                            <span class="armor-name">胸部</span>
+                            <div class="armor-bar"><span style="width:100%"></span></div>
+                            <span class="armor-value">24 / 24</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="battle-scene labeled-block">
+                    <div class="sub-area-tag">预览场景</div>
+                    <div class="battle-presentation-meta" data-role="battle-presentation-meta">演出配置资产：加载中</div>
+                    <div class="stage-background"></div>
+                    <div class="fighters-layer">
+                        <div class="fighter player-character">
+                            <div class="character-sprite-container">
+                                <div class="sprite-layer body"></div>
+                                <div class="sprite-layer armor"></div>
+                                <div class="sprite-layer weapon"></div>
+                            </div>
+                            <div class="character-shadow"></div>
+                            <div class="effect-anchor"></div>
+                        </div>
+                        <div class="fighter enemy-character">
+                            <div class="character-sprite-container">
+                                <div class="sprite-layer body"></div>
+                                <div class="sprite-layer armor"></div>
+                                <div class="sprite-layer weapon"></div>
+                            </div>
+                            <div class="character-shadow"></div>
+                            <div class="effect-anchor"></div>
+                        </div>
+                    </div>
+                    <div class="fx-layer"></div>
+                </section>
+
+                <section class="hud-panel enemy-hud labeled-block">
+                    <h2>敌人：参数样本</h2>
+                    <div class="hud-stat">
+                        <span>HP 96 / 96</span>
+                        <div class="bar hp"><span style="width:100%"></span></div>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">BUFF</span>
+                        <div class="status-icons"></div>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">DEBUFF</span>
+                        <div class="status-icons"></div>
+                    </div>
+                    <div class="armor-list-wrapper">
+                        <div class="armor-row" data-key="head">
+                            <span class="armor-name">头部</span>
+                            <div class="armor-bar"><span style="width:100%"></span></div>
+                            <span class="armor-value">12 / 12</span>
+                        </div>
+                        <div class="armor-row" data-key="chest">
+                            <span class="armor-name">胸部</span>
+                            <div class="armor-bar"><span style="width:100%"></span></div>
+                            <span class="armor-value">18 / 18</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+        <pre id="previewLog" class="log"></pre>
+    </section>
+
+    <section class="panel">
+        <h2>JSON 输出 / 导入</h2>
+        <p>点击“导出 JSON”会把当前文档序列化到下面文本框；修改后再点击“从下方 JSON 导入”即可替换当前工作文档。</p>
+        <textarea id="jsonEditor" spellcheck="false"></textarea>
+    </section>
+</div>
+
+<script type="module">
+    import { BattlePresentationController } from '../script/ui/presentation/BattlePresentationController.js';
+    import {
+        clearBattlePresentationProfileWorkspace,
+        loadBattlePresentationProfile,
+        normalizeBattlePresentationProfileDocument,
+        saveBattlePresentationProfileWorkspace
+    } from '../script/ui/presentation/BattlePresentationAssetStore.js';
+
+    const FIELD_DEFS = [
+        { path: ['motion', 'durations', 'actionMs'], label: '前冲时长', min: 120, max: 1200, step: 10, note: '攻击起手动画持续时间（ms）' },
+        { path: ['motion', 'durations', 'hitMs'], label: '受击时长', min: 120, max: 1200, step: 10, note: '角色受击晃动时长（ms）' },
+        { path: ['motion', 'durations', 'healMs'], label: '治疗时长', min: 120, max: 1200, step: 10, note: '治疗回弹时长（ms）' },
+        { path: ['motion', 'durations', 'sceneBeatMs'], label: '节奏脉冲时长', min: 120, max: 1200, step: 10, note: 'scene-beat-* 持续时间（ms）' },
+        { path: ['motion', 'durations', 'sceneImpactMs'], label: '冲击时长', min: 120, max: 1200, step: 10, note: 'scene-impact 持续时间（ms）' },
+        { path: ['motion', 'durations', 'floatTextMs'], label: '飘字时长', min: 120, max: 1800, step: 10, note: '飘字淡出时长（ms）' },
+        { path: ['motion', 'values', 'lungeDistancePx'], label: '前冲距离', min: 4, max: 96, step: 1, note: '角色向前突进的像素距离' },
+        { path: ['motion', 'values', 'lungeLiftPx'], label: '前冲抬升', min: 0, max: 32, step: 1, note: '前冲时角色向上的抬升像素' },
+        { path: ['motion', 'values', 'weaponSwingDeg'], label: '武器摆角', min: 0, max: 48, step: 1, note: '玩家武器层的旋转角度（deg）' },
+        { path: ['motion', 'values', 'hitShakeLeftPx'], label: '受击左摆', min: -32, max: 0, step: 1, note: '受击第一段向左摆动的像素' },
+        { path: ['motion', 'values', 'hitShakeRightPx'], label: '受击右摆', min: 0, max: 32, step: 1, note: '受击第二段向右摆动的像素' },
+        { path: ['motion', 'values', 'healLiftPx'], label: '治疗抬升', min: 0, max: 32, step: 1, note: '治疗回弹向上的像素' },
+        { path: ['motion', 'values', 'sceneBeatOffsetPx'], label: '镜头聚焦偏移', min: 0, max: 18, step: 1, note: 'scene-beat-* 的水平偏移' },
+        { path: ['motion', 'values', 'sceneImpactX1Px'], label: '镜头冲击首摆', min: -18, max: 18, step: 1, note: 'scene-impact 第一段水平位移' },
+        { path: ['motion', 'values', 'floatEndPx'], label: '飘字终点高度', min: -120, max: -12, step: 1, note: '飘字结束时的垂直位置（px）' }
+    ];
+
+    function clone(value) {
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    function getByPath(target, path) {
+        return path.reduce((current, key) => current?.[key], target);
+    }
+
+    function setByPath(target, path, value) {
+        let cursor = target;
+        for (let index = 0; index < path.length - 1; index += 1) {
+            const key = path[index];
+            if (!cursor[key] || typeof cursor[key] !== 'object') {
+                cursor[key] = {};
+            }
+            cursor = cursor[key];
+        }
+        cursor[path[path.length - 1]] = value;
+    }
+
+    function createMiniEventBus() {
+        const listeners = new Map();
+        return {
+            on(event, callback) {
+                if (!listeners.has(event)) listeners.set(event, []);
+                listeners.get(event).push(callback);
+                return () => {
+                    const next = (listeners.get(event) || []).filter(fn => fn !== callback);
+                    listeners.set(event, next);
+                };
+            },
+            emit(event, payload) {
+                for (const fn of listeners.get(event) || []) {
+                    fn(payload);
+                }
+            }
+        };
+    }
+
+    const eventBus = createMiniEventBus();
+    const previewRoot = document.querySelector('.probe-shell .battle-row');
+    const sceneRoot = previewRoot.querySelector('.battle-scene');
+    const controller = new BattlePresentationController({ root: previewRoot, eventBus });
+    controller.connect();
+
+    let workingDocument = null;
+    let currentProfileId = null;
+    const previewBaseState = {
+        player: {
+            id: 'player_preview',
+            stats: { hp: 112, maxHp: 120 },
+            bodyParts: {
+                head: { current: 18, max: 18 },
+                chest: { current: 24, max: 24 }
+            },
+            buffs: [],
+            debuffs: []
+        },
+        enemy: {
+            id: 'enemy_preview',
+            hp: 96,
+            maxHp: 96,
+            bodyParts: {
+                head: { current: 12, max: 12 },
+                chest: { current: 18, max: 18 }
+            },
+            buffs: [],
+            debuffs: []
+        }
+    };
+    let previewState = clone(previewBaseState);
+
+    const logEl = document.getElementById('previewLog');
+    const profileSelect = document.getElementById('profileSelect');
+    const fieldGrid = document.getElementById('fieldGrid');
+    const jsonEditor = document.getElementById('jsonEditor');
+
+    function appendLog(text) {
+        logEl.textContent = logEl.textContent ? `${logEl.textContent}\n${text}` : text;
+    }
+
+    function resetPreviewState() {
+        previewState = clone(previewBaseState);
+        eventBus.emit('BATTLE_START', {
+            player: previewState.player,
+            enemies: [previewState.enemy]
+        });
+    }
+
+    function updateMeta(sourceLabel) {
+        const activeProfile = workingDocument.profiles.find(profile => profile.id === currentProfileId) || workingDocument.profiles[0];
+        document.getElementById('assetMetaState').textContent = `资产：${workingDocument.meta.name} / ${workingDocument.meta.id}`;
+        document.getElementById('profileMetaState').textContent = `当前 profile：${activeProfile.label}（${activeProfile.id}）`;
+        document.getElementById('workspaceMetaState').textContent = `workspace：${sourceLabel}`;
+        jsonEditor.value = JSON.stringify(workingDocument, null, 2);
+    }
+
+    function applyCurrentProfile(reason = 'configurator-preview') {
+        const activeProfile = workingDocument.profiles.find(profile => profile.id === currentProfileId) || workingDocument.profiles[0];
+        controller.applyPresentationProfile(activeProfile, {
+            source: reason,
+            profileId: activeProfile.id,
+            profileLabel: activeProfile.label,
+            assetId: workingDocument.meta.id
+        });
+        updateMeta(reason);
+        appendLog(`[APPLY] ${activeProfile.label} 已应用到预览。`);
+    }
+
+    function renderProfileOptions() {
+        profileSelect.innerHTML = '';
+        workingDocument.profiles.forEach(profile => {
+            const option = document.createElement('option');
+            option.value = profile.id;
+            option.textContent = `${profile.label} (${profile.id})`;
+            option.selected = profile.id === currentProfileId;
+            profileSelect.appendChild(option);
+        });
+    }
+
+    function renderFieldGrid() {
+        const activeProfile = workingDocument.profiles.find(profile => profile.id === currentProfileId) || workingDocument.profiles[0];
+        fieldGrid.innerHTML = '';
+
+        FIELD_DEFS.forEach(def => {
+            const row = document.createElement('div');
+            row.className = 'field-row';
+
+            const label = document.createElement('label');
+            label.textContent = def.label;
+            const note = document.createElement('small');
+            note.textContent = def.note;
+            label.appendChild(note);
+
+            const range = document.createElement('input');
+            range.type = 'range';
+            range.min = String(def.min);
+            range.max = String(def.max);
+            range.step = String(def.step);
+
+            const number = document.createElement('input');
+            number.type = 'number';
+            number.min = String(def.min);
+            number.max = String(def.max);
+            number.step = String(def.step);
+
+            const currentValue = Number(getByPath(activeProfile, def.path));
+            range.value = String(currentValue);
+            number.value = String(currentValue);
+
+            const syncValue = (nextValue) => {
+                const numeric = Number(nextValue);
+                if (!Number.isFinite(numeric)) return;
+                setByPath(activeProfile, def.path, numeric);
+                range.value = String(numeric);
+                number.value = String(numeric);
+            };
+
+            range.addEventListener('input', () => syncValue(range.value));
+            number.addEventListener('input', () => syncValue(number.value));
+
+            row.appendChild(label);
+            row.appendChild(range);
+            row.appendChild(number);
+            fieldGrid.appendChild(row);
+        });
+    }
+
+    function emitTemplate(template, label) {
+        eventBus.emit('TIMELINE_ENTRY_START', {
+            entry: {
+                side: 'self',
+                skillId: `preview_${template}`,
+                actorId: previewState.player.id,
+                meta: { label },
+                presentation: { template }
+            }
+        });
+    }
+
+    function bindPreviewActions() {
+        document.getElementById('btnPreviewAttack').addEventListener('click', () => {
+            emitTemplate('melee', '预览前冲');
+            appendLog('[PREVIEW] 攻击前冲');
+        });
+        document.getElementById('btnPreviewHit').addEventListener('click', () => {
+            previewState.enemy.hp = Math.max(0, previewState.enemy.hp - 16);
+            previewState.enemy.bodyParts.head.current = Math.max(0, previewState.enemy.bodyParts.head.current - 4);
+            eventBus.emit('BATTLE_TAKE_DAMAGE', {
+                target: { id: previewState.enemy.id },
+                damageDealt: 16,
+                armorDamage: 4,
+                targetPart: 'head'
+            });
+            eventBus.emit('BATTLE_UPDATE', {
+                player: previewState.player,
+                enemies: [previewState.enemy]
+            });
+            appendLog('[PREVIEW] 受击');
+        });
+        document.getElementById('btnPreviewHeal').addEventListener('click', () => {
+            previewState.player.stats.hp = Math.min(previewState.player.stats.maxHp, previewState.player.stats.hp + 8);
+            eventBus.emit('BATTLE_UPDATE', {
+                player: previewState.player,
+                enemies: [previewState.enemy]
+            });
+            appendLog('[PREVIEW] 治疗');
+        });
+        document.getElementById('btnPreviewStatus').addEventListener('click', () => {
+            previewState.player.buffs.push({
+                id: `buff_${previewState.player.buffs.length + 1}`,
+                name: '配置祝福',
+                description: '用于预览状态脉冲'
+            });
+            emitTemplate('status', '预览 Buff');
+            eventBus.emit('BATTLE_UPDATE', {
+                player: previewState.player,
+                enemies: [previewState.enemy]
+            });
+            appendLog('[PREVIEW] Buff 提示');
+        });
+        document.getElementById('btnPreviewImpact').addEventListener('click', () => {
+            controller.animationDriver.pulseSceneDirective('impact', 'self');
+            appendLog('[PREVIEW] 镜头冲击');
+        });
+    }
+
+    async function loadAssetDocument() {
+        const loaded = await loadBattlePresentationProfile({ preferWorkspace: false });
+        workingDocument = clone(loaded.document);
+        currentProfileId = loaded.activeProfile.id;
+        renderProfileOptions();
+        renderFieldGrid();
+        applyCurrentProfile(loaded.source);
+    }
+
+    async function loadWorkspaceDocument() {
+        const loaded = await loadBattlePresentationProfile({ preferWorkspace: true });
+        workingDocument = clone(loaded.document);
+        currentProfileId = loaded.activeProfile.id;
+        renderProfileOptions();
+        renderFieldGrid();
+        applyCurrentProfile(loaded.source);
+    }
+
+    profileSelect.addEventListener('change', () => {
+        currentProfileId = profileSelect.value;
+        renderFieldGrid();
+        applyCurrentProfile('configurator-switch');
+    });
+
+    document.getElementById('btnApplyPreview').addEventListener('click', () => {
+        applyCurrentProfile('configurator-preview');
+    });
+
+    document.getElementById('btnSaveWorkspace').addEventListener('click', () => {
+        saveBattlePresentationProfileWorkspace(workingDocument);
+        updateMeta('workspace-saved');
+        appendLog('[SAVE] 已写入浏览器 workspace');
+    });
+
+    document.getElementById('btnLoadWorkspace').addEventListener('click', () => {
+        loadWorkspaceDocument().catch(error => appendLog(`[ERROR] 读取 workspace 失败：${error?.message || error}`));
+    });
+
+    document.getElementById('btnResetAsset').addEventListener('click', () => {
+        loadAssetDocument().catch(error => appendLog(`[ERROR] 恢复资产默认失败：${error?.message || error}`));
+    });
+
+    document.getElementById('btnClearWorkspace').addEventListener('click', () => {
+        clearBattlePresentationProfileWorkspace();
+        appendLog('[CLEAR] 已清空浏览器 workspace');
+        loadAssetDocument().catch(error => appendLog(`[ERROR] 清空后恢复资产失败：${error?.message || error}`));
+    });
+
+    document.getElementById('btnExportJson').addEventListener('click', () => {
+        jsonEditor.value = JSON.stringify(workingDocument, null, 2);
+        appendLog('[EXPORT] 已导出 JSON');
+    });
+
+    document.getElementById('btnImportJson').addEventListener('click', () => {
+        try {
+            const parsed = JSON.parse(jsonEditor.value);
+            workingDocument = normalizeBattlePresentationProfileDocument(parsed);
+            currentProfileId = workingDocument.activeProfileId;
+            renderProfileOptions();
+            renderFieldGrid();
+            applyCurrentProfile('configurator-import');
+            appendLog('[IMPORT] 已从下方 JSON 导入');
+        } catch (error) {
+            appendLog(`[ERROR] JSON 导入失败：${error?.message || error}`);
+        }
+    });
+
+    bindPreviewActions();
+    resetPreviewState();
+    loadWorkspaceDocument().catch(async () => {
+        await loadAssetDocument();
+    });
+</script>
+</body>
+</html>

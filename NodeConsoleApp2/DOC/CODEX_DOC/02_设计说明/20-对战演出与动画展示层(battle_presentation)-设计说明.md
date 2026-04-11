@@ -307,6 +307,29 @@ probe 页还应额外遵守：
 2. 当前主工程中的动画参数配置器负责展示参数、消费映射和配置管理。
 3. 双方通过稳定的数据接口衔接，而不是让主工程直接承担素材制作职责。
 
+### 12.4 当前推荐实现形态
+
+为保证低耦合与可落地性，当前动画参数配置器应采用“三层一入口”结构：
+
+1. 展示配置资产：
+   - 使用独立 JSON 文档保存 `activeProfileId + profiles[]`
+   - 配置内容只覆盖展示层参数，如前冲距离、受击摆动、场景节奏和飘字高度
+2. 配置装载层：
+   - 使用独立 `BattlePresentationAssetStore` 负责默认资产读取、workspace 覆写读取和清空
+   - 主流程、probe 页和配置器都通过同一装载层拿配置
+3. 展示消费层：
+   - `BattlePresentationController` 负责把 active profile 应用到 CSS 变量和展示层 dataset
+   - `FighterPresenter / BattleAnimationDriver` 只消费这些展示参数，不感知规则层
+4. 独立入口：
+   - `battle_presentation_configurator.html` 负责编辑、预览、写入浏览器 workspace 和导出 JSON
+
+这样做的原因：
+
+1. 主流程只读配置，不承担编辑逻辑。
+2. probe 页只做验证，不承担保存逻辑。
+3. 配置器只操作展示参数，不直接碰伤害、Buff、敌人策略与时间线规则。
+4. 后续若 `SpineAssets` 输出新的角色 bundle，仍然只需复用当前 profile / bridge 语义，不需要重写主工程规则链。
+
 ## 13. 后续扩展方向
 
 本轮之后可继续拆分：

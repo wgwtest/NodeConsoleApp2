@@ -127,6 +127,13 @@
         </div>
     </div>
 
+    <div class="panel guide-panel" id="remediationGuide">
+        <h2>WBS-3.3.3 异常分批闭环</h2>
+        <p><span class="guide-tag">WBS-3.3.3</span>本页当前对应的正式修复节点是 <code>WBS-3.3.3</code>。它负责把已归档的技能异常从“问题码列表”推进成“修复批次 + 当前状态 + 后续去向”。</p>
+        <p>当前节点负责的批次会在下面直接列出。若你在共享回归页看到其他 <code>FAIL</code>，请用 <code>codex_regression_runner.html?scope=WBS-3.3.3</code> 只看当前范围；那些非本节点失败项不应和本页的批量校核结果混为一谈。</p>
+        <div id="remediationBatches" class="issue-list"></div>
+    </div>
+
     <div class="panel">
         <h2>摘要卡</h2>
         <div id="summaryGrid" class="summary-grid"></div>
@@ -169,6 +176,7 @@
     const summaryGridEl = document.getElementById('summaryGrid');
     const issueListEl = document.getElementById('issueList');
     const contractRowsEl = document.getElementById('contractRows');
+    const remediationBatchesEl = document.getElementById('remediationBatches');
     const logsEl = document.getElementById('logs');
 
     let logs = [];
@@ -256,6 +264,36 @@
         `).join('');
     }
 
+    function renderRemediationBatches(remediation) {
+        const batches = Array.isArray(remediation?.batches) ? remediation.batches : [];
+        if (!batches.length) {
+            remediationBatchesEl.innerHTML = '<div class="empty">当前没有可展示的异常分批闭环信息。</div>';
+            return;
+        }
+
+        remediationBatchesEl.innerHTML = batches.map(batch => {
+            const statusLabel = batch.status === 'closed' ? '已关闭批次' : '后续批次';
+            const sampleSkills = Array.isArray(batch.affectedSkills) ? batch.affectedSkills.slice(0, 6) : [];
+            return `
+                <div class="issue-card">
+                    <h3>${escapeHtml(batch.title)}</h3>
+                    <div>
+                        <span class="code-badge">${escapeHtml(statusLabel)}</span>
+                        <span class="flag-badge">owner: ${escapeHtml(batch.ownerNode || 'WBS-3.3.3')}</span>
+                        <span class="flag-badge">issues: ${escapeHtml(batch.openIssueCount ?? 0)}</span>
+                        <span class="flag-badge">skills: ${escapeHtml(batch.affectedSkillCount ?? 0)}</span>
+                    </div>
+                    <p>${escapeHtml(batch.description || '')}</p>
+                    <p><strong>当前节点负责的批次</strong>：<span class="mono">${escapeHtml((batch.issueCodes || []).join(', ') || 'none')}</span></p>
+                    <p><strong>非本节点说明</strong>：如果共享回归页里还有别的 FAIL，但这里没有归到本批次，就应回到对应 WBS 节点跟踪，不应算成本页失败。</p>
+                    <p><strong>样本技能</strong>：${sampleSkills.length
+                        ? sampleSkills.map(skill => `<span class="flag-badge">${escapeHtml(skill.skillId)}</span>`).join('')
+                        : '<span class="empty">当前批次已无未关闭样本</span>'}</p>
+                </div>
+            `;
+        }).join('');
+    }
+
     function renderContractRows(entries, issuesMap) {
         contractRowsEl.innerHTML = entries.map(entry => {
             const issues = issuesMap.get(entry.id) || [];
@@ -313,6 +351,9 @@
                 .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
                 .map(([code, count]) => `${code}=${count}`)
                 .join(', ');
+            const remediation = typeof DataManager.getSkillContractRemediationBatches === 'function'
+                ? DataManager.getSkillContractRemediationBatches({ includeAliases: true })
+                : null;
 
             renderSummary([
                 {
@@ -338,11 +379,17 @@
             ]);
 
             renderIssueList(entriesWithIssues);
+            renderRemediationBatches(remediation);
             renderContractRows(entries, issuesMap);
 
             appendLog(`[catalog] selectedTreeId=${catalog?.selectedTreeId || '-'} schema=${catalog?.schemaVersion || '-'}`);
             appendLog(`[summary] entries=${entries.length} alias=${aliasCount} skillsWithIssues=${entriesWithIssues.length} issueCount=${issueCount}`);
             appendLog(`[issue_codes] ${issueCodeSummary || 'none'}`);
+            if (remediation && Array.isArray(remediation.batches)) {
+                remediation.batches.forEach(batch => {
+                    appendLog(`[batch] ${batch.id} status=${batch.status} issues=${batch.openIssueCount} skills=${batch.affectedSkillCount}`);
+                });
+            }
             entriesWithIssues.slice(0, 10).forEach(({ entry, issues }) => {
                 appendLog(`[issue] ${entry.id}: ${issues.map(issue => issue.code).join(', ')}`);
             });

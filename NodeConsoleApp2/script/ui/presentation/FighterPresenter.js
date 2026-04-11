@@ -14,7 +14,7 @@ function findStatusRow(root, expectedLabel, fallbackIndex) {
 }
 
 export class FighterPresenter {
-    constructor({ side, fighterRoot = null, hudRoot = null, animationDriver = null } = {}) {
+    constructor({ side, fighterRoot = null, hudRoot = null, animationDriver = null, presentationProfile = null } = {}) {
         this.side = side === 'enemy' ? 'enemy' : 'self';
         this.sideClass = this.side === 'enemy' ? 'enemy' : 'self';
         this.fighterRoot = fighterRoot;
@@ -22,6 +22,7 @@ export class FighterPresenter {
         this.animationDriver = animationDriver instanceof BattleAnimationDriver
             ? animationDriver
             : new BattleAnimationDriver();
+        this.presentationProfile = presentationProfile || null;
 
         this.spriteContainer = fighterRoot?.querySelector('.character-sprite-container') || fighterRoot || null;
         this.shadow = fighterRoot?.querySelector('.character-shadow') || null;
@@ -35,6 +36,11 @@ export class FighterPresenter {
         );
     }
 
+    setPresentationProfile(profile = null) {
+        this.presentationProfile = profile || null;
+        this.animationDriver?.setPresentationProfile?.(this.presentationProfile);
+    }
+
     syncVisualState(snapshot) {
         if (!snapshot) return;
         this._syncHp(snapshot);
@@ -45,9 +51,9 @@ export class FighterPresenter {
     }
 
     playAction() {
-        this.animationDriver.pulseClass(this.fighterRoot, 'is-acting', 420);
-        this.animationDriver.pulseClass(this.spriteContainer, 'is-striking', 420);
-        this.animationDriver.pulseClass(this.shadow, 'is-shadow-surge', 420);
+        this.animationDriver.pulseClass(this.fighterRoot, 'is-acting', this._duration('actionMs', 420));
+        this.animationDriver.pulseClass(this.spriteContainer, 'is-striking', this._duration('actionMs', 420));
+        this.animationDriver.pulseClass(this.shadow, 'is-shadow-surge', this._duration('shadowMs', 420));
     }
 
     playTemplate(template = 'default', context = {}) {
@@ -69,28 +75,28 @@ export class FighterPresenter {
 
     playHit({ armorPart = null, damage = 0, armorDamage = 0 } = {}) {
         if (!damage && !armorDamage) return;
-        this.animationDriver.pulseClass(this.fighterRoot, 'is-hit', 420);
-        this.animationDriver.pulseClass(this.spriteContainer, 'is-hit-flash', 420);
+        this.animationDriver.pulseClass(this.fighterRoot, 'is-hit', this._duration('hitMs', 420));
+        this.animationDriver.pulseClass(this.spriteContainer, 'is-hit-flash', this._duration('hitFlashMs', 420));
         if (armorPart) {
             this.pulseArmor(armorPart, 'hit');
         }
     }
 
     playHeal() {
-        this.animationDriver.pulseClass(this.fighterRoot, 'is-heal', 460);
-        this.animationDriver.pulseClass(this.spriteContainer, 'is-heal-glow', 460);
+        this.animationDriver.pulseClass(this.fighterRoot, 'is-heal', this._duration('healMs', 460));
+        this.animationDriver.pulseClass(this.spriteContainer, 'is-heal-glow', this._duration('healGlowMs', 460));
     }
 
     pulseStatus(kind = 'buff') {
         const row = kind === 'debuff' ? this.debuffRow : this.buffRow;
         const className = kind === 'debuff' ? 'is-debuff-pulse' : 'is-buff-pulse';
-        this.animationDriver.pulseClass(row, className, 560);
+        this.animationDriver.pulseClass(row, className, this._duration('statusMs', 560));
     }
 
     pulseArmor(partKey, mode = 'hit') {
         const row = this.armorRows.get(partKey);
         const className = mode === 'heal' ? 'is-armor-heal' : 'is-armor-hit';
-        this.animationDriver.pulseClass(row, className, 560);
+        this.animationDriver.pulseClass(row, className, this._duration('armorMs', 560));
     }
 
     showFloatText(text, kind = 'damage') {
@@ -98,7 +104,8 @@ export class FighterPresenter {
             text,
             kind,
             side: this.sideClass,
-            anchorEl: this.effectAnchor
+            anchorEl: this.effectAnchor,
+            durationMs: this._duration('floatTextMs', 950)
         });
     }
 
@@ -143,8 +150,8 @@ export class FighterPresenter {
     }
 
     _playGuardTemplate(context = {}) {
-        this.animationDriver.pulseClass(this.fighterRoot, 'is-hit', 320);
-        this.animationDriver.pulseClass(this.spriteContainer, 'is-hit-flash', 280);
+        this.animationDriver.pulseClass(this.fighterRoot, 'is-hit', this._duration('hitMs', 320));
+        this.animationDriver.pulseClass(this.spriteContainer, 'is-hit-flash', this._duration('hitFlashMs', 280));
         const armorPart = context.armorPart || this._firstArmorPartKey();
         if (armorPart) {
             this.pulseArmor(armorPart, 'hit');
@@ -183,5 +190,10 @@ export class FighterPresenter {
             return key;
         }
         return null;
+    }
+
+    _duration(key, fallback) {
+        const value = Number(this.presentationProfile?.motion?.durations?.[key]);
+        return Number.isFinite(value) && value > 0 ? value : fallback;
     }
 }

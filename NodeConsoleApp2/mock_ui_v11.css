@@ -131,19 +131,93 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
   border-style: solid;
   border-color: rgba(255,255,255,0.12);
 }
-.battle-scene { background: #1a1e2e; border-radius: 20px; border: 2px solid #ffd266; position: relative; overflow: hidden; box-shadow: inset 0 0 50px rgba(5,8,25,0.6); padding: 0; height: 100%; box-sizing: border-box; }
+.battle-scene {
+  --battle-idle-duration: 2800ms;
+  --battle-action-duration: 420ms;
+  --battle-hit-duration: 420ms;
+  --battle-hit-flash-duration: 420ms;
+  --battle-heal-duration: 460ms;
+  --battle-heal-glow-duration: 460ms;
+  --battle-shadow-duration: 420ms;
+  --battle-status-duration: 560ms;
+  --battle-armor-duration: 560ms;
+  --battle-scene-turn-duration: 520ms;
+  --battle-scene-beat-duration: 480ms;
+  --battle-scene-impact-duration: 460ms;
+  --battle-float-duration: 950ms;
+  --battle-idle-bob-px: 8px;
+  --battle-lunge-distance-px: 34px;
+  --battle-lunge-lift-px: 8px;
+  --battle-lunge-scale: 1.02;
+  --battle-weapon-swing-x-px: 10px;
+  --battle-weapon-swing-y-px: -14px;
+  --battle-weapon-swing-deg: 18deg;
+  --battle-enemy-weapon-swing-x-px: -10px;
+  --battle-enemy-weapon-swing-y-px: -14px;
+  --battle-enemy-weapon-swing-deg: -18deg;
+  --battle-body-strike-lift-px: -4px;
+  --battle-body-strike-rotate-deg: -2deg;
+  --battle-hit-shake-left-px: -10px;
+  --battle-hit-shake-right-px: 12px;
+  --battle-hit-shake-settle-px: -8px;
+  --battle-heal-lift-px: 14px;
+  --battle-heal-scale: 1.02;
+  --battle-shadow-scale-x: 1.08;
+  --battle-shadow-scale-y: 0.96;
+  --battle-scene-turn-scale: 1.01;
+  --battle-scene-turn-saturate: 1.18;
+  --battle-scene-beat-offset-px: 6px;
+  --battle-scene-beat-scale: 1.01;
+  --battle-scene-beat-brightness: 1.12;
+  --battle-scene-impact-x1-px: 4px;
+  --battle-scene-impact-y1-px: -2px;
+  --battle-scene-impact-x2-px: -3px;
+  --battle-scene-impact-y2-px: 1px;
+  --battle-scene-impact-x3-px: 2px;
+  --battle-scene-impact-y3-px: -1px;
+  --battle-scene-impact-x4-px: -1px;
+  --battle-scene-impact-y4-px: 0px;
+  --battle-scene-impact-brightness: 1.08;
+  --battle-float-start-px: 16px;
+  --battle-float-mid-px: -6px;
+  --battle-float-end-px: -56px;
+  --battle-float-scale-start: 0.92;
+  --battle-float-scale-end: 1.02;
+  background: #1a1e2e;
+  border-radius: 20px;
+  border: 2px solid #ffd266;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 50px rgba(5,8,25,0.6);
+  padding: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
 .battle-scene .sub-area-tag { color: #ffd266; z-index: 10; }
+.battle-presentation-meta {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 102, 0.28);
+  background: rgba(9, 16, 34, 0.72);
+  color: #dbeafe;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
 .battle-scene.scene-turn-announce {
-  animation: sceneTurnPulse 0.52s ease-out;
+  animation: sceneTurnPulse var(--battle-scene-turn-duration) ease-out;
 }
 .battle-scene.scene-beat-self {
-  animation: sceneBeatFocusSelf 0.48s ease-out;
+  animation: sceneBeatFocusSelf var(--battle-scene-beat-duration) ease-out;
 }
 .battle-scene.scene-beat-enemy {
-  animation: sceneBeatFocusEnemy 0.48s ease-out;
+  animation: sceneBeatFocusEnemy var(--battle-scene-beat-duration) ease-out;
 }
 .battle-scene.scene-impact {
-  animation: sceneImpactShake 0.46s ease-out;
+  animation: sceneImpactShake var(--battle-scene-impact-duration) ease-out;
 }
 .stage-background {
   position: absolute;
@@ -269,31 +343,34 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
 }
 
 .battle-scene.is-presentation-ready .fighter.is-idle .character-sprite-container {
-  animation: battleIdleBob 2.8s ease-in-out infinite;
+  animation: battleIdleBob var(--battle-idle-duration) ease-in-out infinite;
 }
 
 .battle-scene.is-presentation-ready .fighter.is-acting.player-character {
-  animation: battleLungePlayer 0.42s ease-out;
+  animation: battleLungePlayer var(--battle-action-duration) ease-out;
 }
 
 .battle-scene.is-presentation-ready .fighter.is-acting.enemy-character {
-  animation: battleLungeEnemy 0.42s ease-out;
+  animation: battleLungeEnemy var(--battle-action-duration) ease-out;
 }
 
 .battle-scene.is-presentation-ready .character-sprite-container.is-striking .sprite-layer.weapon {
-  transform: translate3d(10px, -14px, 0) rotate(18deg);
+  transform: translate3d(var(--battle-weapon-swing-x-px), var(--battle-weapon-swing-y-px), 0) rotate(var(--battle-weapon-swing-deg));
+  transition: transform var(--battle-action-duration) ease-out;
 }
 
 .battle-scene.is-presentation-ready .enemy-character .character-sprite-container.is-striking .sprite-layer.weapon {
-  transform: translate3d(-10px, -14px, 0) rotate(-18deg);
+  transform: translate3d(var(--battle-enemy-weapon-swing-x-px), var(--battle-enemy-weapon-swing-y-px), 0) rotate(var(--battle-enemy-weapon-swing-deg));
+  transition: transform var(--battle-action-duration) ease-out;
 }
 
 .battle-scene.is-presentation-ready .character-sprite-container.is-striking .sprite-layer.body {
-  transform: translateY(-4px) rotate(-2deg);
+  transform: translateY(var(--battle-body-strike-lift-px)) rotate(var(--battle-body-strike-rotate-deg));
+  transition: transform var(--battle-action-duration) ease-out;
 }
 
 .battle-scene.is-presentation-ready .fighter.is-hit {
-  animation: battleHitShudder 0.42s ease;
+  animation: battleHitShudder var(--battle-hit-duration) ease;
 }
 
 .battle-scene.is-presentation-ready .character-sprite-container.is-hit-flash .sprite-layer.body,
@@ -302,7 +379,7 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
 }
 
 .battle-scene.is-presentation-ready .fighter.is-heal {
-  animation: battleHealBounce 0.46s ease-out;
+  animation: battleHealBounce var(--battle-heal-duration) ease-out;
 }
 
 .battle-scene.is-presentation-ready .character-sprite-container.is-heal-glow .sprite-layer.body,
@@ -311,23 +388,23 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
 }
 
 .battle-scene.is-presentation-ready .character-shadow.is-shadow-surge {
-  animation: battleShadowSurge 0.42s ease-out;
+  animation: battleShadowSurge var(--battle-shadow-duration) ease-out;
 }
 
 .status-row.is-buff-pulse .status-icons {
-  animation: battleStatusBuffPulse 0.56s ease-out;
+  animation: battleStatusBuffPulse var(--battle-status-duration) ease-out;
 }
 
 .status-row.is-debuff-pulse .status-icons {
-  animation: battleStatusDebuffPulse 0.56s ease-out;
+  animation: battleStatusDebuffPulse var(--battle-status-duration) ease-out;
 }
 
 .armor-row.is-armor-hit {
-  animation: battleArmorHitPulse 0.56s ease-out;
+  animation: battleArmorHitPulse var(--battle-armor-duration) ease-out;
 }
 
 .armor-row.is-armor-heal {
-  animation: battleArmorHealPulse 0.56s ease-out;
+  animation: battleArmorHealPulse var(--battle-armor-duration) ease-out;
 }
 
 .battle-float-text {
@@ -338,7 +415,7 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
   font-weight: 700;
   letter-spacing: 0.04em;
   text-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
-  animation: battleFloatTextRise 0.95s ease-out forwards;
+  animation: battleFloatTextRise var(--battle-float-duration) ease-out forwards;
   pointer-events: none;
 }
 
@@ -369,38 +446,38 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
 
 @keyframes battleIdleBob {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(calc(var(--battle-idle-bob-px) * -1)); }
 }
 
 @keyframes battleLungePlayer {
   0% { transform: translate3d(0, 0, 0) scale(1); }
-  45% { transform: translate3d(34px, -8px, 0) scale(1.02); }
+  45% { transform: translate3d(var(--battle-lunge-distance-px), calc(var(--battle-lunge-lift-px) * -1), 0) scale(var(--battle-lunge-scale)); }
   100% { transform: translate3d(0, 0, 0) scale(1); }
 }
 
 @keyframes battleLungeEnemy {
   0% { transform: translate3d(0, 0, 0) scale(1); }
-  45% { transform: translate3d(-34px, -8px, 0) scale(1.02); }
+  45% { transform: translate3d(calc(var(--battle-lunge-distance-px) * -1), calc(var(--battle-lunge-lift-px) * -1), 0) scale(var(--battle-lunge-scale)); }
   100% { transform: translate3d(0, 0, 0) scale(1); }
 }
 
 @keyframes battleHitShudder {
   0% { transform: translateX(0); }
-  20% { transform: translateX(-10px) rotate(-1deg); }
-  42% { transform: translateX(12px) rotate(1deg); }
-  64% { transform: translateX(-8px); }
+  20% { transform: translateX(var(--battle-hit-shake-left-px)) rotate(-1deg); }
+  42% { transform: translateX(var(--battle-hit-shake-right-px)) rotate(1deg); }
+  64% { transform: translateX(var(--battle-hit-shake-settle-px)); }
   100% { transform: translateX(0); }
 }
 
 @keyframes battleHealBounce {
   0% { transform: translateY(0) scale(1); }
-  40% { transform: translateY(-14px) scale(1.02); }
+  40% { transform: translateY(calc(var(--battle-heal-lift-px) * -1)) scale(var(--battle-heal-scale)); }
   100% { transform: translateY(0) scale(1); }
 }
 
 @keyframes battleShadowSurge {
   0% { opacity: 0.3; transform: translateX(-50%) scale(1); }
-  50% { opacity: 0.46; transform: translateX(-50%) scale(1.08, 0.96); }
+  50% { opacity: 0.46; transform: translateX(-50%) scale(var(--battle-shadow-scale-x), var(--battle-shadow-scale-y)); }
   100% { opacity: 0.3; transform: translateX(-50%) scale(1); }
 }
 
@@ -431,15 +508,15 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
 @keyframes battleFloatTextRise {
   0% {
     opacity: 0;
-    transform: translate(-50%, 16px) scale(0.92);
+    transform: translate(-50%, var(--battle-float-start-px)) scale(var(--battle-float-scale-start));
   }
   18% {
     opacity: 1;
-    transform: translate(-50%, -6px) scale(1);
+    transform: translate(-50%, var(--battle-float-mid-px)) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -56px) scale(1.02);
+    transform: translate(-50%, var(--battle-float-end-px)) scale(var(--battle-float-scale-end));
   }
 }
 
@@ -449,8 +526,8 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
     filter: saturate(1);
   }
   40% {
-    transform: scale(1.01);
-    filter: saturate(1.18);
+    transform: scale(var(--battle-scene-turn-scale));
+    filter: saturate(var(--battle-scene-turn-saturate));
   }
   100% {
     transform: scale(1);
@@ -464,8 +541,8 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
     filter: brightness(1);
   }
   35% {
-    transform: translateX(6px) scale(1.01);
-    filter: brightness(1.12);
+    transform: translateX(var(--battle-scene-beat-offset-px)) scale(var(--battle-scene-beat-scale));
+    filter: brightness(var(--battle-scene-beat-brightness));
   }
   75% {
     transform: translateX(0);
@@ -481,8 +558,8 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
     filter: brightness(1);
   }
   35% {
-    transform: translateX(-6px) scale(1.01);
-    filter: brightness(1.12);
+    transform: translateX(calc(var(--battle-scene-beat-offset-px) * -1)) scale(var(--battle-scene-beat-scale));
+    filter: brightness(var(--battle-scene-beat-brightness));
   }
   75% {
     transform: translateX(0);
@@ -498,17 +575,17 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
     filter: brightness(1);
   }
   20% {
-    transform: translate(4px, -2px);
-    filter: brightness(1.08);
+    transform: translate(var(--battle-scene-impact-x1-px), var(--battle-scene-impact-y1-px));
+    filter: brightness(var(--battle-scene-impact-brightness));
   }
   40% {
-    transform: translate(-3px, 1px);
+    transform: translate(var(--battle-scene-impact-x2-px), var(--battle-scene-impact-y2-px));
   }
   60% {
-    transform: translate(2px, -1px);
+    transform: translate(var(--battle-scene-impact-x3-px), var(--battle-scene-impact-y3-px));
   }
   80% {
-    transform: translate(-1px, 0);
+    transform: translate(var(--battle-scene-impact-x4-px), var(--battle-scene-impact-y4-px));
   }
   100% {
     transform: translate(0, 0);

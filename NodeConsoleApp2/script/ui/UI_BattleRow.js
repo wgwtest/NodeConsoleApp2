@@ -5,6 +5,7 @@
  */
 
 import { BattlePresentationController } from './presentation/BattlePresentationController.js';
+import { loadBattlePresentationProfile } from './presentation/BattlePresentationAssetStore.js';
 
 class BattleHUD {
     /**
@@ -197,7 +198,8 @@ class BattleScene {
             background: element.querySelector('.stage-background'),
             playerContainer: element.querySelector('.fighter.player-character'),
             enemyContainer: element.querySelector('.fighter.enemy-character'),
-            fxLayer: element.querySelector('.fx-layer')
+            fxLayer: element.querySelector('.fx-layer'),
+            meta: element.parentElement?.querySelector?.('[data-role="battle-presentation-meta"]') || null
         };
 
         this.presentation = new BattlePresentationController({
@@ -209,6 +211,27 @@ class BattleScene {
     attach(eventBus) {
         this.presentation.setEventBus(eventBus);
         this.presentation.connect();
+        this.loadPresentationProfile();
+    }
+
+    async loadPresentationProfile() {
+        try {
+            const loaded = await loadBattlePresentationProfile();
+            this.presentation.applyPresentationProfile(loaded.activeProfile, {
+                source: loaded.source,
+                profileId: loaded.activeProfile?.id,
+                profileLabel: loaded.activeProfile?.label,
+                assetId: loaded.document?.meta?.id
+            });
+            if (this.dom.meta) {
+                this.dom.meta.textContent = `演出配置资产：${loaded.activeProfile?.label || '默认平衡'}（${loaded.source}）`;
+            }
+        } catch (error) {
+            console.warn('[BattleScene] Failed to load battle presentation profile:', error);
+            if (this.dom.meta) {
+                this.dom.meta.textContent = '演出配置资产：默认平衡（fallback）';
+            }
+        }
     }
 
     /**

@@ -1056,7 +1056,7 @@
             "leg"
           ],
           "selectedParts": [],
-          "selectCount": 6
+          "selectCount": 1
         }
       },
       "requirements": {
@@ -1445,16 +1445,10 @@
         "subject": "SUBJECT_SELF",
         "scope": "SCOPE_ENTITY",
         "selection": {
-          "mode": "multiple",
-          "candidateParts": [
-            "head",
-            "chest",
-            "abdomen",
-            "arm",
-            "leg"
-          ],
+          "mode": "single",
+          "candidateParts": [],
           "selectedParts": [],
-          "selectCount": 6
+          "selectCount": 1
         }
       },
       "requirements": {
@@ -1916,7 +1910,7 @@
             "arm"
           ],
           "selectedParts": [],
-          "selectCount": 6
+          "selectCount": 1
         }
       },
       "requirements": {
@@ -2234,7 +2228,7 @@
             "arm",
             "leg"
           ],
-          "selectCount": 5
+          "selectCount": 1
         }
       },
       "requirements": {
@@ -2326,7 +2320,7 @@
             "leg"
           ],
           "selectedParts": [],
-          "selectCount": 5
+          "selectCount": 1
         }
       },
       "requirements": {

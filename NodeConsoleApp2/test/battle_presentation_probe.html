@@ -236,6 +236,7 @@
                 <h3>与其他页面的关系</h3>
                 <ul>
                     <li><code>battle_presentation_probe.html</code>：验证展示层本身。</li>
+                    <li><code>battle_presentation_configurator.html</code>：编辑、保存、导出演出参数资产。</li>
                     <li><code>mock_ui_v11.html</code>：验证展示层接入真实主流程后不阻断点击链。</li>
                     <li><code>codex_regression_runner.html</code>：验证关键契约没有被后续修改打坏。</li>
                 </ul>
@@ -320,8 +321,10 @@
             <button type="button" class="secondary" id="btnTplStatus">模板：Buff 上身</button>
             <button type="button" class="warn" id="btnTplUnknown">模板：未知类别（降级）</button>
             <button type="button" class="secondary" id="btnTogglePresentation">切换动画：开</button>
+            <button type="button" class="secondary" id="btnReloadProfile">重新读取演出配置</button>
             <button type="button" class="warn" id="btnResetState">重置状态</button>
         </div>
+        <p id="profileAssetState">当前演出配置资产：加载中</p>
         <p id="templateProbeState">最近模板：无</p>
         <p id="presentationSourceState">最近配置来源：无</p>
     </section>
@@ -419,6 +422,7 @@
 
 <script type="module">
     import { BattlePresentationController } from '../script/ui/presentation/BattlePresentationController.js';
+    import { loadBattlePresentationProfile } from '../script/ui/presentation/BattlePresentationAssetStore.js';
 
     function createMiniEventBus() {
         const listeners = new Map();
@@ -494,6 +498,19 @@
         const fallback = sceneRoot?.dataset?.lastTemplateFallback || '无';
         const scenePulse = sceneRoot?.dataset?.lastScenePulse || '无';
         document.getElementById('presentationSourceState').textContent = `最近配置来源：${source}；最近降级语义：${fallback}；最近场景脉冲：${scenePulse}`;
+    }
+
+    async function loadPresentationProfile() {
+        const loaded = await loadBattlePresentationProfile();
+        controller.applyPresentationProfile(loaded.activeProfile, {
+            source: loaded.source,
+            profileId: loaded.activeProfile?.id,
+            profileLabel: loaded.activeProfile?.label,
+            assetId: loaded.document?.meta?.id
+        });
+        document.getElementById('profileAssetState').textContent = `当前演出配置资产：${loaded.activeProfile?.label || '默认平衡'}（${loaded.source}）`;
+        appendLog(`[PROFILE] 已加载演出配置：${loaded.activeProfile?.label || '默认平衡'} / ${loaded.source}`);
+        refreshTemplateReadout();
     }
 
     function renderStatusIcons(containerId, rows, mode) {
@@ -720,9 +737,17 @@
     document.getElementById('btnTplStatus').addEventListener('click', runTemplateStatus);
     document.getElementById('btnTplUnknown').addEventListener('click', runTemplateUnknown);
     document.getElementById('btnTogglePresentation').addEventListener('click', togglePresentation);
+    document.getElementById('btnReloadProfile').addEventListener('click', () => {
+        loadPresentationProfile().catch(error => {
+            appendLog(`[ERROR] 重新读取演出配置失败：${error?.message || error}`);
+        });
+    });
     document.getElementById('btnResetState').addEventListener('click', resetState);
 
     resetState();
+    loadPresentationProfile().catch(error => {
+        appendLog(`[ERROR] 加载演出配置失败：${error?.message || error}`);
+    });
 </script>
 </body>
 </html>

@@ -4,7 +4,7 @@
 
 最后整理时间：2026-04-11
 
-状态：`当前有效，对应 #83 / WBS-3.3；#84 / WBS-3.3.1、#85 / WBS-3.3.2 已通过人工验收；后续需补建异常修复承接叶子`
+状态：`当前有效，对应 #83 / WBS-3.3；#84 / WBS-3.3.1、#85 / WBS-3.3.2 已通过人工验收；#98 / WBS-3.3.3 已完成首批结构异常收口并进入待人工验收`
 
 编号口径：
 
@@ -26,6 +26,7 @@
 
 1. `#84 WBS-3.3.1 技能效果矩阵与说明契约收口`
 2. `#85 WBS-3.3.2 技能运行时批量回归与异常归档`
+3. `#98 WBS-3.3.3 技能异常修复分批闭环与状态回写`
 
 ## 2. 为什么 WBS-3 需要单独拆出 WBS-3.3
 
@@ -127,6 +128,28 @@
 1. `test/skill_contract_probe.html`
 2. `DOC/CODEX_DOC/04_研发文档/07-技能运行时一致性首轮异常归档.md`
 3. `test/codex_regression_runner.html`
+4. `DOC/CODEX_DOC/04_研发文档/08-WBS-3.3.3-技能异常修复分批与状态回写.md`
+
+### 5.4 `#98 / WBS-3.3.3 技能异常修复分批闭环与状态回写`
+
+目标：
+
+1. 把已归档异常从“问题码列表”推进成“修复批次 + 当前状态 + 共享回归范围说明”
+2. 完成首批结构选择异常的正式收口
+3. 让共享回归页支持 `scope=WBS-3.3.3` 的当前范围验证
+
+当前结论：
+
+1. 已完成首批结构异常收口：
+   - `selection_count_exceeds_candidates = 0`
+   - `single_selection_count_invalid = 0`
+2. 已在 `DataManagerV2` 增加 `getSkillContractRemediationBatches()`，把 issue code 汇总到正式修复批次
+3. 已在 `skill_contract_probe.html` 增加 `WBS-3.3.3` 异常分批闭环说明
+4. 已在 `codex_regression_runner.html` 增加共享回归页 `scope=` 范围说明与 `WBS-3.3.3` 过滤入口
+5. 当前剩余后续批次：
+   - `batch_target_tags = 21 issues / 14 skills`
+   - `batch_effect_tags = 48 issues / 27 skills`
+6. 本节点当前状态：已自测，待人工验收
 
 ## 6. 推荐输出物
 

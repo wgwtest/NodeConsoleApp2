@@ -49,6 +49,11 @@
           <li>人工结论仍然应该写回对应 WBS 验收清单。</li>
         </ol>
       </div>
+      <div class="guide-card" id="scopeGuide">
+        <h3>当前节点范围</h3>
+        <p>本页是<strong>共享回归页</strong>。如果你只想看某个节点，比如 <code>WBS-3.3.3</code>，请使用 <code>?scope=WBS-3.3.3</code>。这会只运行当前范围的断言。</p>
+        <p><strong>非本节点失败项</strong> 不应混入当前人工验收语义；如果没有使用 <code>scope=</code>，你看到的 FAIL 可能来自别的 WBS 节点。</p>
+      </div>
     </div>
   </div>
   <div id="summary"></div>
@@ -917,6 +922,78 @@
       assertPageIncludesText(html, 'HP 108 / 120', 'battle_presentation_probe 未提供轻伤治疗基线');
     }
 
+    async function testBattlePresentationControllerAppliesAssetProfileBridge() {
+      const host = resetRegressionFixture('');
+      setupBattleRowDom(host);
+
+      const { BattlePresentationController } = await importBattlePresentationControllerModule();
+      const eventBus = createMiniEventBus();
+      const controller = new BattlePresentationController({
+        root: host.querySelector('.battle-row'),
+        eventBus
+      });
+      const customProfile = {
+        id: 'impact_heavy',
+        label: '冲击强化',
+        motion: {
+          durations: {
+            actionMs: 460,
+            sceneBeatMs: 520
+          },
+          values: {
+            lungeDistancePx: 42,
+            sceneBeatOffsetPx: 8
+          }
+        }
+      };
+
+      controller.applyPresentationProfile(customProfile, {
+        source: 'workspace',
+        profileId: 'impact_heavy',
+        profileLabel: '冲击强化',
+        assetId: 'battle_presentation_profiles_v1'
+      });
+
+      const scene = host.querySelector('.battle-scene');
+      assert(scene?.dataset?.presentationProfileId === 'impact_heavy', `presentationProfileId 错误: ${scene?.dataset?.presentationProfileId}`);
+      assert(scene?.dataset?.presentationProfileLabel === '冲击强化', `presentationProfileLabel 错误: ${scene?.dataset?.presentationProfileLabel}`);
+      assert(scene?.dataset?.presentationProfileSource === 'workspace', `presentationProfileSource 错误: ${scene?.dataset?.presentationProfileSource}`);
+      assert(scene?.style?.getPropertyValue('--battle-lunge-distance-px') === '42px', `前冲距离 CSS 变量错误: ${scene?.style?.getPropertyValue('--battle-lunge-distance-px')}`);
+      assert(scene?.style?.getPropertyValue('--battle-scene-beat-offset-px') === '8px', `节奏偏移 CSS 变量错误: ${scene?.style?.getPropertyValue('--battle-scene-beat-offset-px')}`);
+    }
+
+    async function testBattlePresentationConfiguratorProvidesReadableGuide() {
+      const response = await fetch('./battle_presentation_configurator.html', { cache: 'no-store' });
+      assert(response.ok, `battle_presentation_configurator.html 加载失败: ${response.status}`);
+      const html = await response.text();
+      for (const requiredText of [
+        '动画参数配置器',
+        '只改展示参数',
+        '不会改伤害、Buff 结果或敌人行为',
+        '写入浏览器 workspace',
+        '导出 JSON',
+        'battle_presentation_probe.html',
+        'mock_ui_v11.html'
+      ]) {
+        assertPageIncludesText(html, requiredText, `battle_presentation_configurator 缺少说明：${requiredText}`);
+      }
+    }
+
+    async function testBattlePresentationProbeProvidesProfileAssetReadout() {
+      const response = await fetch('./battle_presentation_probe.html', { cache: 'no-store' });
+      assert(response.ok, `battle_presentation_probe.html 加载失败: ${response.status}`);
+      const html = await response.text();
+      assertPageIncludesText(html, '当前演出配置资产', 'battle_presentation_probe 缺少演出配置资产读数');
+      assertPageIncludesText(html, '重新读取演出配置', 'battle_presentation_probe 缺少重新读取演出配置按钮');
+      assertPageIncludesText(html, 'battle_presentation_configurator.html', 'battle_presentation_probe 缺少配置器关系说明');
+    }
+
+    async function testMockUiProvidesPresentationAssetReadoutEntry() {
+      const html = await fetch('../mock_ui_v11.html').then(r => r.text());
+      assertPageIncludesText(html, 'battle-presentation-meta', 'mock_ui_v11.html 缺少展示配置资产读数节点');
+      assertPageIncludesText(html, '演出配置资产：加载中', 'mock_ui_v11.html 缺少展示配置资产占位文案');
+    }
+
     async function testCoreEngineBattleSaveSyncContract() {
       const source = await fetch('../script/engine/CoreEngine.js').then(r => r.text());
       assert(/runtime\.currentScene\s*=\s*'BATTLE_LOOP'/.test(source), 'saveBattleState 未同步 runtime.currentScene = BATTLE_LOOP');
@@ -990,7 +1067,7 @@
       assert(summary.target?.subject === 'SUBJECT_SELF', `skill_block target.subject 错误: ${summary?.target?.subject}`);
       assert(summary.target?.scope === 'SCOPE_PART', `skill_block target.scope 错误: ${summary?.target?.scope}`);
       assert(summary.target?.selection?.mode === 'single', `skill_block selection.mode 错误: ${summary?.target?.selection?.mode}`);
-      assert(summary.target?.selection?.selectCount === 6, `skill_block selectCount 错误: ${summary?.target?.selection?.selectCount}`);
+      assert(summary.target?.selection?.selectCount === 1, `skill_block selectCount 错误: ${summary?.target?.selection?.selectCount}`);
       assert(Array.isArray(summary.actionEffectTypes) && summary.actionEffectTypes.includes('ARMOR_ADD'), 'skill_block actionEffectTypes 未包含 ARMOR_ADD');
       assert(summary.runtimeFlags?.isPartTargeted === true, 'skill_block 未标记为部位目标技能');
       assert(summary.runtimeFlags?.isBuffDriven === false, 'skill_block 不应被标记为纯 buff 驱动');
@@ -1014,9 +1091,14 @@
 
       const blockIssues = DataManager.getSkillContractIssues('skill_block');
       assert(Array.isArray(blockIssues) && blockIssues.length > 0, 'skill_block 契约问题列表为空');
-      assert(blockIssues.some(issue => issue.code === 'selection_count_exceeds_candidates'), 'skill_block 未标记 selectCount 越界');
-      assert(blockIssues.some(issue => issue.code === 'single_selection_count_invalid'), 'skill_block 未标记 single 模式计数错误');
       assert(blockIssues.some(issue => issue.code === 'tag_scope_mismatch'), 'skill_block 未标记 SCOPE 标签冲突');
+      assert(!blockIssues.some(issue => issue.code === 'selection_count_exceeds_candidates'), 'skill_block 的 selectCount 越界问题应已收口');
+      assert(!blockIssues.some(issue => issue.code === 'single_selection_count_invalid'), 'skill_block 的 single 计数问题应已收口');
+
+      const escapeIssues = DataManager.getSkillContractIssues('skill_escape');
+      assert(Array.isArray(escapeIssues), 'skill_escape 契约问题列表未返回数组');
+      assert(!escapeIssues.some(issue => issue.code === 'selection_count_exceeds_candidates'), 'skill_escape 不应再继承 selectCount 越界');
+      assert(!escapeIssues.some(issue => issue.code === 'single_selection_count_invalid'), 'skill_escape 不应再继承 single 计数错误');
 
       const shockwaveIssues = DataManager.getSkillContractIssues('skill_shockwave');
       assert(Array.isArray(shockwaveIssues) && shockwaveIssues.length > 0, 'skill_shockwave 契约问题列表为空');
@@ -1038,6 +1120,24 @@
       const issues = DataManager.getSkillContractIssues('skill_regroup');
       assert(Array.isArray(issues), 'skill_regroup 契约问题列表未返回数组');
       assert(issues.some(issue => issue.code === 'unexpected_effect_tag' && issue.tag === 'BUFF_REMOVE'), 'skill_regroup 未标记多余的 BUFF_REMOVE 标签');
+    }
+
+    async function testDataManagerBuildsSkillContractRemediationBatches() {
+      assert(typeof DataManager.getSkillContractRemediationBatches === 'function', 'DataManagerV2 缺少 getSkillContractRemediationBatches()');
+
+      await DataManager.loadConfigs();
+
+      const rollup = DataManager.getSkillContractRemediationBatches({ includeAliases: true });
+      assert(rollup?.ownerNode === 'WBS-3.3.3', `ownerNode 错误: ${rollup?.ownerNode}`);
+      assert(Array.isArray(rollup?.batches) && rollup.batches.length >= 3, '修复批次数量不足');
+
+      const structureBatch = rollup.batches.find(batch => batch.id === 'batch_structure_selection');
+      assert(structureBatch, '缺少 batch_structure_selection');
+      assert(structureBatch.openIssueCount === 0, `首批结构批次未关闭: ${structureBatch?.openIssueCount}`);
+      assert(Array.isArray(structureBatch.issueCodes) && structureBatch.issueCodes.includes('selection_count_exceeds_candidates'), '首批结构批次缺少预期 issue code');
+
+      const effectBatch = rollup.batches.find(batch => batch.id === 'batch_effect_tags');
+      assert(effectBatch && effectBatch.openIssueCount > 0, '效果标签批次应仍存在后续待修问题');
     }
 
     async function testDataManagerSupportsRuntimeSkillPackOverrideBridge() {
@@ -2645,6 +2745,20 @@
       }
     }
 
+    async function testSkillContractProbePageExplainsRemediationBatches() {
+      const probePage = await fetch('../test/skill_contract_probe.html').then(r => r.text());
+      for (const requiredText of [
+        'WBS-3.3.3',
+        '异常分批闭环',
+        '当前节点负责的批次',
+        '已关闭批次',
+        '后续批次',
+        '非本节点'
+      ]) {
+        assertPageIncludesText(probePage, requiredText, 'skill_contract_probe.html 缺少异常分批闭环说明');
+      }
+    }
+
     function testRegressionRunnerProvidesHumanUsageGuide() {
       const guide = document.getElementById('usageGuide');
       assert(guide, 'codex_regression_runner.html 缺少人工使用说明面板 #usageGuide');
@@ -2656,6 +2770,22 @@
         '打开后自动执行全部回归用例'
       ]) {
         assert(runnerPage.includes(requiredText), `codex_regression_runner.html 缺少人工使用说明: ${requiredText}`);
+      }
+    }
+
+    function testRegressionRunnerExplainsScopeFilteringForSharedFailures() {
+      const guide = document.getElementById('usageGuide');
+      assert(guide, 'codex_regression_runner.html 缺少共享回归页说明面板');
+      const runnerPage = guide.textContent || '';
+      for (const requiredText of [
+        '共享回归页',
+        '当前节点范围',
+        'scope=',
+        'WBS-3.3.3',
+        '非本节点失败项',
+        '只运行当前范围'
+      ]) {
+        assert(runnerPage.includes(requiredText), `codex_regression_runner.html 缺少 scope 过滤说明: ${requiredText}`);
       }
     }
 
@@ -5876,6 +6006,63 @@
       assert(autoButtons.includes('读取'), '自动存档卡片缺少读取按钮');
     }
 
+    const testScopeRegistry = {
+      'WBS-3.3.1': new Set([
+        'DataManager 暴露技能契约摘要与矩阵目录',
+        'DataManager 能识别技能契约中的结构与标签冲突',
+        'DataManager 能识别纯 buff 驱动技能的契约摘要'
+      ]),
+      'WBS-3.3.2': new Set([
+        'skill_contract_probe 提供批量一致性校核入口',
+        'skill_contract_probe 会解释问题码与读数顺序'
+      ]),
+      'WBS-3.3.3': new Set([
+        'DataManager 暴露技能契约摘要与矩阵目录',
+        'DataManager 能识别技能契约中的结构与标签冲突',
+        'DataManager 能识别纯 buff 驱动技能的契约摘要',
+        'DataManager 会按修复批次汇总技能异常',
+        'skill_contract_probe 提供批量一致性校核入口',
+        'skill_contract_probe 会解释问题码与读数顺序',
+        'skill_contract_probe 会解释异常分批闭环',
+        'codex_regression_runner 提供 scope 范围说明'
+      ]),
+      'WBS-4.3.7': new Set([
+        'BattlePresentationController 会应用展示配置资产桥接面',
+        'battle_presentation_configurator 提供可理解的展示参数工具说明',
+        'battle_presentation_probe 提供演出配置资产读数入口',
+        'mock_ui_v11 提供展示配置资产读数入口'
+      ])
+    };
+
+    function resolveTestScopes(testName) {
+      return Object.entries(testScopeRegistry)
+        .filter(([, names]) => names.has(testName))
+        .map(([scope]) => scope);
+    }
+
+    function getRequestedScopes() {
+      const raw = new URLSearchParams(window.location.search).get('scope') || '';
+      return raw
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean);
+    }
+
+    function renderScopeGuide(requestedScopes, activeCount, totalCount) {
+      const guide = document.getElementById('scopeGuide');
+      if (!guide) return;
+      if (!requestedScopes.length) {
+        guide.insertAdjacentHTML('beforeend', `
+          <p><strong>当前运行范围</strong>：未指定 <code>scope=</code>，因此会执行全部 ${totalCount} 个回归断言。若只想查看某一节点，例如 <code>WBS-3.3.3</code>，请改用 <code>?scope=WBS-3.3.3</code>。</p>
+        `);
+        return;
+      }
+
+      guide.insertAdjacentHTML('beforeend', `
+        <p><strong>当前运行范围</strong>：<code>${requestedScopes.join(', ')}</code>，因此本次只执行 ${activeCount} / ${totalCount} 个断言。未被选中的断言即使失败，也属于非本节点失败项。</p>
+      `);
+    }
+
     const tests = [
       ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
       ['mock_ui_v11 使用统一的主流程按钮语言', testMockUiUsesUnifiedMainFlowButtonLabels],
@@ -5891,6 +6078,10 @@
       ['battle_presentation_probe 提供可理解的展示层验证说明', testBattlePresentationProbeProvidesReadableGuide],
       ['battle_presentation_probe 会解释演出配置边界与降级读数', testBattlePresentationProbeExplainsConfiguredBoundary],
       ['battle_presentation_probe 提供一键可验证的治疗演示基线', testBattlePresentationProbeProvidesHealableBaseline],
+      ['BattlePresentationController 会应用展示配置资产桥接面', testBattlePresentationControllerAppliesAssetProfileBridge],
+      ['battle_presentation_configurator 提供可理解的展示参数工具说明', testBattlePresentationConfiguratorProvidesReadableGuide],
+      ['battle_presentation_probe 提供演出配置资产读数入口', testBattlePresentationProbeProvidesProfileAssetReadout],
+      ['mock_ui_v11 提供展示配置资产读数入口', testMockUiProvidesPresentationAssetReadoutEntry],
       ['codex_regression_runner 提供人工使用说明', testRegressionRunnerProvidesHumanUsageGuide],
       ['CoreEngine 战斗保存同步 currentScene/battleState', testCoreEngineBattleSaveSyncContract],
       ['config registry 与 DataManager 装载边界统一', testContentRegistryProvidesUnifiedLoaderBoundary],
@@ -5898,6 +6089,7 @@
       ['DataManager 暴露技能契约摘要与矩阵目录', testDataManagerBuildsSkillContractSummary],
       ['DataManager 能识别技能契约中的结构与标签冲突', testDataManagerDetectsSkillContractIssues],
       ['DataManager 能识别纯 buff 驱动技能的契约摘要', testDataManagerSummarizesBuffDrivenSkillContracts],
+      ['DataManager 会按修复批次汇总技能异常', testDataManagerBuildsSkillContractRemediationBatches],
       ['DataManager 支持技能 pack 运行时覆写桥', testDataManagerSupportsRuntimeSkillPackOverrideBridge],
       ['DataManager 暴露 Buff 目录边界 API', testDataManagerProvidesBuffCatalogBoundary],
       ['DataManager 支持 Buff pack 运行时覆写桥', testDataManagerSupportsRuntimeBuffPackOverrideBridge],
@@ -5933,6 +6125,8 @@
       ['level_runtime_probe 提供运行时消费入口', testLevelRuntimeProbePageProvidesRuntimeConsumptionEntry],
       ['skill_contract_probe 提供批量一致性校核入口', testSkillContractProbePageProvidesBatchConsistencyGuide],
       ['skill_contract_probe 会解释问题码与读数顺序', testSkillContractProbePageExplainsIssueCodesAndReadingOrder],
+      ['skill_contract_probe 会解释异常分批闭环', testSkillContractProbePageExplainsRemediationBatches],
+      ['codex_regression_runner 提供 scope 范围说明', testRegressionRunnerExplainsScopeFilteringForSharedFailures],
       ['CoreEngine 在战斗开始时注入关卡验收技能', testCoreEngineInjectsLevelBattleSkillsIntoBattleStartPayload],
       ['CoreEngine 在战斗开始时应用关卡玩家战斗态覆盖', testCoreEngineAppliesLevelBattlePlayerStateOverridesAtBattleStart],
       ['CoreEngine 在战斗开始时应用关卡玩家战斗数值覆盖', testCoreEngineAppliesLevelBattlePlayerStatOverridesAtBattleStart],
@@ -5998,9 +6192,15 @@
       ['UI_SystemModal 存档页会显示反馈与槽位元数据', testSystemModalRendersSaveLoadFeedbackAndSlotMeta]
     ];
 
+    const requestedScopes = getRequestedScopes();
+    const activeTests = requestedScopes.length
+      ? tests.filter(([name]) => resolveTestScopes(name).some(scope => requestedScopes.includes(scope)))
+      : tests;
+    renderScopeGuide(requestedScopes, activeTests.length, tests.length);
+
     let passed = 0;
     let failed = 0;
-    for (const [name, fn] of tests) {
+    for (const [name, fn] of activeTests) {
       try {
         removeRegressionFixtures();
         await fn();
@@ -6016,7 +6216,7 @@
 
     summaryEl.innerHTML = `
       <p class="${failed === 0 ? 'pass' : 'fail'}">
-        通过 ${passed} / ${tests.length}，失败 ${failed}
+        通过 ${passed} / ${activeTests.length}，失败 ${failed}
       </p>
     `;
   </script>

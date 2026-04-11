@@ -1,13 +1,18 @@
 export class BattleAnimationDriver {
-    constructor({ sceneRoot = null, fxLayer = null, enabled = true } = {}) {
+    constructor({ sceneRoot = null, fxLayer = null, enabled = true, presentationProfile = null } = {}) {
         this.sceneRoot = sceneRoot;
         this.fxLayer = fxLayer || sceneRoot?.querySelector?.('.fx-layer') || null;
         this.enabled = enabled !== false;
+        this.presentationProfile = presentationProfile || null;
         this._timers = new WeakMap();
     }
 
     setEnabled(enabled) {
         this.enabled = enabled !== false;
+    }
+
+    setPresentationProfile(profile = null) {
+        this.presentationProfile = profile || null;
     }
 
     pulseClass(node, className, durationMs = 420) {
@@ -64,7 +69,7 @@ export class BattleAnimationDriver {
         this.pulseScene(normalizedSide === 'enemy' ? 'scene-beat-enemy' : 'scene-beat-self', durationMs);
     }
 
-    pulseSceneDirective(scenePulse = null, side = 'self', durationMs = 520) {
+    pulseSceneDirective(scenePulse = null, side = 'self', durationMs = null) {
         const normalizedSide = this._normalizeSide(side);
         const normalizedPulse = String(scenePulse || '').trim().toLowerCase();
 
@@ -73,7 +78,7 @@ export class BattleAnimationDriver {
             || normalizedPulse === 'enemy_beat'
             || normalizedPulse === 'enemy'
         ) {
-            this.pulseScene('scene-beat-enemy', durationMs);
+            this.pulseScene('scene-beat-enemy', durationMs ?? this._getDuration('sceneBeatMs', 480));
             return;
         }
 
@@ -82,7 +87,7 @@ export class BattleAnimationDriver {
             || normalizedPulse === 'guard'
             || normalizedPulse === 'scene-impact'
         ) {
-            this.pulseScene('scene-impact', durationMs);
+            this.pulseScene('scene-impact', durationMs ?? this._getDuration('sceneImpactMs', 460));
             return;
         }
 
@@ -94,14 +99,17 @@ export class BattleAnimationDriver {
             || normalizedPulse === 'status'
             || normalizedPulse === 'announce'
         ) {
-            this.pulseScene('scene-turn-announce', durationMs);
+            this.pulseScene('scene-turn-announce', durationMs ?? this._getDuration('sceneTurnMs', 520));
             return;
         }
 
-        this.pulseScene(normalizedSide === 'enemy' ? 'scene-beat-enemy' : 'scene-beat-self', durationMs);
+        this.pulseScene(
+            normalizedSide === 'enemy' ? 'scene-beat-enemy' : 'scene-beat-self',
+            durationMs ?? this._getDuration('sceneBeatMs', 480)
+        );
     }
 
-    createFloatText({ text, kind = 'damage', side = 'self', anchorEl = null } = {}) {
+    createFloatText({ text, kind = 'damage', side = 'self', anchorEl = null, durationMs = null } = {}) {
         if (!this.enabled || !this.fxLayer || text === undefined || text === null) {
             return null;
         }
@@ -111,6 +119,7 @@ export class BattleAnimationDriver {
         const el = document.createElement('div');
         el.className = `battle-float-text battle-float-text--${normalizedKind} battle-float-text--${normalizedSide}`;
         el.textContent = String(text);
+        el.style.animationDuration = `${durationMs ?? this._getDuration('floatTextMs', 950)}ms`;
         this._positionFloatText(el, anchorEl, normalizedSide);
         this.fxLayer.appendChild(el);
 
@@ -121,7 +130,7 @@ export class BattleAnimationDriver {
         };
 
         el.addEventListener('animationend', remove, { once: true });
-        setTimeout(remove, 1200);
+        setTimeout(remove, this._getDuration('floatTextCleanupMs', 1200));
         return el;
     }
 
@@ -172,5 +181,10 @@ export class BattleAnimationDriver {
 
     _normalizeSide(side) {
         return side === 'enemy' ? 'enemy' : 'self';
+    }
+
+    _getDuration(key, fallback) {
+        const value = Number(this.presentationProfile?.motion?.durations?.[key]);
+        return Number.isFinite(value) && value > 0 ? value : fallback;
     }
 }
