@@ -3,6 +3,20 @@
 
 /* eslint-disable */
 
+export function stripDuplicatedSkillCopySuffix(skillId) {
+    const normalized = String(skillId || '').trim();
+    if (!normalized) return 'skill';
+    const stripped = normalized.replace(/(?:_copy_\d+)+$/u, '');
+    return stripped || normalized || 'skill';
+}
+
+export function buildDuplicatedSkillId(skillId, seed = Date.now()) {
+    const baseId = stripDuplicatedSkillCopySuffix(skillId);
+    const numericSeed = Number(seed);
+    const suffix = Number.isFinite(numericSeed) ? Math.trunc(numericSeed) : Date.now();
+    return `${baseId}_copy_${suffix}`;
+}
+
 export class SkillEditor {
     constructor() {
         // Constants
@@ -936,7 +950,13 @@ export class SkillEditor {
         const src = this.getSkillById(this.selectedNodeId);
         if (!src) return;
         const copy = JSON.parse(JSON.stringify(src));
-        copy.id = `${src.id}_copy_${Date.now()}`;
+        let seed = Date.now();
+        let nextId = buildDuplicatedSkillId(src.id, seed);
+        while (this.getSkillById(nextId)) {
+            seed += 1;
+            nextId = buildDuplicatedSkillId(src.id, seed);
+        }
+        copy.id = nextId;
         copy.name = `${src.name || 'Skill'} (Copy)`;
         copy.prerequisites = Array.isArray(src.prerequisites) ? [...src.prerequisites] : [];
         copy.editorMeta = { x: (src.editorMeta?.x ?? 14) + 100, y: (src.editorMeta?.y ?? 14) + 0 };

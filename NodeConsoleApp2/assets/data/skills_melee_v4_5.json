@@ -2290,7 +2290,7 @@
       "rarity": "Rare",
       "description": "扣除5点腿部护甲，获得一层免伤",
       "prerequisites": [
-        "skill_skull_cracker_copy_1769957925421_copy_1769961490300",
+        "skill_skull_cracker_copy_1770042860426",
         "skill_1771769351059"
       ],
       "unlock": {
@@ -2476,7 +2476,7 @@
       "actions": []
     },
     {
-      "id": "skill_skull_cracker_copy_1769957925421_copy_1769961490300_copy_1770042860426",
+      "id": "skill_skull_cracker_copy_1770042860426",
       "name": "转进如风",
       "rarity": "Uncommon",
       "description": "所有技能的基础速度+2",
@@ -2653,12 +2653,12 @@
       ]
     },
     {
-      "id": "skill_shockwave_copy_1770041956468_copy_1770042951717",
+      "id": "skill_shockwave_copy_1770042951717",
       "name": "撕裂伤口",
       "rarity": "Rare",
       "description": "使对方获得buff，撕裂伤口，在撕裂伤口情况下，每次行动，流血+1\n【问题：需要补充流血buff】",
       "prerequisites": [
-        "skill_skull_cracker_copy_1769957925421_copy_1769961490300",
+        "skill_skull_cracker_copy_1770042860426",
         "skill_1771769351059"
       ],
       "unlock": {
@@ -2763,12 +2763,12 @@
       ]
     },
     {
-      "id": "skill_execute_copy_1769961767095_copy_1770043820577",
+      "id": "skill_execute_copy_1770043820577",
       "name": "迸发",
       "rarity": "Epic",
       "description": "对指定部位的护甲，造成5倍流血的伤害",
       "prerequisites": [
-        "skill_shockwave_copy_1770041956468_copy_1770042951717"
+        "skill_shockwave_copy_1770042951717"
       ],
       "unlock": {
         "cost": {
@@ -2853,12 +2853,12 @@
       ]
     },
     {
-      "id": "skill_execute_copy_1769961767095_copy_1770043820577_copy_1770044052832",
+      "id": "skill_execute_copy_1770044052832",
       "name": "吸血",
       "rarity": "Epic",
       "description": "获取流血层数*2的血量",
       "prerequisites": [
-        "skill_shockwave_copy_1770041956468_copy_1770042951717"
+        "skill_shockwave_copy_1770042951717"
       ],
       "unlock": {
         "cost": {
@@ -2948,7 +2948,7 @@
       "rarity": "Rare",
       "description": "移除所有护甲，回10点血量",
       "prerequisites": [
-        "skill_skull_cracker_copy_1769957925421_copy_1769961490300_copy_1770042860426"
+        "skill_skull_cracker_copy_1770042860426"
       ],
       "unlock": {
         "cost": {
