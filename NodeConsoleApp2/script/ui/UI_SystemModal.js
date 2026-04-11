@@ -587,49 +587,31 @@ export class UI_SystemModal {
         const learned = Array.isArray(playerSkills?.learned) ? playerSkills.learned : [];
         const skillPoints = Number(playerSkills?.skillPoints);
         const summary = document.createElement('section');
-        summary.className = 'menu-growth-summary';
-        summary.style.padding = '14px 16px';
-        summary.style.marginBottom = '14px';
-        summary.style.borderRadius = '10px';
-        summary.style.border = '1px solid rgba(124, 245, 217, 0.25)';
-        summary.style.background = 'rgba(18, 23, 38, 0.92)';
-        summary.style.color = '#dfe7ff';
+        summary.className = 'summary-section summary-section--growth';
+        summary.dataset.summaryKind = 'growth';
 
         const title = document.createElement('div');
+        title.className = 'summary-section__title';
         title.textContent = '成长摘要';
-        title.style.fontSize = '0.96rem';
-        title.style.fontWeight = '700';
-        title.style.marginBottom = '8px';
 
         const tip = document.createElement('p');
+        tip.className = 'summary-section__description';
         tip.textContent = '在进入关卡前先确认当前知识点和已学技能，再决定这局要走什么构筑方向。';
-        tip.style.margin = '0 0 12px';
-        tip.style.fontSize = '0.88rem';
-        tip.style.lineHeight = '1.5';
-        tip.style.color = '#cfe8ff';
 
         const statGrid = document.createElement('div');
-        statGrid.style.display = 'grid';
-        statGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(140px, 1fr))';
-        statGrid.style.gap = '10px';
+        statGrid.className = 'summary-metric-grid';
 
         const createStatCard = (label, value) => {
             const card = document.createElement('div');
-            card.style.padding = '10px 12px';
-            card.style.borderRadius = '8px';
-            card.style.background = 'rgba(255, 255, 255, 0.04)';
-            card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+            card.className = 'summary-metric-card';
 
             const labelEl = document.createElement('div');
+            labelEl.className = 'summary-metric-card__label';
             labelEl.textContent = label;
-            labelEl.style.fontSize = '0.8rem';
-            labelEl.style.color = '#8fb0d6';
-            labelEl.style.marginBottom = '4px';
 
             const valueEl = document.createElement('div');
+            valueEl.className = 'summary-metric-card__value';
             valueEl.textContent = value;
-            valueEl.style.fontSize = '1.1rem';
-            valueEl.style.fontWeight = '700';
 
             card.appendChild(labelEl);
             card.appendChild(valueEl);
@@ -644,9 +626,7 @@ export class UI_SystemModal {
         summary.appendChild(statGrid);
 
         const detailStack = document.createElement('div');
-        detailStack.style.display = 'grid';
-        detailStack.style.gap = '10px';
-        detailStack.style.marginTop = '12px';
+        detailStack.className = 'summary-detail-stack';
 
         detailStack.appendChild(this._createGrowthSummaryDetail(
             '最近成长来源',
@@ -670,58 +650,38 @@ export class UI_SystemModal {
         }
 
         const section = document.createElement('section');
-        section.className = 'menu-content-source-guide';
-        section.style.padding = '14px 16px';
-        section.style.marginBottom = '14px';
-        section.style.borderRadius = '10px';
-        section.style.border = '1px solid rgba(124, 245, 217, 0.22)';
-        section.style.background = 'rgba(18, 23, 38, 0.88)';
-        section.style.color = '#dfe7ff';
+        section.className = 'summary-section summary-section--content-sources';
+        section.dataset.summaryKind = 'content-sources';
 
         const title = document.createElement('div');
+        title.className = 'summary-section__title';
         title.textContent = '内容入口说明';
-        title.style.fontSize = '0.96rem';
-        title.style.fontWeight = '700';
-        title.style.marginBottom = '8px';
 
         const tip = document.createElement('p');
+        tip.className = 'summary-section__description';
         tip.textContent = '正式游戏菜单只承载 story 与验收样本入口；作者样本工具页保留在独立测试页，不直接进入主流程运行时。';
-        tip.style.margin = '0 0 12px';
-        tip.style.fontSize = '0.88rem';
-        tip.style.lineHeight = '1.6';
-        tip.style.color = '#cfe8ff';
 
         const list = document.createElement('div');
-        list.style.display = 'grid';
-        list.style.gap = '10px';
+        list.className = 'summary-detail-stack';
 
         overview.forEach(item => {
             const card = document.createElement('div');
-            card.style.padding = '10px 12px';
-            card.style.borderRadius = '8px';
-            card.style.background = 'rgba(255, 255, 255, 0.04)';
-            card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+            card.className = 'summary-detail-card';
 
             const heading = document.createElement('div');
+            heading.className = 'summary-detail-card__label';
             heading.textContent = item?.title || item?.kind || '来源';
-            heading.style.fontSize = '0.82rem';
-            heading.style.color = '#8fb0d6';
-            heading.style.marginBottom = '4px';
 
             const entry = document.createElement('div');
+            entry.className = 'summary-detail-card__value';
             const countText = Number.isFinite(item?.count) ? ` · ${item.count} 项` : '';
             entry.textContent = item?.isRuntimeEntry
                 ? `${item?.entryLabel || '入口'}${countText}`
                 : `${item?.entryLabel || '入口'} · 不在游戏菜单`;
-            entry.style.fontSize = '0.94rem';
-            entry.style.fontWeight = '700';
 
             const desc = document.createElement('div');
+            desc.className = 'summary-detail-card__text';
             desc.textContent = item?.description || '';
-            desc.style.marginTop = '6px';
-            desc.style.fontSize = '0.84rem';
-            desc.style.lineHeight = '1.55';
-            desc.style.color = '#dfe7ff';
 
             card.appendChild(heading);
             card.appendChild(entry);
@@ -737,22 +697,15 @@ export class UI_SystemModal {
 
     _createGrowthSummaryDetail(label, text) {
         const card = document.createElement('div');
-        card.style.padding = '10px 12px';
-        card.style.borderRadius = '8px';
-        card.style.background = 'rgba(255, 255, 255, 0.04)';
-        card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        card.className = 'summary-detail-card';
 
         const labelEl = document.createElement('div');
+        labelEl.className = 'summary-detail-card__label';
         labelEl.textContent = label;
-        labelEl.style.fontSize = '0.8rem';
-        labelEl.style.color = '#8fb0d6';
-        labelEl.style.marginBottom = '4px';
 
         const valueEl = document.createElement('div');
+        valueEl.className = 'summary-detail-card__value';
         valueEl.textContent = text;
-        valueEl.style.fontSize = '0.9rem';
-        valueEl.style.lineHeight = '1.6';
-        valueEl.style.color = '#dfe7ff';
 
         card.appendChild(labelEl);
         card.appendChild(valueEl);
@@ -870,30 +823,19 @@ export class UI_SystemModal {
     _buildPreBattleBuildSummarySection() {
         const summaryData = this._buildPreBattleBuildSummaryData();
         const section = document.createElement('section');
-        section.className = 'prebattle-build-summary';
-        section.style.padding = '14px 16px';
-        section.style.marginBottom = '16px';
-        section.style.borderRadius = '10px';
-        section.style.border = '1px solid rgba(124, 245, 217, 0.25)';
-        section.style.background = 'rgba(18, 23, 38, 0.92)';
-        section.style.color = '#dfe7ff';
+        section.className = 'summary-section summary-section--prebattle-build';
+        section.dataset.summaryKind = 'prebattle-build';
 
         const title = document.createElement('div');
+        title.className = 'summary-section__title';
         title.textContent = '关前构筑摘要';
-        title.style.fontSize = '0.96rem';
-        title.style.fontWeight = '700';
-        title.style.marginBottom = '8px';
 
         const tip = document.createElement('p');
+        tip.className = 'summary-section__description';
         tip.textContent = '当前版本会在进入本局时自动带入全部已学技能；这里的重点是先确认当前技能池和最近学习带来的新增差异。';
-        tip.style.margin = '0 0 12px';
-        tip.style.fontSize = '0.88rem';
-        tip.style.lineHeight = '1.6';
-        tip.style.color = '#cfe8ff';
 
         const detailStack = document.createElement('div');
-        detailStack.style.display = 'grid';
-        detailStack.style.gap = '10px';
+        detailStack.className = 'summary-detail-stack';
 
         const skillPoolText = summaryData.previewNames.length > 0
             ? `${summaryData.totalCount} 项：${summaryData.previewNames.join('、')}${summaryData.remainingCount > 0 ? ` 等 ${summaryData.totalCount} 项` : ''}`
@@ -1159,7 +1101,8 @@ export class UI_SystemModal {
         if (!data) return null;
 
         const section = document.createElement('section');
-        section.className = 'story-progress-panel';
+        section.className = 'story-progress-panel summary-section summary-section--story-progress';
+        section.dataset.summaryKind = 'story-progress';
         const heading = [data.chapterLabel, data.chapterTitle].filter(Boolean).join(' · ');
         const recommendedText = data.recommendedLevelName
             ? `${data.currentNodeLabel ? `${data.currentNodeLabel} ` : ''}${data.recommendedLevelName}`

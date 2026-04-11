@@ -70,6 +70,7 @@
     import UI_SkillPanel from '../script/ui/UI_SkillPanel.js';
     import { UI_SkillTreeModal } from '../script/ui/UI_SkillTreeModal.js';
     import { UI_SystemModal } from '../script/ui/UI_SystemModal.js';
+    import { UI_AttentionGuide } from '../script/ui/UI_AttentionGuide.js';
     import { UI_BattleRow } from '../script/ui/UI_BattleRow.js';
     import { CONTENT_PACK_OVERRIDE_STORAGE_KEY, buildContentPackOverrideKey, clearContentPackOverride, getContentPackOverride, setContentPackOverride } from '../script/tooling/ContentPackOverrideStore.js';
 
@@ -992,6 +993,193 @@
       const html = await fetch('../mock_ui_v11.html').then(r => r.text());
       assertPageIncludesText(html, 'battle-presentation-meta', 'mock_ui_v11.html 缺少展示配置资产读数节点');
       assertPageIncludesText(html, '演出配置资产：加载中', 'mock_ui_v11.html 缺少展示配置资产占位文案');
+    }
+
+    function buildUiSummaryRegressionEngine() {
+      return {
+        eventBus: createMiniEventBus(),
+        battlePhase: 'PLANNING',
+        currentTurn: 1,
+        playerSkillQueue: [],
+        timeline: {
+          phase: 'IDLE'
+        },
+        data: {
+          playerData: {
+            stats: {
+              ap: 6,
+              maxAp: 6
+            },
+            skills: {
+              skillTreeId: 'player1',
+              skillPoints: 2,
+              learned: ['skill_throw_stone', 'skill_heal']
+            }
+          },
+          dataConfig: {
+            global: {
+              progress: {
+                lastSettlement: {
+                  levelName: '幽暗森林边缘',
+                  rewards: { exp: 100, gold: 50, kp: 1 }
+                },
+                lastLearnAction: {
+                  learnedCount: 1,
+                  learnedSkillNames: ['投石'],
+                  spentKp: 1,
+                  remainingKp: 2
+                }
+              }
+            }
+          },
+          getLevelContentSourceOverview() {
+            return [
+              {
+                kind: 'story',
+                title: '故事关卡',
+                entryLabel: '关卡选择',
+                count: 1,
+                isRuntimeEntry: true,
+                description: '正式推进内容。'
+              }
+            ];
+          },
+          getAcceptanceLevelSelectEntries() {
+            return [];
+          },
+          getSkillConfig(skillId) {
+            const names = {
+              skill_throw_stone: { id: 'skill_throw_stone', name: '投石' },
+              skill_heal: { id: 'skill_heal', name: '治疗术' }
+            };
+            return names[skillId] || null;
+          },
+          getLevelSelectOverview() {
+            return {
+              chapterLabel: '第一章',
+              chapterTitle: '幽暗森林',
+              completedCount: 1,
+              totalCount: 3,
+              unlockedCount: 2,
+              recommendedLevelId: 'level_1_2_story',
+              recommendedLevelName: '密林前哨',
+              currentNodeLabel: '1-2',
+              currentObjectiveText: '穿过前哨，向废墟推进。',
+              nextLockedLevelId: 'level_1_3_story',
+              nextLockedLevelName: '废墟关隘',
+              chapterNodes: [
+                { id: 'level_1_1', name: '幽暗森林边缘', nodeLabel: '1-1', status: 'completed' },
+                { id: 'level_1_2_story', name: '密林前哨', nodeLabel: '1-2', status: 'recommended' },
+                { id: 'level_1_3_story', name: '废墟关隘', nodeLabel: '1-3', status: 'locked' }
+              ]
+            };
+          },
+          getLevelSelectEntries() {
+            return [
+              {
+                id: 'level_1_2_story',
+                name: '密林前哨',
+                description: '第二节点',
+                isUnlocked: true,
+                isCompleted: false,
+                flow: {
+                  kind: 'story',
+                  chapterLabel: '第一章',
+                  chapterTitle: '幽暗森林',
+                  nodeLabel: '1-2'
+                },
+                progression: {
+                  stateLabel: '当前推荐',
+                  unlockHint: '当前已解锁，建议优先推进。'
+                },
+                rewards: { exp: 100, gold: 50, kp: 1 },
+                clearFeedback: {
+                  currentMode: 'first_clear',
+                  firstClearText: '首次通关将解锁下一关：废墟关隘。',
+                  repeatClearText: '重复通关仍获得常规资源奖励，但不再解锁新章节。'
+                }
+              }
+            ];
+          }
+        },
+        input: {
+          selectLevel() {},
+          loadGame() {},
+          confirmSettlement() {},
+          resumeGame() {}
+        }
+      };
+    }
+
+    async function testUiAttentionGuideProvidesBattleSummary() {
+      const host = resetRegressionFixture(`
+        <div id="uiAttentionBadge"></div>
+        <section id="battleStateSummary"></section>
+      `);
+      const engine = buildUiSummaryRegressionEngine();
+      const guide = new UI_AttentionGuide(engine);
+
+      let summaryText = host.querySelector('#battleStateSummary')?.textContent || '';
+      assert(summaryText.includes('当前目标'), 'UI_AttentionGuide 未渲染“当前目标”摘要卡');
+      assert(summaryText.includes('选择技能并部署到技能槽'), 'UI_AttentionGuide 未给出规划阶段目标');
+      assert(summaryText.includes('尚未提交规划'), 'UI_AttentionGuide 未提示尚未提交规划');
+
+      engine.playerSkillQueue = [
+        { skillId: 'skill_throw_stone', cost: 1 },
+        { skillId: 'skill_heal', cost: 2 }
+      ];
+      engine.timeline.phase = 'READY';
+      engine.eventBus.emit('BATTLE_UPDATE', {
+        phase: 'PLANNING',
+        queue: engine.playerSkillQueue,
+        timelinePhase: 'READY'
+      });
+
+      summaryText = host.querySelector('#battleStateSummary')?.textContent || '';
+      assert(summaryText.includes('已规划 2 项'), 'UI_AttentionGuide 未反映已规划技能数量');
+      assert(summaryText.includes('可以执行回合'), 'UI_AttentionGuide 未提示可执行回合');
+
+      engine.battlePhase = 'EXECUTION';
+      engine.timeline.phase = 'PLAYING';
+      engine.eventBus.emit('TIMELINE_START', { roundId: 1 });
+
+      summaryText = host.querySelector('#battleStateSummary')?.textContent || '';
+      assert(summaryText.includes('时间轴执行中'), 'UI_AttentionGuide 未反映执行阶段状态');
+      assert(summaryText.includes('等待自动结算'), 'UI_AttentionGuide 未提示等待自动结算');
+      assert(document.body.dataset.uiPhase === 'execution', `body[data-ui-phase] 未同步为 execution: ${document.body.dataset.uiPhase}`);
+    }
+
+    async function testUiSystemModalUsesUnifiedSummarySectionClasses() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true">
+          <div class="modal-panel">
+            <div id="modalTitle"></div>
+            <div id="modalBody"></div>
+            <div id="modalFooter"></div>
+            <button id="modalCloseBtn" type="button"></button>
+          </div>
+        </div>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const modal = new UI_SystemModal();
+      modal.engine = buildUiSummaryRegressionEngine();
+      modal.bindDOM();
+
+      modal.renderMainMenu();
+      let kinds = Array.from(document.querySelectorAll('#modalBody .summary-section')).map(node => node.dataset.summaryKind);
+      assert(kinds.includes('growth'), '主菜单缺少 growth 摘要语义类');
+      assert(kinds.includes('content-sources'), '主菜单缺少 content-sources 摘要语义类');
+
+      modal.renderLevelSelect();
+      kinds = Array.from(document.querySelectorAll('#modalBody .summary-section')).map(node => node.dataset.summaryKind);
+      assert(kinds.includes('story-progress'), '关卡选择页缺少 story-progress 摘要语义类');
+      assert(kinds.includes('prebattle-build'), '关卡选择页缺少 prebattle-build 摘要语义类');
+    }
+
+    async function testMockUiProvidesBattleStateSummaryMount() {
+      const html = await fetch('../mock_ui_v11.html').then(r => r.text());
+      assert(/id="battleStateSummary"/.test(html), 'mock_ui_v11.html 缺少主界面摘要条挂载点 #battleStateSummary');
     }
 
     async function testCoreEngineBattleSaveSyncContract() {
@@ -6026,6 +6214,11 @@
         'skill_contract_probe 会解释异常分批闭环',
         'codex_regression_runner 提供 scope 范围说明'
       ]),
+      'WBS-4.1.3': new Set([
+        'UI_AttentionGuide 提供主界面摘要条',
+        'UI_SystemModal 主菜单与关卡选择页使用统一摘要语义类',
+        'mock_ui_v11 提供主界面摘要条挂载点'
+      ]),
       'WBS-4.3.7': new Set([
         'BattlePresentationController 会应用展示配置资产桥接面',
         'battle_presentation_configurator 提供可理解的展示参数工具说明',
@@ -6066,6 +6259,9 @@
     const tests = [
       ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
       ['mock_ui_v11 使用统一的主流程按钮语言', testMockUiUsesUnifiedMainFlowButtonLabels],
+      ['UI_AttentionGuide 提供主界面摘要条', testUiAttentionGuideProvidesBattleSummary],
+      ['UI_SystemModal 主菜单与关卡选择页使用统一摘要语义类', testUiSystemModalUsesUnifiedSummarySectionClasses],
+      ['mock_ui_v11 提供主界面摘要条挂载点', testMockUiProvidesBattleStateSummaryMount],
       ['BattlePresentationController 会在时间线启动时标记攻击态', testBattlePresentationControllerMarksActorOnTimelineEntry],
       ['BattlePresentationController 会在受击时生成伤害飘字', testBattlePresentationControllerCreatesFloatTextOnDamage],
       ['BattlePresentationController 会在时间线启动时显示动作标签', testBattlePresentationControllerShowsReadableActionLabelOnTimelineEntry],
