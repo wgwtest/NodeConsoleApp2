@@ -16,18 +16,28 @@ body { margin: 0; background: radial-gradient(circle at top, rgba(78,139,255,0.3
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
 }
 .battle-state-summary {
+  position: relative;
+  z-index: 3;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 12px;
-  position: relative;
-  z-index: 3;
+  min-height: 0;
+  padding: 18px 20px 20px;
+  border-radius: 18px;
+  border: 2px solid rgba(124, 245, 217, 0.52);
+  background: linear-gradient(180deg, rgba(17, 22, 38, 0.96), rgba(28, 34, 55, 0.94));
+  box-shadow: 0 18px 36px rgba(6,10,35,0.28);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.battle-state-summary .area-tag {
+  color: #7cf5d9;
 }
 .summary-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 92px;
+  min-height: 0;
   padding: 12px 14px;
   border-radius: 14px;
   border: 1px solid rgba(129, 165, 255, 0.18);
@@ -41,15 +51,15 @@ body { margin: 0; background: radial-gradient(circle at top, rgba(78,139,255,0.3
   color: rgba(124, 245, 217, 0.82);
 }
 .summary-card__value {
-  font-size: 0.98rem;
+  font-size: 0.92rem;
   font-weight: 700;
   line-height: 1.35;
   color: #f5f8ff;
 }
 .summary-card__meta {
   margin: 0;
-  font-size: 0.82rem;
-  line-height: 1.55;
+  font-size: 0.78rem;
+  line-height: 1.5;
   color: #cfe0ff;
 }
 .summary-chip-row {
@@ -66,7 +76,7 @@ body { margin: 0; background: radial-gradient(circle at top, rgba(78,139,255,0.3
   border: 1px solid rgba(129, 165, 255, 0.22);
   background: rgba(255, 255, 255, 0.04);
   color: #dfe8ff;
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   line-height: 1.2;
 }
 main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286px 186px; gap: 16px; height: calc(1080px - 56px); overflow: visible; }
@@ -271,7 +281,7 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
   animation: sceneBeatFocusEnemy var(--battle-scene-beat-duration) ease-out;
 }
 .battle-scene.scene-impact {
-  animation: sceneImpactShake var(--battle-scene-impact-duration) ease-out;
+  animation: sceneImpactFlash var(--battle-scene-impact-duration) ease-out;
 }
 .stage-background {
   position: absolute;
@@ -623,26 +633,17 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
   }
 }
 
-@keyframes sceneImpactShake {
+@keyframes sceneImpactFlash {
   0% {
-    transform: translate(0, 0);
     filter: brightness(1);
   }
-  20% {
-    transform: translate(var(--battle-scene-impact-x1-px), var(--battle-scene-impact-y1-px));
+  25% {
     filter: brightness(var(--battle-scene-impact-brightness));
   }
-  40% {
-    transform: translate(var(--battle-scene-impact-x2-px), var(--battle-scene-impact-y2-px));
-  }
-  60% {
-    transform: translate(var(--battle-scene-impact-x3-px), var(--battle-scene-impact-y3-px));
-  }
-  80% {
-    transform: translate(var(--battle-scene-impact-x4-px), var(--battle-scene-impact-y4-px));
+  55% {
+    filter: brightness(calc((var(--battle-scene-impact-brightness) + 1) / 2));
   }
   100% {
-    transform: translate(0, 0);
     filter: brightness(1);
   }
 }

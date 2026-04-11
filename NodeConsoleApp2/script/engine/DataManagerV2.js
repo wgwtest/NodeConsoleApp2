@@ -1443,10 +1443,167 @@ class DataManager {
         return issues;
     }
 
+    getSkillContractRemediationHistory() {
+        const fixedAt = '2026-04-11 09:10:19 +0800';
+        const reason = '原配置里存在 selectCount 越界，或 single 模式的选择数量不是 1，导致规划阶段的选择语义不稳定。';
+        const remediation = '以 candidateParts 为上限收敛 selectCount，并把 single 模式统一修正为 selectCount = 1。';
+        return [
+            'skill_block',
+            'skill_aegis',
+            'skill_hold_the_line_copy_1769790933469',
+            'skill_shockwave_copy_1770041956468',
+            'skill_bone_repair',
+            'skill_escape'
+        ].map(skillId => ({
+            skillId,
+            ownerNode: 'WBS-3.3.3',
+            fixedAt,
+            issueCodes: ['selection_count_exceeds_candidates', 'single_selection_count_invalid'],
+            reason,
+            remediation
+        }));
+    }
+
+    _describeSkillContractIssues(issues) {
+        const list = Array.isArray(issues) ? issues : [];
+        if (list.length === 0) {
+            return '当前未发现契约异常。';
+        }
+
+        const labelMap = {
+            selection_count_exceeds_candidates: 'selectCount 超过 candidateParts 上限',
+            single_selection_count_invalid: 'single 模式的 selectCount 不是 1',
+            tag_subject_mismatch: 'SUBJECT 标签与 target.subject 不一致',
+            tag_scope_mismatch: 'SCOPE 标签与 target.scope 不一致',
+            unexpected_effect_tag: 'tags 声称存在某效果，但 actions / buffRefs 无法直接推导',
+            missing_effect_tag: 'actions / buffRefs 已体现某效果，但 tags 未同步'
+        };
+
+        return Array.from(new Set(list.map(issue => labelMap[issue.code] || issue.message || issue.code))).join('；');
+    }
+
+    _recommendSkillContractFixFromIssues(issues) {
+        const list = Array.isArray(issues) ? issues : [];
+        if (list.length === 0) {
+            return '无需修改。';
+        }
+
+        const codes = new Set(list.map(issue => issue.code));
+        const steps = [];
+        if (codes.has('selection_count_exceeds_candidates') || codes.has('single_selection_count_invalid')) {
+            steps.push('收敛 target.selection.selectCount，使其不超过 candidateParts；single 模式固定为 1');
+        }
+        if (codes.has('tag_subject_mismatch') || codes.has('tag_scope_mismatch')) {
+            steps.push('以 target.subject / target.scope 为准，删除或修正漂移的 SUBJECT_* / SCOPE_* 标签');
+        }
+        if (codes.has('unexpected_effect_tag') || codes.has('missing_effect_tag')) {
+            steps.push('以 actions / buffRefs 为事实来源，移除过时效果标签或补齐缺失标签');
+        }
+        return steps.join('；');
+    }
+
+    getSkillContractStatusBoard(options = {}) {
+        const includeAliases = options && options.includeAliases === true;
+        const catalog = this.getSkillContractCatalog({ includeAliases });
+        const entries = Array.isArray(catalog?.entries) ? catalog.entries : [];
+        const historyList = this.getSkillContractRemediationHistory();
+        const historyBySkill = new Map();
+        historyList.forEach(item => {
+            if (!item || !item.skillId) return;
+            if (!historyBySkill.has(item.skillId)) {
+                historyBySkill.set(item.skillId, []);
+            }
+            historyBySkill.get(item.skillId).push(item);
+        });
+
+        const statusWeight = {
+            '未修复': 0,
+            '已修复': 1,
+            '正常': 2
+        };
+
+        const rows = entries
+            .filter(entry => includeAliases || !entry?.runtimeFlags?.isAlias)
+            .map(entry => {
+                const issues = this.getSkillContractIssues(entry);
+                const history = historyBySkill.get(entry.id) || [];
+                const lastHistory = history.length > 0 ? history[history.length - 1] : null;
+                const resolvedIssueCodes = new Set(
+                    history.flatMap(item => Array.isArray(item?.issueCodes) ? item.issueCodes : [])
+                );
+                const unresolvedResolvedIssues = issues.filter(issue => resolvedIssueCodes.has(issue.code));
+                const remainingIssues = issues.filter(issue => !resolvedIssueCodes.has(issue.code));
+                const status = unresolvedResolvedIssues.length > 0
+                    ? '未修复'
+                    : (history.length > 0
+                        ? '已修复'
+                        : (issues.length > 0 ? '未修复' : '正常'));
+
+                const reasonParts = [];
+                const remediationParts = [];
+
+                if (status === '正常') {
+                    reasonParts.push('当前未发现契约异常。');
+                    remediationParts.push('无需修改。');
+                } else if (status === '已修复') {
+                    reasonParts.push(String(lastHistory?.reason || '当前节点已完成正式修复。'));
+                    remediationParts.push(String(lastHistory?.remediation || '已完成修复。'));
+                    if (remainingIssues.length > 0) {
+                        reasonParts.push(`仍有后续批次问题：${this._describeSkillContractIssues(remainingIssues)}`);
+                        remediationParts.push(`后续修改方向：${this._recommendSkillContractFixFromIssues(remainingIssues)}`);
+                    }
+                } else {
+                    if (unresolvedResolvedIssues.length > 0) {
+                        reasonParts.push(`已登记修复的问题仍未完全收口：${this._describeSkillContractIssues(unresolvedResolvedIssues)}`);
+                        remediationParts.push(`优先回归已登记修复项：${this._recommendSkillContractFixFromIssues(unresolvedResolvedIssues)}`);
+                    }
+
+                    const activeIssues = remainingIssues.length > 0 ? remainingIssues : issues;
+                    if (activeIssues.length > 0) {
+                        reasonParts.push(this._describeSkillContractIssues(activeIssues));
+                        remediationParts.push(this._recommendSkillContractFixFromIssues(activeIssues));
+                    }
+                }
+
+                return {
+                    skillId: entry.id,
+                    skillName: entry.name,
+                    runtimeAliasOf: entry.runtimeAliasOf || null,
+                    status,
+                    fixedAt: status === '已修复' ? String(lastHistory?.fixedAt || '') : '',
+                    issueCodes: issues.map(issue => issue.code),
+                    reason: reasonParts.filter(Boolean).join('；'),
+                    remediation: remediationParts.filter(Boolean).join('；')
+                };
+            })
+            .sort((a, b) => {
+                const byStatus = (statusWeight[a.status] ?? 99) - (statusWeight[b.status] ?? 99);
+                if (byStatus !== 0) return byStatus;
+                return String(a.skillId).localeCompare(String(b.skillId));
+            });
+
+        const counts = rows.reduce((acc, row) => {
+            acc.total += 1;
+            if (row.status === '正常') acc.normal += 1;
+            if (row.status === '已修复') acc.fixed += 1;
+            if (row.status === '未修复') acc.open += 1;
+            return acc;
+        }, { total: 0, normal: 0, fixed: 0, open: 0 });
+
+        return {
+            ownerNode: 'WBS-3.3.3',
+            selectedTreeId: catalog?.selectedTreeId || null,
+            schemaVersion: catalog?.schemaVersion || null,
+            counts,
+            rows
+        };
+    }
+
     getSkillContractRemediationBatches(options = {}) {
         const includeAliases = options && options.includeAliases === true;
         const catalog = this.getSkillContractCatalog({ includeAliases });
         const entries = Array.isArray(catalog?.entries) ? catalog.entries : [];
+        const historyList = this.getSkillContractRemediationHistory();
         const batchDefinitions = [
             {
                 id: 'batch_structure_selection',
@@ -1487,14 +1644,30 @@ class DataManager {
 
         const batches = batchDefinitions.map(definition => {
             const rows = issueRows.filter(row => definition.issueCodes.includes(row.code));
-            const affectedSkills = Array.from(new Map(rows.map(row => [row.skillId, {
+            const openSkills = Array.from(new Map(rows.map(row => [row.skillId, {
                 skillId: row.skillId,
                 skillName: row.skillName,
                 runtimeAliasOf: row.runtimeAliasOf || null
             }])).values());
+            const fixedSkills = Array.from(new Map(
+                historyList
+                    .filter(item => Array.isArray(item.issueCodes) && item.issueCodes.some(code => definition.issueCodes.includes(code)))
+                    .map(item => [item.skillId, {
+                        skillId: item.skillId,
+                        skillName: this.getSkillConfig(item.skillId)?.name || item.skillId,
+                        runtimeAliasOf: this.getSkillConfig(item.skillId)?.runtimeAliasOf || null,
+                        fixedAt: item.fixedAt
+                    }])
+            ).values());
+            const isClosed = rows.length === 0;
+            const affectedSkills = isClosed ? fixedSkills : openSkills;
+            const closedAt = isClosed
+                ? (fixedSkills.map(item => item.fixedAt).filter(Boolean).sort().slice(-1)[0] || '')
+                : '';
             return {
                 ...definition,
-                status: rows.length === 0 ? 'closed' : 'open',
+                status: isClosed ? 'closed' : 'open',
+                closedAt,
                 openIssueCount: rows.length,
                 affectedSkillCount: affectedSkills.length,
                 affectedSkills,

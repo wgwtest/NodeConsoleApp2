@@ -9,7 +9,7 @@
         .container { max-width: 1280px; margin: 0 auto; }
         .panel { background: #fff; border: 1px solid #d9e1ec; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05); }
         .guide-panel { background: #f8fbff; border-color: #cfe1ff; }
-        .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        .guide-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         .guide-card { background: #fff; border: 1px solid #dbe7f6; border-radius: 8px; padding: 12px; }
         .guide-card h3 { margin-top: 0; margin-bottom: 8px; font-size: 16px; }
         .guide-card p, .guide-card li { color: #334155; line-height: 1.6; }
@@ -24,6 +24,11 @@
         .summary-label { color: #64748b; font-size: 13px; margin-bottom: 6px; }
         .summary-value { font-size: 28px; font-weight: 700; color: #0f172a; }
         .summary-note { color: #334155; font-size: 13px; line-height: 1.5; }
+        .status-board-note { margin: 0 0 12px; color: #334155; line-height: 1.7; }
+        .status-pill { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .status-pill--normal { background: #dcfce7; color: #166534; }
+        .status-pill--fixed { background: #dbeafe; color: #1d4ed8; }
+        .status-pill--open { background: #fee2e2; color: #991b1b; }
         .issue-list { display: grid; gap: 12px; }
         .issue-card { border: 1px solid #fecaca; background: #fff7f7; border-radius: 8px; padding: 14px; }
         .issue-card h3 { margin: 0 0 6px; font-size: 18px; color: #991b1b; }
@@ -63,9 +68,9 @@
             <div class="guide-card">
                 <h3>你在本页应该先看什么</h3>
                 <ol>
-                    <li>先看顶部摘要卡：尤其是 <code>问题技能数</code>、<code>别名条目数</code>、<code>问题总数</code>。</li>
-                    <li>再看“首批异常技能”列表，优先处理每个技能的 issue code。</li>
-                    <li>最后看下方“技能契约矩阵”，确认 alias、目标范围、直接动作效果和 buff 引用是否符合预期。</li>
+                    <li>先看“技能状态总表”：它直接回答“哪些技能正常、哪些已修复、哪些还没修”。</li>
+                    <li>再看“WBS-3.3.3 异常分批闭环”：确认当前节点负责哪些批次、哪些已关闭、哪些留到后续。</li>
+                    <li>最后再看“仍有问题的技能”和“技能契约矩阵”，定位具体 issue code 与运行时结构。</li>
                 </ol>
             </div>
             <div class="guide-card">
@@ -127,6 +132,27 @@
         </div>
     </div>
 
+    <div class="panel guide-panel" id="statusBoardGuide">
+        <h2>技能状态总表</h2>
+        <p class="status-board-note"><span class="guide-tag">先看这里</span>如果你只关心“哪些技能有问题、哪些已经修过、为什么还没修完”，先看下表，不需要先理解批次或 issue code。</p>
+        <p class="status-board-note">状态（正常，已修复，未修复）的判定口径：<code>正常</code> 表示当前未发现契约异常；<code>已修复</code> 表示当前节点已正式修过该技能的结构问题，若仍有后续批次问题，会继续写在“问题原因 / 修改方法”列；<code>未修复</code> 表示当前仍有未收口问题。</p>
+        <div id="statusBoardSummary" class="summary-grid"></div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>名称</th>
+                        <th>状态（正常，已修复，未修复）</th>
+                        <th>修复时间</th>
+                        <th>问题原因</th>
+                        <th>修改方法</th>
+                    </tr>
+                </thead>
+                <tbody id="statusBoardRows"></tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="panel guide-panel" id="remediationGuide">
         <h2>WBS-3.3.3 异常分批闭环</h2>
         <p><span class="guide-tag">WBS-3.3.3</span>本页当前对应的正式修复节点是 <code>WBS-3.3.3</code>。它负责把已归档的技能异常从“问题码列表”推进成“修复批次 + 当前状态 + 后续去向”。</p>
@@ -140,7 +166,7 @@
     </div>
 
     <div class="panel">
-        <h2>首批异常技能</h2>
+        <h2>仍有问题的技能</h2>
         <div id="issueList" class="issue-list"></div>
     </div>
 
@@ -173,6 +199,8 @@
     import DataManager from '../script/engine/DataManagerV2.js';
 
     const statusEl = document.getElementById('status');
+    const statusBoardSummaryEl = document.getElementById('statusBoardSummary');
+    const statusBoardRowsEl = document.getElementById('statusBoardRows');
     const summaryGridEl = document.getElementById('summaryGrid');
     const issueListEl = document.getElementById('issueList');
     const contractRowsEl = document.getElementById('contractRows');
@@ -200,14 +228,66 @@
         logsEl.textContent = logs.join('\n');
     }
 
-    function renderSummary(summaryItems) {
-        summaryGridEl.innerHTML = summaryItems.map(item => `
+    function renderSummaryCards(targetEl, summaryItems) {
+        if (!targetEl) return;
+        targetEl.innerHTML = summaryItems.map(item => `
             <div class="summary-card">
                 <div class="summary-label">${escapeHtml(item.label)}</div>
                 <div class="summary-value">${escapeHtml(item.value)}</div>
                 <div class="summary-note">${escapeHtml(item.note)}</div>
             </div>
         `).join('');
+    }
+
+    function renderSummary(summaryItems) {
+        renderSummaryCards(summaryGridEl, summaryItems);
+    }
+
+    function renderStatusBoard(board) {
+        const rows = Array.isArray(board?.rows) ? board.rows : [];
+        const counts = board?.counts || { total: 0, normal: 0, fixed: 0, open: 0 };
+
+        renderSummaryCards(statusBoardSummaryEl, [
+            {
+                label: '技能总数',
+                value: counts.total,
+                note: '默认按 canonical 技能统计，不把 alias 重复算入总表'
+            },
+            {
+                label: '正常',
+                value: counts.normal,
+                note: '当前未发现契约异常的技能数'
+            },
+            {
+                label: '已修复',
+                value: counts.fixed,
+                note: '当前节点已完成正式修复登记的技能数'
+            },
+            {
+                label: '未修复',
+                value: counts.open,
+                note: '当前仍需继续收口的问题技能数'
+            }
+        ]);
+
+        statusBoardRowsEl.innerHTML = rows.map(row => {
+            const statusClass = row.status === '正常'
+                ? 'status-pill status-pill--normal'
+                : (row.status === '已修复' ? 'status-pill status-pill--fixed' : 'status-pill status-pill--open');
+            return `
+                <tr>
+                    <td>
+                        <div><strong>${escapeHtml(row.skillName || row.skillId)}</strong></div>
+                        <div class="mono">${escapeHtml(row.skillId)}</div>
+                        ${row.runtimeAliasOf ? `<div class="muted">alias of ${escapeHtml(row.runtimeAliasOf)}</div>` : ''}
+                    </td>
+                    <td><span class="${statusClass}">${escapeHtml(row.status || '未定义')}</span></td>
+                    <td>${row.fixedAt ? `<span class="mono">${escapeHtml(row.fixedAt)}</span>` : '<span class="muted">-</span>'}</td>
+                    <td>${escapeHtml(row.reason || '—')}</td>
+                    <td>${escapeHtml(row.remediation || '—')}</td>
+                </tr>
+            `;
+        }).join('');
     }
 
     function formatTarget(entry) {
@@ -274,6 +354,7 @@
         remediationBatchesEl.innerHTML = batches.map(batch => {
             const statusLabel = batch.status === 'closed' ? '已关闭批次' : '后续批次';
             const sampleSkills = Array.isArray(batch.affectedSkills) ? batch.affectedSkills.slice(0, 6) : [];
+            const sampleLabel = batch.status === 'closed' ? '已修复技能样本' : '未收口技能样本';
             return `
                 <div class="issue-card">
                     <h3>${escapeHtml(batch.title)}</h3>
@@ -285,10 +366,11 @@
                     </div>
                     <p>${escapeHtml(batch.description || '')}</p>
                     <p><strong>当前节点负责的批次</strong>：<span class="mono">${escapeHtml((batch.issueCodes || []).join(', ') || 'none')}</span></p>
+                    <p><strong>关闭时间</strong>：${batch.closedAt ? `<span class="mono">${escapeHtml(batch.closedAt)}</span>` : '<span class="muted">尚未关闭</span>'}</p>
                     <p><strong>非本节点说明</strong>：如果共享回归页里还有别的 FAIL，但这里没有归到本批次，就应回到对应 WBS 节点跟踪，不应算成本页失败。</p>
-                    <p><strong>样本技能</strong>：${sampleSkills.length
+                    <p><strong>${sampleLabel}</strong>：${sampleSkills.length
                         ? sampleSkills.map(skill => `<span class="flag-badge">${escapeHtml(skill.skillId)}</span>`).join('')
-                        : '<span class="empty">当前批次已无未关闭样本</span>'}</p>
+                        : '<span class="empty">当前没有可展示样本</span>'}</p>
                 </div>
             `;
         }).join('');
@@ -351,10 +433,14 @@
                 .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
                 .map(([code, count]) => `${code}=${count}`)
                 .join(', ');
+            const statusBoard = typeof DataManager.getSkillContractStatusBoard === 'function'
+                ? DataManager.getSkillContractStatusBoard()
+                : null;
             const remediation = typeof DataManager.getSkillContractRemediationBatches === 'function'
                 ? DataManager.getSkillContractRemediationBatches({ includeAliases: true })
                 : null;
 
+            renderStatusBoard(statusBoard);
             renderSummary([
                 {
                     label: '总技能数',

@@ -294,3 +294,13 @@ test('mock_ui_v11.html 提供主界面摘要条挂载点', async () => {
   const html = await fs.readFile(path.join(projectRoot, 'mock_ui_v11.html'), 'utf8');
   assert.match(html, /id="battleStateSummary"/);
 });
+
+test('mock_ui_v11.html 不再把主界面摘要条插入场景区顶部', async () => {
+  const html = await fs.readFile(path.join(projectRoot, 'mock_ui_v11.html'), 'utf8');
+  const sceneWrapperIdx = html.indexOf('<section class="scene-wrapper labeled-block">');
+  const actionPanelIdx = html.indexOf('<section class="action-panel labeled-block">');
+  const summaryIdx = html.indexOf('id="battleStateSummary"');
+  assert.notEqual(summaryIdx, -1, '缺少 #battleStateSummary');
+  assert.ok(summaryIdx > actionPanelIdx, 'battleStateSummary 仍位于 action-panel 之前，会压缩主显示区');
+  assert.ok(summaryIdx > sceneWrapperIdx, 'battleStateSummary 不应挂在 scene-wrapper 内部');
+});

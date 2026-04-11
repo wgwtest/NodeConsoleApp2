@@ -243,7 +243,7 @@
             </div>
             <div class="guide-card">
                 <h3>节奏与镜头语义</h3>
-                <p>本页也验证展现层是否可以借 <code>scene-turn-announce</code>、<code>scene-beat-* / scene-impact</code> 这样的类名，独立营造“回合亮起 → 行动连击 → 受击晃动”的节奏感，而不依赖真正的战斗结算。</p>
+                <p>本页也验证展现层是否可以借 <code>scene-turn-announce</code>、<code>scene-beat-* / scene-impact</code> 这样的类名，独立营造“回合亮起 → 行动连击 → 受击强调”的节奏感，而不依赖真正的战斗结算。</p>
             </div>
             <div class="guide-card">
                 <h3>演出配置边界</h3>
@@ -297,7 +297,7 @@
                 </tr>
                 <tr>
                     <td><code>节奏 / 镜头</code></td>
-                    <td>每次 <code>TURN_START</code>、<code>TIMELINE_ENTRY_START</code> 与 <code>BATTLE_TAKE_DAMAGE</code> 都会触发新的类（<code>scene-turn-announce</code> / <code>scene-beat-*</code> / <code>scene-impact</code>），来测试是否能给全景带来短促的亮度/位移/抖动。</td>
+                    <td>每次 <code>TURN_START</code>、<code>TIMELINE_ENTRY_START</code> 与 <code>BATTLE_TAKE_DAMAGE</code> 都会触发新的类（<code>scene-turn-announce</code> / <code>scene-beat-*</code> / <code>scene-impact</code>），来测试是否能给全景带来短促的亮度/聚焦强调，而不是额外的屏幕晃动。</td>
                     <td>展示层是不是能自己承接节奏语义：只要有事件输入，就能把“镜头”强度叠加注册在场景上，而不会修改回合、伤害等核心逻辑。</td>
                 </tr>
             </tbody>
@@ -691,7 +691,7 @@
             blockText: '格挡成功',
             template: 'guard'
         });
-        appendLog('[TPL] 防御模板：应看到格挡提示与护甲脉冲（scene-impact）。');
+        appendLog('[TPL] 防御模板：应看到格挡提示与护甲脉冲（scene-impact 亮度强调）。');
     }
 
     function runTemplateHeal() {

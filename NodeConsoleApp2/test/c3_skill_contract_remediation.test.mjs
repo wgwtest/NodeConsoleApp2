@@ -78,8 +78,33 @@ test('WBS-3.3.3 会把技能异常汇总到正式修复批次', async () => {
   assert.ok(structureBatch, '缺少结构选择批次');
   assert.equal(structureBatch.openIssueCount, 0, '结构选择批次应已完成首批收口');
   assert.ok(Array.isArray(structureBatch.issueCodes) && structureBatch.issueCodes.includes('selection_count_exceeds_candidates'), '结构选择批次未包含预期 issue code');
+  assert.equal(structureBatch.closedAt, '2026-04-11 09:10:19 +0800', `结构选择批次应回写关闭时间，当前为 ${structureBatch.closedAt}`);
+  assert.ok(Array.isArray(structureBatch.affectedSkills) && structureBatch.affectedSkills.some(skill => skill.skillId === 'skill_block'), '结构选择批次应保留已修复技能样本');
   const effectBatch = rollup.batches.find(batch => batch.id === 'batch_effect_tags');
   assert.ok(effectBatch && effectBatch.openIssueCount > 0, '效果标签批次应仍保留后续待修问题');
+});
+
+test('WBS-3.3.3 会生成面向人工验收的技能状态总表', async () => {
+  const manager = await buildSkillContractManager();
+  assert.equal(typeof manager.getSkillContractStatusBoard, 'function', '缺少 getSkillContractStatusBoard()');
+  const board = manager.getSkillContractStatusBoard();
+  assert.ok(Array.isArray(board?.rows) && board.rows.length > 0, '技能状态总表为空');
+
+  const skillBlock = board.rows.find(row => row.skillId === 'skill_block');
+  assert.ok(skillBlock, '技能状态总表缺少 skill_block');
+  assert.equal(skillBlock.status, '已修复', `skill_block 应标记为已修复，当前为 ${skillBlock?.status}`);
+  assert.equal(skillBlock.fixedAt, '2026-04-11 09:10:19 +0800', `skill_block 修复时间错误: ${skillBlock?.fixedAt}`);
+  assert.match(skillBlock.reason, /selectCount|single/i, 'skill_block 原因说明不包含结构选择异常');
+  assert.match(skillBlock.remediation, /single|candidateParts|selectCount/i, 'skill_block 修改方法未写明结构修复方式');
+
+  const problematic = board.rows.find(row => row.status === '未修复');
+  assert.ok(problematic, '技能状态总表至少应存在一个未修复技能');
+  assert.ok(problematic.reason.length > 0, '未修复技能缺少原因说明');
+  assert.ok(problematic.remediation.length > 0, '未修复技能缺少修改方法说明');
+
+  const normal = board.rows.find(row => row.status === '正常');
+  assert.ok(normal, '技能状态总表至少应存在一个正常技能');
+  assert.equal(normal.fixedAt, '', '正常技能不应带修复时间');
 });
 
 test('skill_contract_probe 会解释 WBS-3.3.3 的异常分批闭环与去向', async () => {
@@ -108,6 +133,20 @@ test('codex_regression_runner 会提供 scope 过滤与非本节点失败说明'
     'WBS-3.3.3',
     '共享回归页',
     '只运行当前范围'
+  ]) {
+    assert.match(html, new RegExp(requiredText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+});
+
+test('skill_contract_probe 会把技能状态总表作为主阅读入口', async () => {
+  const filePath = path.join(projectRoot, 'test', 'skill_contract_probe.html');
+  const html = await fs.readFile(filePath, 'utf8');
+  for (const requiredText of [
+    '技能状态总表',
+    '状态（正常，已修复，未修复）',
+    '修复时间',
+    '问题原因',
+    '修改方法'
   ]) {
     assert.match(html, new RegExp(requiredText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }

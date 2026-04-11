@@ -43,13 +43,13 @@ const MOTION_VALUE_DEFAULTS = Object.freeze({
     sceneBeatOffsetPx: 6,
     sceneBeatScale: 1.01,
     sceneBeatBrightness: 1.12,
-    sceneImpactX1Px: 4,
-    sceneImpactY1Px: -2,
-    sceneImpactX2Px: -3,
-    sceneImpactY2Px: 1,
-    sceneImpactX3Px: 2,
-    sceneImpactY3Px: -1,
-    sceneImpactX4Px: -1,
+    sceneImpactX1Px: 0,
+    sceneImpactY1Px: 0,
+    sceneImpactX2Px: 0,
+    sceneImpactY2Px: 0,
+    sceneImpactX3Px: 0,
+    sceneImpactY3Px: 0,
+    sceneImpactX4Px: 0,
     sceneImpactY4Px: 0,
     sceneImpactBrightness: 1.08,
     floatStartPx: 16,
@@ -76,7 +76,7 @@ const DEFAULT_PROFILE = Object.freeze({
 const IMPACT_PROFILE = Object.freeze({
     id: 'impact_heavy',
     label: '冲击强化',
-    description: '加强前冲、受击与场景冲击，适合重打击风格的展示实验。',
+    description: '加强前冲、受击与场景强调亮度，适合重打击风格的展示实验。',
     bridge: {
         spineSlotProfile: 'humanoid_impact',
         notes: '适合未来 SpineAssets 中偏重前摇与受击反馈的角色模板。'
@@ -99,9 +99,9 @@ const IMPACT_PROFILE = Object.freeze({
             hitShakeRightPx: 16,
             hitShakeSettlePx: -10,
             sceneBeatOffsetPx: 8,
-            sceneImpactX1Px: 6,
-            sceneImpactX2Px: -5,
-            sceneImpactX3Px: 3,
+            sceneImpactX1Px: 0,
+            sceneImpactX2Px: 0,
+            sceneImpactX3Px: 0,
             floatEndPx: -64
         }
     }

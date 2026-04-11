@@ -30,18 +30,25 @@
         }
 
         .guide-grid,
-        .layout-grid {
+        .layout-grid,
+        .tool-stack,
+        .preview-stack {
             display: grid;
             gap: 12px;
         }
 
         .guide-grid {
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: 1fr;
         }
 
         .layout-grid {
-            grid-template-columns: minmax(320px, 420px) minmax(420px, 1fr);
+            grid-template-columns: minmax(360px, 470px) minmax(620px, 1fr);
             align-items: start;
+        }
+
+        .preview-stack {
+            position: sticky;
+            top: 24px;
         }
 
         .guide-card,
@@ -115,6 +122,9 @@
         .field-grid {
             display: grid;
             gap: 10px;
+            max-height: 700px;
+            overflow: auto;
+            padding-right: 4px;
         }
 
         .field-row {
@@ -177,6 +187,17 @@
 
         .probe-shell .battle-scene {
             min-height: 320px;
+        }
+
+        .preview-heading {
+            margin: 0;
+            color: #1e3a8a;
+        }
+
+        .preview-note {
+            margin: 0;
+            color: #334155;
+            line-height: 1.7;
         }
 
         .probe-shell .player-character .sprite-layer.body {
@@ -246,6 +267,10 @@
             .probe-shell .battle-row {
                 grid-template-columns: 1fr;
             }
+
+            .preview-stack {
+                position: static;
+            }
         }
     </style>
 </head>
@@ -254,7 +279,7 @@
     <section class="panel">
         <h1>Battle Presentation Configurator</h1>
         <p><span class="badge">动画参数配置器</span>本页是动画参数配置器。它只改展示参数，不改战斗规则；不会改伤害、Buff 结果或敌人行为。</p>
-        <p>配置器负责把前冲、受击、治疗、镜头节奏和飘字参数提升成可编辑资产。保存后，<code>battle_presentation_probe.html</code> 与 <code>mock_ui_v11.html</code> 都会优先读取同一份浏览器 workspace。</p>
+        <p>配置器负责把前冲、受击、治疗、场景强调和飘字参数提升成可编辑资产。参数编辑与实时预览同屏，保存后 <code>battle_presentation_probe.html</code> 与 <code>mock_ui_v11.html</code> 都会优先读取同一份浏览器 workspace。</p>
     </section>
 
     <section class="panel">
@@ -263,7 +288,7 @@
                 <h3>本页在验什么</h3>
                 <ul>
                     <li>展示参数是否已成为独立资产，而不是写死在 CSS 和 JS 里的常量。</li>
-                    <li>配置是否可以在当前工程内完成编辑、预览、保存、加载。</li>
+                    <li>配置是否可以在当前工程内完成编辑、预览、保存、加载，而且参数编辑与实时预览同屏。</li>
                     <li>未来 SpineAssets 接入时，是否只需要消费同一套展示配置桥接面。</li>
                 </ul>
             </div>
@@ -287,134 +312,138 @@
     </section>
 
     <section class="panel layout-grid">
-        <div class="tool-card">
-            <h3>资产与工作区</h3>
-            <div class="meta-stack">
-                <div class="meta-item" id="assetMetaState">资产：加载中</div>
-                <div class="meta-item" id="profileMetaState">当前 profile：-</div>
-                <div class="meta-item" id="workspaceMetaState">workspace：-</div>
+        <div class="tool-stack">
+            <div class="tool-card">
+                <h3>资产与工作区</h3>
+                <div class="meta-stack">
+                    <div class="meta-item" id="assetMetaState">资产：加载中</div>
+                    <div class="meta-item" id="profileMetaState">当前 profile：-</div>
+                    <div class="meta-item" id="workspaceMetaState">workspace：-</div>
+                </div>
+                <div class="toolbar">
+                    <label>
+                        当前 profile：
+                        <select id="profileSelect"></select>
+                    </label>
+                </div>
+                <div class="toolbar">
+                    <button type="button" id="btnApplyPreview">应用到预览</button>
+                    <button type="button" id="btnSaveWorkspace">写入浏览器 workspace</button>
+                    <button type="button" class="secondary" id="btnLoadWorkspace">从 workspace 读取</button>
+                    <button type="button" class="secondary" id="btnResetAsset">恢复资产默认</button>
+                    <button type="button" class="warn" id="btnClearWorkspace">清空 workspace</button>
+                    <button type="button" class="secondary" id="btnExportJson">导出 JSON</button>
+                    <button type="button" class="secondary" id="btnImportJson">从下方 JSON 导入</button>
+                </div>
+                <p>建议使用顺序：选一个 profile → 调参数 → 观察右侧实时预览 → 应用到预览 → 写入浏览器 workspace → 打开 <code>battle_presentation_probe.html</code> 或 <code>mock_ui_v11.html</code> 验证。</p>
             </div>
-            <div class="toolbar">
-                <label>
-                    当前 profile：
-                    <select id="profileSelect"></select>
-                </label>
+
+            <div class="tool-card">
+                <h3>参数编辑</h3>
+                <p class="preview-note">左侧改参数，右侧立刻可以滚轮或停留观察效果；不需要在多个页面之间来回跳。</p>
+                <div id="fieldGrid" class="field-grid"></div>
             </div>
-            <div class="toolbar">
-                <button type="button" id="btnApplyPreview">应用到预览</button>
-                <button type="button" id="btnSaveWorkspace">写入浏览器 workspace</button>
-                <button type="button" class="secondary" id="btnLoadWorkspace">从 workspace 读取</button>
-                <button type="button" class="secondary" id="btnResetAsset">恢复资产默认</button>
-                <button type="button" class="warn" id="btnClearWorkspace">清空 workspace</button>
-                <button type="button" class="secondary" id="btnExportJson">导出 JSON</button>
-                <button type="button" class="secondary" id="btnImportJson">从下方 JSON 导入</button>
-            </div>
-            <p>建议使用顺序：选一个 profile → 调参数 → 应用到预览 → 写入浏览器 workspace → 打开 <code>battle_presentation_probe.html</code> 或 <code>mock_ui_v11.html</code> 验证。</p>
         </div>
 
-        <div class="tool-card">
-            <h3>参数编辑</h3>
-            <div id="fieldGrid" class="field-grid"></div>
-        </div>
-    </section>
-
-    <section class="panel">
-        <h2>预览区</h2>
-        <p>下面的按钮只触发展示事件，帮助你确认参数改动是否产生可观察差异。</p>
-        <div class="probe-shell">
-            <div class="preview-controls">
-                <button type="button" id="btnPreviewAttack">攻击前冲</button>
-                <button type="button" id="btnPreviewHit">受击</button>
-                <button type="button" id="btnPreviewHeal">治疗</button>
-                <button type="button" id="btnPreviewStatus">Buff 提示</button>
-                <button type="button" class="secondary" id="btnPreviewImpact">镜头冲击</button>
-            </div>
-            <div class="battle-row">
-                <section class="hud-panel player-hud labeled-block">
-                    <h2>玩家：参数样本</h2>
-                    <div class="hud-stat">
-                        <span>HP 112 / 120</span>
-                        <div class="bar hp"><span style="width:93%"></span></div>
+        <div class="preview-stack">
+            <div class="tool-card">
+                <h3 class="preview-heading">实时预览</h3>
+                <p class="preview-note">下面的按钮只触发展示事件，帮助你确认参数改动是否产生可观察差异。这里保留角色动作、受击和状态提示，但不再提供屏幕晃动类入口。</p>
+                <div class="probe-shell">
+                    <div class="preview-controls">
+                        <button type="button" id="btnPreviewAttack">攻击前冲</button>
+                        <button type="button" id="btnPreviewHit">受击</button>
+                        <button type="button" id="btnPreviewHeal">治疗</button>
+                        <button type="button" id="btnPreviewStatus">Buff 提示</button>
                     </div>
-                    <div class="status-row">
-                        <span class="status-label">BUFF</span>
-                        <div class="status-icons"></div>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">DEBUFF</span>
-                        <div class="status-icons"></div>
-                    </div>
-                    <div class="armor-list-wrapper">
-                        <div class="armor-row" data-key="head">
-                            <span class="armor-name">头部</span>
-                            <div class="armor-bar"><span style="width:100%"></span></div>
-                            <span class="armor-value">18 / 18</span>
-                        </div>
-                        <div class="armor-row" data-key="chest">
-                            <span class="armor-name">胸部</span>
-                            <div class="armor-bar"><span style="width:100%"></span></div>
-                            <span class="armor-value">24 / 24</span>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="battle-scene labeled-block">
-                    <div class="sub-area-tag">预览场景</div>
-                    <div class="battle-presentation-meta" data-role="battle-presentation-meta">演出配置资产：加载中</div>
-                    <div class="stage-background"></div>
-                    <div class="fighters-layer">
-                        <div class="fighter player-character">
-                            <div class="character-sprite-container">
-                                <div class="sprite-layer body"></div>
-                                <div class="sprite-layer armor"></div>
-                                <div class="sprite-layer weapon"></div>
+                    <div class="battle-row">
+                        <section class="hud-panel player-hud labeled-block">
+                            <h2>玩家：参数样本</h2>
+                            <div class="hud-stat">
+                                <span>HP 112 / 120</span>
+                                <div class="bar hp"><span style="width:93%"></span></div>
                             </div>
-                            <div class="character-shadow"></div>
-                            <div class="effect-anchor"></div>
-                        </div>
-                        <div class="fighter enemy-character">
-                            <div class="character-sprite-container">
-                                <div class="sprite-layer body"></div>
-                                <div class="sprite-layer armor"></div>
-                                <div class="sprite-layer weapon"></div>
+                            <div class="status-row">
+                                <span class="status-label">BUFF</span>
+                                <div class="status-icons"></div>
                             </div>
-                            <div class="character-shadow"></div>
-                            <div class="effect-anchor"></div>
-                        </div>
-                    </div>
-                    <div class="fx-layer"></div>
-                </section>
+                            <div class="status-row">
+                                <span class="status-label">DEBUFF</span>
+                                <div class="status-icons"></div>
+                            </div>
+                            <div class="armor-list-wrapper">
+                                <div class="armor-row" data-key="head">
+                                    <span class="armor-name">头部</span>
+                                    <div class="armor-bar"><span style="width:100%"></span></div>
+                                    <span class="armor-value">18 / 18</span>
+                                </div>
+                                <div class="armor-row" data-key="chest">
+                                    <span class="armor-name">胸部</span>
+                                    <div class="armor-bar"><span style="width:100%"></span></div>
+                                    <span class="armor-value">24 / 24</span>
+                                </div>
+                            </div>
+                        </section>
 
-                <section class="hud-panel enemy-hud labeled-block">
-                    <h2>敌人：参数样本</h2>
-                    <div class="hud-stat">
-                        <span>HP 96 / 96</span>
-                        <div class="bar hp"><span style="width:100%"></span></div>
+                        <section class="battle-scene labeled-block">
+                            <div class="sub-area-tag">预览场景</div>
+                            <div class="battle-presentation-meta" data-role="battle-presentation-meta">演出配置资产：加载中</div>
+                            <div class="stage-background"></div>
+                            <div class="fighters-layer">
+                                <div class="fighter player-character">
+                                    <div class="character-sprite-container">
+                                        <div class="sprite-layer body"></div>
+                                        <div class="sprite-layer armor"></div>
+                                        <div class="sprite-layer weapon"></div>
+                                    </div>
+                                    <div class="character-shadow"></div>
+                                    <div class="effect-anchor"></div>
+                                </div>
+                                <div class="fighter enemy-character">
+                                    <div class="character-sprite-container">
+                                        <div class="sprite-layer body"></div>
+                                        <div class="sprite-layer armor"></div>
+                                        <div class="sprite-layer weapon"></div>
+                                    </div>
+                                    <div class="character-shadow"></div>
+                                    <div class="effect-anchor"></div>
+                                </div>
+                            </div>
+                            <div class="fx-layer"></div>
+                        </section>
+
+                        <section class="hud-panel enemy-hud labeled-block">
+                            <h2>敌人：参数样本</h2>
+                            <div class="hud-stat">
+                                <span>HP 96 / 96</span>
+                                <div class="bar hp"><span style="width:100%"></span></div>
+                            </div>
+                            <div class="status-row">
+                                <span class="status-label">BUFF</span>
+                                <div class="status-icons"></div>
+                            </div>
+                            <div class="status-row">
+                                <span class="status-label">DEBUFF</span>
+                                <div class="status-icons"></div>
+                            </div>
+                            <div class="armor-list-wrapper">
+                                <div class="armor-row" data-key="head">
+                                    <span class="armor-name">头部</span>
+                                    <div class="armor-bar"><span style="width:100%"></span></div>
+                                    <span class="armor-value">12 / 12</span>
+                                </div>
+                                <div class="armor-row" data-key="chest">
+                                    <span class="armor-name">胸部</span>
+                                    <div class="armor-bar"><span style="width:100%"></span></div>
+                                    <span class="armor-value">18 / 18</span>
+                                </div>
+                            </div>
+                        </section>
                     </div>
-                    <div class="status-row">
-                        <span class="status-label">BUFF</span>
-                        <div class="status-icons"></div>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">DEBUFF</span>
-                        <div class="status-icons"></div>
-                    </div>
-                    <div class="armor-list-wrapper">
-                        <div class="armor-row" data-key="head">
-                            <span class="armor-name">头部</span>
-                            <div class="armor-bar"><span style="width:100%"></span></div>
-                            <span class="armor-value">12 / 12</span>
-                        </div>
-                        <div class="armor-row" data-key="chest">
-                            <span class="armor-name">胸部</span>
-                            <div class="armor-bar"><span style="width:100%"></span></div>
-                            <span class="armor-value">18 / 18</span>
-                        </div>
-                    </div>
-                </section>
+                </div>
+                <pre id="previewLog" class="log"></pre>
             </div>
         </div>
-        <pre id="previewLog" class="log"></pre>
     </section>
 
     <section class="panel">
@@ -438,7 +467,7 @@
         { path: ['motion', 'durations', 'hitMs'], label: '受击时长', min: 120, max: 1200, step: 10, note: '角色受击晃动时长（ms）' },
         { path: ['motion', 'durations', 'healMs'], label: '治疗时长', min: 120, max: 1200, step: 10, note: '治疗回弹时长（ms）' },
         { path: ['motion', 'durations', 'sceneBeatMs'], label: '节奏脉冲时长', min: 120, max: 1200, step: 10, note: 'scene-beat-* 持续时间（ms）' },
-        { path: ['motion', 'durations', 'sceneImpactMs'], label: '冲击时长', min: 120, max: 1200, step: 10, note: 'scene-impact 持续时间（ms）' },
+        { path: ['motion', 'durations', 'sceneImpactMs'], label: '场景强调时长', min: 120, max: 1200, step: 10, note: 'scene-impact 亮度强调持续时间（ms）' },
         { path: ['motion', 'durations', 'floatTextMs'], label: '飘字时长', min: 120, max: 1800, step: 10, note: '飘字淡出时长（ms）' },
         { path: ['motion', 'values', 'lungeDistancePx'], label: '前冲距离', min: 4, max: 96, step: 1, note: '角色向前突进的像素距离' },
         { path: ['motion', 'values', 'lungeLiftPx'], label: '前冲抬升', min: 0, max: 32, step: 1, note: '前冲时角色向上的抬升像素' },
@@ -446,8 +475,7 @@
         { path: ['motion', 'values', 'hitShakeLeftPx'], label: '受击左摆', min: -32, max: 0, step: 1, note: '受击第一段向左摆动的像素' },
         { path: ['motion', 'values', 'hitShakeRightPx'], label: '受击右摆', min: 0, max: 32, step: 1, note: '受击第二段向右摆动的像素' },
         { path: ['motion', 'values', 'healLiftPx'], label: '治疗抬升', min: 0, max: 32, step: 1, note: '治疗回弹向上的像素' },
-        { path: ['motion', 'values', 'sceneBeatOffsetPx'], label: '镜头聚焦偏移', min: 0, max: 18, step: 1, note: 'scene-beat-* 的水平偏移' },
-        { path: ['motion', 'values', 'sceneImpactX1Px'], label: '镜头冲击首摆', min: -18, max: 18, step: 1, note: 'scene-impact 第一段水平位移' },
+        { path: ['motion', 'values', 'sceneBeatOffsetPx'], label: '场景聚焦偏移', min: 0, max: 18, step: 1, note: 'scene-beat-* 的轻量水平偏移' },
         { path: ['motion', 'values', 'floatEndPx'], label: '飘字终点高度', min: -120, max: -12, step: 1, note: '飘字结束时的垂直位置（px）' }
     ];
 
@@ -671,10 +699,6 @@
                 enemies: [previewState.enemy]
             });
             appendLog('[PREVIEW] Buff 提示');
-        });
-        document.getElementById('btnPreviewImpact').addEventListener('click', () => {
-            controller.animationDriver.pulseSceneDirective('impact', 'self');
-            appendLog('[PREVIEW] 镜头冲击');
         });
     }
 

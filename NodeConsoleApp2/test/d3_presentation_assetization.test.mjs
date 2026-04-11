@@ -9,6 +9,7 @@ const controllerPath = path.join(repoRoot, 'script', 'ui', 'presentation', 'Batt
 const battleRowPath = path.join(repoRoot, 'script', 'ui', 'UI_BattleRow.js');
 const assetJsonPath = path.join(repoRoot, 'assets', 'data', 'battle_presentation_profiles_v1.json');
 const configuratorPath = path.join(repoRoot, 'test', 'battle_presentation_configurator.html');
+const mockCssPath = path.join(repoRoot, 'mock_ui_v11.css');
 
 function readUtf8(filePath) {
     return fs.readFileSync(filePath, 'utf8');
@@ -59,4 +60,25 @@ test('battle_presentation_configurator 提供可理解的展示参数工具说�
     ]) {
         assert.match(html, new RegExp(requiredText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `battle_presentation_configurator 缺少说明：${requiredText}`);
     }
+});
+
+test('battle_presentation_configurator 把参数编辑与实时预览放在同一工作区，并移除镜头冲击按钮', () => {
+    const html = readUtf8(configuratorPath);
+
+    assert.match(html, /参数编辑与实时预览同屏/, '配置器未说明参数编辑与实时预览同屏');
+    assert.doesNotMatch(html, /id="btnPreviewImpact"/, '配置器仍保留镜头冲击按钮');
+    assert.doesNotMatch(html, /镜头冲击/, '配置器仍向人工验收暴露镜头冲击入口');
+});
+
+test('battle-scene 的 scene-impact 不再通过位移制造屏幕晃动', () => {
+    const css = readUtf8(mockCssPath);
+    const animationMatch = css.match(/\.battle-scene\.scene-impact\s*\{[^}]*animation:\s*([a-zA-Z0-9_-]+)/);
+
+    assert.ok(animationMatch, '缺少 .battle-scene.scene-impact 动画配置');
+
+    const keyframesName = animationMatch[1];
+    const keyframesMatch = css.match(new RegExp(`@keyframes\\s+${keyframesName}\\s*\\{([\\s\\S]*?)\\n\\}`));
+
+    assert.ok(keyframesMatch, `缺少 ${keyframesName} 的 keyframes 定义`);
+    assert.doesNotMatch(keyframesMatch[1], /translate\(/, 'scene-impact 仍通过 translate 触发屏幕晃动');
 });
