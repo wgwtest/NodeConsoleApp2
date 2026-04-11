@@ -1,6 +1,6 @@
 # CODEX_DOC 文档总入口
 
-最后整理时间：2026-04-03
+最后整理时间：2026-04-11
 
 状态：`当前有效 / 已完成深度迁移`
 
@@ -16,7 +16,8 @@
 2. [03_研制计划/README](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md)
 3. [02_设计说明/README](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/README.md)
 4. [05_测试文档/02_验收清单/README](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/README.md)
-5. 最近一份会话交接文档
+5. [11-Graphify接入与知识图谱使用说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/04_研发文档/11-Graphify接入与知识图谱使用说明.md)
+6. 最近一份会话交接文档
 
 ## 2. 三层协同入口
 
@@ -39,7 +40,7 @@
 | `01_需求分析` | 产品边界、总体分析、测试基线 | 工程总体分析、mock_ui_v11 主流程基线 |
 | `02_设计说明` | 稳定设计文档 | Skill / Buff / Level / Engine / UI / Timeline 设计 |
 | `03_研制计划` | WBS 总纲、阶段计划、执行口径 | L0 总纲、阶段 A 计划、迁移设计与实施计划 |
-| `04_研发文档` | 当前实现边界、研发规则说明 | 当前阶段验收说明、入口更正、人工验收原则 |
+| `04_研发文档` | 当前实现边界、研发规则说明 | 当前阶段验收说明、入口更正、人工验收原则、Graphify 使用说明 |
 | `05_测试文档` | 自测、人工验收、验收结论 | 自测报告、验收清单、验收记录、验收结论 |
 | `06_过程文档` | 会话交接、计划归档、迁移记录 | 会话交接、计划管理归档、文档迁移记录 |
 
@@ -52,6 +53,7 @@
 3. 旧本地文档根已退出正式使用，不再作为兼容入口保留。
 4. GitHub Issue / GitHub Project 等共享协作面，应统一引用 `DOC/CODEX_DOC/...` 的仓库相对路径。
 5. 迁移设计与迁移实施计划保留旧路径说明，作为本轮迁移的历史依据。
+6. `Graphify` 已作为开发辅助层接入当前工程，但不替代正式设计、计划和验收文档。
 
 ## 5. 本轮迁移证据
 
@@ -69,4 +71,5 @@
 2. [03_研制计划/README](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md)
 3. [01-WBS-L0-NodeConsoleApp2-可交付版本研发总纲](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/01-WBS-L0-NodeConsoleApp2-可交付版本研发总纲.md)
 4. [02_设计说明/README](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/README.md)
-5. 最新自测报告、验收清单和会话交接
+5. [11-Graphify接入与知识图谱使用说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/04_研发文档/11-Graphify接入与知识图谱使用说明.md)
+6. 最新自测报告、验收清单和会话交接

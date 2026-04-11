@@ -1,0 +1,4 @@
+# Keep the graph focused on source code and stable project docs.
+node_modules/
+test-results/
+graphify-out/cache/
