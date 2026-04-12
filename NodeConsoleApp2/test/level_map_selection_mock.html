@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关卡地图组织方案预览</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #eef4fb;
+            --panel: rgba(255, 255, 255, 0.92);
+            --line: rgba(148, 163, 184, 0.28);
+            --line-strong: rgba(71, 85, 105, 0.45);
+            --ink: #143047;
+            --ink-soft: #47657d;
+            --accent: #d97706;
+            --accent-soft: rgba(245, 158, 11, 0.16);
+            --success: #166534;
+            --danger: #991b1b;
+            --shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(217, 119, 6, 0.16), transparent 28%),
+                radial-gradient(circle at top right, rgba(20, 48, 71, 0.12), transparent 24%),
+                linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+            color: var(--ink);
+        }
+
+        .page {
+            width: min(1500px, calc(100vw - 32px));
+            margin: 20px auto 36px;
+        }
+
+        .hero,
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .hero {
+            padding: 24px 28px;
+            margin-bottom: 20px;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            color: var(--ink);
+        }
+
+        p, li, td, th, code {
+            line-height: 1.68;
+        }
+
+        .hero-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(20, 48, 71, 0.08);
+            color: #12324c;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-bar {
+            margin-top: 16px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(20, 48, 71, 0.06);
+            border: 1px solid var(--line);
+            color: var(--ink-soft);
+            font-weight: 600;
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .guide-card {
+            padding: 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid var(--line);
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 320px minmax(0, 1fr) 340px;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .panel {
+            padding: 18px;
+        }
+
+        .meta-line,
+        .inspector-grid div {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--line);
+        }
+
+        .meta-note,
+        .inspector-copy,
+        .sub-copy {
+            color: var(--ink-soft);
+            font-size: 14px;
+        }
+
+        .tool-row,
+        .mode-buttons,
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 12px;
+            background: #1d4ed8;
+            color: white;
+            padding: 10px 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.94;
+        }
+
+        .mode-button {
+            background: rgba(20, 48, 71, 0.08);
+            color: var(--ink);
+            border: 1px solid var(--line-strong);
+        }
+
+        .mode-button[data-active="true"] {
+            background: var(--accent-soft);
+            color: #7c2d12;
+            border-color: rgba(217, 119, 6, 0.45);
+        }
+
+        .map-stage {
+            position: relative;
+            min-height: 540px;
+            overflow: hidden;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        }
+
+        .map-stage::before,
+        .map-stage::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .map-stage::before {
+            background:
+                radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.18), transparent 14%),
+                radial-gradient(circle at 74% 32%, rgba(255, 255, 255, 0.12), transparent 18%),
+                linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.12));
+        }
+
+        .map-stage::after {
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 18px;
+        }
+
+        .map-toolbar {
+            position: relative;
+            z-index: 2;
+            padding: 18px 18px 0;
+        }
+
+        .map-canvas {
+            position: relative;
+            z-index: 1;
+            min-height: 480px;
+        }
+
+        .map-edges {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .map-edge {
+            fill: none;
+            stroke: rgba(255,255,255,0.24);
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 9 8;
+        }
+
+        .map-edge[data-active="true"] {
+            stroke: rgba(255, 226, 146, 0.82);
+            stroke-dasharray: none;
+            filter: drop-shadow(0 0 6px rgba(255, 206, 84, 0.4));
+        }
+
+        .map-edge-label {
+            fill: rgba(255,255,255,0.78);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .map-node {
+            position: absolute;
+            width: 168px;
+            padding: 14px 14px 12px;
+            transform: translate(-50%, -50%);
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.28);
+            background: rgba(16, 30, 43, 0.74);
+            color: #f8fafc;
+            text-align: left;
+            box-shadow: 0 18px 30px rgba(15, 23, 42, 0.22);
+        }
+
+        .map-node.kind-event {
+            border-radius: 999px;
+        }
+
+        .map-node.kind-boss {
+            clip-path: polygon(12% 0, 88% 0, 100% 50%, 88% 100%, 12% 100%, 0 50%);
+        }
+
+        .map-node.is-locked {
+            opacity: 0.45;
+            filter: saturate(0.4);
+        }
+
+        .map-node.is-completed {
+            background: rgba(22, 101, 52, 0.8);
+        }
+
+        .map-node.is-unlocked {
+            border-color: rgba(255, 223, 157, 0.7);
+            background: rgba(44, 58, 73, 0.82);
+        }
+
+        .map-node[data-selected="true"] {
+            outline: 3px solid rgba(255, 201, 87, 0.72);
+            outline-offset: 2px;
+        }
+
+        .map-node__label,
+        .map-node__meta {
+            display: block;
+            font-size: 12px;
+            opacity: 0.84;
+        }
+
+        .map-node__title {
+            display: block;
+            margin: 6px 0;
+            font-size: 16px;
+        }
+
+        .inspector-chip,
+        .reward-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-completed {
+            background: rgba(22, 101, 52, 0.14);
+            color: var(--success);
+        }
+
+        .status-unlocked {
+            background: rgba(217, 119, 6, 0.14);
+            color: #92400e;
+        }
+
+        .status-locked {
+            background: rgba(71, 85, 105, 0.12);
+            color: #475569;
+        }
+
+        .reward-chip {
+            background: rgba(29, 78, 216, 0.1);
+            color: #1d4ed8;
+        }
+
+        .json-block {
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 14px;
+            padding: 14px;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .list {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .mode-guide {
+            margin: 8px 0 14px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(20, 48, 71, 0.08);
+            border: 1px solid var(--line);
+        }
+
+        @media (max-width: 1200px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="hero">
+            <div class="hero-tags">
+                <span class="tag">WBS-3.2.3.1</span>
+                <span class="tag">方案验证页</span>
+                <span class="tag">不接主流程</span>
+            </div>
+            <h1>关卡地图组织方案预览</h1>
+            <p>本页是 <strong>地图式关卡选择方案</strong> 的独立效果图和数据包预览，不会改当前主流程、不会改战斗结算、也不会改存档结构。它验证的是：如果未来把 story 关卡从线性列表扩成地图分支，是否能保持 <strong>关卡选择层与游戏主内容绝对解耦</strong>。</p>
+            <div class="status-bar" id="status">等待加载地图预览包。</div>
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <h3>这是个啥工具</h3>
+                    <p>这是一个 <strong>效果图 / 方案页</strong>，不是正式主界面。它用独立的地图包样例来证明：关卡可以先经过地图选择，再把结果以数据形式交给主程序。</p>
+                </div>
+                <div class="guide-card">
+                    <h3>为什么点这里能验证</h3>
+                    <p>因为本页同时展示了地图节点、分支路线、背景/节点素材引用，以及最终交给主程序的 handoff payload。你可以直接判断这种视图是否直观，而不需要先改运行时。</p>
+                </div>
+                <div class="guide-card">
+                    <h3>这三个按钮是什么意思</h3>
+                    <p><strong>初始解锁 / 分支展开 / 章节收束</strong> 不是游戏操作按钮，而是同一张地图的三个 <strong>推进快照</strong>。它们只是在帮你观察“如果关卡组织从线性列表变成地图分支，页面表达是否清楚”。</p>
+                </div>
+                <div class="guide-card">
+                    <h3>和主流程什么关系</h3>
+                    <p>这里点击节点后，只输出 <code>selectedLevelId</code> 与地图上下文；真正的战斗主流程未来只消费这份结果，而不是反向依赖地图页面。</p>
+                </div>
+                <div class="guide-card">
+                    <h3>和正式地图编辑器什么关系</h3>
+                    <p>未来正式地图编辑器应维护这份地图包，包括节点、边、背景图、节点图和素材引用。本页只读取样例包并做预览，不承担作者工具职责。</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="workspace">
+            <aside class="panel">
+                <h2>地图包摘要</h2>
+                <div id="packMeta"></div>
+                <h3 style="margin-top:20px;">结构关系</h3>
+                <ul class="list" id="relationshipList"></ul>
+                <div class="tool-row" style="margin-top:20px;">
+                    <button id="reloadBtn" type="button">重新加载样例包</button>
+                </div>
+                <p class="sub-copy" style="margin-top:12px;">如果这份效果图被接受，下一步才进入真正的地图编辑器实现与主流程接入评估。</p>
+            </aside>
+
+            <section class="panel map-stage" id="mapStage">
+                <div class="map-toolbar">
+                    <h2 id="mapHeading">地图预览</h2>
+                    <p class="sub-copy" id="mapModeDescription">当前未设置预览模式。</p>
+                    <p class="sub-copy mode-guide">下面三个按钮是同一张地图的三种推进快照：A 只解锁第一关，B 假设首关完成后分支展开，C 假设一条分支完成后 Boss 节点可达。它们不是主流程玩法按钮，也不是正式地图编辑器操作。</p>
+                    <div class="mode-buttons" id="modeButtons"></div>
+                </div>
+                <div class="map-canvas" id="mapCanvas"></div>
+            </section>
+
+            <aside class="panel">
+                <h2>节点检查器</h2>
+                <div id="nodeInspector" class="sub-copy">点击地图节点查看详情。</div>
+                <h3 style="margin-top:20px;">交给主程序的数据</h3>
+                <p class="sub-copy">这里故意只输出最小 handoff payload，用来强调“地图选择层不侵入战斗主内容”。</p>
+                <pre class="json-block" id="handoffPayload">{}</pre>
+            </aside>
+        </section>
+
+        <section class="panel" style="margin-top:18px;">
+            <h2>地图包样例</h2>
+            <p class="sub-copy">地图包负责节点、连线、背景和素材引用；主程序未来只需要通过选中的节点拿到 <code>selectedLevelId</code>。这份数据包与当前 <code>levels.json</code> 并行存在，不替代已有运行时配置。</p>
+            <pre class="json-block" id="packPreview"></pre>
+        </section>
+
+        <section class="panel" style="margin-top:18px;">
+            <h2>后续承接</h2>
+            <p class="sub-copy"><strong>WBS-3.2.3.1</strong> 当前只负责把“地图组织方案是否可理解”验证清楚；如果这条方案成立，后续由 <strong>WBS-3.2.3</strong> 继续承接，其中 <strong>WBS-3.2.3.2</strong> 负责地图编辑工作区，<strong>WBS-3.2.3.3</strong> 负责地图包导入导出与校验。</p>
+            <ul class="list">
+                <li>本页负责：地图方案预览、样例包说明、最小 handoff payload。</li>
+                <li>后续正式地图编辑器负责：地图节点拖拽、增删改、背景切换、节点样式编辑、地图包导入导出。</li>
+                <li>主流程负责：只消费选中的 <code>selectedLevelId</code>，不直接依赖这里的页面实现。</li>
+            </ul>
+        </section>
+    </div>
+
+    <script type="module">
+        import LevelMapPreviewPage from '../script/editor/level/LevelMapPreviewPage.js';
+
+        const page = new LevelMapPreviewPage({
+            defaultSourceUrl: '../assets/data/level_map_pack_v1.example.json'
+        });
+        page.bind();
+        page.loadDefaultPack().catch((error) => {
+            const status = document.getElementById('status');
+            if (status) {
+                status.textContent = `加载失败：${error.message}`;
+            }
+            console.error(error);
+        });
+    </script>
+</body>
+</html>

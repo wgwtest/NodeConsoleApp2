@@ -1,0 +1,36 @@
+{
+  "$schemaVersion": "contract_v1",
+  "id": "level_editor_export",
+  "ownerNode": "WBS-3.2.2",
+  "description": "关卡编辑器导出与验证契约。由 WBS-3.2.2 输出，供 WBS-3.2.3 和运行时装载链消费。",
+  "inputContracts": [
+    "assets/data/contracts/level_runtime_definition.contract.json",
+    "assets/data/contracts/level_map_definition.contract.json"
+  ],
+  "outputArtifacts": [
+    "assets/data/levels.json",
+    "test/level_editor_v1.html",
+    "test/level_runtime_probe.html",
+    "DOC/CODEX_DOC/03_研制计划/17-WBS-3.2.2-关卡编辑器实现计划.md"
+  ],
+  "requiredEditorCapabilities": [
+    "level CRUD",
+    "enemy and reward editing",
+    "battle rule editing",
+    "runtime export",
+    "validation before export"
+  ],
+  "exportInvariants": [
+    "levelId 唯一",
+    "enemyPoolId 引用存在",
+    "关键 flow / waves / rewards 字段完整",
+    "导出结果可被 DataManagerV2 装载"
+  ],
+  "consumerNodes": [
+    "WBS-3.2.3"
+  ],
+  "notes": [
+    "本契约把关卡编辑器输出固定为“运行时关卡包 + 编辑器验证链”，而不是单一页面截图。",
+    "地图编辑器只能消费满足本契约的 levels.json，不应自行定义另一套 levelId 语义。"
+  ]
+}

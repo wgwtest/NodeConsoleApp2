@@ -1,0 +1,208 @@
+{
+  "$schemaVersion": "level_map_pack_v1",
+  "meta": {
+    "id": "level_map_preview_pack",
+    "title": "关卡地图组织方案预览包",
+    "ownerNode": "WBS-3.2.3",
+    "notes": [
+      "这是独立于主流程运行时的地图方案样例包。",
+      "地图节点只负责表达关卡组织与可视化，不直接驱动战斗。",
+      "真正进入战斗时，主程序只消费 selectedLevelId 与少量地图上下文。"
+    ]
+  },
+  "assetLibrary": {
+    "backgrounds": [
+      {
+        "id": "bg_forest_canopy",
+        "label": "幽暗森林薄雾",
+        "previewGradient": "linear-gradient(135deg, #15384d 0%, #265d63 38%, #f0c987 100%)"
+      }
+    ],
+    "nodeSkins": [
+      {
+        "id": "skin_story_battle",
+        "label": "战斗节点",
+        "shape": "hex"
+      },
+      {
+        "id": "skin_story_event",
+        "label": "事件节点",
+        "shape": "pill"
+      },
+      {
+        "id": "skin_story_boss",
+        "label": "首领节点",
+        "shape": "diamond"
+      }
+    ]
+  },
+  "maps": [
+    {
+      "id": "chapter_1_branch_preview",
+      "name": "第一章分支地图预览",
+      "chapterId": "story_chapter_1",
+      "chapterLabel": "第一章",
+      "chapterTitle": "幽暗森林",
+      "backgroundRef": "bg_forest_canopy",
+      "entryNodeId": "node_edge",
+      "nodes": [
+        {
+          "id": "node_edge",
+          "levelId": "level_1_1",
+          "label": "1-1",
+          "title": "幽暗森林边缘",
+          "kind": "battle",
+          "nodeSkinRef": "skin_story_battle",
+          "iconLabel": "侦察",
+          "x": 120,
+          "y": 240,
+          "objectiveText": "建立第一波防线，进入森林分岔口。",
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "KP +1",
+            "金币 50"
+          ],
+          "artRefs": {
+            "nodeArt": "node_forest_watch",
+            "portrait": "enemy_goblin_hunter"
+          }
+        },
+        {
+          "id": "node_scout_route",
+          "levelId": "level_1_2_story",
+          "label": "1-2A",
+          "title": "侦察岔路",
+          "kind": "battle",
+          "nodeSkinRef": "skin_story_battle",
+          "iconLabel": "分支A",
+          "x": 330,
+          "y": 138,
+          "objectiveText": "走轻敌高机动路线，争取提前压缩敌方回血节奏。",
+          "difficultyLabel": "进阶",
+          "rewardPreview": [
+            "KP +1",
+            "分支素材：薄雾林道"
+          ],
+          "artRefs": {
+            "nodeArt": "node_mist_path",
+            "portrait": "enemy_goblin_medic"
+          }
+        },
+        {
+          "id": "node_camp_route",
+          "levelId": "level_1_3_story",
+          "label": "1-2B",
+          "title": "前哨营地",
+          "kind": "event",
+          "nodeSkinRef": "skin_story_event",
+          "iconLabel": "分支B",
+          "x": 340,
+          "y": 346,
+          "objectiveText": "走补给路线，拿稳定资源并观察更重的装甲敌人配置。",
+          "difficultyLabel": "进阶",
+          "rewardPreview": [
+            "金币 120",
+            "分支素材：营地火光"
+          ],
+          "artRefs": {
+            "nodeArt": "node_camp_supply",
+            "portrait": "enemy_skeleton_guard"
+          }
+        },
+        {
+          "id": "node_gate_boss",
+          "levelId": "level_1_3_story",
+          "label": "1-3",
+          "title": "废墟关隘",
+          "kind": "boss",
+          "nodeSkinRef": "skin_story_boss",
+          "iconLabel": "收束",
+          "x": 600,
+          "y": 240,
+          "objectiveText": "收束双分支后进入章节首领关。",
+          "difficultyLabel": "高压",
+          "rewardPreview": [
+            "KP +2",
+            "章节奖励"
+          ],
+          "artRefs": {
+            "nodeArt": "node_ruins_gate",
+            "portrait": "enemy_ruins_boss"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge_entry_to_scout",
+          "fromNodeId": "node_edge",
+          "toNodeId": "node_scout_route",
+          "branchLabel": "侦察路线",
+          "type": "branch"
+        },
+        {
+          "id": "edge_entry_to_camp",
+          "fromNodeId": "node_edge",
+          "toNodeId": "node_camp_route",
+          "branchLabel": "营地路线",
+          "type": "branch"
+        },
+        {
+          "id": "edge_scout_to_gate",
+          "fromNodeId": "node_scout_route",
+          "toNodeId": "node_gate_boss",
+          "branchLabel": "提前切入",
+          "type": "merge"
+        },
+        {
+          "id": "edge_camp_to_gate",
+          "fromNodeId": "node_camp_route",
+          "toNodeId": "node_gate_boss",
+          "branchLabel": "补给后收束",
+          "type": "merge"
+        }
+      ],
+      "previewModes": [
+        {
+          "id": "initial_unlock",
+          "label": "初始解锁（仅第一关）",
+          "description": "预览快照A：只开放第一关。用于证明地图模式也能退化为当前最小交付基线，这不是新的玩法按钮。",
+          "focusNodeId": "node_edge",
+          "unlockedNodeIds": [
+            "node_edge"
+          ],
+          "completedNodeIds": []
+        },
+        {
+          "id": "branch_opened",
+          "label": "分支展开（首关完成后）",
+          "description": "预览快照B：假设首关已完成，同时解锁两条路线。用于展示地图层如何表达分支推进，而不是修改战斗规则。",
+          "focusNodeId": "node_scout_route",
+          "unlockedNodeIds": [
+            "node_edge",
+            "node_scout_route",
+            "node_camp_route"
+          ],
+          "completedNodeIds": [
+            "node_edge"
+          ]
+        },
+        {
+          "id": "boss_ready",
+          "label": "章节收束（Boss可达）",
+          "description": "预览快照C：假设已走完一条分支，Boss 节点已可达。此时主程序仍只需要收到 selectedLevelId。",
+          "focusNodeId": "node_gate_boss",
+          "unlockedNodeIds": [
+            "node_edge",
+            "node_scout_route",
+            "node_camp_route",
+            "node_gate_boss"
+          ],
+          "completedNodeIds": [
+            "node_edge",
+            "node_scout_route"
+          ]
+        }
+      ]
+    }
+  ]
+}

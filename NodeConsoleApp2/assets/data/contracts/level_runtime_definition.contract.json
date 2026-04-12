@@ -1,0 +1,45 @@
+{
+  "$schemaVersion": "contract_v1",
+  "id": "level_runtime_definition",
+  "ownerNode": "WBS-3.2.1",
+  "description": "关卡运行时数据结构规范。由 WBS-3.2.1 输出，供 WBS-3.2.2 和 WBS-3.2.3 消费。",
+  "sourceArtifacts": [
+    "DOC/CODEX_DOC/02_设计说明/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md"
+  ],
+  "requiredTopLevelKeys": [
+    "$schemaVersion",
+    "meta",
+    "enemyPools",
+    "levels"
+  ],
+  "levelRequiredFields": [
+    "id",
+    "name",
+    "description",
+    "flow",
+    "waves",
+    "rewards"
+  ],
+  "flowRequiredFields": [
+    "kind",
+    "order"
+  ],
+  "waveRequiredFields": [
+    "waveId",
+    "waveType",
+    "enemyPoolId"
+  ],
+  "rewardFields": [
+    "exp",
+    "gold",
+    "kp"
+  ],
+  "consumerNodes": [
+    "WBS-3.2.2",
+    "WBS-3.2.3"
+  ],
+  "notes": [
+    "levels.json 是该契约当前运行时落地载体。",
+    "关卡编辑器只能导出满足本契约的数据，不应绕过该契约直接拼页面态。"
+  ]
+}

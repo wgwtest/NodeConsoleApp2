@@ -1,0 +1,51 @@
+{
+  "$schemaVersion": "contract_v1",
+  "id": "level_map_definition",
+  "ownerNode": "WBS-3.2.1",
+  "description": "地图组织与地图包数据结构规范。由 WBS-3.2.1 输出，供 WBS-3.2.3 消费。",
+  "sourceArtifacts": [
+    "DOC/CODEX_DOC/02_设计说明/26-关卡地图选择与地图包(level_map_selection)-设计说明.md"
+  ],
+  "requiredTopLevelKeys": [
+    "$schemaVersion",
+    "meta",
+    "assetLibrary",
+    "maps"
+  ],
+  "mapRequiredFields": [
+    "id",
+    "name",
+    "chapterId",
+    "entryNodeId",
+    "nodes",
+    "edges"
+  ],
+  "nodeRequiredFields": [
+    "id",
+    "levelId",
+    "label",
+    "title",
+    "kind",
+    "x",
+    "y"
+  ],
+  "edgeRequiredFields": [
+    "id",
+    "fromNodeId",
+    "toNodeId",
+    "type"
+  ],
+  "handoffPayloadFields": [
+    "selectedLevelId",
+    "sourceMapId",
+    "sourceNodeId",
+    "previewModeId"
+  ],
+  "consumerNodes": [
+    "WBS-3.2.3"
+  ],
+  "notes": [
+    "level_map_pack_v1.example.json 是该契约当前地图包样例载体。",
+    "地图包只负责组织与展示，不直接决定战斗运行规则。"
+  ]
+}

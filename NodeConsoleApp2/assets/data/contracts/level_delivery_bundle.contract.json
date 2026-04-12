@@ -1,0 +1,37 @@
+{
+  "$schemaVersion": "contract_v1",
+  "id": "level_delivery_bundle",
+  "ownerNode": "WBS-3.2.3",
+  "description": "关卡与地图联合交付契约。由 WBS-3.2.3 输出，定义地图编辑器如何消费前序产物并导出最终成果。",
+  "inputContracts": [
+    "assets/data/contracts/level_runtime_definition.contract.json",
+    "assets/data/contracts/level_map_definition.contract.json",
+    "assets/data/contracts/level_editor_export.contract.json"
+  ],
+  "inputArtifacts": [
+    "assets/data/levels.json"
+  ],
+  "outputArtifacts": [
+    "assets/data/levels.json",
+    "assets/data/level_map_pack_v1.example.json",
+    "test/level_map_editor_v1.html",
+    "test/level_map_editor_io_test.html",
+    "DOC/CODEX_DOC/03_研制计划/20-WBS-3.2.3-地图编辑器基础能力与地图包导出链.md"
+  ],
+  "bundleParts": [
+    "runtime level pack",
+    "level map pack",
+    "minimal handoff payload contract"
+  ],
+  "requiredEditorCapabilities": [
+    "node and edge editing",
+    "background and style editing",
+    "map pack import/export",
+    "round-trip validation",
+    "low-coupling handoff to runtime"
+  ],
+  "notes": [
+    "WBS-3.2.3 输出的是标准地图编辑器以及可交付的关卡/地图联合成果，不只是预览页。",
+    "最终交付成果当前固定为 levels.json 与 level_map_pack 的组合，而不是把地图页面状态直接塞进主流程。"
+  ]
+}
