@@ -130,7 +130,10 @@ function buildSystemModalEngine(overrides = {}) {
             entryLabel: '作者样本工具页',
             count: 2,
             isRuntimeEntry: false,
-            description: '独立工具页，不属于主流程。'
+            description: '独立工具页，不属于主流程。',
+            details: [
+              '地图编辑页已支持逻辑空间与显示配置编辑'
+            ]
           }
         ];
       },
@@ -244,6 +247,7 @@ test('UI_SystemModal 主菜单会显示内容入口说明', async () => {
     assert.match(bodyText, /内容入口说明/);
     assert.match(bodyText, /作者样本工具页/);
     assert.match(bodyText, /不属于主流程/);
+    assert.match(bodyText, /地图编辑页已支持逻辑空间与显示配置编辑/);
   } finally {
     dom.window.close();
     cleanupDomGlobals();

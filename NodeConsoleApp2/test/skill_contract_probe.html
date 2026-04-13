@@ -113,19 +113,9 @@
                         <td>这会直接破坏 UI 选择语义与规划阶段的理解。</td>
                     </tr>
                     <tr>
-                        <td class="mono">tag_scope_mismatch</td>
-                        <td>标签里的 <code>SCOPE_*</code> 与真实 <code>target.scope</code> 不一致。</td>
-                        <td>说明文档、检索、平衡统计都会被带偏。</td>
-                    </tr>
-                    <tr>
-                        <td class="mono">unexpected_effect_tag</td>
-                        <td>标签声明了某种效果，但 <code>actions / buffRefs</code> 无法直接推导出来。</td>
-                        <td>这类问题常见于说明漂移或旧标签残留。</td>
-                    </tr>
-                    <tr>
-                        <td class="mono">missing_effect_tag</td>
-                        <td><code>actions / buffRefs</code> 已经体现某种效果，但 <code>tags</code> 没写出来。</td>
-                        <td>这会让后续检索、设计分析和异常归类失真。</td>
+                        <td class="mono">旧标签字段已退役</td>
+                        <td>当前活动工程不再把旧标签字段当作技能契约的一部分，也不再产出任何旧标签类问题码。</td>
+                        <td>这样可以避免“派生分析维度”和“正式字段”长期漂移，确保本页只围绕正式结构做判断。</td>
                     </tr>
                 </tbody>
             </table>

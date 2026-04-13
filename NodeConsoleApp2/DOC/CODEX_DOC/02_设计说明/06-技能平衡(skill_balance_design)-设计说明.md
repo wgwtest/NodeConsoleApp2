@@ -50,7 +50,7 @@
 技能平衡不是孤立地调一个伤害数字，而是建立在技能系统整体框架稳定的前提下：
 
 1. **定义层必须稳定**
-   - skill 的 `target / costs / requirements / actions / buffRefs / tags` 语义清晰，平衡讨论才有共同语言。
+   - skill 的 target / costs / requirements / actions / buffRefs 语义清晰，平衡讨论才有共同语言。
 2. **规划层必须可信**
    - 如果 AP、部位槽位、多选/单选规则、每回合次数限制不稳定，则任何数值平衡都会被规划漏洞放大或扭曲。
 3. **执行层必须一致**
@@ -64,29 +64,29 @@
 
 ### 1.6 平衡前必须先通过契约层体检
 
-一个技能如果连“目标是谁、作用范围是什么、标签是否与动作一致”都没有收口，就不适合直接进入数值平衡阶段。
+一个技能如果连“目标是谁、作用范围是什么、结构是否自洽”都没有收口，就不适合直接进入数值平衡阶段。
 
 因此，推荐把技能平衡前的前置体检固定为两步：
 
-1. **先过技能契约矩阵**
-   - 先确认 `target / selection / actions / buffRefs / tags` 没有结构冲突；
-   - 若存在 `selection_count_exceeds_candidates`、`tag_scope_mismatch`、`unexpected_effect_tag` 这类问题，应先修契约层。
-2. **再谈数值与节奏**
+1. 先过技能契约矩阵
+   - 先确认 target / selection / actions / buffRefs 没有结构冲突；
+   - 若存在 selection_count_exceeds_candidates、single_selection_count_invalid 这类问题，应先修契约层。
+2. 再谈数值与节奏
    - 当结构层一致之后，再讨论伤害、AP、速度、Buff 持续时间和触发频率。
 
 这样做的理由很直接：
 
-1. 如果 `tags` 与动作事实不一致，平衡统计表本身就会被污染；
+1. 如果正式字段之间都还不一致，平衡统计表本身就会被污染；
 2. 如果技能是“纯 buff 驱动”，但设计表误把它当成“直接动作技能”，就会重复计价或漏计价；
 3. 如果 alias 技能没有进入统一契约矩阵，敌人侧和平衡表会天然分裂成两套口径。
 
 所以，一个合理的技能平衡流程应当是：
 
-1. **Contract Clean**
-   - 契约字段、标签、alias、buffRefs 已统一
-2. **Behavior Verified**
+1. Contract Clean
+   - 契约字段、alias、buffRefs 已统一
+2. Behavior Verified
    - 主流程或批量回归已证明运行时能稳定消费
-3. **Balance Tuning**
+3. Balance Tuning
    - 再进入数值与体验调优
 
 这也是为什么“技能效果矩阵”和“批量校核页”并不是额外负担，而是平衡工作的上游基础设施。
@@ -155,168 +155,56 @@
 
 ---
 
-## 3. 技能的分类标签（Skill Tags / Taxonomy）
+## 3. 技能分析维度（Derived Analysis Dimensions）
 
-> 目的：让每个技能都能被一致地描述、检索、统计与平衡。
+目的：让每个技能都能被一致地描述、检索、统计与平衡，但这些维度只在工具侧派生，不进入活动 skill schema。
 
-本章标签建议作为技能的元数据字段（例如 `tags: []`），但即便暂时不写入数据文件，也应在设计表中维护。
+### 3.1 为什么使用“派生分析维度”而不是持久化附加字段
 
-### 3.1 按作用属性维度（What it changes）
+- 正式字段表达的是运行时事实，分析维度表达的是作者和工具对这些事实的投影。
+- 一旦把派生结果持久化，就会形成重复维护，长期必然漂移。
+- 因此，分析维度应由正式字段实时推导，而不是写回 skill pack。
 
-- `DMG_HP`：以 HP 伤害为主
-- `DMG_ARMOR`：以护甲伤害/破甲为主
-- `PIERCE`：穿透/忽略护甲
-- `HEAL`：治疗
-- `ARMOR_ADD`：加护甲/补护甲
-- `AP_GAIN`：获得/返还 AP
-- `SPEED`：加速/减速/插队（若有）
-- `BUFF_APPLY`：施加 buff
-- `BUFF_REMOVE`：移除 buff
+### 3.2 推荐维度词表
 
-### 3.2 按数值类型（Absolute vs Relative）
+1. 作用属性
+   - DMG_HP / DMG_ARMOR / PIERCE / HEAL / ARMOR_ADD / AP_GAIN / SPEED / BUFF_APPLY / BUFF_REMOVE
+2. 数值类型
+   - ABS / PCT_MAX / PCT_CURRENT / SCALING
+3. 生效时间点
+   - INSTANT / DELAYED / ON_EVENT
+4. 持续周期
+   - ONE_SHOT / ONE_TURN / MULTI_TURN / BATTLE / PERMANENT
+5. 目标与范围
+   - SUBJECT_SELF / SUBJECT_ENEMY / SUBJECT_BOTH
+   - SCOPE_ENTITY / SCOPE_PART / SCOPE_MULTI_PARTS
+   - SELECT_FIXED_PART / SELECT_RANDOM_PART / SELECT_ALL_PARTS
+6. 组织维度
+   - MELEE / RANGED / MAGIC
+   - ARCH_HEAVY / ARCH_WALL / ARCH_SWORD / ARCH_RANGER / ARCH_SNIPER / ARCH_ELEMENT / ARCH_HOLY
 
-- `ABS`：修改绝对值（+10 HP、-5 Armor）
-- `PCT_MAX`：按最大值比例（最大 HP 的 10%）
-- `PCT_CURRENT`：按当前值比例（当前护甲的 30%）
-- `SCALING`：按来源属性缩放（例如 atk * 1.2；若系统支持）
+### 3.3 派生规则
 
-### 3.3 按生效时间点（Immediate vs Delayed）
+- 作用属性：从 actions[].effect.effectType 与 buffRefs 推导
+- 数值类型：从 amountType、scaling、legacy valueType 推导
+- 目标与范围：从 target.subject / target.scope / target.selection 推导
+- 资源与限制：从 costs、requirements、perTurnLimit 推导
 
-- `INSTANT`：即时生效（释放时立刻结算）
-- `DELAYED`：延时生效（下回合/若干回合后触发）
-- `ON_EVENT`：事件触发（如受击时、回合开始/结束时）
+### 3.4 在平衡流程中的使用方式
 
-> 注：`DELAYED` 与 `ON_EVENT` 通常通过 buff/trigger 来实现。
+- 用分析维度做技能库过滤、占比分布、风险提醒
+- 用正式字段做真正的运行时校核与数值设计
+- 若二者出现冲突，以正式字段为准，并回到作者工具修正结构
 
-### 3.4 按持续周期（Duration / Lifetime）
+### 3.5 最小完备性建议
 
-- `ONE_SHOT`：单次生效（典型伤害技能）
-- `ONE_TURN`：单回合持续（例如“本回合 +护甲”）
-- `MULTI_TURN`：多回合持续（例如 3 回合中毒）
-- `BATTLE`：单战斗持续（直到战斗结束）
-- `PERMANENT`：永久持续（Roguelike 成长向，通常来自装备/天赋）
+任一技能至少应能在工具侧派生出：
 
-### 3.5 按条件（Conditionality）
-
-- `UNCONDITIONAL`：无条件
-- `CONDITIONAL`：有条件（需要额外描述条件）
-
-条件的推荐细分（可选）：
-- `COND_TARGET_ARMOR_BROKEN`：目标某部位护甲为 0
-- `COND_SELF_HP_LT_X`：自身 HP 低于阈值
-- `COND_STACK_GE_X`：某 buff 层数达到阈值
-- `COND_PREV_SKILL_USED`：依赖上一技能/连携
-
-### 3.6 风格与流派维度（Build / Archetype）
-
-用于“设计一套技能体系”的全局组织：
-
-- 流派（示例）：`ARCH_HEAVY`（重装）、`ARCH_WALL`（铁壁）、`ARCH_SWORD`（剑术）、`ARCH_RANGER`（游侠）、`ARCH_SNIPER`（狙击）、`ARCH_ELEMENT`（元素）、`ARCH_HOLY`（神圣）
-- 距离（可选）：`MELEE` / `RANGED` / `MAGIC`
-
-### 3.7 按释放对象维度（Target Subject / Release Object）
-
-> 目的：补足“技能是对谁释放、作用在什么对象粒度上”的分类能力。
-> 该维度与 `targetType` / `requiredPart` 字段是互补关系：
->
-> - 字段表达的是**运行时事实**（引擎如何结算）
-> - 标签表达的是**设计语义**（设计意图/用于检索与平衡统计）
->
-> 当标签与字段冲突时，以字段为准；标签用于校验与提示。
-
-#### 3.7.1 阵营对象（Subject）
-
-- `SUBJECT_SELF`：主要对自己施放（治疗、加护甲、自增益、净化等）
-- `SUBJECT_ENEMY`：主要对敌人施放（伤害、破甲、减益、控制等）
-- `SUBJECT_BOTH`：（可选）同时影响双方（较少见，通常属于高阶机制类）
-
-#### 3.7.2 作用粒度（Scope）
-
-- `SCOPE_ENTITY`：作用在角色整体（HP/AP/速度/全局免疫等，不绑定部位）
-- `SCOPE_PART`：作用在单个部位（典型：护甲、部位 debuff、指定部位打击）
-- `SCOPE_MULTI_PARTS`：作用在多个部位（1v1 中的“AOE”等价物：全身部位伤害/全身部位增益）
-
-#### 3.7.3 选择方式（Selection，可选增强）
-
-> 若后续需要更细分的检索/校验，可增加以下可选标签；MVP 阶段可不强制要求。
-
-- `SELECT_FIXED_PART`：指定部位（通常对应 `targetType=SINGLE_PART` 且存在 `requiredPart`）
-- `SELECT_RANDOM_PART`：随机部位（通常对应 `targetType=RANDOM_PART`）
-- `SELECT_ALL_PARTS`：全部部位（通常对应 `targetType=ALL_PARTS` 或 `SELF_PARTS`）
-- `SELECT_LISTED_PARTS`：（建议扩展）指定多个部位（用于 `SCOPE_MULTI_PARTS` 但不覆盖全身的情况，例如“只作用四肢/只作用双腿/只加固上半身”等）
-
-#### 3.7.4 标签完整性建议（推荐约束）
-
-- 每个技能至少具备：`SUBJECT_*` + `SCOPE_*`。
-- 若 `SUBJECT_SELF`：
-  - 常见为 `SCOPE_ENTITY`（治疗、净化）或 `SCOPE_MULTI_PARTS`（全身部位修甲/加护甲）。
-- 若 `DMG_ARMOR`：通常应为 `SCOPE_PART` 或 `SCOPE_MULTI_PARTS`。
-- 若技能要求玩家选择/指定部位，建议补充 `SELECT_FIXED_PART/SELECT_RANDOM_PART/SELECT_ALL_PARTS` 以便检索与校验。
-
----
-
-## 4. 技能标签体系（可落地的 Schema 方案）
-
-### 4.1 标签字段建议
-
-建议在 `skills.json` 的每个技能对象中增加（或由编辑器额外维护）以下字段：
-
-- `tags: string[]`：基础标签（枚举集合，便于过滤与统计）
-- `tagMeta?: object`：标签的参数化信息（用于条件类、部位类等）
-
-示例：
-
-```json
-{
-  "id": "skill_crush_armor",
-  "name": "破甲打击",
-  "cost": 3,
-  "speed": -1,
-  "targetType": "SINGLE_PART",
-  "requiredPart": "chest",
-  "tags": ["DMG_ARMOR", "ABS", "INSTANT", "ONE_SHOT", "UNCONDITIONAL", "SUBJECT_ENEMY", "SCOPE_PART", "SELECT_FIXED_PART", "MELEE", "ARCH_SWORD"],
-  "tagMeta": {
-    "parts": ["chest"],
-    "notes": "专门对胸甲造成高额护甲伤害"
-  }
-}
-```
-
-### 4.2 标签枚举设计建议（稳定枚举 vs 可扩展）
-
-- **稳定枚举**（建议写死到文档/编辑器下拉）：
-  - 作用属性类（`DMG_HP` 等）
-  - 数值类型类（`ABS`/`PCT_MAX`/`PCT_CURRENT`/`SCALING`）
-  - 生效时间点（`INSTANT`/`DELAYED`/`ON_EVENT`）
-  - 持续周期（`ONE_SHOT`/`ONE_TURN`/`MULTI_TURN`/`BATTLE`/`PERMANENT`）
-  - 释放对象（`SUBJECT_*`）与作用粒度（`SCOPE_*`），以及（可选）选择方式（`SELECT_*`）
-  - 距离/流派（`MELEE`/`RANGED`/`MAGIC` + `ARCH_*`）
-
-- **可扩展标签**（允许自由新增，但要有约束与校验）：
-  - 条件类（`COND_*`）
-  - 玩法类（例如 `COMBO`/`FINISHER`/`SETUP`）
-
-> 原则：枚举越稳定，越适合用于 UI 的过滤与统计；扩展标签用于快速迭代，但应逐步“收敛入枚举”。
-
-### 4.3 设计流程：用标签驱动技能产出
-
-推荐“先标签、后数值”的设计流程：
-
-1. 先确定技能的 **战术定位**：输出/破甲/续航/节奏/控制/辅助。
-2. 选择标签组合（至少覆盖）：
-   - 作用属性（What）
-   - 数值类型（How）
-   - 时间点（When）
-   - 周期（How long）
-   - 条件（If）
-   - 部位（Where）
-3. 再确定 AP 与 speed（成本维度）。
-4. 最后确定具体数值（伤害/护甲/持续时间/概率）。
-5. 通过“对照组”测试：
-   - 同 AP、同 speed 的技能应当强度接近，但玩法不同
-   - 更强效果必须对应更高代价或更苛刻条件
-
----
+- 1 个作用属性维度
+- 1 个数值类型维度（若存在直接数值效果）
+- 1 个时间点维度
+- 1 个持续周期维度
+- 目标主体维度 + 作用范围维度
 
 ## 5. 技能需求资源与消耗模型（Resource Requirements）
 
@@ -454,27 +342,22 @@ MVP 示例：
 }
 ```
 
-### 5.5 与标签体系的结合（用于平衡统计）
+### 5.5 与分析维度的结合（用于平衡统计）
 
-为了让平衡工具能统计“资源约束”是否偏科，建议增加一组资源相关标签：
+为了让平衡工具能统计“资源约束”是否偏科，建议把资源相关分析维度稳定为：
 
-- `RES_AP`：消耗 AP（几乎所有技能）
-- `RES_SLOT`：消耗部位槽位（绝大多数战斗技能）
-- `REQ_SELF_PART`：依赖自身部位可用
-- `REQ_POSITIONAL`：（可选）依赖站位/姿态/引导状态
-- `LIMIT_PER_TURN`：每回合次数限制（若未来需要）
+- RES_AP：消耗 AP
+- RES_SLOT：消耗部位槽位
+- REQ_SELF_PART：依赖自身部位可用
+- REQ_POSITIONAL：可选，依赖站位/姿态/引导状态
+- LIMIT_PER_TURN：每回合次数限制
 
-并建议在 `tagMeta` 里记录关键参数：
+这些维度不应存回技能数据，而应从正式字段实时派生，例如：
 
-```json
-{
-  "tags": ["RES_AP","RES_SLOT","REQ_SELF_PART"],
-  "tagMeta": {
-    "slot": { "part": "left_arm", "slotCost": 1 },
-    "reqSelfPart": { "mode": "ANY", "parts": ["left_arm"] }
-  }
-}
-```
+- costs.ap -> RES_AP
+- costs.partSlot.slotCost > 0 -> RES_SLOT
+- requirements.selfPart 存在 -> REQ_SELF_PART
+- costs.perTurnLimit > 0 -> LIMIT_PER_TURN
 
 ### 5.6 平衡性风险提示（与“一回合多技能组合”强相关）
 
@@ -493,7 +376,7 @@ MVP 示例：
 
 建议维护一个表格（可以是 Markdown 表格或 Excel），列包括：
 
-- `id` / `name` / `rarity` / `arch` / `tags`
+- `id` / `name` / `rarity` / `arch` / `derived dimensions`
 - `AP cost` / `speed`
 - `targetType` / `requiredPart`
 - `buffRefs` 摘要（施加了哪些 buff）
@@ -509,18 +392,20 @@ MVP 示例：
 
 ### 6.3 与编辑器的结合点（建议）
 
-- 在 skill editor 的属性面板中增加 `tags`（多选）与 `tagMeta`（只读/弱编辑）。
-- 允许按 `tags` 过滤技能库、以及导出时进行标签完整性校验（至少每类选一个）。
+- 在 skill editor 或分析工具中展示“派生分析维度”只读结果。
+- 允许按派生分析维度过滤技能库，并在导出前做一致性校核提示。
 
 ---
 
-## 7. 附录：最小标签集合（MVP）
+## 7. 附录：最小分析维度集合（MVP）
 
-若要快速落地，建议先实现如下 MVP 标签：
+若要快速落地，建议先稳定以下 MVP 分析维度：
 
-- 作用属性：`DMG_HP` / `DMG_ARMOR` / `HEAL` / `ARMOR_ADD` / `BUFF_APPLY` / `BUFF_REMOVE`
-- 数值类型：`ABS` / `PCT_MAX` / `PCT_CURRENT`
-- 时间点：`INSTANT` / `ON_EVENT`
-- 周期：`ONE_SHOT` / `ONE_TURN` / `MULTI_TURN`
-- 释放对象（MVP）：`SUBJECT_SELF` / `SUBJECT_ENEMY` + `SCOPE_ENTITY` / `SCOPE_PART` / `SCOPE_MULTI_PARTS`
-- 流派：`ARCH_*`（至少一个）
+- 作用属性：DMG_HP / DMG_ARMOR / HEAL / ARMOR_ADD / BUFF_APPLY / BUFF_REMOVE
+- 数值类型：ABS / PCT_MAX / PCT_CURRENT
+- 时间点：INSTANT / ON_EVENT
+- 周期：ONE_SHOT / ONE_TURN / MULTI_TURN
+- 释放对象：SUBJECT_SELF / SUBJECT_ENEMY + SCOPE_ENTITY / SCOPE_PART / SCOPE_MULTI_PARTS
+- 资源维度：RES_AP / RES_SLOT / REQ_SELF_PART / LIMIT_PER_TURN
+
+这些维度足以支撑 MVP 阶段的过滤、统计与异常提醒，同时不会把工具侧语义写回活动 skill schema。

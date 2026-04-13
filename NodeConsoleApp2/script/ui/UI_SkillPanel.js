@@ -293,10 +293,9 @@ export default class UI_SkillPanel {
 
         const name = String(skill.name || '').toLowerCase();
         const desc = String(skill.description || skill.desc || '').toLowerCase();
-        const tags = Array.isArray(skill.tags) ? skill.tags.map(t => String(t).toLowerCase()) : [];
         const typeLabel = String(this.getSkillTypeLabel(skill) || '').toLowerCase();
 
-        const hay = [name, desc, typeLabel, ...tags].join(' ');
+        const hay = [name, desc, typeLabel].join(' ');
 
         const rules = [
             { re: /(he(al|al))|治疗|恢复|regen|revive|复活|药/, icon: '✨' },
@@ -1106,14 +1105,48 @@ export default class UI_SkillPanel {
         return '-';
     }
 
-    getSkillTypeLabel(skill) {
-        if (skill && skill.type) return skill.type;
-        const tags = Array.isArray(skill?.tags) ? skill.tags : [];
-        if (tags.includes('HEAL')) return 'HEAL';
-        if (tags.includes('DMG_HP') || tags.includes('DMG_ARMOR') || tags.includes('PIERCE')) return 'DAMAGE';
-        if (tags.includes('ARMOR_ADD')) return 'DEFENSE';
-        if (tags.includes('BUFF_APPLY') || tags.includes('BUFF_REMOVE')) return 'BUFF';
+    _collectSkillEffectTypes(skill) {
+        const actions = Array.isArray(skill?.actions) ? skill.actions : [];
+        const types = [];
+        const seen = new Set();
+        actions.forEach(action => {
+            const effectType = typeof action?.effect?.effectType === 'string'
+                ? action.effect.effectType.trim()
+                : '';
+            if (!effectType || seen.has(effectType)) return;
+            seen.add(effectType);
+            types.push(effectType);
+        });
+        return types;
+    }
+
+    _collectSkillBuffRefs(skill) {
+        const buffRefs = (skill?.buffRefs && typeof skill.buffRefs === 'object') ? skill.buffRefs : {};
+        const normalizeRows = (rows) => Array.isArray(rows) ? rows.filter(Boolean) : [];
+        return {
+            apply: normalizeRows(buffRefs.apply),
+            applySelf: normalizeRows(buffRefs.applySelf),
+            remove: normalizeRows(buffRefs.remove)
+        };
+    }
+
+    _deriveSkillPresentationType(skill) {
+        if (skill && skill.type) return String(skill.type);
+
+        const effectTypes = this._collectSkillEffectTypes(skill);
+        const buffRefs = this._collectSkillBuffRefs(skill);
+        const has = (effectType) => effectTypes.includes(effectType);
+        const hasBuffOps = buffRefs.apply.length > 0 || buffRefs.applySelf.length > 0 || buffRefs.remove.length > 0;
+
+        if (has('HEAL')) return 'HEAL';
+        if (has('DMG_HP') || has('DMG_ARMOR') || has('PIERCE')) return 'DAMAGE';
+        if (has('ARMOR_ADD')) return 'DEFENSE';
+        if (has('BUFF_APPLY') || has('BUFF_REMOVE') || hasBuffOps) return 'BUFF';
         return 'SKILL';
+    }
+
+    getSkillTypeLabel(skill) {
+        return this._deriveSkillPresentationType(skill);
     }
 
     getSkillApCost(skill) {

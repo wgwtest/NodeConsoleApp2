@@ -995,6 +995,55 @@
       assertPageIncludesText(html, '演出配置资产：加载中', 'mock_ui_v11.html 缺少展示配置资产占位文案');
     }
 
+    async function testLevelMapSelectionMockProvidesReadableGuide() {
+      const response = await fetch('./level_map_selection_mock.html', { cache: 'no-store' });
+      assert(response.ok, `level_map_selection_mock.html 加载失败: ${response.status}`);
+      const html = await response.text();
+      for (const requiredText of [
+        '关卡地图组织方案预览',
+        '这是个啥工具',
+        '为什么点这里能验证',
+        '关卡选择层与游戏主内容绝对解耦',
+        '未来正式关卡编辑器应维护这份地图包'
+      ]) {
+        assertPageIncludesText(html, requiredText, `level_map_selection_mock 缺少说明：${requiredText}`);
+      }
+    }
+
+    async function testLevelMapSelectionMockProvidesMapPackBridge() {
+      const [pageHtml, moduleSource, packJson] = await Promise.all([
+        fetch('./level_map_selection_mock.html', { cache: 'no-store' }).then(r => {
+          assert(r.ok, `level_map_selection_mock.html 加载失败: ${r.status}`);
+          return r.text();
+        }),
+        fetch('../script/editor/level/LevelMapPreviewPage.js', { cache: 'no-store' }).then(r => {
+          assert(r.ok, `LevelMapPreviewPage.js 加载失败: ${r.status}`);
+          return r.text();
+        }),
+        fetch('../assets/data/level_map_pack_v1.example.json', { cache: 'no-store' }).then(r => {
+          assert(r.ok, `level_map_pack_v1.example.json 加载失败: ${r.status}`);
+          return r.json();
+        })
+      ]);
+
+      for (const requiredText of [
+        '只输出 selectedLevelId',
+        '地图包样例',
+        'selectedLevelId',
+        '这份数据包与当前 levels.json 并行存在'
+      ]) {
+        assertPageIncludesText(pageHtml, requiredText, `level_map_selection_mock 缺少桥接说明：${requiredText}`);
+      }
+
+      for (const requiredToken of ['selectedLevelId', 'sourceMapId', 'sourceNodeId', 'previewModeId']) {
+        assert(moduleSource.includes(requiredToken), `LevelMapPreviewPage 未保留字段：${requiredToken}`);
+      }
+
+      assert(packJson?.$schemaVersion === 'level_map_pack_v1', `地图包 schemaVersion 错误: ${packJson?.$schemaVersion}`);
+      assert(packJson?.meta?.ownerNode === 'WBS-3.2.3', `地图包 ownerNode 错误: ${packJson?.meta?.ownerNode}`);
+      assert(Array.isArray(packJson?.maps) && packJson.maps.length > 0, '地图包缺少 maps');
+    }
+
     function buildUiSummaryRegressionEngine() {
       return {
         eventBus: createMiniEventBus(),
@@ -1278,8 +1327,8 @@
       await DataManager.loadConfigs();
 
       const blockIssues = DataManager.getSkillContractIssues('skill_block');
-      assert(Array.isArray(blockIssues) && blockIssues.length > 0, 'skill_block 契约问题列表为空');
-      assert(blockIssues.some(issue => issue.code === 'tag_scope_mismatch'), 'skill_block 未标记 SCOPE 标签冲突');
+      assert(Array.isArray(blockIssues), 'skill_block 契约问题列表未返回数组');
+      assert(blockIssues.length === 0, 'skill_block 契约问题应已清零');
       assert(!blockIssues.some(issue => issue.code === 'selection_count_exceeds_candidates'), 'skill_block 的 selectCount 越界问题应已收口');
       assert(!blockIssues.some(issue => issue.code === 'single_selection_count_invalid'), 'skill_block 的 single 计数问题应已收口');
 
@@ -1289,10 +1338,8 @@
       assert(!escapeIssues.some(issue => issue.code === 'single_selection_count_invalid'), 'skill_escape 不应再继承 single 计数错误');
 
       const shockwaveIssues = DataManager.getSkillContractIssues('skill_shockwave');
-      assert(Array.isArray(shockwaveIssues) && shockwaveIssues.length > 0, 'skill_shockwave 契约问题列表为空');
-      assert(shockwaveIssues.some(issue => issue.code === 'unexpected_effect_tag' && issue.tag === 'DMG_HP'), 'skill_shockwave 未标记多余的 DMG_HP 标签');
-      assert(shockwaveIssues.some(issue => issue.code === 'missing_effect_tag' && issue.tag === 'DMG_ARMOR'), 'skill_shockwave 未标记缺少的 DMG_ARMOR 标签');
-      assert(shockwaveIssues.some(issue => issue.code === 'missing_effect_tag' && issue.tag === 'BUFF_REMOVE'), 'skill_shockwave 未标记缺少的 BUFF_REMOVE 标签');
+      assert(Array.isArray(shockwaveIssues), 'skill_shockwave 契约问题列表未返回数组');
+      assert(shockwaveIssues.length === 0, 'skill_shockwave 契约问题应已清零');
     }
 
     async function testDataManagerSummarizesBuffDrivenSkillContracts() {
@@ -1307,7 +1354,7 @@
 
       const issues = DataManager.getSkillContractIssues('skill_regroup');
       assert(Array.isArray(issues), 'skill_regroup 契约问题列表未返回数组');
-      assert(issues.some(issue => issue.code === 'unexpected_effect_tag' && issue.tag === 'BUFF_REMOVE'), 'skill_regroup 未标记多余的 BUFF_REMOVE 标签');
+      assert(issues.length === 0, 'skill_regroup 契约问题应已清零');
     }
 
     async function testDataManagerBuildsSkillContractRemediationBatches() {
@@ -1316,16 +1363,15 @@
       await DataManager.loadConfigs();
 
       const rollup = DataManager.getSkillContractRemediationBatches({ includeAliases: true });
-      assert(rollup?.ownerNode === 'WBS-3.3.3', `ownerNode 错误: ${rollup?.ownerNode}`);
-      assert(Array.isArray(rollup?.batches) && rollup.batches.length >= 3, '修复批次数量不足');
+      assert(rollup?.ownerNode === 'WBS-3.3.3',                 `ownerNode 错误: ${rollup?.ownerNode}`);
+      assert(Array.isArray(rollup?.batches) && rollup.batches.length >= 1, '修复批次数量不足');
 
       const structureBatch = rollup.batches.find(batch => batch.id === 'batch_structure_selection');
       assert(structureBatch, '缺少 batch_structure_selection');
+      assert(structureBatch.status === 'closed', `首批结构批次状态错误: ${structureBatch?.status}`);
       assert(structureBatch.openIssueCount === 0, `首批结构批次未关闭: ${structureBatch?.openIssueCount}`);
       assert(Array.isArray(structureBatch.issueCodes) && structureBatch.issueCodes.includes('selection_count_exceeds_candidates'), '首批结构批次缺少预期 issue code');
-
-      const effectBatch = rollup.batches.find(batch => batch.id === 'batch_effect_tags');
-      assert(effectBatch && effectBatch.openIssueCount > 0, '效果标签批次应仍存在后续待修问题');
+      assert(!rollup.batches.some(batch => batch.id === 'batch_effect_tags'), '修复批次不应继续保留效果标签批次');
     }
 
     async function testDataManagerSupportsRuntimeSkillPackOverrideBridge() {
@@ -1501,7 +1547,7 @@
       assert(modal._selectedSkillId === 'skill_a', `UI_SkillTreeModal 默认选中错误: ${modal._selectedSkillId}`);
     }
 
-    function testSkillTreeModalFiltersOutDemoSkillsFromFormalTree() {
+    function testSkillTreeModalFiltersHiddenNodesFromFormalTree() {
       const modal = new UI_SkillTreeModal();
       modal.engine = {
         data: {
@@ -1510,12 +1556,12 @@
               selectedTreeId: 'melee_v4_5',
               schemaVersion: 'skills_melee_v3',
               skillsMap: {
-                skill_formal: { id: 'skill_formal', name: '正式技能', tags: ['DEFENSE'] },
-                skill_demo: { id: 'skill_demo', name: '演示技能', tags: ['DEMO', 'DEFENSE'] }
+                skill_formal: { id: 'skill_formal', name: '正式技能', editorMeta: {} },
+                skill_hidden: { id: 'skill_hidden', name: '隐藏技能', editorMeta: { hiddenInSkillTree: true } }
               },
               skillsList: [
-                { id: 'skill_formal', name: '正式技能', tags: ['DEFENSE'] },
-                { id: 'skill_demo', name: '演示技能', tags: ['DEMO', 'DEFENSE'] }
+                { id: 'skill_formal', name: '正式技能', editorMeta: {} },
+                { id: 'skill_hidden', name: '隐藏技能', editorMeta: { hiddenInSkillTree: true } }
               ]
             };
           },
@@ -1530,10 +1576,12 @@
 
       modal._loadDataFromEngine();
 
-      assert(modal._skillsMap.skill_demo?.id === 'skill_demo', '技能树不应破坏 skillsMap 中的 DEMO 技能');
-      assert(modal._skillsList.length === 1, `正式技能树应过滤 DEMO 节点，实际 ${modal._skillsList.length}`);
+      assert(modal._skillsMap.skill_hidden?.id === 'skill_hidden', '技能树不应破坏 skillsMap 中的隐藏技能');
+      assert(modal._skillsList.length === 1, `正式技能树应过滤显式隐藏节点，实际 ${modal._skillsList.length}`);
       assert(modal._skillsList[0]?.id === 'skill_formal', `正式技能树保留的节点错误: ${modal._skillsList[0]?.id}`);
-      assert(modal._selectedSkillId === 'skill_formal', `过滤 DEMO 后默认选中错误: ${modal._selectedSkillId}`);
+      assert(modal._selectedSkillId === 'skill_formal', `过滤隐藏节点后默认选中错误: ${modal._selectedSkillId}`);
+      assert(modal._shouldRenderSkillNode({ id: 'skill_visible', editorMeta: {} }) === true, '未标记 hiddenInSkillTree 的技能应可见');
+      assert(modal._shouldRenderSkillNode({ id: 'skill_hidden', editorMeta: { hiddenInSkillTree: true } }) === false, '显式隐藏节点应不可见');
     }
 
     function testCoreEngineLearnSkillConsumesDataBoundary() {
@@ -2614,10 +2662,7 @@
       assert(Array.isArray(enums.targetScopes) && enums.targetScopes.includes('SCOPE_MULTI_PARTS'), 'meta.enums.targetScopes 缺少 SCOPE_MULTI_PARTS');
       assert(Array.isArray(enums.selectionModes) && enums.selectionModes.includes('random_single'), 'meta.enums.selectionModes 缺少 random_single');
 
-      const allTags = Object.values(enums.tags || {}).flat();
-      for (const requiredTag of ['SCOPE_MULTI_PARTS', 'DEFENSE', 'DEMO', 'UTILITY', 'WAIT']) {
-        assert(allTags.includes(requiredTag), `meta.enums.tags 缺少 ${requiredTag}`);
-      }
+      assert(!Object.prototype.hasOwnProperty.call(enums, 'tags'), '技能 pack 不应继续定义旧标签枚举');
 
       const skillList = Array.isArray(skillPack.skills) ? skillPack.skills : [];
       assert(skillList.length > 0, '技能 pack 缺少 skills 列表');
@@ -2625,6 +2670,9 @@
       for (const skill of skillList) {
         assert(Array.isArray(skill.actions), `${skill.id} 缺少 actions[]`);
         assert(!Array.isArray(skill.effects), `${skill.id} 不应继续保留旧 effects[]`);
+        assert(!Object.prototype.hasOwnProperty.call(skill, 'tags'), `${skill.id} 不应继续保留 tags`);
+        const retiredLegacyMetaKey = ['ta', 'gMeta'].join('');
+        assert(!Object.prototype.hasOwnProperty.call(skill, retiredLegacyMetaKey), `${skill.id} 不应继续保留旧附加参数字段`);
         assert(skill.unlock && typeof skill.unlock === 'object', `${skill.id} 缺少 unlock`);
         assert(typeof skill.unlock.cost?.kp === 'number', `${skill.id} 缺少 unlock.cost.kp`);
         assert(skill.editorMeta && typeof skill.editorMeta === 'object', `${skill.id} 缺少 editorMeta`);
@@ -2860,14 +2908,54 @@
         '重新加载默认关卡包',
         '保存当前关卡',
         '保存波次与敌人池',
+        '导入现有 JSON',
         '应用 Runtime Override',
         '打开 Runtime Probe',
         '与其他页面的关系',
+        '导入 -> 编辑 -> 导出 -> Runtime Override -> Probe',
+        'unlockModeInput',
+        'victoryConditionTypeInput',
+        'failureConditionTypeInput',
         '敌人池成员',
         '每行一条 `templateId@position`',
         '../script/editor/level/index.js'
       ]) {
         assertPageIncludesText(editorPage, requiredText, 'level_editor_v1.html 缺少正式编辑器入口文案');
+      }
+    }
+
+    async function testLevelMapEditorV1PageProvidesFormalEditorEntry() {
+      const editorPage = await fetch('../test/level_map_editor_v1.html').then(r => r.text());
+      for (const requiredText of [
+        '地图编辑工作区',
+        '加载地图包样例',
+        '新增节点',
+        '保存节点',
+        '新增边',
+        '保存边',
+        '消费 levels.json 中已存在的 levelId',
+        'WBS-3.2.3.3',
+        'level_map_selection_mock.html',
+        'level_editor_v1.html'
+      ]) {
+        assertPageIncludesText(editorPage, requiredText, 'level_map_editor_v1.html 缺少正式地图编辑入口文案');
+      }
+    }
+
+    async function testLevelMapEditorIoPageProvidesFormalIoEntry() {
+      const ioPage = await fetch('../test/level_map_editor_io_test.html').then(r => r.text());
+      for (const requiredText of [
+        '地图包导入导出与校验',
+        '这是个啥工具',
+        '为什么点这些按钮',
+        '合法样例',
+        '非法样例',
+        'round-trip',
+        'level_map_editor_v1.html',
+        'WBS-3.2.3.2',
+        'WBS-3.2.3.3'
+      ]) {
+        assertPageIncludesText(ioPage, requiredText, 'level_map_editor_io_test.html 缺少地图包 IO 入口文案');
       }
     }
 
@@ -2877,6 +2965,9 @@
         'Reload Runtime',
         'Instantiate Probe Level',
         'Resolved Enemy Members',
+        'Unlock Rules',
+        'Victory Condition',
+        'Failure Condition',
         'Instantiated Enemy Names',
         'level_1_1',
         'DataManagerV2.js',
@@ -2921,9 +3012,7 @@
       for (const requiredText of [
         'selection_count_exceeds_candidates',
         'single_selection_count_invalid',
-        'tag_scope_mismatch',
-        'unexpected_effect_tag',
-        'missing_effect_tag',
+        '旧标签字段已退役',
         '你在本页应该先看什么',
         '问题技能数',
         '别名条目数',
@@ -4663,9 +4752,11 @@
       assert(acceptance?.isRuntimeEntry === true, 'acceptance 应属于运行时入口');
       assert(authoring?.entryLabel === '作者样本工具页', `authoring.entryLabel 错误: ${authoring?.entryLabel}`);
       assert(authoring?.isRuntimeEntry === false, 'authoring 不应属于运行时入口');
-      assert(authoring?.count === 3, `authoring.count 错误: ${authoring?.count}`);
+      assert(authoring?.count === 5, `authoring.count 错误: ${authoring?.count}`);
       assert(Array.isArray(authoring?.pages) && authoring.pages.includes('test/level_editor_v1.html'), 'authoring 缺少 level_editor_v1.html');
+      assert(Array.isArray(authoring?.pages) && authoring.pages.includes('test/level_map_editor_v1.html'), 'authoring 缺少 level_map_editor_v1.html');
       assert(Array.isArray(authoring?.pages) && authoring.pages.includes('test/level_editor_io_test.html'), 'authoring 缺少 level_editor_io_test.html');
+      assert(Array.isArray(authoring?.pages) && authoring.pages.includes('test/level_map_editor_io_test.html'), 'authoring 缺少 level_map_editor_io_test.html');
       assert(Array.isArray(authoring?.pages) && authoring.pages.includes('test/level_runtime_probe.html'), 'authoring 缺少 level_runtime_probe.html');
     }
 
@@ -6219,6 +6310,18 @@
         'UI_SystemModal 主菜单与关卡选择页使用统一摘要语义类',
         'mock_ui_v11 提供主界面摘要条挂载点'
       ]),
+      'WBS-3.2.3.1': new Set([
+        'level_map_selection_mock 提供可理解的地图方案说明',
+        'level_map_selection_mock 会解释地图包与主程序交接面'
+      ]),
+      'WBS-3.2.3.2': new Set([
+        'DataManager 会把地图编辑器纳入作者工具摘要',
+        'level_map_editor_v1 提供正式地图编辑入口'
+      ]),
+      'WBS-3.2.3.3': new Set([
+        'DataManager 会把地图编辑器纳入作者工具摘要',
+        'level_map_editor_io_test 提供地图包导入导出与校验入口'
+      ]),
       'WBS-4.3.7': new Set([
         'BattlePresentationController 会应用展示配置资产桥接面',
         'battle_presentation_configurator 提供可理解的展示参数工具说明',
@@ -6278,12 +6381,14 @@
       ['battle_presentation_configurator 提供可理解的展示参数工具说明', testBattlePresentationConfiguratorProvidesReadableGuide],
       ['battle_presentation_probe 提供演出配置资产读数入口', testBattlePresentationProbeProvidesProfileAssetReadout],
       ['mock_ui_v11 提供展示配置资产读数入口', testMockUiProvidesPresentationAssetReadoutEntry],
+      ['level_map_selection_mock 提供可理解的地图方案说明', testLevelMapSelectionMockProvidesReadableGuide],
+      ['level_map_selection_mock 会解释地图包与主程序交接面', testLevelMapSelectionMockProvidesMapPackBridge],
       ['codex_regression_runner 提供人工使用说明', testRegressionRunnerProvidesHumanUsageGuide],
       ['CoreEngine 战斗保存同步 currentScene/battleState', testCoreEngineBattleSaveSyncContract],
       ['config registry 与 DataManager 装载边界统一', testContentRegistryProvidesUnifiedLoaderBoundary],
       ['DataManager 暴露技能目录边界 API', testDataManagerProvidesSkillCatalogBoundary],
       ['DataManager 暴露技能契约摘要与矩阵目录', testDataManagerBuildsSkillContractSummary],
-      ['DataManager 能识别技能契约中的结构与标签冲突', testDataManagerDetectsSkillContractIssues],
+      ['DataManager 会收口技能契约结构异常并保持清零状态', testDataManagerDetectsSkillContractIssues],
       ['DataManager 能识别纯 buff 驱动技能的契约摘要', testDataManagerSummarizesBuffDrivenSkillContracts],
       ['DataManager 会按修复批次汇总技能异常', testDataManagerBuildsSkillContractRemediationBatches],
       ['DataManager 支持技能 pack 运行时覆写桥', testDataManagerSupportsRuntimeSkillPackOverrideBridge],
@@ -6292,7 +6397,7 @@
       ['DataManager 支持关卡 pack 运行时覆写桥', testDataManagerSupportsRuntimeLevelPackOverrideBridge],
       ['DataManager 暴露关卡目录边界 API', testDataManagerProvidesLevelCatalogBoundary],
       ['UI_SkillTreeModal 仅消费技能目录边界', testSkillTreeModalConsumesSkillCatalogBoundary],
-      ['UI_SkillTreeModal 会过滤 DEMO 技能节点', testSkillTreeModalFiltersOutDemoSkillsFromFormalTree],
+      ['UI_SkillTreeModal 仅隐藏显式标记 hiddenInSkillTree 的节点', testSkillTreeModalFiltersHiddenNodesFromFormalTree],
       ['CoreEngine.learnSkill 仅消费 DataManager 技能边界', testCoreEngineLearnSkillConsumesDataBoundary],
       ['CoreEngine.login 新游戏入口不应隐式读档', testCoreEngineLoginStartsNewGameWithoutImplicitLoad],
       ['CoreEngine.init 仅消费 DataManager Buff 边界', testCoreEngineInitConsumesBuffDataBoundary],
@@ -6318,6 +6423,8 @@
       ['buff_runtime_probe 提供运行时消费入口', testBuffRuntimeProbePageProvidesRuntimeConsumptionEntry],
       ['level_editor_io_test 提供 runtime bridge 验证入口', testLevelEditorIoPageProvidesRuntimeBridgeEntry],
       ['level_editor_v1 提供正式关卡编辑入口', testLevelEditorV1PageProvidesFormalEditorEntry],
+      ['level_map_editor_v1 提供正式地图编辑入口', testLevelMapEditorV1PageProvidesFormalEditorEntry],
+      ['level_map_editor_io_test 提供地图包导入导出与校验入口', testLevelMapEditorIoPageProvidesFormalIoEntry],
       ['level_runtime_probe 提供运行时消费入口', testLevelRuntimeProbePageProvidesRuntimeConsumptionEntry],
       ['skill_contract_probe 提供批量一致性校核入口', testSkillContractProbePageProvidesBatchConsistencyGuide],
       ['skill_contract_probe 会解释问题码与读数顺序', testSkillContractProbePageExplainsIssueCodesAndReadingOrder],
@@ -6358,7 +6465,7 @@
       ['DataManager 透出故事关卡内容元数据与奖励预览', testDataManagerBuildsStoryLevelSelectionMetaAndRewardPreview],
       ['DataManager 透出故事关卡首次通关与重复通关差异说明', testDataManagerBuildsStoryLevelClearFeedbackComparison],
       ['DataManager 构建独立验收样本选择入口', testDataManagerBuildsAcceptanceLevelEntriesForManualVerification],
-      ['DataManager 构建关卡内容来源分层摘要', testDataManagerBuildsLevelContentSourceOverview],
+      ['DataManager 会把地图编辑器纳入作者工具摘要', testDataManagerBuildsLevelContentSourceOverview],
       ['DataManager 首次通关会解锁下一故事关卡', testDataManagerFirstClearUnlocksNextStoryLevel],
       ['DataManager 会保留最近学习结果进度字段', testDataManagerNormalizeProgressKeepsLastLearnAction],
       ['CoreEngine.endBattle 会发出带 settlement 的结算事件', testCoreEngineEndBattleEmitsSettlementPayload],

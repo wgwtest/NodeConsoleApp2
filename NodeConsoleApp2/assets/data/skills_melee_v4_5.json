@@ -63,8 +63,7 @@
       "skills[].buffRefs": "与 Buff 系统的轻耦合引用（技能只引用 buffId，不内嵌 buff 逻辑）。",
       "skills[].buffRefs.apply": "对 enemy 施加的 buff 列表（每项包含 buffId/target/chance/duration 等）。",
       "skills[].buffRefs.applySelf": "对 self 施加的 buff 列表。",
-      "skills[].buffRefs.remove": "移除 buff 的列表（用于净化/驱散）。",
-      "skills[].tags": "平衡性/统计标签，建议取值对齐 meta.enums.tags.*（工具侧更易做分布分析）。"
+      "skills[].buffRefs.remove": "移除 buff 的列表（用于净化/驱散）。"
     },
     "defaultParts": [
       "head",
@@ -134,74 +133,6 @@
         "minCount": 1,
         "maxCount": 20
       },
-      "tags": {
-        "what": [
-          "DMG_HP",
-          "DMG_ARMOR",
-          "PIERCE",
-          "HEAL",
-          "ARMOR_ADD",
-          "AP_GAIN",
-          "SPEED",
-          "BUFF_APPLY",
-          "BUFF_REMOVE"
-        ],
-        "how": [
-          "ABS",
-          "PCT_MAX",
-          "PCT_CURRENT",
-          "SCALING"
-        ],
-        "when": [
-          "INSTANT",
-          "DELAYED",
-          "ON_EVENT"
-        ],
-        "lifetime": [
-          "ONE_SHOT",
-          "ONE_TURN",
-          "MULTI_TURN",
-          "BATTLE",
-          "PERMANENT"
-        ],
-        "subject": [
-          "SUBJECT_SELF",
-          "SUBJECT_ENEMY",
-          "SUBJECT_BOTH"
-        ],
-        "scope": [
-          "SCOPE_ENTITY",
-          "SCOPE_PART",
-          "SCOPE_MULTI_PARTS"
-        ],
-        "selectionLegacy": [
-          "SELECT_FIXED_PART",
-          "SELECT_RANDOM_PART",
-          "SELECT_ALL_PARTS"
-        ],
-        "resources": [
-          "RES_AP",
-          "RES_SLOT"
-        ],
-        "requirements": [
-          "REQ_SELF_PART"
-        ],
-        "distance": [
-          "MELEE",
-          "RANGED",
-          "MAGIC"
-        ],
-        "conditions": [
-          "UNCONDITIONAL",
-          "CONDITIONAL"
-        ],
-        "purpose": [
-          "DEFENSE",
-          "UTILITY",
-          "DEMO",
-          "WAIT"
-        ]
-      },
       "editStates": [
         "done",
         "editing",
@@ -253,16 +184,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "HEAL",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP"
-      ],
       "actions": [
         {
           "id": "action_1",
@@ -279,8 +200,7 @@
             "amountType": "ABS"
           }
         }
-      ],
-      "tagMeta": {}
+      ]
     },
     {
       "id": "skill_heavy_swing",
@@ -346,20 +266,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -443,21 +349,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -552,21 +443,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "DMG_ARMOR",
-        "SCALING",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
       "actions": [
         {
           "id": "action_2",
@@ -589,8 +465,7 @@
             }
           }
         }
-      ],
-      "tagMeta": {}
+      ]
     },
     {
       "id": "skill_shockwave",
@@ -671,21 +546,6 @@
         ],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -776,19 +636,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "PCT_CURRENT",
-        "INSTANT",
-        "ONE_SHOT",
-        "CONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
       "actions": [
         {
           "id": "action_1",
@@ -806,8 +653,7 @@
             "note": "按当前 HP 百分比造成伤害；引擎实现时可映射为 TRUE/PIERCE 以避免护甲干扰。"
           }
         }
-      ],
-      "tagMeta": {}
+      ]
     },
     {
       "id": "skill_earthquake",
@@ -879,20 +725,6 @@
         ],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
       "actions": [
         {
           "id": "action_1",
@@ -980,19 +812,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
       "actions": [
         {
           "id": "action_1",
@@ -1016,8 +835,7 @@
             "amount": 50
           }
         }
-      ],
-      "tagMeta": {}
+      ]
     },
     {
       "id": "skill_block",
@@ -1076,20 +894,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -1177,20 +981,6 @@
           }
         ]
       },
-      "tags": [
-        "ARMOR_ADD",
-        "BUFF_REMOVE",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": []
     },
     {
@@ -1248,20 +1038,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -1382,21 +1158,6 @@
         ],
         "remove": []
       },
-      "tags": [
-        "BUFF_APPLY",
-        "ARMOR_ADD",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -1480,21 +1241,7 @@
         ],
         "remove": []
       },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "actions": [],
-      "tagMeta": {}
+      "actions": []
     },
     {
       "id": "skill_artery_slice",
@@ -1557,21 +1304,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -1651,21 +1383,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "SELECT_RANDOM_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -1750,21 +1467,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -1842,21 +1544,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -1944,20 +1631,6 @@
         ],
         "remove": []
       },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -2031,21 +1704,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -2150,21 +1808,6 @@
         ],
         "remove": []
       },
-      "tags": [
-        "BUFF_APPLY",
-        "ARMOR_ADD",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -2252,20 +1895,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -2355,21 +1984,6 @@
         ],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -2459,20 +2073,6 @@
         ],
         "remove": []
       },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": []
     },
     {
@@ -2544,22 +2144,6 @@
         ],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "DMG_ARMOR",
-        "SCALING",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": []
     },
     {
@@ -2619,20 +2203,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "PCT_CURRENT",
-        "INSTANT",
-        "ONE_SHOT",
-        "CONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -2729,21 +2299,6 @@
         ],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -2819,20 +2374,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "PCT_CURRENT",
-        "INSTANT",
-        "ONE_SHOT",
-        "CONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -2909,20 +2450,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "PCT_CURRENT",
-        "INSTANT",
-        "ONE_SHOT",
-        "CONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -3005,21 +2532,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "SELECT_RANDOM_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -3115,8 +2627,6 @@
         "locked": false
       },
       "description": "获得buff，每当扣除hp，获得攻击加成",
-      "tags": [],
-      "tagMeta": {},
       "unlock": {
         "cost": {
           "kp": 5
@@ -3170,8 +2680,6 @@
         "locked": false
       },
       "description": "消耗2点血，对指定部位造成20点伤害",
-      "tags": [],
-      "tagMeta": {},
       "unlock": {
         "cost": {
           "kp": 8
@@ -3297,8 +2805,6 @@
         "editState": "done"
       },
       "description": "以锯齿刃撕开伤口，造成伤害并施加流血。",
-      "tags": [],
-      "tagMeta": {},
       "unlock": {
         "cost": {
           "kp": 2
@@ -3366,8 +2872,6 @@
         "editState": "done"
       },
       "description": "攻击单个部位",
-      "tags": [],
-      "tagMeta": {},
       "unlock": {
         "cost": {
           "kp": 1
@@ -3435,8 +2939,6 @@
         "editState": "done"
       },
       "description": "",
-      "tags": [],
-      "tagMeta": {},
       "unlock": {
         "cost": {
           "kp": 1
@@ -3482,8 +2984,6 @@
         "editState": "done"
       },
       "description": "",
-      "tags": [],
-      "tagMeta": {},
       "unlock": {
         "cost": {
           "kp": 1
@@ -3537,12 +3037,6 @@
         "editState": "done"
       },
       "description": "为自身附加 1 回合 HP 免伤，用于人工验收。",
-      "tags": [
-        "BUFF_APPLY",
-        "DEFENSE",
-        "DEMO"
-      ],
-      "tagMeta": {},
       "unlock": {
         "cost": {
           "kp": 0
@@ -3599,12 +3093,6 @@
         "editState": "done"
       },
       "description": "为自身附加 1 回合护甲免伤，用于人工验收。",
-      "tags": [
-        "BUFF_APPLY",
-        "DEFENSE",
-        "DEMO"
-      ],
-      "tagMeta": {},
       "unlock": {
         "cost": {
           "kp": 0
@@ -3660,12 +3148,6 @@
         "editState": "done"
       },
       "description": "为自身附加受击获甲效果，用于人工验收。",
-      "tags": [
-        "BUFF_APPLY",
-        "DEFENSE",
-        "DEMO"
-      ],
-      "tagMeta": {},
       "unlock": {
         "cost": {
           "kp": 0
@@ -3725,14 +3207,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_ARMOR",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "DEMO"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -3804,14 +3278,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "DEMO"
-      ],
-      "tagMeta": {},
       "actions": [
         {
           "id": "action_1",
@@ -3879,12 +3345,6 @@
         "apply": [],
         "remove": []
       },
-      "tags": [
-        "DEMO",
-        "UTILITY",
-        "WAIT"
-      ],
-      "tagMeta": {},
       "actions": []
     }
   ]

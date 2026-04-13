@@ -63,32 +63,77 @@
       "skills[].buffRefs": "与 Buff 系统的轻耦合引用（技能只引用 buffId，不内嵌 buff 逻辑）。",
       "skills[].buffRefs.apply": "对 enemy 施加的 buff 列表（每项包含 buffId/target/chance/duration 等）。",
       "skills[].buffRefs.applySelf": "对 self 施加的 buff 列表。",
-      "skills[].buffRefs.remove": "移除 buff 的列表（用于净化/驱散）。",
-      "skills[].tags": "平衡性/统计标签，建议取值对齐 meta.enums.tags.*（工具侧更易做分布分析）。"
+      "skills[].buffRefs.remove": "移除 buff 的列表（用于净化/驱散）。"
     },
-    "defaultParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+    "defaultParts": [
+      "head",
+      "chest",
+      "left_arm",
+      "right_arm",
+      "left_leg",
+      "right_leg"
+    ],
     "enums": {
-      "rarities": ["Common", "Uncommon", "Rare", "Epic", "Legendary"],
-      "targetSubjects": ["SUBJECT_SELF", "SUBJECT_ENEMY", "SUBJECT_BOTH"],
-      "targetScopes": ["SCOPE_ENTITY", "SCOPE_PART", "SCOPE_MULTI_PARTS"],
-      "selectionModes": ["single", "multiple", "random_single", "random_multiple"],
-      "effectTypes": ["DMG_HP","DMG_ARMOR","PIERCE","HEAL","ARMOR_ADD","AP_GAIN","SPEED","BUFF_APPLY","BUFF_REMOVE"],
-      "amountTypes": ["ABS", "PCT_MAX", "PCT_CURRENT", "SCALING"],
-      "buffRefTargets": ["self", "enemy"],
-      "requirementSelfPartModes": ["ANY", "ALL"],
-      "partOverrideModes": ["fixed", "listed"],
-      "hitModes": ["normal", "cannot_dodge", "always_crit"],
-      "repeat": { "minCount": 1, "maxCount": 20 },
-      "tags": {
-        "what": ["DMG_HP", "DMG_ARMOR", "PIERCE", "HEAL", "ARMOR_ADD", "AP_GAIN", "SPEED", "BUFF_APPLY", "BUFF_REMOVE"],
-        "how": ["ABS", "PCT_MAX", "PCT_CURRENT", "SCALING"],
-        "when": ["INSTANT", "DELAYED", "ON_EVENT"],
-        "lifetime": ["ONE_SHOT", "ONE_TURN", "MULTI_TURN", "BATTLE", "PERMANENT"],
-        "subject": ["SUBJECT_SELF", "SUBJECT_ENEMY", "SUBJECT_BOTH"],
-        "scope": ["SCOPE_ENTITY", "SCOPE_PART", "SCOPE_MULTI_PARTS"],
-        "resources": ["RES_AP", "RES_SLOT"],
-        "requirements": ["REQ_SELF_PART"],
-        "conditions": ["UNCONDITIONAL", "CONDITIONAL"]
+      "rarities": [
+        "Common",
+        "Uncommon",
+        "Rare",
+        "Epic",
+        "Legendary"
+      ],
+      "targetSubjects": [
+        "SUBJECT_SELF",
+        "SUBJECT_ENEMY",
+        "SUBJECT_BOTH"
+      ],
+      "targetScopes": [
+        "SCOPE_ENTITY",
+        "SCOPE_PART",
+        "SCOPE_MULTI_PARTS"
+      ],
+      "selectionModes": [
+        "single",
+        "multiple",
+        "random_single",
+        "random_multiple"
+      ],
+      "effectTypes": [
+        "DMG_HP",
+        "DMG_ARMOR",
+        "PIERCE",
+        "HEAL",
+        "ARMOR_ADD",
+        "AP_GAIN",
+        "SPEED",
+        "BUFF_APPLY",
+        "BUFF_REMOVE"
+      ],
+      "amountTypes": [
+        "ABS",
+        "PCT_MAX",
+        "PCT_CURRENT",
+        "SCALING"
+      ],
+      "buffRefTargets": [
+        "self",
+        "enemy"
+      ],
+      "requirementSelfPartModes": [
+        "ANY",
+        "ALL"
+      ],
+      "partOverrideModes": [
+        "fixed",
+        "listed"
+      ],
+      "hitModes": [
+        "normal",
+        "cannot_dodge",
+        "always_crit"
+      ],
+      "repeat": {
+        "minCount": 1,
+        "maxCount": 20
       }
     }
   },
@@ -99,25 +144,56 @@
       "rarity": "Common",
       "description": "基础的挥砍攻击。",
       "prerequisites": [],
-      "unlock": { "cost": { "kp": 1 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 0, "y": 0, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 0,
+        "y": 0,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 0,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",
         "selection": {
           "mode": "single",
-          "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectedParts": [],
           "selectCount": 1
         }
       },
       "requirements": {
-        "selfPart": { "mode": "ANY", "parts": ["left_arm", "right_arm"], "mustBeUsable": true }
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_arm",
+            "right_arm"
+          ],
+          "mustBeUsable": true
+        }
       },
       "costs": {
         "ap": 2,
-        "partSlot": { "part": "right_arm", "slotCost": 1 },
+        "partSlot": {
+          "part": "right_arm",
+          "slotCost": 1
+        },
         "perTurnLimit": 1
       },
       "effects": [
@@ -127,20 +203,11 @@
           "amountType": "ABS"
         }
       ],
-      "buffRefs": { "apply": [], "applySelf": [], "remove": [] },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      "buffRefs": {
+        "apply": [],
+        "applySelf": [],
+        "remove": []
+      }
     },
     {
       "id": "skill_heal",
@@ -148,20 +215,51 @@
       "rarity": "Common",
       "description": "恢复少量生命值。",
       "prerequisites": [],
-      "unlock": { "cost": { "kp": 1 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 1, "y": 0, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1,
+        "y": 0,
+        "group": "melee",
+        "locked": false
+      },
       "speed": -2,
       "target": {
         "subject": "SUBJECT_SELF",
         "scope": "SCOPE_ENTITY",
         "selection": {
           "mode": "multiple",
-          "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
-          "selectedParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "selectedParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectCount": 6
         }
       },
-      "costs": { "ap": 3, "perTurnLimit": 1 },
+      "costs": {
+        "ap": 3,
+        "perTurnLimit": 1
+      },
       "effects": [
         {
           "effectType": "HEAL",
@@ -169,8 +267,11 @@
           "amountType": "ABS"
         }
       ],
-      "buffRefs": { "apply": [], "applySelf": [], "remove": [] },
-      "tags": ["HEAL", "ABS", "INSTANT", "ONE_SHOT", "UNCONDITIONAL", "SUBJECT_SELF", "SCOPE_ENTITY", "RES_AP"]
+      "buffRefs": {
+        "apply": [],
+        "applySelf": [],
+        "remove": []
+      }
     },
     {
       "id": "skill_heavy_swing",
@@ -178,48 +279,73 @@
       "rarity": "Common",
       "description": "对选中部位造成较高伤害（按攻击力缩放）。",
       "prerequisites": [],
-      "unlock": { "cost": { "kp": 1 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 0, "y": 1, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 0,
+        "y": 1,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 0,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",
         "selection": {
           "mode": "single",
-          "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectedParts": [],
           "selectCount": 1
         }
       },
       "requirements": {
-        "selfPart": { "mode": "ANY", "parts": ["left_arm", "right_arm"], "mustBeUsable": true }
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_arm",
+            "right_arm"
+          ],
+          "mustBeUsable": true
+        }
       },
       "costs": {
         "ap": 3,
-        "partSlot": { "part": "right_arm", "slotCost": 2 },
+        "partSlot": {
+          "part": "right_arm",
+          "slotCost": 2
+        },
         "perTurnLimit": 1
       },
       "effects": [
         {
           "effectType": "DMG_HP",
           "amountType": "SCALING",
-          "scaling": { "stat": "atk", "multiplier": 1.2 }
+          "scaling": {
+            "stat": "atk",
+            "multiplier": 1.2
+          }
         }
       ],
-      "buffRefs": { "apply": [], "applySelf": [], "remove": [] },
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      "buffRefs": {
+        "apply": [],
+        "applySelf": [],
+        "remove": []
+      }
     },
     {
       "id": "skill_shield_bash",
@@ -227,49 +353,73 @@
       "rarity": "Common",
       "description": "攻击躯干：造成少量伤害，并有概率眩晕。",
       "prerequisites": [],
-      "unlock": { "cost": { "kp": 1 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 1, "y": 1, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1,
+        "y": 1,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 0,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",
         "selection": {
           "mode": "single",
-          "candidateParts": ["chest"],
-          "selectedParts": ["chest"],
+          "candidateParts": [
+            "chest"
+          ],
+          "selectedParts": [
+            "chest"
+          ],
           "selectCount": 1
         }
       },
       "requirements": {
-        "selfPart": { "mode": "ANY", "parts": ["left_arm"], "mustBeUsable": true }
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_arm"
+          ],
+          "mustBeUsable": true
+        }
       },
       "costs": {
         "ap": 3,
-        "partSlot": { "part": "left_arm", "slotCost": 1 },
+        "partSlot": {
+          "part": "left_arm",
+          "slotCost": 1
+        },
         "perTurnLimit": 1
       },
       "effects": [
-        { "effectType": "DMG_HP", "amount": 10, "amountType": "ABS" }
+        {
+          "effectType": "DMG_HP",
+          "amount": 10,
+          "amountType": "ABS"
+        }
       ],
       "buffRefs": {
-        "apply": [{ "buffId": "buff_stun", "target": "enemy", "chance": 0.4, "duration": 1 }],
+        "apply": [
+          {
+            "buffId": "buff_stun",
+            "target": "enemy",
+            "chance": 0.4,
+            "duration": 1
+          }
+        ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      }
     },
     {
       "id": "skill_headbutt",
@@ -277,25 +427,60 @@
       "rarity": "Common",
       "description": "攻击头部：造成伤害；自身反噬；并有概率眩晕。",
       "prerequisites": [],
-      "unlock": { "cost": { "kp": 1 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 2, "y": 1, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 2,
+        "y": 1,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 0,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",
         "selection": {
           "mode": "single",
-          "candidateParts": ["head"],
-          "selectedParts": ["head"],
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
           "selectCount": 1
         }
       },
       "requirements": {
-        "selfPart": { "mode": "ANY", "parts": ["head"], "mustBeUsable": true }
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "head"
+          ],
+          "mustBeUsable": true
+        }
       },
-      "costs": { "ap": 2, "partSlot": { "part": "head", "slotCost": 1 }, "perTurnLimit": 1 },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "head",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
       "effects": [
-        { "effectType": "DMG_HP", "amount": 15, "amountType": "ABS" },
+        {
+          "effectType": "DMG_HP",
+          "amount": 15,
+          "amountType": "ABS"
+        },
         {
           "effectType": "DMG_HP",
           "subjectOverride": "SUBJECT_SELF",
@@ -305,62 +490,93 @@
         }
       ],
       "buffRefs": {
-        "apply": [{ "buffId": "buff_stun", "target": "enemy", "chance": 0.25, "duration": 1 }],
+        "apply": [
+          {
+            "buffId": "buff_stun",
+            "target": "enemy",
+            "chance": 0.25,
+            "duration": 1
+          }
+        ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      }
     },
     {
       "id": "skill_savage_charge",
       "name": "冲撞",
       "rarity": "Uncommon",
       "description": "对躯干造成中等伤害，并施加短暂减速。",
-      "unlock": { "cost": { "kp": 2 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 0, "y": 2, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 0,
+        "y": 2,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 2,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",
-        "selection": { "mode": "single", "candidateParts": ["chest"], "selectedParts": ["chest"], "selectCount": 1 }
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "chest"
+          ],
+          "selectedParts": [
+            "chest"
+          ],
+          "selectCount": 1
+        }
       },
       "requirements": {
-        "selfPart": { "mode": "ANY", "parts": ["left_leg", "right_leg"], "mustBeUsable": true }
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_leg",
+            "right_leg"
+          ],
+          "mustBeUsable": true
+        }
       },
-      "costs": { "ap": 4, "partSlot": { "part": "left_leg", "slotCost": 2 }, "perTurnLimit": 1 },
-      "effects": [{ "effectType": "DMG_HP", "amount": 30, "amountType": "ABS" }],
+      "costs": {
+        "ap": 4,
+        "partSlot": {
+          "part": "left_leg",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "effects": [
+        {
+          "effectType": "DMG_HP",
+          "amount": 30,
+          "amountType": "ABS"
+        }
+      ],
       "buffRefs": {
-        "apply": [{ "buffId": "buff_slow", "target": "enemy", "chance": 1, "duration": 1 }],
+        "apply": [
+          {
+            "buffId": "buff_slow",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 1
+          }
+        ],
         "applySelf": [],
         "remove": []
       },
-      "prerequisites": ["skill_heavy_swing"],
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
+      "prerequisites": [
+        "skill_heavy_swing"
       ]
     },
     {
@@ -368,38 +584,83 @@
       "name": "裂颅一击",
       "rarity": "Uncommon",
       "description": "对头部造成伤害（按攻击力缩放），并额外削减头部护甲。",
-      "unlock": { "cost": { "kp": 2 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 1, "y": 2, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1,
+        "y": 2,
+        "group": "melee",
+        "locked": false
+      },
       "speed": -3,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",
-        "selection": { "mode": "single", "candidateParts": ["head"], "selectedParts": ["head"], "selectCount": 1 }
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
       },
       "requirements": {
-        "selfPart": { "mode": "ANY", "parts": ["left_arm", "right_arm"], "mustBeUsable": true }
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_arm",
+            "right_arm"
+          ],
+          "mustBeUsable": true
+        }
       },
-      "costs": { "ap": 4, "partSlot": { "part": "right_arm", "slotCost": 2 }, "perTurnLimit": 1 },
+      "costs": {
+        "ap": 4,
+        "partSlot": {
+          "part": "right_arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
       "effects": [
-        { "effectType": "DMG_HP", "amountType": "SCALING", "scaling": { "stat": "atk", "multiplier": 1.5 } },
-        { "effectType": "DMG_ARMOR", "amount": 30, "amountType": "ABS", "partOverride": { "mode": "fixed", "parts": ["head"] } }
+        {
+          "effectType": "DMG_HP",
+          "amountType": "SCALING",
+          "scaling": {
+            "stat": "atk",
+            "multiplier": 1.5
+          }
+        },
+        {
+          "effectType": "DMG_ARMOR",
+          "amount": 30,
+          "amountType": "ABS",
+          "partOverride": {
+            "mode": "fixed",
+            "parts": [
+              "head"
+            ]
+          }
+        }
       ],
-      "buffRefs": { "apply": [], "applySelf": [], "remove": [] },
-      "prerequisites": ["skill_heavy_swing"],
-      "tags": [
-        "DMG_HP",
-        "DMG_ARMOR",
-        "SCALING",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
+      "buffRefs": {
+        "apply": [],
+        "applySelf": [],
+        "remove": []
+      },
+      "prerequisites": [
+        "skill_heavy_swing"
       ]
     },
     {
@@ -407,43 +668,85 @@
       "name": "震荡波",
       "rarity": "Rare",
       "description": "猛击地面：对敌方所有部位造成少量伤害并施加减速。",
-      "unlock": { "cost": { "kp": 3 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 0, "y": 3, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 0,
+        "y": 3,
+        "group": "melee",
+        "locked": false
+      },
       "speed": -2,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_MULTI_PARTS",
         "selection": {
           "mode": "multiple",
-          "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
-          "selectedParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "selectedParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectCount": 6
         }
       },
       "requirements": {
-        "selfPart": { "mode": "ANY", "parts": ["chest"], "mustBeUsable": true }
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
       },
-      "costs": { "ap": 4, "partSlot": { "part": "chest", "slotCost": 2 }, "perTurnLimit": 1 },
-      "effects": [{ "effectType": "DMG_HP", "amount": 10, "amountType": "ABS" }],
+      "costs": {
+        "ap": 4,
+        "partSlot": {
+          "part": "chest",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "effects": [
+        {
+          "effectType": "DMG_HP",
+          "amount": 10,
+          "amountType": "ABS"
+        }
+      ],
       "buffRefs": {
-        "apply": [{ "buffId": "buff_slow", "target": "enemy", "chance": 1, "duration": 2 }],
+        "apply": [
+          {
+            "buffId": "buff_slow",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 2
+          }
+        ],
         "applySelf": [],
         "remove": []
       },
-      "prerequisites": ["skill_savage_charge"],
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
+      "prerequisites": [
+        "skill_savage_charge"
       ]
     },
     {
@@ -451,16 +754,51 @@
       "name": "斩首",
       "rarity": "Epic",
       "description": "只能对 HP < 30% 的目标使用，造成巨额伤害（按当前 HP 百分比计算）。",
-      "unlock": { "cost": { "kp": 5 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 1, "y": 3, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1,
+        "y": 3,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 1,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",
-        "selection": { "mode": "single", "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"], "selectedParts": [], "selectCount": 1 }
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
       },
-      "requirements": { "targetHpPercentBelow": 0.3 },
-      "costs": { "ap": 3, "partSlot": { "part": "right_arm", "slotCost": 2 }, "perTurnLimit": 1 },
+      "requirements": {
+        "targetHpPercentBelow": 0.3
+      },
+      "costs": {
+        "ap": 3,
+        "partSlot": {
+          "part": "right_arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
       "effects": [
         {
           "effectType": "DMG_HP",
@@ -469,20 +807,13 @@
           "note": "按当前 HP 百分比造成伤害；引擎实现时可映射为 TRUE/PIERCE 以避免护甲干扰。"
         }
       ],
-      "buffRefs": { "apply": [], "applySelf": [], "remove": [] },
-      "prerequisites": ["skill_skull_cracker"],
-      "tags": [
-        "DMG_HP",
-        "PCT_CURRENT",
-        "INSTANT",
-        "ONE_SHOT",
-        "CONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
+      "buffRefs": {
+        "apply": [],
+        "applySelf": [],
+        "remove": []
+      },
+      "prerequisites": [
+        "skill_skull_cracker"
       ]
     },
     {
@@ -490,36 +821,79 @@
       "name": "大地震击",
       "rarity": "Epic",
       "description": "强力打击：造成高额伤害，并有概率眩晕。",
-      "unlock": { "cost": { "kp": 5 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 0, "y": 4, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 0,
+        "y": 4,
+        "group": "melee",
+        "locked": false
+      },
       "speed": -4,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",
-        "selection": { "mode": "single", "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"], "selectedParts": [], "selectCount": 1 }
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
       },
-      "requirements": { "selfPart": { "mode": "ANY", "parts": ["left_arm", "right_arm"], "mustBeUsable": true } },
-      "costs": { "ap": 5, "partSlot": { "part": "right_arm", "slotCost": 3 }, "perTurnLimit": 1 },
-      "effects": [{ "effectType": "DMG_HP", "amount": 50, "amountType": "ABS" }],
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_arm",
+            "right_arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 5,
+        "partSlot": {
+          "part": "right_arm",
+          "slotCost": 3
+        },
+        "perTurnLimit": 1
+      },
+      "effects": [
+        {
+          "effectType": "DMG_HP",
+          "amount": 50,
+          "amountType": "ABS"
+        }
+      ],
       "buffRefs": {
-        "apply": [{ "buffId": "buff_stun", "target": "enemy", "chance": 0.5, "duration": 1 }],
+        "apply": [
+          {
+            "buffId": "buff_stun",
+            "target": "enemy",
+            "chance": 0.5,
+            "duration": 1
+          }
+        ],
         "applySelf": [],
         "remove": []
       },
-      "prerequisites": ["skill_shockwave"],
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
+      "prerequisites": [
+        "skill_shockwave"
       ]
     },
     {
@@ -527,38 +901,85 @@
       "name": "诸神黄昏",
       "rarity": "Legendary",
       "description": "对敌方所有部位造成毁灭性打击（按攻击力缩放）。",
-      "unlock": { "cost": { "kp": 8 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 0, "y": 5, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 0,
+        "y": 5,
+        "group": "melee",
+        "locked": false
+      },
       "speed": -5,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_MULTI_PARTS",
         "selection": {
           "mode": "multiple",
-          "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
-          "selectedParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "selectedParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectCount": 6
         }
       },
-      "requirements": { "selfPart": { "mode": "ANY", "parts": ["left_arm", "right_arm"], "mustBeUsable": true } },
-      "costs": { "ap": 6, "partSlot": { "part": "right_arm", "slotCost": 4 }, "perTurnLimit": 1 },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_arm",
+            "right_arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 6,
+        "partSlot": {
+          "part": "right_arm",
+          "slotCost": 4
+        },
+        "perTurnLimit": 1
+      },
       "effects": [
-        { "effectType": "DMG_HP", "amountType": "SCALING", "scaling": { "stat": "atk", "multiplier": 2.0 }, "repeat": { "count": 6 } }
+        {
+          "effectType": "DMG_HP",
+          "amountType": "SCALING",
+          "scaling": {
+            "stat": "atk",
+            "multiplier": 2
+          },
+          "repeat": {
+            "count": 6
+          }
+        }
       ],
-      "buffRefs": { "apply": [], "applySelf": [], "remove": [] },
-      "prerequisites": ["skill_earthquake"],
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
+      "buffRefs": {
+        "apply": [],
+        "applySelf": [],
+        "remove": []
+      },
+      "prerequisites": [
+        "skill_earthquake"
       ]
     },
     {
@@ -567,29 +988,59 @@
       "rarity": "Common",
       "description": "立刻修复自身头部与躯干护甲。",
       "prerequisites": [],
-      "unlock": { "cost": { "kp": 1 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 2, "y": 0, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 2,
+        "y": 0,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 1,
       "target": {
         "subject": "SUBJECT_SELF",
         "scope": "SCOPE_MULTI_PARTS",
-        "selection": { "mode": "multiple", "candidateParts": ["head", "chest"], "selectedParts": ["head", "chest"], "selectCount": 2 }
+        "selection": {
+          "mode": "multiple",
+          "candidateParts": [
+            "head",
+            "chest"
+          ],
+          "selectedParts": [
+            "head",
+            "chest"
+          ],
+          "selectCount": 2
+        }
       },
-      "costs": { "ap": 2, "partSlot": { "part": "chest", "slotCost": 1 }, "perTurnLimit": 1 },
-      "effects": [{ "effectType": "ARMOR_ADD", "amount": 15, "amountType": "ABS" }],
-      "buffRefs": { "apply": [], "applySelf": [], "remove": [] },
-      "tags": [
-        "ARMOR_ADD",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "MELEE"
-      ]
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "chest",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "effects": [
+        {
+          "effectType": "ARMOR_ADD",
+          "amount": 15,
+          "amountType": "ABS"
+        }
+      ],
+      "buffRefs": {
+        "apply": [],
+        "applySelf": [],
+        "remove": []
+      }
     },
     {
       "id": "skill_block",
@@ -597,75 +1048,148 @@
       "rarity": "Common",
       "description": "对自身施加格挡 Buff。",
       "prerequisites": [],
-      "unlock": { "cost": { "kp": 1 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 3, "y": 0, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 3,
+        "y": 0,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 10,
       "target": {
         "subject": "SUBJECT_SELF",
         "scope": "SCOPE_ENTITY",
         "selection": {
           "mode": "multiple",
-          "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
-          "selectedParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "selectedParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectCount": 6
         }
       },
-      "requirements": { "selfPart": { "mode": "ANY", "parts": ["left_arm", "right_arm"], "mustBeUsable": true } },
-      "costs": { "ap": 2, "partSlot": { "part": "left_arm", "slotCost": 1 }, "perTurnLimit": 1 },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_arm",
+            "right_arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "left_arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
       "effects": [],
       "buffRefs": {
-        "applySelf": [{ "buffId": "buff_block", "target": "self", "chance": 1, "duration": 1 }],
+        "applySelf": [
+          {
+            "buffId": "buff_block",
+            "target": "self",
+            "chance": 1,
+            "duration": 1
+          }
+        ],
         "apply": [],
         "remove": []
-      },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      }
     },
     {
       "id": "skill_regroup",
       "name": "重整旗鼓",
       "rarity": "Uncommon",
       "description": "修复四肢护甲，并解除流血。",
-      "unlock": { "cost": { "kp": 2 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 2, "y": 1, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 2,
+        "y": 1,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 2,
       "target": {
         "subject": "SUBJECT_SELF",
         "scope": "SCOPE_MULTI_PARTS",
         "selection": {
           "mode": "multiple",
-          "candidateParts": ["left_arm", "right_arm", "left_leg", "right_leg"],
-          "selectedParts": ["left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "selectedParts": [
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectCount": 4
         }
       },
-      "costs": { "ap": 3, "partSlot": { "part": "chest", "slotCost": 1 }, "perTurnLimit": 1 },
-      "effects": [{ "effectType": "ARMOR_ADD", "amount": 10, "amountType": "ABS" }],
-      "buffRefs": { "remove": [{ "buffId": "buff_bleed", "target": "self" }], "apply": [], "applySelf": [] },
-      "prerequisites": ["skill_iron_will"],
-      "tags": [
-        "ARMOR_ADD",
-        "BUFF_REMOVE",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "MELEE"
+      "costs": {
+        "ap": 3,
+        "partSlot": {
+          "part": "chest",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "effects": [
+        {
+          "effectType": "ARMOR_ADD",
+          "amount": 10,
+          "amountType": "ABS"
+        }
+      ],
+      "buffRefs": {
+        "remove": [
+          {
+            "buffId": "buff_bleed",
+            "target": "self"
+          }
+        ],
+        "apply": [],
+        "applySelf": []
+      },
+      "prerequisites": [
+        "skill_iron_will"
       ]
     },
     {
@@ -673,43 +1197,85 @@
       "name": "稳固防线",
       "rarity": "Rare",
       "description": "对自身施加护盾与格挡。",
-      "unlock": { "cost": { "kp": 3 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 3, "y": 1, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 3,
+        "y": 1,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 5,
       "target": {
         "subject": "SUBJECT_SELF",
         "scope": "SCOPE_ENTITY",
         "selection": {
           "mode": "multiple",
-          "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
-          "selectedParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "selectedParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectCount": 6
         }
       },
-      "requirements": { "selfPart": { "mode": "ANY", "parts": ["chest"], "mustBeUsable": true } },
-      "costs": { "ap": 3, "partSlot": { "part": "chest", "slotCost": 2 }, "perTurnLimit": 1 },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 3,
+        "partSlot": {
+          "part": "chest",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
       "effects": [],
       "buffRefs": {
         "applySelf": [
-          { "buffId": "buff_shield", "target": "self", "chance": 1, "duration": 1 },
-          { "buffId": "buff_block", "target": "self", "chance": 1, "duration": 1 }
+          {
+            "buffId": "buff_shield",
+            "target": "self",
+            "chance": 1,
+            "duration": 1
+          },
+          {
+            "buffId": "buff_block",
+            "target": "self",
+            "chance": 1,
+            "duration": 1
+          }
         ],
         "apply": [],
         "remove": []
       },
-      "prerequisites": ["skill_block"],
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
+      "prerequisites": [
+        "skill_block"
       ]
     },
     {
@@ -717,28 +1283,75 @@
       "name": "堡垒姿态",
       "rarity": "Epic",
       "description": "施加护盾，并立刻修复少量护甲。",
-      "unlock": { "cost": { "kp": 5 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 3, "y": 2, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 3,
+        "y": 2,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 0,
-      "target": { "subject": "SUBJECT_SELF", "scope": "SCOPE_PART", "selection": { "mode": "single", "candidateParts": ["chest"], "selectedParts": ["chest"], "selectCount": 1 } },
-      "requirements": { "selfPart": { "mode": "ANY", "parts": ["chest"], "mustBeUsable": true } },
-      "costs": { "ap": 4, "partSlot": { "part": "chest", "slotCost": 2 }, "perTurnLimit": 1 },
-      "effects": [{ "effectType": "ARMOR_ADD", "amount": 10, "amountType": "ABS" }],
-      "buffRefs": { "applySelf": [{ "buffId": "buff_shield", "target": "self", "chance": 1, "duration": 1 }], "apply": [], "remove": [] },
-      "prerequisites": ["skill_hold_the_line"],
-      "tags": [
-        "BUFF_APPLY",
-        "ARMOR_ADD",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "chest"
+          ],
+          "selectedParts": [
+            "chest"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 4,
+        "partSlot": {
+          "part": "chest",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "effects": [
+        {
+          "effectType": "ARMOR_ADD",
+          "amount": 10,
+          "amountType": "ABS"
+        }
+      ],
+      "buffRefs": {
+        "applySelf": [
+          {
+            "buffId": "buff_shield",
+            "target": "self",
+            "chance": 1,
+            "duration": 1
+          }
+        ],
+        "apply": [],
+        "remove": []
+      },
+      "prerequisites": [
+        "skill_hold_the_line"
       ]
     },
     {
@@ -746,43 +1359,85 @@
       "name": "绝对防御",
       "rarity": "Legendary",
       "description": "对自身施加护盾与格挡（简化版）。",
-      "unlock": { "cost": { "kp": 8 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 3, "y": 3, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 3,
+        "y": 3,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 10,
       "target": {
         "subject": "SUBJECT_SELF",
         "scope": "SCOPE_ENTITY",
         "selection": {
           "mode": "multiple",
-          "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
-          "selectedParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "selectedParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectCount": 6
         }
       },
-      "requirements": { "selfPart": { "mode": "ANY", "parts": ["chest"], "mustBeUsable": true } },
-      "costs": { "ap": 5, "partSlot": { "part": "chest", "slotCost": 3 }, "perTurnLimit": 1 },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 5,
+        "partSlot": {
+          "part": "chest",
+          "slotCost": 3
+        },
+        "perTurnLimit": 1
+      },
       "effects": [],
       "buffRefs": {
         "applySelf": [
-          { "buffId": "buff_shield", "target": "self", "chance": 1, "duration": 1 },
-          { "buffId": "buff_block", "target": "self", "chance": 1, "duration": 1 }
+          {
+            "buffId": "buff_shield",
+            "target": "self",
+            "chance": 1,
+            "duration": 1
+          },
+          {
+            "buffId": "buff_block",
+            "target": "self",
+            "chance": 1,
+            "duration": 1
+          }
         ],
         "apply": [],
         "remove": []
       },
-      "prerequisites": ["skill_fortify"],
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
+      "prerequisites": [
+        "skill_fortify"
       ]
     },
     {
@@ -791,37 +1446,75 @@
       "rarity": "Common",
       "description": "攻击四肢：命中后施加流血。",
       "prerequisites": [],
-      "unlock": { "cost": { "kp": 1 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 4, "y": 0, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 4,
+        "y": 0,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 2,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",
         "selection": {
           "mode": "single",
-          "candidateParts": ["left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectedParts": [],
           "selectCount": 1
         }
       },
-      "requirements": { "selfPart": { "mode": "ANY", "parts": ["left_arm", "right_arm"], "mustBeUsable": true } },
-      "costs": { "ap": 2, "partSlot": { "part": "right_arm", "slotCost": 1 }, "perTurnLimit": 1 },
-      "effects": [{ "effectType": "DMG_HP", "amount": 15, "amountType": "ABS" }],
-      "buffRefs": { "apply": [{ "buffId": "buff_bleed", "target": "enemy", "chance": 1, "duration": 3 }], "applySelf": [], "remove": [] },
-      "tags": [
-        "DMG_HP",
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_arm",
+            "right_arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "right_arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "effects": [
+        {
+          "effectType": "DMG_HP",
+          "amount": 15,
+          "amountType": "ABS"
+        }
+      ],
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_bleed",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 3
+          }
+        ],
+        "applySelf": [],
+        "remove": []
+      }
     },
     {
       "id": "skill_double_thrust",
@@ -829,44 +1522,76 @@
       "rarity": "Common",
       "description": "快速攻击两次，每次造成按攻击力缩放的伤害，随机命中部位。",
       "prerequisites": [],
-      "unlock": { "cost": { "kp": 1 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 5, "y": 0, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 5,
+        "y": 0,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 4,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",
         "selection": {
           "mode": "random_single",
-          "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectedParts": [],
           "selectCount": 1
         }
       },
-      "requirements": { "selfPart": { "mode": "ANY", "parts": ["left_arm", "right_arm"], "mustBeUsable": true } },
-      "costs": { "ap": 2, "partSlot": { "part": "right_arm", "slotCost": 1 }, "perTurnLimit": 1 },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_arm",
+            "right_arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "right_arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
       "effects": [
         {
           "effectType": "DMG_HP",
           "amountType": "SCALING",
-          "scaling": { "stat": "atk", "multiplier": 0.6 },
-          "repeat": { "count": 2 }
+          "scaling": {
+            "stat": "atk",
+            "multiplier": 0.6
+          },
+          "repeat": {
+            "count": 2
+          }
         }
       ],
-      "buffRefs": { "apply": [], "applySelf": [], "remove": [] },
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "SELECT_RANDOM_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      "buffRefs": {
+        "apply": [],
+        "applySelf": [],
+        "remove": []
+      }
     },
     {
       "id": "skill_feint",
@@ -874,36 +1599,78 @@
       "rarity": "Common",
       "description": "对自身施加破甲增益（下一次攻击护甲减免修正）。",
       "prerequisites": [],
-      "unlock": { "cost": { "kp": 1 }, "requirements": {}, "exclusives": [], "grants": { "type": "permanent" } },
-      "editorMeta": { "x": 6, "y": 0, "group": "melee", "locked": false },
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 6,
+        "y": 0,
+        "group": "melee",
+        "locked": false
+      },
       "speed": 8,
       "target": {
         "subject": "SUBJECT_SELF",
         "scope": "SCOPE_ENTITY",
         "selection": {
           "mode": "multiple",
-          "candidateParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
-          "selectedParts": ["head", "chest", "left_arm", "right_arm", "left_leg", "right_leg"],
+          "candidateParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "selectedParts": [
+            "head",
+            "chest",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
           "selectCount": 6
         }
       },
-      "requirements": { "selfPart": { "mode": "ANY", "parts": ["left_arm", "right_arm"], "mustBeUsable": true } },
-      "costs": { "ap": 1, "partSlot": { "part": "right_arm", "slotCost": 1 }, "perTurnLimit": 1 },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "left_arm",
+            "right_arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "right_arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
       "effects": [],
-      "buffRefs": { "applySelf": [{ "buffId": "buff_armor_pen", "target": "self", "chance": 1, "duration": 1 }], "apply": [], "remove": [] },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      "buffRefs": {
+        "applySelf": [
+          {
+            "buffId": "buff_armor_pen",
+            "target": "self",
+            "chance": 1,
+            "duration": 1
+          }
+        ],
+        "apply": [],
+        "remove": []
+      }
     }
   ]
 }

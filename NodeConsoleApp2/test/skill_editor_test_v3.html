@@ -306,30 +306,6 @@
                     <div class="error" id="err-buffs" style="display:none; margin-top:8px;"></div>
                 </div>
 
-                <div class="panel" style="display:none;">
-                    <div class="panel-h">J. Tags</div>
-                    <div class="small" style="margin-bottom:6px;">`tags[]` 与 `tagMeta`（用于平衡统计与校验）。</div>
-
-                    <div class="panel" style="padding:10px; background:#fafafa; margin-bottom:10px;">
-                        <div class="grid2" style="align-items:center;">
-                            <div class="small">Tag Search</div>
-                            <input class="input" type="text" id="tags-search" placeholder="filter tags..." autocomplete="off" />
-                        </div>
-                        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
-                            <button class="btn btn-sm btn-dark" type="button" onclick="editor.tagsSelectAllFiltered?.()">All (filtered)</button>
-                            <button class="btn btn-sm btn-dark" type="button" onclick="editor.tagsSelectNoneFiltered?.()">None (filtered)</button>
-                            <span style="flex:1"></span>
-                            <div class="small" style="color:#888;">交互选中会自动写回 tags JSON</div>
-                        </div>
-                        <div id="tags-editor" style="margin-top:10px;"></div>
-                    </div>
-
-                    <textarea class="textarea" id="prop-tags" placeholder="[]"></textarea>
-                    <div class="small" style="margin:10px 0 6px;">tagMeta (JSON)</div>
-                    <textarea class="textarea" id="prop-tagMeta" placeholder="{}"></textarea>
-                    <div class="error" id="err-tags" style="display:none; margin-top:8px;"></div>
-                </div>
-
                 <div class="panel">
                     <button class="btn btn-success" style="width:100%;" onclick="editor.saveCurrentNode()" id="btn-save" disabled>Save Changes</button>
                 </div>

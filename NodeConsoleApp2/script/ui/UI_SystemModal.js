@@ -400,6 +400,11 @@ export class UI_SystemModal {
             ? '“新游戏”会创建新的自动存档；“读取存档”用于读取自动存档或手动槽位。'
             : '当前没有可读取的本地存档，请先创建新游戏。';
 
+        const flowGuide = this._buildMainFlowGuide({ view: 'LOGIN' });
+        if (flowGuide) {
+            container.appendChild(flowGuide);
+        }
+
         container.appendChild(input);
         actionRow.appendChild(newGameBtn);
         actionRow.appendChild(loadBtn);
@@ -566,6 +571,10 @@ export class UI_SystemModal {
         if (growthSummary) {
             this.dom.body.appendChild(growthSummary);
         }
+        const mainFlowGuide = this._buildMainFlowGuide({ view: 'MAIN_MENU' });
+        if (mainFlowGuide) {
+            this.dom.body.appendChild(mainFlowGuide);
+        }
         const contentSourceGuide = this._buildContentSourceGuide();
         if (contentSourceGuide) {
             this.dom.body.appendChild(contentSourceGuide);
@@ -641,6 +650,91 @@ export class UI_SystemModal {
         return summary;
     }
 
+    _buildMainFlowGuide(options = {}) {
+        const view = options?.view || this.currentView || 'MAIN_MENU';
+
+        const section = document.createElement('section');
+        section.className = 'summary-section summary-section--main-flow';
+        section.dataset.summaryKind = 'main-flow';
+
+        const title = document.createElement('div');
+        title.className = 'summary-section__title';
+        title.textContent = '主流程怎么走';
+
+        const tip = document.createElement('p');
+        tip.className = 'summary-section__description';
+        tip.textContent = view === 'LOGIN'
+            ? '先决定是创建新档还是恢复旧档，再进入正式入口；不要把欢迎页、读档和战斗规划混成同一种操作。'
+            : '这里负责把“正式主流程入口”和“关联子流程入口”分开说清楚，避免只看到按钮名却不知道下一步。';
+
+        const detailStack = document.createElement('div');
+        detailStack.className = 'summary-detail-stack';
+
+        const appendCard = (label, value, text) => {
+            const card = document.createElement('div');
+            card.className = 'summary-detail-card';
+
+            const labelEl = document.createElement('div');
+            labelEl.className = 'summary-detail-card__label';
+            labelEl.textContent = label;
+
+            const valueEl = document.createElement('div');
+            valueEl.className = 'summary-detail-card__value';
+            valueEl.textContent = value;
+
+            card.appendChild(labelEl);
+            card.appendChild(valueEl);
+
+            if (text) {
+                const textEl = document.createElement('div');
+                textEl.className = 'summary-detail-card__text';
+                textEl.textContent = text;
+                card.appendChild(textEl);
+            }
+
+            detailStack.appendChild(card);
+        };
+
+        if (view === 'LOGIN') {
+            appendCard(
+                '新游戏',
+                '创建新的自动存档并进入游戏菜单',
+                '适用于从当前版本的正式主流程重新开始。'
+            );
+            appendCard(
+                '读取存档',
+                '直接恢复到存档对应的页面',
+                '用于回到上次离开的页面，不会强制先经过游戏菜单。'
+            );
+            appendCard(
+                '正式主流程',
+                '新游戏 -> 游戏菜单 -> 关卡选择 -> 选择技能并部署到技能槽 -> 提交规划 -> 执行回合',
+                '如果只是验证主流程，默认按这条顺序推进。'
+            );
+        } else {
+            appendCard(
+                '关卡选择',
+                '当前正式主流程入口',
+                '从这里进入故事关卡，然后才会进入战斗规划与执行阶段。'
+            );
+            appendCard(
+                '技能树 / 构筑',
+                '主流程关联子流程',
+                '用于学习技能和确认当前技能池，不会直接开始战斗。'
+            );
+            appendCard(
+                '进入关卡后',
+                '选择技能并部署到技能槽 -> 提交规划 -> 执行回合',
+                '提交规划只锁定本回合方案；执行回合才会开始自动结算。'
+            );
+        }
+
+        section.appendChild(title);
+        section.appendChild(tip);
+        section.appendChild(detailStack);
+        return section;
+    }
+
     _buildContentSourceGuide() {
         const overview = (this.engine?.data?.getLevelContentSourceOverview)
             ? this.engine.data.getLevelContentSourceOverview()
@@ -686,6 +780,24 @@ export class UI_SystemModal {
             card.appendChild(heading);
             card.appendChild(entry);
             card.appendChild(desc);
+
+            if (Array.isArray(item?.details) && item.details.length > 0) {
+                const detailList = document.createElement('ul');
+                detailList.className = 'summary-detail-card__list';
+                item.details.forEach(detailText => {
+                    if (typeof detailText !== 'string' || !detailText.trim()) {
+                        return;
+                    }
+                    const detailItem = document.createElement('li');
+                    detailItem.className = 'summary-detail-card__list-item';
+                    detailItem.textContent = detailText.trim();
+                    detailList.appendChild(detailItem);
+                });
+                if (detailList.childElementCount > 0) {
+                    card.appendChild(detailList);
+                }
+            }
+
             list.appendChild(card);
         });
 

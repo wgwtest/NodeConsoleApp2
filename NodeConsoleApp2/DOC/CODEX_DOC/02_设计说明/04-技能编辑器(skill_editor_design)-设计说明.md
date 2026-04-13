@@ -35,7 +35,7 @@
 2) **JSON 字段（Explicit-save fields）**
 
 - 允许存在中间态；只有点击按钮（Apply/Save）后才写回到 skill。
-- 典型字段：`unlock`, `requirements`, `tags`, `tagMeta`, `actions[]`。
+- 典型字段：`unlock`, `requirements`, `actions[]`。
 
 > 说明：如果某个字段是 `<input type="number">` 但属于原子字段（如 `target.selection.selectCount`），也必须绑定 auto-save 事件，否则切换技能后会回退为旧值。
 
@@ -153,9 +153,9 @@ v4 的核心是 `actions[]`：
 - `prerequisites`：结构依赖（技能树边）
 - `unlock`：KP 成本、额外门槛、互斥、授权方式
 
-5) 平衡标签：`tags` 与 `meta.enums.tags` 对齐
+5) 分析维度：由正式字段实时派生
 
-`tags` 为工具侧统计/分布分析服务，编辑器即使不编辑，也必须**完整保留**。
+分析维度只服务于统计与分布分析，编辑器可以展示派生结果，但不应把派生结果写回活动技能 pack。
 
 #### 2.3.4 对 Skill Editor 的适配要求（建议按优先级实施）
 
@@ -170,7 +170,7 @@ v4 的核心是 `actions[]`：
 
 - `actions[]` 更完整的表单化编辑（包括 action-level target）；目前 MVP 允许先不做。
 - `unlock.requirements` 结构化表单；可先用 JSON 编辑框。
-- `tags` 的辅助生成与自动校验；可先做“保留 + 枚举校验”。
+- 分析维度的派生预览与一致性校验；可先做“只读展示 + 校核提示”。
 
 ## 3. v4 Schema 字段映射（编辑器 UI 必须遵循）
 
@@ -371,7 +371,7 @@ v4 action 的关键字段：
 ### 6.1 保存策略（建议）
 
 - 大多数字段：实时保存（`blur/change/Enter`）
-  - `name/rarity/description/speed/target/costs/requirements/prerequisites/editorMeta/unlock/buffRefs/tags/tagMeta`
+  - `name/rarity/description/speed/target/costs/requirements/prerequisites/editorMeta/unlock/buffRefs`
 - `actions`：显式保存（`Validate / Apply JSON / Save Actions`）
 
 ### 6.2 导出前必做校验清单

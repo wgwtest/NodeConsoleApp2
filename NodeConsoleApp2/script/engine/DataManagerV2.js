@@ -1182,14 +1182,21 @@ class DataManager {
                 kind: 'authoring',
                 title: '作者样本',
                 entryLabel: '作者样本工具页',
-                count: 3,
+                count: 5,
                 isRuntimeEntry: false,
-                description: '只存在于工具页，用于作者编辑关卡 pack、验证覆写注入与运行时消费；不属于故事推进关卡，也不属于验收样本入口。',
-                source: 'test/level_editor_v1.html + test/level_editor_io_test.html + test/level_runtime_probe.html',
+                description: '只存在于工具页，用于作者编辑关卡 pack、地图工作区、地图包 IO 校核、验证覆写注入与运行时消费；不属于故事推进关卡，也不属于验收样本入口。',
+                source: 'test/level_editor_v1.html + test/level_map_editor_v1.html + test/level_editor_io_test.html + test/level_map_editor_io_test.html + test/level_runtime_probe.html',
                 pages: [
                     'test/level_editor_v1.html',
+                    'test/level_map_editor_v1.html',
                     'test/level_editor_io_test.html',
+                    'test/level_map_editor_io_test.html',
                     'test/level_runtime_probe.html'
+                ],
+                details: [
+                    '地图编辑页已支持逻辑空间与显示配置编辑',
+                    '地图包 IO 校核页负责验证导入导出契约与异常样例',
+                    '运行时探针页用于确认关卡与地图包能被主流程稳定消费'
                 ]
             }
         ];
@@ -1296,18 +1303,12 @@ class DataManager {
         const selection = this._normalizeSkillSelection(target.selection);
         const buffRefs = this._normalizeSkillBuffRefs(skill.buffRefs);
         const actionEffectTypes = this._collectSkillActionEffectTypes(skill.actions);
-        const tags = Array.isArray(skill.tags)
-            ? skill.tags
-                .map(tag => (typeof tag === 'string' ? tag.trim() : ''))
-                .filter(Boolean)
-            : [];
 
         const summary = {
             id: skill.id,
             runtimeAliasOf: skill.runtimeAliasOf || null,
             name: typeof skill.name === 'string' ? skill.name : skill.id,
             description: typeof skill.description === 'string' ? skill.description : '',
-            tags,
             target: {
                 subject: typeof target.subject === 'string' ? target.subject : null,
                 scope: typeof target.scope === 'string' ? target.scope : null,
@@ -1363,25 +1364,6 @@ class DataManager {
         const selection = summary.target?.selection || {};
         const candidateCount = Array.isArray(selection.candidateParts) ? selection.candidateParts.length : 0;
         const selectCount = Number.isFinite(selection.selectCount) ? selection.selectCount : null;
-        const tagSet = new Set(Array.isArray(summary.tags) ? summary.tags : []);
-        const subjectTags = ['SUBJECT_SELF', 'SUBJECT_ENEMY', 'SUBJECT_BOTH']
-            .filter(tag => tagSet.has(tag));
-        const scopeTags = ['SCOPE_ENTITY', 'SCOPE_PART', 'SCOPE_MULTI_PARTS']
-            .filter(tag => tagSet.has(tag));
-        const comparableEffectTags = new Set(['DMG_HP', 'DMG_ARMOR', 'HEAL', 'AP_GAIN', 'SPEED', 'BUFF_APPLY', 'BUFF_REMOVE']);
-        const derivedEffectTags = new Set();
-
-        (summary.actionEffectTypes || []).forEach(effectType => {
-            if (comparableEffectTags.has(effectType)) {
-                derivedEffectTags.add(effectType);
-            }
-        });
-        if ((summary.buffRefs?.apply || []).length > 0) {
-            derivedEffectTags.add('BUFF_APPLY');
-        }
-        if ((summary.buffRefs?.remove || []).length > 0) {
-            derivedEffectTags.add('BUFF_REMOVE');
-        }
 
         if (selectCount !== null && candidateCount > 0 && selectCount > candidateCount) {
             issues.push({
@@ -1400,45 +1382,6 @@ class DataManager {
             });
         }
 
-        if (subjectTags.length > 0 && summary.target?.subject && !subjectTags.includes(summary.target.subject)) {
-            issues.push({
-                code: 'tag_subject_mismatch',
-                message: `SUBJECT 标签与 target.subject 不一致：tags=${subjectTags.join(',')} target=${summary.target.subject}`,
-                targetSubject: summary.target.subject,
-                tags: subjectTags
-            });
-        }
-
-        if (scopeTags.length > 0 && summary.target?.scope && !scopeTags.includes(summary.target.scope)) {
-            issues.push({
-                code: 'tag_scope_mismatch',
-                message: `SCOPE 标签与 target.scope 不一致：tags=${scopeTags.join(',')} target=${summary.target.scope}`,
-                targetScope: summary.target.scope,
-                tags: scopeTags
-            });
-        }
-
-        Array.from(tagSet)
-            .filter(tag => comparableEffectTags.has(tag))
-            .forEach(tag => {
-                if (!derivedEffectTags.has(tag)) {
-                    issues.push({
-                        code: 'unexpected_effect_tag',
-                        tag,
-                        message: `标签 ${tag} 无法从 actions / buffRefs 中直接推导。`
-                    });
-                }
-            });
-
-        Array.from(derivedEffectTags).forEach(tag => {
-            if (!tagSet.has(tag)) {
-                issues.push({
-                    code: 'missing_effect_tag',
-                    tag,
-                    message: `actions / buffRefs 已体现 ${tag}，但 tags 中缺失。`
-                });
-            }
-        });
 
         return issues;
     }
@@ -1472,11 +1415,7 @@ class DataManager {
 
         const labelMap = {
             selection_count_exceeds_candidates: 'selectCount 超过 candidateParts 上限',
-            single_selection_count_invalid: 'single 模式的 selectCount 不是 1',
-            tag_subject_mismatch: 'SUBJECT 标签与 target.subject 不一致',
-            tag_scope_mismatch: 'SCOPE 标签与 target.scope 不一致',
-            unexpected_effect_tag: 'tags 声称存在某效果，但 actions / buffRefs 无法直接推导',
-            missing_effect_tag: 'actions / buffRefs 已体现某效果，但 tags 未同步'
+            single_selection_count_invalid: 'single 模式的 selectCount 不是 1'
         };
 
         return Array.from(new Set(list.map(issue => labelMap[issue.code] || issue.message || issue.code))).join('；');
@@ -1492,12 +1431,6 @@ class DataManager {
         const steps = [];
         if (codes.has('selection_count_exceeds_candidates') || codes.has('single_selection_count_invalid')) {
             steps.push('收敛 target.selection.selectCount，使其不超过 candidateParts；single 模式固定为 1');
-        }
-        if (codes.has('tag_subject_mismatch') || codes.has('tag_scope_mismatch')) {
-            steps.push('以 target.subject / target.scope 为准，删除或修正漂移的 SUBJECT_* / SCOPE_* 标签');
-        }
-        if (codes.has('unexpected_effect_tag') || codes.has('missing_effect_tag')) {
-            steps.push('以 actions / buffRefs 为事实来源，移除过时效果标签或补齐缺失标签');
         }
         return steps.join('；');
     }
@@ -1611,20 +1544,6 @@ class DataManager {
                 ownerNode: 'WBS-3.3.3',
                 issueCodes: ['selection_count_exceeds_candidates', 'single_selection_count_invalid'],
                 description: '优先关闭 selectCount 越界与 single 模式计数错误，避免污染 UI 选择语义与规划阶段。'
-            },
-            {
-                id: 'batch_target_tags',
-                title: '主体 / 范围标签一致性',
-                ownerNode: 'WBS-3.3.3',
-                issueCodes: ['tag_subject_mismatch', 'tag_scope_mismatch'],
-                description: '继续收口 SUBJECT / SCOPE 标签与 target 声明的一致性。'
-            },
-            {
-                id: 'batch_effect_tags',
-                title: '动作效果标签一致性',
-                ownerNode: 'WBS-3.3.3',
-                issueCodes: ['unexpected_effect_tag', 'missing_effect_tag'],
-                description: '最后清理 tags 与 actions / buffRefs 之间的效果标签漂移。'
             }
         ];
 

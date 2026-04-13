@@ -73,15 +73,14 @@ test('WBS-3.3.3 会把技能异常汇总到正式修复批次', async () => {
   assert.equal(typeof manager.getSkillContractRemediationBatches, 'function', '缺少 getSkillContractRemediationBatches()');
   const rollup = manager.getSkillContractRemediationBatches({ includeAliases: true });
   assert.equal(rollup?.ownerNode, 'WBS-3.3.3', 'ownerNode 应回写到 WBS-3.3.3');
-  assert.ok(Array.isArray(rollup?.batches) && rollup.batches.length >= 3, '修复批次汇总数量不足');
+  assert.ok(Array.isArray(rollup?.batches) && rollup.batches.length >= 1, '修复批次汇总数量不足');
   const structureBatch = rollup.batches.find(batch => batch.id === 'batch_structure_selection');
   assert.ok(structureBatch, '缺少结构选择批次');
   assert.equal(structureBatch.openIssueCount, 0, '结构选择批次应已完成首批收口');
   assert.ok(Array.isArray(structureBatch.issueCodes) && structureBatch.issueCodes.includes('selection_count_exceeds_candidates'), '结构选择批次未包含预期 issue code');
   assert.equal(structureBatch.closedAt, '2026-04-11 09:10:19 +0800', `结构选择批次应回写关闭时间，当前为 ${structureBatch.closedAt}`);
   assert.ok(Array.isArray(structureBatch.affectedSkills) && structureBatch.affectedSkills.some(skill => skill.skillId === 'skill_block'), '结构选择批次应保留已修复技能样本');
-  const effectBatch = rollup.batches.find(batch => batch.id === 'batch_effect_tags');
-  assert.ok(effectBatch && effectBatch.openIssueCount > 0, '效果标签批次应仍保留后续待修问题');
+  assert.equal(rollup.batches.some(batch => batch.id === 'batch_effect_tags'), false, '效果标签批次不应继续存在');
 });
 
 test('WBS-3.3.3 会生成面向人工验收的技能状态总表', async () => {
@@ -97,10 +96,8 @@ test('WBS-3.3.3 会生成面向人工验收的技能状态总表', async () => {
   assert.match(skillBlock.reason, /selectCount|single/i, 'skill_block 原因说明不包含结构选择异常');
   assert.match(skillBlock.remediation, /single|candidateParts|selectCount/i, 'skill_block 修改方法未写明结构修复方式');
 
-  const problematic = board.rows.find(row => row.status === '未修复');
-  assert.ok(problematic, '技能状态总表至少应存在一个未修复技能');
-  assert.ok(problematic.reason.length > 0, '未修复技能缺少原因说明');
-  assert.ok(problematic.remediation.length > 0, '未修复技能缺少修改方法说明');
+  const unresolved = board.rows.filter(row => row.status === '未修复');
+  assert.equal(unresolved.length, 0, '当前技能状态总表不应再保留未修复技能');
 
   const normal = board.rows.find(row => row.status === '正常');
   assert.ok(normal, '技能状态总表至少应存在一个正常技能');

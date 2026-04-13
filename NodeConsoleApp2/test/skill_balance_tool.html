@@ -241,10 +241,10 @@
         <div class="search-row">
           <input class="input" id="q" placeholder="搜索：id / name" />
           <select class="select" id="tag-filter" style="max-width: 180px;">
-            <option value="">(按标签过滤)</option>
+            <option value="">(按分析维度过滤)</option>
           </select>
         </div>
-        <div class="muted" style="margin-bottom:10px;">提示：若技能数据中没有 `tags` 字段，本工具会基于 `type` / `targetType` / `valueType` / `buffRefs` 做最小推断，用于统计分布。</div>
+        <div class="muted" style="margin-bottom:10px;">提示：本工具只基于正式字段派生分析维度，不再读取或写回持久化标签字段。</div>
         <div id="skill-list"></div>
       </div>
     </aside>
@@ -258,11 +258,11 @@
         <div class="two-col">
           <div class="card">
             <div class="card-h">
-              <div>标签分布</div>
+              <div>分析维度分布</div>
               <div class="muted" id="tag-dist-meta">—</div>
             </div>
             <table class="table" id="tag-dist-table">
-              <thead><tr><th style="width: 30%">tag</th><th style="width: 15%">count</th><th>ratio</th></tr></thead>
+              <thead><tr><th style="width: 30%">facet</th><th style="width: 15%">count</th><th>ratio</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
@@ -272,7 +272,7 @@
               <div>异常提示</div>
               <div class="muted">基于阈值的启发式检查</div>
             </div>
-            <div class="muted" style="margin-bottom: 10px;">默认规则：某标签占比 &gt; 35% 判定“过多”；占比 &lt; 3% 判定“过少”。仅作辅助，不代表最终平衡结论。</div>
+            <div class="muted" style="margin-bottom: 10px;">默认规则：某分析维度占比 &gt; 35% 判定“过多”；占比 &lt; 3% 判定“过少”。仅作辅助，不代表最终平衡结论。</div>
             <div id="alerts"></div>
           </div>
         </div>
@@ -403,15 +403,6 @@
           <div class="error" id="err-req" style="display:none; margin-top: 6px;"></div>
         </div>
 
-        <div class="card" style="margin-bottom: 12px;">
-          <div class="card-h"><div>Tags</div><div class="muted">可编辑（数组）</div></div>
-          <div class="tag-box">
-            <div class="muted" style="margin-bottom: 8px;">若 `tags` 为空，会使用推断标签参与统计。编辑后建议显式写入 `tags`，以便稳定分析。</div>
-            <textarea class="textarea" id="f-tags" placeholder='例如：["DMG_HP","ABS","INSTANT","ONE_SHOT","SUBJECT_ENEMY","SCOPE_PART"]'></textarea>
-            <div class="error" id="err-tags" style="display:none; margin-top: 6px;"></div>
-          </div>
-        </div>
-
         <div class="card">
           <div class="card-h"><div>Effects / BuffRefs</div><div class="muted">JSON 直编</div></div>
           <div class="muted" style="margin-bottom: 8px;">说明：此处不做强 schema 约束，仅做 JSON 语法校验。</div>
@@ -432,26 +423,16 @@
   <script>
     const DEFAULT_SKILLS_URL = '../assets/data/skills.json';
 
-    const STABLE_TAGS = [
-      // What
+    const STABLE_DIMENSIONS = [
       'DMG_HP','DMG_ARMOR','PIERCE','HEAL','ARMOR_ADD','AP_GAIN','SPEED','BUFF_APPLY','BUFF_REMOVE',
-      // How
       'ABS','PCT_MAX','PCT_CURRENT','SCALING',
-      // When
       'INSTANT','DELAYED','ON_EVENT',
-      // How long
       'ONE_SHOT','ONE_TURN','MULTI_TURN','BATTLE','PERMANENT',
-      // Subject & scope
       'SUBJECT_SELF','SUBJECT_ENEMY','SUBJECT_BOTH','SCOPE_ENTITY','SCOPE_PART','SCOPE_MULTI_PARTS',
-      // Selection
       'SELECT_FIXED_PART','SELECT_RANDOM_PART','SELECT_ALL_PARTS',
-      // Range
       'MELEE','RANGED','MAGIC',
-      // Archetype
       'ARCH_HEAVY','ARCH_WALL','ARCH_SWORD','ARCH_RANGER','ARCH_SNIPER','ARCH_ELEMENT','ARCH_HOLY',
-      // Conditional
       'UNCONDITIONAL','CONDITIONAL',
-      // Resource
       'RES_AP','RES_SLOT','REQ_SELF_PART','LIMIT_PER_TURN'
     ];
 
@@ -477,80 +458,118 @@
 
     function normalizeSkillsJson(raw) {
       if (!raw || typeof raw !== 'object') return {};
-      // In this repo, skills.json is an object keyed by skill id.
-      // But tolerate array format as well.
-      if (Array.isArray(raw)) {
+      const source = Array.isArray(raw.skills) ? raw.skills : raw;
+      if (Array.isArray(source)) {
         const map = {};
-        for (const s of raw) {
+        for (const s of source) {
           if (s && s.id) map[s.id] = s;
         }
         return map;
       }
-      return raw;
+      return source;
     }
 
-    function inferTags(skill) {
-      const tags = new Set();
-
-      // What
-      if (skill.type === 'HEAL') tags.add('HEAL');
-      if (skill.type === 'DEFEND') tags.add('ARMOR_ADD');
-      if (skill.type === 'BUFF') tags.add('BUFF_APPLY');
-      if (skill.type === 'DAMAGE') tags.add('DMG_HP');
-
-      // Presence of buffRefs
-      if (skill.buffRefs?.apply?.length) tags.add('BUFF_APPLY');
-      if (skill.buffRefs?.remove?.length) tags.add('BUFF_REMOVE');
-
-      // How
-      if (skill.valueType === 'PERCENT') tags.add('PCT_MAX');
-      else if (typeof skill.value === 'number') tags.add('ABS');
-
-      // When
-      tags.add('INSTANT');
-
-      // How long
-      tags.add('ONE_SHOT');
-      if (skill.buffRefs?.apply?.some(a => typeof a?.duration === 'number' && a.duration > 1)) tags.add('MULTI_TURN');
-      if (skill.buffRefs?.apply?.some(a => typeof a?.duration === 'number' && a.duration === 1)) tags.add('ONE_TURN');
-
-      // Subject & scope (based on targetType)
-      if (skill.targetType === 'SELF' || skill.targetType === 'SELF_PARTS') tags.add('SUBJECT_SELF');
-      else tags.add('SUBJECT_ENEMY');
-
-      if (skill.targetType === 'SINGLE_PART') tags.add('SCOPE_PART');
-      else if (skill.targetType === 'ALL_PARTS' || skill.targetType === 'SELF_PARTS') tags.add('SCOPE_MULTI_PARTS');
-      else tags.add('SCOPE_ENTITY');
-
-      // selection
-      if (skill.targetType === 'SINGLE_PART' && (skill.requiredPart || skill.requiredParts)) tags.add('SELECT_FIXED_PART');
-      if (skill.targetType === 'RANDOM_PART') tags.add('SELECT_RANDOM_PART');
-      if (skill.targetType === 'ALL_PARTS' || skill.targetType === 'SELF_PARTS') tags.add('SELECT_ALL_PARTS');
-
-      // Conditional
-      if (skill.requirements && Object.keys(skill.requirements).length) tags.add('CONDITIONAL');
-      else tags.add('UNCONDITIONAL');
-
-      // Resource (new design)
-      if (typeof skill.cost === 'number' || typeof skill.costs?.ap === 'number') tags.add('RES_AP');
-      if (typeof skill.slotCost === 'number' && skill.slotCost > 0) tags.add('RES_SLOT');
-      if (Array.isArray(skill.castParts) && skill.castParts.length) tags.add('REQ_SELF_PART');
-
-      return Array.from(tags);
+    function collectActionEffects(skill) {
+      const effects = [];
+      for (const action of Array.isArray(skill?.actions) ? skill.actions : []) {
+        if (action?.effect && typeof action.effect === 'object') effects.push(action.effect);
+        if (Array.isArray(action?.effects)) {
+          for (const effect of action.effects) {
+            if (effect && typeof effect === 'object') effects.push(effect);
+          }
+        }
+      }
+      return effects;
     }
 
-    function getEffectiveTags(skill) {
-      if (Array.isArray(skill.tags) && skill.tags.length) return skill.tags;
-      return inferTags(skill);
+    function deriveTargetFacts(skill) {
+      const subject = skill?.target?.subject || null;
+      const scope = skill?.target?.scope || null;
+      const selectionMode = skill?.target?.selection?.mode || null;
+      if (subject || scope || selectionMode) {
+        return { subject, scope, selectionMode };
+      }
+
+      switch (skill?.targetType) {
+        case 'SELF':
+          return { subject: 'SUBJECT_SELF', scope: 'SCOPE_ENTITY', selectionMode: null };
+        case 'SELF_PARTS':
+          return { subject: 'SUBJECT_SELF', scope: 'SCOPE_MULTI_PARTS', selectionMode: 'SELECT_ALL_PARTS' };
+        case 'SINGLE_PART':
+          return { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_PART', selectionMode: skill?.requiredPart ? 'SELECT_FIXED_PART' : null };
+        case 'RANDOM_PART':
+          return { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_PART', selectionMode: 'SELECT_RANDOM_PART' };
+        case 'ALL_PARTS':
+          return { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_MULTI_PARTS', selectionMode: 'SELECT_ALL_PARTS' };
+        default:
+          return { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_ENTITY', selectionMode: null };
+      }
+    }
+
+    function deriveAnalysisDimensions(skill) {
+      const dimensions = new Set();
+      const effects = collectActionEffects(skill);
+      const effectTypes = new Set(effects.map(effect => effect?.effectType).filter(Boolean));
+
+      if (skill?.type === 'HEAL' || effectTypes.has('HEAL')) dimensions.add('HEAL');
+      if (skill?.type === 'DEFEND' || effectTypes.has('ARMOR_ADD')) dimensions.add('ARMOR_ADD');
+      if (skill?.type === 'BUFF' || effectTypes.has('BUFF_APPLY') || skill?.buffRefs?.apply?.length) dimensions.add('BUFF_APPLY');
+      if (skill?.type === 'DAMAGE' || effectTypes.has('DMG_HP')) dimensions.add('DMG_HP');
+      if (effectTypes.has('DMG_ARMOR')) dimensions.add('DMG_ARMOR');
+      if (effectTypes.has('PIERCE')) dimensions.add('PIERCE');
+      if (effectTypes.has('AP_GAIN')) dimensions.add('AP_GAIN');
+      if (effectTypes.has('SPEED')) dimensions.add('SPEED');
+      if (skill?.buffRefs?.remove?.length || effectTypes.has('BUFF_REMOVE')) dimensions.add('BUFF_REMOVE');
+
+      const amountTypes = new Set(effects.map(effect => effect?.amountType).filter(Boolean));
+      if (amountTypes.has('PCT_MAX') || skill?.valueType === 'PERCENT') dimensions.add('PCT_MAX');
+      if (amountTypes.has('PCT_CURRENT')) dimensions.add('PCT_CURRENT');
+      if (amountTypes.has('SCALING') || effects.some(effect => effect?.scaling)) dimensions.add('SCALING');
+      if (!dimensions.has('PCT_MAX') && !dimensions.has('PCT_CURRENT') && !dimensions.has('SCALING') && (typeof skill?.value === 'number' || effects.some(effect => typeof effect?.amount === 'number'))) {
+        dimensions.add('ABS');
+      }
+
+      if (effects.some(effect => effect?.trigger)) dimensions.add('ON_EVENT');
+      else if (effects.some(effect => effect?.delayTurns > 0)) dimensions.add('DELAYED');
+      else dimensions.add('INSTANT');
+
+      const applyBuffs = Array.isArray(skill?.buffRefs?.apply) ? skill.buffRefs.apply : [];
+      if (applyBuffs.some(buff => typeof buff?.duration === 'number' && buff.duration > 1)) dimensions.add('MULTI_TURN');
+      else if (applyBuffs.some(buff => typeof buff?.duration === 'number' && buff.duration === 1)) dimensions.add('ONE_TURN');
+      else dimensions.add('ONE_SHOT');
+
+      const targetFacts = deriveTargetFacts(skill);
+      if (targetFacts.subject) dimensions.add(targetFacts.subject);
+      if (targetFacts.scope) dimensions.add(targetFacts.scope);
+      if (targetFacts.selectionMode === 'SELECT_FIXED_PART' || targetFacts.selectionMode === 'single') dimensions.add('SELECT_FIXED_PART');
+      if (targetFacts.selectionMode === 'SELECT_RANDOM_PART' || targetFacts.selectionMode === 'random_single') dimensions.add('SELECT_RANDOM_PART');
+      if (targetFacts.selectionMode === 'SELECT_ALL_PARTS' || targetFacts.selectionMode === 'multiple') dimensions.add('SELECT_ALL_PARTS');
+
+      if (skill?.requirements && Object.keys(skill.requirements).length) dimensions.add('CONDITIONAL');
+      else dimensions.add('UNCONDITIONAL');
+
+      if (typeof skill?.cost === 'number' || typeof skill?.costs?.ap === 'number') dimensions.add('RES_AP');
+      if ((typeof skill?.slotCost === 'number' && skill.slotCost > 0) || (typeof skill?.costs?.partSlot?.slotCost === 'number' && skill.costs.partSlot.slotCost > 0)) dimensions.add('RES_SLOT');
+      if ((Array.isArray(skill?.castParts) && skill.castParts.length) || skill?.requirements?.selfPart) dimensions.add('REQ_SELF_PART');
+      if ((typeof skill?.costs?.perTurnLimit === 'number' && skill.costs.perTurnLimit > 0) || (typeof skill?.perTurnLimit === 'number' && skill.perTurnLimit > 0)) dimensions.add('LIMIT_PER_TURN');
+
+      return Array.from(dimensions);
+    }
+
+    function getEffectiveDimensions(skill) {
+      return deriveAnalysisDimensions(skill);
     }
 
     function computeReqStats(skillsById) {
       const skills = Object.values(skillsById);
       const hasReq = skills.filter(s => s && s.requirements && Object.keys(s.requirements).length).length;
       const hasCastParts = skills.filter(s => Array.isArray(s.castParts) && s.castParts.length).length;
-      const hasSlotCost = skills.filter(s => typeof s.slotCost === 'number').length;
-      const slotCostGt1 = skills.filter(s => typeof s.slotCost === 'number' && s.slotCost > 1).length;
-      const hasCostsAp = skills.filter(s => typeof s.costs?.ap === 'number').length;
+      const hasSlotCost = skills.filter(s => typeof s.slotCost === 'number' || typeof s.costs?.partSlot?.slotCost === 'number').length;
+      const slotCostGt1 = skills.filter(s => {
+        const slotCost = typeof s.slotCost === 'number' ? s.slotCost : s.costs?.partSlot?.slotCost;
+        return typeof slotCost === 'number' && slotCost > 1;
+      }).length;
+      const hasCostsAp = skills.filter(s => typeof s.costs?.ap === 'number' || typeof s.cost === 'number').length;
       return [
         { metric: 'has requirements', count: hasReq, notes: 'skills.requirements 非空' },
         { metric: 'has castParts', count: hasCastParts, notes: '来源部位约束（设计层）' },
@@ -571,25 +590,14 @@
       }
     }
 
-    function computeTagDistribution(skillsById) {
+    function computeDimensionDistribution(skillsById) {
       const counts = new Map();
       const ids = Object.keys(skillsById);
       for (const id of ids) {
-        const s = skillsById[id];
-        for (const t of getEffectiveTags(s)) {
-          counts.set(t, (counts.get(t) || 0) + 1);
+        const skill = skillsById[id];
+        for (const dimension of getEffectiveDimensions(skill)) {
+          counts.set(dimension, (counts.get(dimension) || 0) + 1);
         }
-
-    function renderReqStatTable() {
-      const rows = computeReqStats(state.skillsById);
-      const tbody = $('req-stat-table').querySelector('tbody');
-      tbody.innerHTML = '';
-      for (const r of rows) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${escapeHtml(r.metric)}</td><td>${r.count}</td><td class="muted">${escapeHtml(r.notes || '')}</td>`;
-        tbody.appendChild(tr);
-      }
-    }
       }
       return { counts, totalSkills: ids.length };
     }
@@ -597,11 +605,12 @@
     function computeBasicStats(skillsById) {
       const groups = new Map();
       for (const s of Object.values(skillsById)) {
-        const key = s.type || '(none)';
+        const key = s.type || (collectActionEffects(s)[0]?.effectType || '(none)');
         if (!groups.has(key)) groups.set(key, { count: 0, costSum: 0, speedSum: 0, costN: 0, speedN: 0 });
         const g = groups.get(key);
         g.count++;
-        if (typeof s.cost === 'number') { g.costSum += s.cost; g.costN++; }
+        const cost = typeof s.cost === 'number' ? s.cost : s.costs?.ap;
+        if (typeof cost === 'number') { g.costSum += cost; g.costN++; }
         if (typeof s.speed === 'number') { g.speedSum += s.speed; g.speedN++; }
       }
       return Array.from(groups.entries()).map(([type, g]) => ({
@@ -612,10 +621,10 @@
       })).sort((a,b)=> b.count - a.count);
     }
 
-    function renderTagDist() {
-      const { counts, totalSkills } = computeTagDistribution(state.skillsById);
+    function renderDimensionDist() {
+      const { counts, totalSkills } = computeDimensionDistribution(state.skillsById);
       const rows = Array.from(counts.entries())
-        .map(([tag, count]) => ({ tag, count, ratio: totalSkills ? count / totalSkills : 0 }))
+        .map(([dimension, count]) => ({ dimension, count, ratio: totalSkills ? count / totalSkills : 0 }))
         .sort((a,b)=> b.count - a.count);
 
       const tbody = $('tag-dist-table').querySelector('tbody');
@@ -625,8 +634,8 @@
         const tr = document.createElement('tr');
         const pct = (r.ratio * 100).toFixed(1) + '%';
 
-        const tdTag = document.createElement('td');
-        tdTag.textContent = r.tag;
+        const tdDimension = document.createElement('td');
+        tdDimension.textContent = r.dimension;
 
         const tdCount = document.createElement('td');
         tdCount.textContent = String(r.count);
@@ -634,26 +643,24 @@
         const tdBar = document.createElement('td');
         tdBar.innerHTML = `<div class="bar"><div style="width:${Math.min(100, r.ratio * 100)}%"></div></div><div class="muted" style="margin-top:4px;">${pct}</div>`;
 
-        tr.appendChild(tdTag);
+        tr.appendChild(tdDimension);
         tr.appendChild(tdCount);
         tr.appendChild(tdBar);
         tbody.appendChild(tr);
       }
 
-      $('tag-dist-meta').textContent = `skills: ${totalSkills}, tags: ${rows.length}`;
+      $('tag-dist-meta').textContent = `skills: ${totalSkills}, facets: ${rows.length}`;
 
-      // Build filter dropdown
-      const sel = $('tag-filter');
-      const current = sel.value;
-      sel.innerHTML = `<option value="">(按标签过滤)</option>`;
-      const sortedTags = rows.map(r => r.tag);
-      for (const t of sortedTags) {
-        const opt = document.createElement('option');
-        opt.value = t;
-        opt.textContent = `${t} (${counts.get(t)})`;
-        sel.appendChild(opt);
+      const select = $('tag-filter');
+      const current = select.value;
+      select.innerHTML = '<option value="">(按分析维度过滤)</option>';
+      for (const dimension of rows.map(r => r.dimension)) {
+        const option = document.createElement('option');
+        option.value = dimension;
+        option.textContent = `${dimension} (${counts.get(dimension)})`;
+        select.appendChild(option);
       }
-      sel.value = current;
+      select.value = current;
 
       renderAlerts(rows, totalSkills);
     }
@@ -665,27 +672,26 @@
 
       for (const r of rows) {
         if (totalSkills <= 0) continue;
-        if (r.ratio >= hi) alerts.push({ level: 'warn', text: `标签「${r.tag}」占比 ${(r.ratio*100).toFixed(1)}%，可能偏多（>${hi*100}%）。` });
-        if (r.ratio <= lo) alerts.push({ level: 'warn', text: `标签「${r.tag}」占比 ${(r.ratio*100).toFixed(1)}%，可能偏少（<${lo*100}%）。` });
+        if (r.ratio >= hi) alerts.push({ level: 'warn', text: `分析维度「${r.dimension}」占比 ${(r.ratio*100).toFixed(1)}%，可能偏多（>${hi*100}%）。` });
+        if (r.ratio <= lo) alerts.push({ level: 'warn', text: `分析维度「${r.dimension}」占比 ${(r.ratio*100).toFixed(1)}%，可能偏少（<${lo*100}%）。` });
       }
 
-      // Detect unknown tags
-      const unknown = rows.filter(r => !STABLE_TAGS.includes(r.tag));
-      for (const u of unknown) {
-        alerts.push({ level: 'warn', text: `发现非稳定枚举标签「${u.tag}」：建议在设计文档中确认其语义并决定是否收敛为稳定枚举。` });
+      const unknown = rows.filter(r => !STABLE_DIMENSIONS.includes(r.dimension));
+      for (const item of unknown) {
+        alerts.push({ level: 'warn', text: `发现非稳定分析维度「${item.dimension}」：建议在设计文档中确认其语义，并决定是否收敛为稳定枚举。` });
       }
 
       const container = $('alerts');
       container.innerHTML = '';
       if (!alerts.length) {
-        container.innerHTML = `<div class="muted">未发现明显异常（仅基于启发式规则）。</div>`;
+        container.innerHTML = '<div class="muted">未发现明显异常（仅基于启发式规则）。</div>';
         return;
       }
-      for (const a of alerts) {
+      for (const alert of alerts) {
         const div = document.createElement('div');
-        div.className = a.level === 'warn' ? 'warn' : '';
+        div.className = alert.level === 'warn' ? 'warn' : '';
         div.style.marginBottom = '8px';
-        div.textContent = a.text;
+        div.textContent = alert.text;
         container.appendChild(div);
       }
     }
@@ -701,19 +707,10 @@
       }
     }
 
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'",'&#039;');
-    }
-
     function renderSkillList() {
       const list = $('skill-list');
       const q = $('q').value.trim().toLowerCase();
-      const tag = $('tag-filter').value;
+      const facet = $('tag-filter').value;
 
       const skills = Object.values(state.skillsById)
         .filter(s => {
@@ -721,8 +718,8 @@
           return String(s.id || '').toLowerCase().includes(q) || String(s.name || '').toLowerCase().includes(q);
         })
         .filter(s => {
-          if (!tag) return true;
-          return getEffectiveTags(s).includes(tag);
+          if (!facet) return true;
+          return getEffectiveDimensions(s).includes(facet);
         })
         .sort((a,b)=> String(a.id).localeCompare(String(b.id)));
 
@@ -730,8 +727,8 @@
       for (const s of skills) {
         const div = document.createElement('div');
         div.className = 'skill-item' + (s.id === state.selectedId ? ' active' : '');
-        const effTags = getEffectiveTags(s);
-        const shownTags = effTags.slice(0, 5);
+        const effDimensions = getEffectiveDimensions(s);
+        const shownDimensions = effDimensions.slice(0, 5);
         div.innerHTML = `
           <div class="name">${escapeHtml(s.name || '(noname)')}</div>
           <div class="muted">${escapeHtml(s.id || '')}</div>
@@ -742,8 +739,8 @@
             ${s.rarity ? `<span class="pill">${escapeHtml(s.rarity)}</span>` : ''}
           </div>
           <div class="meta">
-            ${shownTags.map(t=>`<span class="pill">${escapeHtml(t)}</span>`).join('')}
-            ${effTags.length > shownTags.length ? `<span class="muted">+${effTags.length - shownTags.length}</span>` : ''}
+            ${shownDimensions.map(d=>`<span class="pill">${escapeHtml(d)}</span>`).join('')}
+            ${effDimensions.length > shownDimensions.length ? `<span class="muted">+${effDimensions.length - shownDimensions.length}</span>` : ''}
           </div>
         `;
         div.addEventListener('click', ()=> selectSkill(s.id));
@@ -755,7 +752,7 @@
 
     function renderAll() {
       $('analysis-summary').textContent = state.loaded ? `skills: ${Object.keys(state.skillsById).length}` : '—';
-      renderTagDist();
+      renderDimensionDist();
       renderBasicStatTable();
       renderReqStatTable();
       renderSkillList();
@@ -804,10 +801,8 @@
         $('f-requirements').value = '';
         $('err-req').style.display = 'none';
         $('f-desc').value = '';
-        $('f-tags').value = '';
         $('f-effects').value = '';
         $('f-buffRefs').value = '';
-        $('err-tags').style.display = 'none';
         $('err-json').style.display = 'none';
         return;
       }
@@ -833,7 +828,7 @@
         ss.targetParts = newParts;
         ensureRequiredPartConsistency(ss);
         renderSkillList();
-        renderTagDist();
+        renderDimensionDist();
         renderBasicStatTable();
         renderReqStatTable();
       }, { lockRequired: s.requiredPart || '' });
@@ -844,7 +839,7 @@
         if (!ss) return;
         ss.castParts = newParts;
         renderSkillList();
-        renderTagDist();
+        renderDimensionDist();
         renderBasicStatTable();
         renderReqStatTable();
       });
@@ -853,15 +848,11 @@
       $('f-requirements').value = JSON.stringify(s.requirements || {}, null, 2);
       $('f-desc').value = s.description || '';
 
-      const tags = Array.isArray(s.tags) ? s.tags : [];
-      $('f-tags').value = JSON.stringify(tags, null, 2);
-
       state.jsonDraft.effects = JSON.stringify(s.effects || [], null, 2);
       state.jsonDraft.buffRefs = JSON.stringify(s.buffRefs || {}, null, 2);
       $('f-effects').value = state.jsonDraft.effects;
       $('f-buffRefs').value = state.jsonDraft.buffRefs;
 
-      $('err-tags').style.display = 'none';
       $('err-json').style.display = 'none';
       $('err-req').style.display = 'none';
     }
@@ -912,7 +903,7 @@
         if (!s) return;
         setter(s, getter(el));
         renderSkillList();
-        renderTagDist();
+        renderDimensionDist();
         renderBasicStatTable();
         renderReqStatTable();
       });
@@ -978,29 +969,6 @@
       state.skillsById = clone(state.originalSkillsById);
       state.selectedId = null;
       renderAll();
-    }
-
-    function saveTags() {
-      const s = getSelectedSkill();
-      if (!s) return;
-      const raw = $('f-tags').value.trim();
-      if (!raw) {
-        s.tags = [];
-        $('err-tags').style.display = 'none';
-        renderAll();
-        return;
-      }
-      try {
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) throw new Error('tags 必须是数组');
-        // normalize strings
-        s.tags = parsed.map(x => String(x)).filter(x => x.length);
-        $('err-tags').style.display = 'none';
-        renderAll();
-      } catch (e) {
-        $('err-tags').textContent = `tags JSON 不合法：${e.message}`;
-        $('err-tags').style.display = 'block';
-      }
     }
 
     function saveJsonFields() {
@@ -1091,7 +1059,7 @@
           ss.targetParts = newParts;
           ensureRequiredPartConsistency(ss);
           renderSkillList();
-          renderTagDist();
+          renderDimensionDist();
           renderBasicStatTable();
           renderReqStatTable();
         }, { lockRequired: s.requiredPart || '' });
@@ -1123,8 +1091,6 @@
         }
       });
 
-      // tags: validate on blur
-      $('f-tags').addEventListener('blur', saveTags);
 
       $('btn-save-json').addEventListener('click', saveJsonFields);
       $('btn-revert-json').addEventListener('click', revertJsonFields);

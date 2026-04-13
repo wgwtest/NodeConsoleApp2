@@ -38,10 +38,6 @@ function cloneSerializable(value) {
 	return JSON.parse(JSON.stringify(value));
 }
 
-function hasTag(skill, tag) {
-	return Array.isArray(skill?.tags) && skill.tags.includes(tag);
-}
-
 /**
  * @typedef {Object} SkillTreeStatus
  * @property {'LEARNED'|'LEARNABLE'|'LOCKED'|'INSUFFICIENT_KP'|'EXCLUSIVE_LOCK'} kind
@@ -178,7 +174,6 @@ export class UI_SkillTreeModal {
 	_shouldRenderSkillNode(skill) {
 		if (!skill || typeof skill !== 'object') return false;
 		if (skill.editorMeta?.hiddenInSkillTree === true) return false;
-		if (hasTag(skill, 'DEMO')) return false;
 		return true;
 	}
 

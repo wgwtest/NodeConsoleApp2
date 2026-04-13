@@ -71,8 +71,7 @@
       "skills[].buffRefs": "与 Buff 系统的轻耦合引用（技能只引用 buffId，不内嵌 buff 逻辑）。",
       "skills[].buffRefs.apply": "对 enemy 施加的 buff 列表（每项包含 buffId/target/chance/duration 等）。",
       "skills[].buffRefs.applySelf": "对 self 施加的 buff 列表。",
-      "skills[].buffRefs.remove": "移除 buff 的列表（用于净化/驱散）。",
-      "skills[].tags": "平衡性/统计标签，建议取值对齐 meta.enums.tags.*（工具侧更易做分布分析）。"
+      "skills[].buffRefs.remove": "移除 buff 的列表（用于净化/驱散）。"
     },
     "defaultParts": [
       "head",
@@ -143,68 +142,6 @@
       "repeat": {
         "minCount": 1,
         "maxCount": 20
-      },
-      "tags": {
-        "what": [
-          "DMG_HP",
-          "DMG_ARMOR",
-          "PIERCE",
-          "HEAL",
-          "ARMOR_ADD",
-          "AP_GAIN",
-          "SPEED",
-          "BUFF_APPLY",
-          "BUFF_REMOVE"
-        ],
-        "how": [
-          "ABS",
-          "PCT_MAX",
-          "PCT_CURRENT",
-          "SCALING"
-        ],
-        "when": [
-          "INSTANT",
-          "DELAYED",
-          "ON_EVENT"
-        ],
-        "lifetime": [
-          "ONE_SHOT",
-          "ONE_TURN",
-          "MULTI_TURN",
-          "BATTLE",
-          "PERMANENT"
-        ],
-        "subject": [
-          "SUBJECT_SELF",
-          "SUBJECT_ENEMY",
-          "SUBJECT_BOTH"
-        ],
-        "scope": [
-          "SCOPE_ENTITY",
-          "SCOPE_PART",
-          "SCOPE_MULTI_PARTS"
-        ],
-        "selectionLegacy": [
-          "SELECT_FIXED_PART",
-          "SELECT_RANDOM_PART",
-          "SELECT_ALL_PARTS"
-        ],
-        "resources": [
-          "RES_AP",
-          "RES_SLOT"
-        ],
-        "requirements": [
-          "REQ_SELF_PART"
-        ],
-        "distance": [
-          "MELEE",
-          "RANGED",
-          "MAGIC"
-        ],
-        "conditions": [
-          "UNCONDITIONAL",
-          "CONDITIONAL"
-        ]
       }
     }
   },
@@ -266,7 +203,10 @@
           "id": "a1",
           "name": "heal",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "HEAL",
@@ -279,17 +219,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "HEAL",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP"
-      ]
+      }
     },
     {
       "id": "skill_heavy_swing",
@@ -354,7 +284,10 @@
           "id": "a1",
           "name": "heavy_swing",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -370,21 +303,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_headbutt",
@@ -445,7 +364,10 @@
           "id": "a1",
           "name": "headbutt_hit",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -457,8 +379,13 @@
           "id": "a2",
           "name": "headbutt_backlash",
           "target": {
-            "binding": { "mode": "explicit" },
-            "spec": { "subject": "SUBJECT_SELF", "scope": "SCOPE_ENTITY" }
+            "binding": {
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -479,21 +406,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      }
     },
     {
       "id": "skill_savage_charge",
@@ -555,7 +468,10 @@
           "id": "a1",
           "name": "main",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -575,22 +491,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_skull_cracker",
@@ -654,7 +555,10 @@
           "id": "a1",
           "name": "hit",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -669,7 +573,10 @@
           "id": "a2",
           "name": "crack_armor",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -688,22 +595,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "DMG_ARMOR",
-        "SCALING",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      }
     },
     {
       "id": "skill_shockwave",
@@ -776,7 +668,10 @@
           "id": "a1",
           "name": "shockwave",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -796,22 +691,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_execute",
@@ -871,7 +751,10 @@
           "id": "a1",
           "name": "execute",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -885,20 +768,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "PCT_CURRENT",
-        "INSTANT",
-        "ONE_SHOT",
-        "CONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      }
     },
     {
       "id": "skill_earthquake",
@@ -965,7 +835,10 @@
           "id": "a1",
           "name": "earthquake",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -985,21 +858,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      }
     },
     {
       "id": "skill_ragnarok",
@@ -1073,7 +932,10 @@
           "id": "a1",
           "name": "ragnarok",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -1092,20 +954,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      }
     },
     {
       "id": "skill_iron_will",
@@ -1164,7 +1013,10 @@
           "id": "a1",
           "name": "repair",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "ARMOR_ADD",
@@ -1177,19 +1029,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "ARMOR_ADD",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "MELEE"
-      ]
+      }
     },
     {
       "id": "skill_block",
@@ -1254,7 +1094,10 @@
           "id": "a1",
           "name": "block",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -1274,21 +1117,7 @@
         ],
         "apply": [],
         "remove": []
-      },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_regroup",
@@ -1358,21 +1187,7 @@
         ],
         "apply": [],
         "applySelf": []
-      },
-      "tags": [
-        "ARMOR_ADD",
-        "BUFF_REMOVE",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_hold_the_line",
@@ -1436,7 +1251,10 @@
           "id": "a1",
           "name": "punch",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -1462,21 +1280,7 @@
         ],
         "apply": [],
         "remove": []
-      },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_fortify",
@@ -1542,7 +1346,10 @@
           "id": "a1",
           "name": "fortify",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "ARMOR_ADD",
@@ -1562,22 +1369,7 @@
         ],
         "apply": [],
         "remove": []
-      },
-      "tags": [
-        "BUFF_APPLY",
-        "ARMOR_ADD",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_aegis",
@@ -1663,20 +1455,7 @@
         ],
         "apply": [],
         "remove": []
-      },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ]
+      }
     },
     {
       "id": "skill_artery_slice",
@@ -1740,7 +1519,10 @@
           "id": "a1",
           "name": "iron_head",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "ARMOR_ADD",
@@ -1760,22 +1542,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_double_thrust",
@@ -1840,7 +1607,10 @@
           "id": "a1",
           "name": "double_thrust",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -1859,22 +1629,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "SELECT_RANDOM_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_artery_slice_copy_1769788322314",
@@ -1935,7 +1690,10 @@
           "id": "a1",
           "name": "iron_hand",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "ARMOR_ADD",
@@ -1955,22 +1713,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_artery_slice_copy_1769789197982",
@@ -2031,7 +1774,10 @@
           "id": "a1",
           "name": "iron_leg",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "ARMOR_ADD",
@@ -2051,22 +1797,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_hold_the_line_copy_1769790933469",
@@ -2128,7 +1859,10 @@
           "id": "a1",
           "name": "pickup",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -2154,21 +1888,7 @@
         ],
         "apply": [],
         "remove": []
-      },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_shockwave_copy_1769791396881",
@@ -2239,7 +1959,10 @@
           "id": "a1",
           "name": "remove_armor",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -2251,8 +1974,13 @@
           "id": "a2",
           "name": "gain_ap",
           "target": {
-            "binding": { "mode": "explicit" },
-            "spec": { "subject": "SUBJECT_SELF", "scope": "SCOPE_ENTITY" }
+            "binding": {
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY"
+            }
           },
           "effect": {
             "effectType": "AP_GAIN",
@@ -2272,22 +2000,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_fortify_copy_1769873501141",
@@ -2352,7 +2065,10 @@
           "id": "a1",
           "name": "west_coast",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "ARMOR_ADD",
@@ -2372,22 +2088,7 @@
         ],
         "apply": [],
         "remove": []
-      },
-      "tags": [
-        "BUFF_APPLY",
-        "ARMOR_ADD",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_hold_the_line_copy_1769956923405",
@@ -2458,7 +2159,10 @@
           "id": "a1",
           "name": "mud_armor",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -2484,21 +2188,7 @@
         ],
         "apply": [],
         "remove": []
-      },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_shockwave_copy_1769791396881_copy_1769957170451",
@@ -2569,7 +2259,10 @@
           "id": "a1",
           "name": "flatten_remove_armor",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -2581,8 +2274,13 @@
           "id": "a2",
           "name": "flatten_gain_ap",
           "target": {
-            "binding": { "mode": "explicit" },
-            "spec": { "subject": "SUBJECT_SELF", "scope": "SCOPE_ENTITY" }
+            "binding": {
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY"
+            }
           },
           "effect": {
             "effectType": "AP_GAIN",
@@ -2602,22 +2300,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_skull_cracker_copy_1769957925421",
@@ -2677,7 +2360,10 @@
           "id": "a1",
           "name": "hit",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -2692,7 +2378,10 @@
           "id": "a2",
           "name": "armor",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -2711,23 +2400,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "DMG_ARMOR",
-        "SCALING",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_skull_cracker_copy_1769957925421_copy_1769961490300",
@@ -2789,7 +2462,10 @@
           "id": "a1",
           "name": "hit",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -2804,7 +2480,10 @@
           "id": "a2",
           "name": "armor",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -2823,23 +2502,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "DMG_ARMOR",
-        "SCALING",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_execute_copy_1769961767095",
@@ -2897,7 +2560,10 @@
           "id": "a1",
           "name": "unbind",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -2911,21 +2577,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "PCT_CURRENT",
-        "INSTANT",
-        "ONE_SHOT",
-        "CONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_shockwave_copy_1770041956468",
@@ -2996,7 +2648,10 @@
           "id": "a1",
           "name": "backstep",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -3016,22 +2671,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_aegis_copy_1770042764756",
@@ -3115,21 +2755,7 @@
         ],
         "apply": [],
         "remove": []
-      },
-      "tags": [
-        "BUFF_APPLY",
-        "ABS",
-        "INSTANT",
-        "ONE_TURN",
-        "UNCONDITIONAL",
-        "SUBJECT_SELF",
-        "SCOPE_ENTITY",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_skull_cracker_copy_1769957925421_copy_1769961490300_copy_1770042860426",
@@ -3191,7 +2817,10 @@
           "id": "a1",
           "name": "hit",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -3206,7 +2835,10 @@
           "id": "a2",
           "name": "armor",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -3225,23 +2857,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "DMG_ARMOR",
-        "SCALING",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_shockwave_copy_1770041956468_copy_1770042951717",
@@ -3312,7 +2928,10 @@
           "id": "a1",
           "name": "tear",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -3332,22 +2951,7 @@
         ],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "ABS",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "BUFF_APPLY",
-        "SUBJECT_ENEMY",
-        "SCOPE_MULTI_PARTS",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_execute_copy_1769961767095_copy_1770043820577",
@@ -3405,7 +3009,10 @@
           "id": "a1",
           "name": "burst",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -3419,21 +3026,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "PCT_CURRENT",
-        "INSTANT",
-        "ONE_SHOT",
-        "CONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_execute_copy_1769961767095_copy_1770043820577_copy_1770044052832",
@@ -3491,7 +3084,10 @@
           "id": "a1",
           "name": "vampire",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -3505,21 +3101,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "PCT_CURRENT",
-        "INSTANT",
-        "ONE_SHOT",
-        "CONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_double_thrust_copy_1770395861178",
@@ -3584,7 +3166,10 @@
           "id": "a1",
           "name": "dump_armor",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_ARMOR",
@@ -3603,8 +3188,13 @@
           "id": "a2",
           "name": "heal",
           "target": {
-            "binding": { "mode": "explicit" },
-            "spec": { "subject": "SUBJECT_SELF", "scope": "SCOPE_ENTITY" }
+            "binding": {
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY"
+            }
           },
           "effect": {
             "effectType": "HEAL",
@@ -3617,22 +3207,7 @@
         "apply": [],
         "applySelf": [],
         "remove": []
-      },
-      "tags": [
-        "DMG_HP",
-        "SCALING",
-        "INSTANT",
-        "ONE_SHOT",
-        "UNCONDITIONAL",
-        "SUBJECT_ENEMY",
-        "SCOPE_PART",
-        "SELECT_RANDOM_PART",
-        "RES_AP",
-        "RES_SLOT",
-        "REQ_SELF_PART",
-        "MELEE"
-      ],
-      "tagMeta": {}
+      }
     },
     {
       "id": "skill_1770396871360",
@@ -3674,8 +3249,6 @@
         "y": 914
       },
       "description": "获得buff，每当扣除hp，获得攻击加成",
-      "tags": [],
-      "tagMeta": {},
       "unlock": {},
       "requirements": {}
     },
@@ -3718,7 +3291,10 @@
           "id": "a1",
           "name": "blood_strike",
           "target": {
-            "binding": { "mode": "follow", "ref": "skillTarget" }
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
           },
           "effect": {
             "effectType": "DMG_HP",
@@ -3732,8 +3308,6 @@
         "y": 1114
       },
       "description": "消耗2点血，对指定部位造成20点伤害",
-      "tags": [],
-      "tagMeta": {},
       "unlock": {},
       "requirements": {}
     }
