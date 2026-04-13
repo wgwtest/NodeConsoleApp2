@@ -13,9 +13,32 @@
   "assetLibrary": {
     "backgrounds": [
       {
-        "id": "bg_forest_canopy",
-        "label": "幽暗森林薄雾",
+        "id": "bg_map_glade_01",
+        "label": "地图背景 01",
+        "src": "../source/map/image_w2752_h1536_map-bg-01.jpeg",
+        "thumbnailSrc": "../source/map/image_w2752_h1536_map-bg-01.jpeg",
         "previewGradient": "linear-gradient(135deg, #15384d 0%, #265d63 38%, #f0c987 100%)"
+      },
+      {
+        "id": "bg_map_winter_02",
+        "label": "地图背景 02 · 冬境",
+        "src": "../source/map/image_w2752_h1536_map-bg-02-winter.jpeg",
+        "thumbnailSrc": "../source/map/image_w2752_h1536_map-bg-02-winter.jpeg",
+        "previewGradient": "linear-gradient(135deg, #13324e 0%, #375c7d 40%, #d8e6f4 100%)"
+      },
+      {
+        "id": "bg_map_glade_03",
+        "label": "地图背景 03",
+        "src": "../source/map/image_w2752_h1536_map-bg-03.jpeg",
+        "thumbnailSrc": "../source/map/image_w2752_h1536_map-bg-03.jpeg",
+        "previewGradient": "linear-gradient(135deg, #2f2330 0%, #46513d 52%, #d59b63 100%)"
+      },
+      {
+        "id": "bg_map_glade_04",
+        "label": "地图背景 04",
+        "src": "../source/map/image_w2752_h1536_map-bg-04.jpeg",
+        "thumbnailSrc": "../source/map/image_w2752_h1536_map-bg-04.jpeg",
+        "previewGradient": "linear-gradient(135deg, #3d2328 0%, #704437 54%, #c49357 100%)"
       }
     ],
     "nodeSkins": [
@@ -34,6 +57,50 @@
         "label": "首领节点",
         "shape": "diamond"
       }
+    ],
+    "nodeArts": [
+      {
+        "id": "node_icon_elemental",
+        "label": "元素节点图标",
+        "src": "../source/scene_icon/level-node-04-elemental_1000.png"
+      },
+      {
+        "id": "node_icon_elf_archer",
+        "label": "精灵弓手节点图标",
+        "src": "../source/scene_icon/level-node-05-elf-archer_1000.png"
+      },
+      {
+        "id": "node_icon_goblin_warrior",
+        "label": "哥布林战士节点图标",
+        "src": "../source/scene_icon/level-node-06-goblin-warrior_1000.png"
+      },
+      {
+        "id": "node_icon_owlbear",
+        "label": "枭熊节点图标",
+        "src": "../source/scene_icon/level-node-07-owlbear_1000.png"
+      }
+    ],
+    "portraits": [
+      {
+        "id": "enemy_goblin_hunter",
+        "label": "哥布林猎手",
+        "src": "../assets/images/level_map/portraits/enemy_goblin_hunter.svg"
+      },
+      {
+        "id": "enemy_goblin_medic",
+        "label": "哥布林医师",
+        "src": "../assets/images/level_map/portraits/enemy_goblin_medic.svg"
+      },
+      {
+        "id": "enemy_skeleton_guard",
+        "label": "骷髅守卫",
+        "src": "../assets/images/level_map/portraits/enemy_skeleton_guard.svg"
+      },
+      {
+        "id": "enemy_ruins_boss",
+        "label": "废墟首领",
+        "src": "../assets/images/level_map/portraits/enemy_ruins_boss.svg"
+      }
     ]
   },
   "maps": [
@@ -43,7 +110,19 @@
       "chapterId": "story_chapter_1",
       "chapterLabel": "第一章",
       "chapterTitle": "幽暗森林",
-      "backgroundRef": "bg_forest_canopy",
+      "space": {
+        "logicalWidth": 1600,
+        "logicalHeight": 900
+      },
+      "display": {
+        "viewportAspect": "16:9",
+        "backgroundFit": "cover",
+        "nodeScale": 0.6,
+        "nodeAnchor": "center",
+        "edgeAnchor": "center",
+        "edgeLabelMode": "midpoint"
+      },
+      "backgroundRef": "bg_map_glade_01",
       "entryNodeId": "node_edge",
       "nodes": [
         {
@@ -54,8 +133,10 @@
           "kind": "battle",
           "nodeSkinRef": "skin_story_battle",
           "iconLabel": "侦察",
-          "x": 120,
-          "y": 240,
+          "position": {
+            "x": 120,
+            "y": 240
+          },
           "objectiveText": "建立第一波防线，进入森林分岔口。",
           "difficultyLabel": "标准",
           "rewardPreview": [
@@ -63,7 +144,7 @@
             "金币 50"
           ],
           "artRefs": {
-            "nodeArt": "node_forest_watch",
+            "nodeArt": "node_icon_elf_archer",
             "portrait": "enemy_goblin_hunter"
           }
         },
@@ -75,8 +156,10 @@
           "kind": "battle",
           "nodeSkinRef": "skin_story_battle",
           "iconLabel": "分支A",
-          "x": 330,
-          "y": 138,
+          "position": {
+            "x": 330,
+            "y": 138
+          },
           "objectiveText": "走轻敌高机动路线，争取提前压缩敌方回血节奏。",
           "difficultyLabel": "进阶",
           "rewardPreview": [
@@ -84,7 +167,7 @@
             "分支素材：薄雾林道"
           ],
           "artRefs": {
-            "nodeArt": "node_mist_path",
+            "nodeArt": "node_icon_elemental",
             "portrait": "enemy_goblin_medic"
           }
         },
@@ -96,8 +179,10 @@
           "kind": "event",
           "nodeSkinRef": "skin_story_event",
           "iconLabel": "分支B",
-          "x": 340,
-          "y": 346,
+          "position": {
+            "x": 340,
+            "y": 346
+          },
           "objectiveText": "走补给路线，拿稳定资源并观察更重的装甲敌人配置。",
           "difficultyLabel": "进阶",
           "rewardPreview": [
@@ -105,7 +190,7 @@
             "分支素材：营地火光"
           ],
           "artRefs": {
-            "nodeArt": "node_camp_supply",
+            "nodeArt": "node_icon_goblin_warrior",
             "portrait": "enemy_skeleton_guard"
           }
         },
@@ -117,8 +202,10 @@
           "kind": "boss",
           "nodeSkinRef": "skin_story_boss",
           "iconLabel": "收束",
-          "x": 600,
-          "y": 240,
+          "position": {
+            "x": 600,
+            "y": 240
+          },
           "objectiveText": "收束双分支后进入章节首领关。",
           "difficultyLabel": "高压",
           "rewardPreview": [
@@ -126,7 +213,7 @@
             "章节奖励"
           ],
           "artRefs": {
-            "nodeArt": "node_ruins_gate",
+            "nodeArt": "node_icon_owlbear",
             "portrait": "enemy_ruins_boss"
           }
         }

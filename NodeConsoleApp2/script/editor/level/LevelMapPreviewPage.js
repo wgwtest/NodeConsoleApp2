@@ -1,9 +1,20 @@
+import {
+    buildStageImageLayers,
+    getLevelMapAssetImage,
+    resolveNodeVisualAssets
+} from './LevelMapAssetResolver.js';
+
 function asArray(value) {
     return Array.isArray(value) ? value : [];
 }
 
 function asObject(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function toFiniteNumber(value, fallback = 0) {
+    const next = Number(value);
+    return Number.isFinite(next) ? next : fallback;
 }
 
 function escapeHtml(value) {
@@ -19,18 +30,116 @@ function clone(value) {
     return JSON.parse(JSON.stringify(value));
 }
 
+function normalizeMapSpace(map) {
+    const source = asObject(map?.space);
+    return {
+        logicalWidth: Math.max(1, toFiniteNumber(source.logicalWidth, 1600)),
+        logicalHeight: Math.max(1, toFiniteNumber(source.logicalHeight, 900))
+    };
+}
+
+function normalizeMapDisplay(map) {
+    const source = asObject(map?.display);
+    return {
+        viewportAspect: typeof source.viewportAspect === 'string' && source.viewportAspect.trim()
+            ? source.viewportAspect.trim()
+            : '16:9',
+        backgroundFit: typeof source.backgroundFit === 'string' && source.backgroundFit.trim()
+            ? source.backgroundFit.trim()
+            : 'cover',
+        nodeScale: Math.max(0.1, toFiniteNumber(source.nodeScale, 0.6)),
+        nodeAnchor: typeof source.nodeAnchor === 'string' && source.nodeAnchor.trim()
+            ? source.nodeAnchor.trim()
+            : 'center',
+        edgeAnchor: typeof source.edgeAnchor === 'string' && source.edgeAnchor.trim()
+            ? source.edgeAnchor.trim()
+            : 'center',
+        edgeLabelMode: typeof source.edgeLabelMode === 'string' && source.edgeLabelMode.trim()
+            ? source.edgeLabelMode.trim()
+            : 'midpoint'
+    };
+}
+
+function normalizeViewportAspect(value, fallback = '16:9') {
+    const text = typeof value === 'string' ? value.trim() : '';
+    return /^\d+\s*:\s*\d+$/u.test(text) ? text.replace(/\s+/gu, '') : fallback;
+}
+
+function toCssAspectRatio(value, fallback = '16:9') {
+    const normalized = normalizeViewportAspect(value, fallback);
+    return normalized.replace(':', ' / ');
+}
+
+function clampNodeScale(value, fallback = 0.6) {
+    return Math.min(2, Math.max(0.1, toFiniteNumber(value, fallback)));
+}
+
+function getPreviewNodeVisualSize(display) {
+    return 168 * clampNodeScale(display?.nodeScale, 0.6);
+}
+
+function normalizeNodePosition(node) {
+    const source = asObject(node);
+    const position = asObject(source.position);
+    return {
+        x: toFiniteNumber(position.x, toFiniteNumber(source.x, 0)),
+        y: toFiniteNumber(position.y, toFiniteNumber(source.y, 0))
+    };
+}
+
+function getCanvasMetrics(host, map, fallbackSize = { width: 760, height: 460 }) {
+    const rect = typeof host?.getBoundingClientRect === 'function'
+        ? host.getBoundingClientRect()
+        : null;
+    const width = Math.max(1, Math.round(host?.clientWidth || rect?.width || fallbackSize.width));
+    const height = Math.max(1, Math.round(host?.clientHeight || rect?.height || fallbackSize.height));
+    const space = normalizeMapSpace(map);
+    const display = normalizeMapDisplay(map);
+    return {
+        width,
+        height,
+        space,
+        display
+    };
+}
+
+function projectPoint(point, metrics) {
+    const position = normalizeNodePosition({ position: point });
+    return {
+        x: Math.round((position.x / metrics.space.logicalWidth) * metrics.width),
+        y: Math.round((position.y / metrics.space.logicalHeight) * metrics.height)
+    };
+}
+
+function resolveProjectedNodeFrame(projectedPoint, display) {
+    const size = getPreviewNodeVisualSize(display);
+    const half = size / 2;
+    const nodeAnchor = display?.nodeAnchor || 'center';
+    const topLeft = nodeAnchor === 'top-left'
+        ? { x: projectedPoint.x, y: projectedPoint.y }
+        : { x: projectedPoint.x - half, y: projectedPoint.y - half };
+    const center = nodeAnchor === 'top-left'
+        ? { x: projectedPoint.x + half, y: projectedPoint.y + half }
+        : { x: projectedPoint.x, y: projectedPoint.y };
+    return {
+        topLeft,
+        center
+    };
+}
+
+function resolveEdgeAnchorPoint(nodeFrame, display) {
+    const edgeAnchor = display?.edgeAnchor || 'center';
+    return edgeAnchor === 'top-left'
+        ? nodeFrame.topLeft
+        : nodeFrame.center;
+}
+
 function getNodeStatus(nodeId, mode) {
     const completed = new Set(asArray(mode?.completedNodeIds));
     const unlocked = new Set(asArray(mode?.unlockedNodeIds));
     if (completed.has(nodeId)) return 'completed';
     if (unlocked.has(nodeId)) return 'unlocked';
     return 'locked';
-}
-
-function getBackgroundPreview(map, assetLibrary) {
-    const backgroundRef = map?.backgroundRef || '';
-    const background = asArray(assetLibrary?.backgrounds).find(item => item.id === backgroundRef);
-    return background?.previewGradient || 'linear-gradient(135deg, #10263a 0%, #244a5a 50%, #d1a85f 100%)';
 }
 
 function normalizeMapPack(source) {
@@ -41,6 +150,8 @@ function normalizeMapPack(source) {
         chapterId: String(map.chapterId || '').trim(),
         chapterLabel: String(map.chapterLabel || '').trim(),
         chapterTitle: String(map.chapterTitle || '').trim(),
+        space: normalizeMapSpace(map),
+        display: normalizeMapDisplay(map),
         backgroundRef: String(map.backgroundRef || '').trim(),
         entryNodeId: String(map.entryNodeId || '').trim(),
         nodes: asArray(map.nodes).map((node) => ({
@@ -51,8 +162,7 @@ function normalizeMapPack(source) {
             kind: String(node.kind || 'battle').trim(),
             nodeSkinRef: String(node.nodeSkinRef || '').trim(),
             iconLabel: String(node.iconLabel || '').trim(),
-            x: Number(node.x) || 0,
-            y: Number(node.y) || 0,
+            position: normalizeNodePosition(node),
             objectiveText: String(node.objectiveText || '').trim(),
             difficultyLabel: String(node.difficultyLabel || '').trim(),
             rewardPreview: asArray(node.rewardPreview).map(item => String(item || '').trim()).filter(Boolean),
@@ -238,25 +348,39 @@ export class LevelMapPreviewPage {
         if (!host || !map) return;
 
         host.innerHTML = '';
+        const metrics = getCanvasMetrics(host, map, { width: 760, height: 460 });
         if (stage) {
-            stage.style.background = getBackgroundPreview(map, this.pack.assetLibrary);
+            const stageLayers = buildStageImageLayers(map, this.pack.assetLibrary);
+            stage.style.backgroundImage = stageLayers.backgroundImage;
+            stage.style.backgroundSize = stageLayers.backgroundSize;
+            stage.style.backgroundPosition = stageLayers.backgroundPosition;
+            stage.style.backgroundRepeat = stageLayers.backgroundRepeat;
+            stage.style.aspectRatio = toCssAspectRatio(metrics.display.viewportAspect);
         }
 
         const svg = createElement(this.document, 'svg', 'map-edges');
-        svg.setAttribute('viewBox', '0 0 760 460');
+        svg.setAttribute('viewBox', `0 0 ${metrics.width} ${metrics.height}`);
         svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
         const nodeMap = new Map(map.nodes.map(node => [node.id, node]));
+        const projectedNodeMap = new Map(map.nodes.map(node => {
+            const projectedPoint = projectPoint(node.position, metrics);
+            return [node.id, resolveProjectedNodeFrame(projectedPoint, metrics.display)];
+        }));
         map.edges.forEach((edge) => {
             const fromNode = nodeMap.get(edge.fromNodeId);
             const toNode = nodeMap.get(edge.toNodeId);
-            if (!fromNode || !toNode) return;
+            const fromFrame = projectedNodeMap.get(edge.fromNodeId);
+            const toFrame = projectedNodeMap.get(edge.toNodeId);
+            if (!fromNode || !toNode || !fromFrame || !toFrame) return;
+            const fromPoint = resolveEdgeAnchorPoint(fromFrame, metrics.display);
+            const toPoint = resolveEdgeAnchorPoint(toFrame, metrics.display);
 
             const fromStatus = getNodeStatus(fromNode.id, mode);
             const toStatus = getNodeStatus(toNode.id, mode);
             const line = createElement(this.document, 'path', `map-edge is-${edge.type}`);
-            const midX = Math.round((fromNode.x + toNode.x) / 2);
-            const pathValue = `M ${fromNode.x} ${fromNode.y} C ${midX} ${fromNode.y}, ${midX} ${toNode.y}, ${toNode.x} ${toNode.y}`;
+            const midX = Math.round((fromPoint.x + toPoint.x) / 2);
+            const pathValue = `M ${fromPoint.x} ${fromPoint.y} C ${midX} ${fromPoint.y}, ${midX} ${toPoint.y}, ${toPoint.x} ${toPoint.y}`;
             line.setAttribute('d', pathValue);
             if (fromStatus !== 'locked' && toStatus !== 'locked') {
                 line.setAttribute('data-active', 'true');
@@ -264,12 +388,14 @@ export class LevelMapPreviewPage {
             svg.appendChild(line);
 
             if (edge.branchLabel) {
-                const label = createElement(this.document, 'text', 'map-edge-label');
-                label.setAttribute('x', String(midX));
-                label.setAttribute('y', String(Math.round((fromNode.y + toNode.y) / 2) - 10));
-                label.setAttribute('text-anchor', 'middle');
-                label.textContent = edge.branchLabel;
-                svg.appendChild(label);
+                if (metrics.display.edgeLabelMode !== 'none') {
+                    const label = createElement(this.document, 'text', 'map-edge-label');
+                    label.setAttribute('x', String(midX));
+                    label.setAttribute('y', String(Math.round((fromPoint.y + toPoint.y) / 2) - 10));
+                    label.setAttribute('text-anchor', 'middle');
+                    label.textContent = edge.branchLabel;
+                    svg.appendChild(label);
+                }
             }
         });
 
@@ -278,9 +404,15 @@ export class LevelMapPreviewPage {
         map.nodes.forEach((node) => {
             const status = getNodeStatus(node.id, mode);
             const button = createElement(this.document, 'button', `map-node is-${status} kind-${node.kind}`);
+            const visualAssets = resolveNodeVisualAssets(node, this.pack.assetLibrary);
+            const projected = projectPoint(node.position, metrics);
             button.type = 'button';
-            button.style.left = `${node.x}px`;
-            button.style.top = `${node.y}px`;
+            button.style.left = `${projected.x}px`;
+            button.style.top = `${projected.y}px`;
+            button.style.setProperty('--node-scale', String(metrics.display.nodeScale));
+            button.style.transform = metrics.display.nodeAnchor === 'top-left'
+                ? `translate(0px, 0px) scale(${metrics.display.nodeScale})`
+                : `translate(-50%, -50%) scale(${metrics.display.nodeScale})`;
             if (node.id === this.selectedNodeId) {
                 button.setAttribute('data-selected', 'true');
             }
@@ -289,6 +421,12 @@ export class LevelMapPreviewPage {
                 <strong class="map-node__title">${escapeHtml(node.title)}</strong>
                 <span class="map-node__meta">${escapeHtml(node.iconLabel || node.kind)}</span>
             `;
+            const artImage = getLevelMapAssetImage(visualAssets.nodeArt);
+            if (artImage) {
+                button.style.backgroundImage = `linear-gradient(180deg, rgba(11, 18, 26, 0.12), rgba(11, 18, 26, 0.28)), url("${artImage}")`;
+                button.style.backgroundSize = 'cover';
+                button.style.backgroundPosition = 'center';
+            }
             button.addEventListener('click', () => {
                 this.selectedNodeId = node.id;
                 this.renderInspector();

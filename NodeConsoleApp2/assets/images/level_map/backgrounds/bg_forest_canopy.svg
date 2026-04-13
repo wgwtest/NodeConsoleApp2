@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#163247"/>
+      <stop offset="56%" stop-color="#265465"/>
+      <stop offset="100%" stop-color="#5c7a58"/>
+    </linearGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7e3b0" stop-opacity="0.48"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <ellipse cx="320" cy="180" rx="240" ry="120" fill="url(#mist)"/>
+  <ellipse cx="1220" cy="140" rx="260" ry="110" fill="url(#mist)"/>
+  <path d="M0 620 Q180 420 360 560 T720 540 T1080 590 T1600 500 V900 H0 Z" fill="#18392d"/>
+  <path d="M0 700 Q220 560 420 700 T900 680 T1600 650 V900 H0 Z" fill="#12291f"/>
+  <g fill="#0d1d16">
+    <path d="M130 900 V490 l60 80 42-66 38 64 52-76 50 68 34-60 44 74 38-52 0 368Z"/>
+    <path d="M980 900 V470 l72 94 54-80 46 78 64-94 58 82 42-72 44 88 38-58 0 362Z"/>
+  </g>
+  <path d="M220 838 C420 744 660 746 840 824" fill="none" stroke="#e6cf93" stroke-opacity=".42" stroke-width="14" stroke-linecap="round"/>
+</svg>

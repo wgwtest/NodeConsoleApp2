@@ -1,0 +1,116 @@
+{
+  "$schemaVersion": "level_map_pack_v1",
+  "meta": {
+    "id": "level_map_invalid_probe",
+    "title": "地图包非法样例",
+    "ownerNode": "WBS-3.2.3.3"
+  },
+  "assetLibrary": {
+    "backgrounds": [
+      {
+        "id": "bg_valid_map_01",
+        "label": "合法背景",
+        "src": "../source/map/image_w2752_h1536_map-bg-01.jpeg"
+      }
+    ],
+    "nodeSkins": [
+      {
+        "id": "skin_story_battle",
+        "label": "战斗节点",
+        "shape": "hex"
+      }
+    ],
+    "nodeArts": [
+      {
+        "id": "node_valid_archer",
+        "label": "合法节点图",
+        "src": "../source/scene_icon/level-node-05-elf-archer_1000.png"
+      }
+    ],
+    "portraits": [
+      {
+        "id": "portrait_valid_watch",
+        "label": "合法立绘",
+        "src": "../assets/images/level_map/portraits/enemy_goblin_hunter.svg"
+      }
+    ]
+  },
+  "maps": [
+    {
+      "id": "map_invalid_branch",
+      "name": "非法样例地图",
+      "chapterId": "story_invalid",
+      "chapterLabel": "非法章",
+      "chapterTitle": "字段断裂测试",
+      "space": {
+        "logicalWidth": 1600,
+        "logicalHeight": 900
+      },
+      "display": {
+        "viewportAspect": "16:9",
+        "backgroundFit": "cover",
+        "nodeScale": 0.6,
+        "nodeAnchor": "center",
+        "edgeAnchor": "center",
+        "edgeLabelMode": "midpoint"
+      },
+      "backgroundRef": "bg_missing_ref",
+      "entryNodeId": "node_missing_entry",
+      "nodes": [
+        {
+          "id": "node_valid",
+          "levelId": "level_1_1",
+          "label": "1-1",
+          "title": "合法节点",
+          "kind": "battle",
+          "nodeSkinRef": "skin_story_battle",
+          "position": {
+            "x": 120,
+            "y": 220
+          },
+          "artRefs": {
+            "nodeArt": "node_valid_archer",
+            "portrait": "portrait_valid_watch"
+          }
+        },
+        {
+          "id": "node_invalid_level",
+          "levelId": "level_missing_runtime_ref",
+          "label": "1-X",
+          "title": "缺失关卡引用",
+          "kind": "battle",
+          "nodeSkinRef": "skin_story_battle",
+          "position": {
+            "x": 320,
+            "y": 220
+          },
+          "artRefs": {
+            "nodeArt": "node_missing_asset",
+            "portrait": "portrait_missing_asset"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge_invalid_to_node",
+          "fromNodeId": "node_valid",
+          "toNodeId": "node_missing_target",
+          "type": "branch",
+          "branchLabel": "断裂路线"
+        }
+      ],
+      "previewModes": [
+        {
+          "id": "invalid_preview",
+          "label": "非法快照",
+          "focusNodeId": "node_missing_entry",
+          "unlockedNodeIds": [
+            "node_valid",
+            "node_missing_target"
+          ],
+          "completedNodeIds": []
+        }
+      ]
+    }
+  ]
+}

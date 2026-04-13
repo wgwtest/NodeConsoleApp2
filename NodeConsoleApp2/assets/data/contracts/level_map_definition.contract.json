@@ -12,10 +12,18 @@
     "assetLibrary",
     "maps"
   ],
+  "assetLibraryCollections": [
+    "backgrounds",
+    "nodeSkins",
+    "nodeArts",
+    "portraits"
+  ],
   "mapRequiredFields": [
     "id",
     "name",
     "chapterId",
+    "space",
+    "display",
     "entryNodeId",
     "nodes",
     "edges"
@@ -24,16 +32,31 @@
     "id",
     "levelId",
     "label",
-    "title",
     "kind",
-    "x",
-    "y"
+    "position.x",
+    "position.y"
+  ],
+  "nodeDisplayOverrideFields": [
+    "title",
+    "objectiveText",
+    "difficultyLabel",
+    "rewardPreview",
+    "iconLabel"
   ],
   "edgeRequiredFields": [
     "id",
     "fromNodeId",
     "toNodeId",
     "type"
+  ],
+  "graphAuthorityFields": [
+    "maps[].backgroundRef",
+    "maps[].space",
+    "maps[].display",
+    "maps[].nodes[].position",
+    "maps[].edges[]",
+    "maps[].entryNodeId",
+    "maps[].nodes[].artRefs.*"
   ],
   "handoffPayloadFields": [
     "selectedLevelId",
@@ -44,8 +67,17 @@
   "consumerNodes": [
     "WBS-3.2.3"
   ],
+  "ownershipNotes": [
+    "maps[].backgroundRef 表示章节/世界地图背景，不表示战斗背景。",
+    "maps[].nodes[].position 与 maps[].edges[] 是地图连接真值，关卡编辑器不负责维护。",
+    "nodes[].objectiveText / difficultyLabel / rewardPreview 等字段在 v1 中视为可选展示覆写；如未提供，应优先回落到 levelId 对应的关卡元数据。"
+  ],
   "notes": [
     "level_map_pack_v1.example.json 是该契约当前地图包样例载体。",
-    "地图包只负责组织与展示，不直接决定战斗运行规则。"
+    "地图包只负责组织与展示，不直接决定战斗运行规则。",
+    "地图包采用 JSON + image assets 组合：maps 中只保存 backgroundRef / artRefs.* 等短引用，真实图片路径集中维护在 assetLibrary.*.src。",
+    "节点位置的真值应表达逻辑地图坐标，不应直接表达当前 DOM 像素坐标。",
+    "边数据只表达 fromNodeId / toNodeId 等关系字段，连线端点与标签位置应由显示层根据节点位置反推。",
+    "抽屉开关、滚动位置、窗口尺寸等编辑器临时状态不属于地图包导出字段。"
   ]
 }

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地图包导入导出与校验</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f3efe6;
+            --panel: rgba(255, 252, 247, 0.94);
+            --line: rgba(94, 78, 56, 0.16);
+            --ink: #2f2417;
+            --soft: #6c5b49;
+            --accent: #8a5522;
+            --blue: #295b8f;
+            --ok: #166534;
+            --warn: #9a3412;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 18px;
+            font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(138, 85, 34, 0.14), transparent 24%),
+                radial-gradient(circle at top right, rgba(41, 91, 143, 0.12), transparent 20%),
+                linear-gradient(180deg, #f6f2ea, #dfe8ef);
+        }
+
+        .page {
+            width: min(1440px, 100%);
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 18px 40px rgba(34, 24, 12, 0.08);
+        }
+
+        .hero h1 {
+            margin: 8px 0 10px;
+            font-size: clamp(30px, 4vw, 44px);
+        }
+
+        .hero p,
+        .guide-card p,
+        .guide-card li,
+        .note,
+        label {
+            line-height: 1.65;
+        }
+
+        .chip-row,
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 30px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: rgba(138, 85, 34, 0.12);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .chip.blue {
+            background: rgba(41, 91, 143, 0.12);
+            color: var(--blue);
+        }
+
+        .status {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid var(--line);
+            font-weight: 700;
+        }
+
+        .guide-grid,
+        .summary-grid,
+        .asset-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .guide-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .summary-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .asset-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .guide-card,
+        .summary-card,
+        .block,
+        .asset-card {
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 14px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(360px, 0.9fr) minmax(520px, 1.3fr);
+            gap: 16px;
+        }
+
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 220px;
+            resize: vertical;
+            border-radius: 14px;
+            border: 1px solid rgba(94, 78, 56, 0.18);
+            padding: 12px;
+            font: 13px/1.55 "Cascadia Mono", "Consolas", monospace;
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--ink);
+        }
+
+        button,
+        .action-link {
+            border: 0;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        button {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        button.secondary,
+        .action-link {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .issue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .issue-item {
+            border-radius: 14px;
+            border: 1px solid rgba(154, 52, 18, 0.22);
+            background: rgba(255, 245, 240, 0.9);
+            padding: 12px;
+        }
+
+        .issue-code {
+            display: inline-block;
+            margin-bottom: 6px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: rgba(154, 52, 18, 0.12);
+            color: var(--warn);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .empty {
+            color: var(--soft);
+        }
+
+        .summary-card strong {
+            display: block;
+            color: var(--soft);
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .summary-card span {
+            display: block;
+            margin-top: 8px;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .note {
+            margin: 0;
+            color: var(--soft);
+        }
+
+        .mono {
+            font-family: "Cascadia Mono", "Consolas", monospace;
+        }
+
+        .asset-card ul {
+            margin: 10px 0 0;
+            padding-left: 18px;
+        }
+
+        .asset-card li {
+            margin-bottom: 8px;
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 1180px) {
+            .guide-grid,
+            .summary-grid,
+            .asset-grid,
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="panel hero">
+            <div class="chip-row">
+                <span class="chip">WBS-3.2.3.3</span>
+                <span class="chip blue">地图包导入导出与校验</span>
+                <span class="chip">IO / round-trip 校核页</span>
+            </div>
+            <h1>地图包导入导出与校验</h1>
+            <p>这是 <strong>WBS-3.2.3.3</strong> 的独立 IO 校核页。它不负责拖拽地图节点，也不重复承担 <strong>WBS-3.2.3.2</strong> 的编辑职责；它只负责验证地图包是否符合 <strong>JSON + image assets</strong> 契约，能否被导入、规范化导出、发现非法字段，并执行 round-trip 稳定性检查。</p>
+            <div id="status" class="status">尚未加载样例。</div>
+        </section>
+
+        <section class="panel">
+            <h2>本页用途</h2>
+            <div class="guide-grid">
+                <article class="guide-card">
+                    <h3>这是个啥工具</h3>
+                    <p>它是地图包的“结构校核页”。你在这里验证的是 JSON 契约和图片资源引用，不是地图舞台视觉，不是战斗主流程，也不是关卡编辑器本身。</p>
+                </article>
+                <article class="guide-card">
+                    <h3>为什么点这些按钮</h3>
+                    <p><strong>Load 合法样例</strong> 用来确认正常地图包可以稳定导入；<strong>Load 非法样例</strong> 用来确认问题码不是靠猜；<strong>Run round-trip</strong> 用来确认导入后再导出不会把结构悄悄弄坏。</p>
+                </article>
+                <article class="guide-card">
+                    <h3>与 3.2.3.2 的关系</h3>
+                    <p><span class="mono">level_map_editor_v1.html</span> 是作者编辑页，负责节点、边、背景的操作；本页负责证明这些产物进入地图包后，导入导出与字段级校验是稳定的。</p>
+                </article>
+                <article class="guide-card">
+                    <h3>你该看什么结论</h3>
+                    <p>先看“合法样例 / 非法样例 / round-trip”三块结论，再看问题码列表。只要问题码能稳定复现、合法样例能稳定归零，就说明 `WBS-3.2.3.3` 的工具边界是清楚的。</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="toolbar">
+                <button type="button" id="loadValidBtn">Load 合法样例</button>
+                <button type="button" id="loadInvalidBtn">Load 非法样例</button>
+                <button type="button" id="analyzeInputBtn">Analyze 当前输入</button>
+                <button type="button" id="roundTripBtn">Run round-trip</button>
+                <a class="action-link" href="./level_map_editor_v1.html" target="_blank" rel="noreferrer">打开 level_map_editor_v1.html</a>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>样例结论</h2>
+            <div id="summaryGrid" class="summary-grid"></div>
+            <p class="note">合法样例应归零问题码；非法样例应稳定打出缺失引用；round-trip 应保持地图 / 节点 / 边数量不漂移。</p>
+        </section>
+
+        <section class="panel">
+            <h2>资源承载方案</h2>
+            <p class="note">这里明确展示地图包的图片承载规则。maps 中只保留短引用，例如 backgroundRef / artRefs.nodeArt / artRefs.portrait；真实图片路径集中维护在 assetLibrary 的背景图资源、节点素材图和立绘图三组集合中。</p>
+            <div id="assetGrid" class="asset-grid">
+                <article class="asset-card">
+                    <h3>背景图资源</h3>
+                    <ul id="backgroundAssetList">
+                        <li class="empty">尚未分析。</li>
+                    </ul>
+                </article>
+                <article class="asset-card">
+                    <h3>节点素材图</h3>
+                    <ul id="nodeArtAssetList">
+                        <li class="empty">尚未分析。</li>
+                    </ul>
+                </article>
+                <article class="asset-card">
+                    <h3>立绘图</h3>
+                    <ul id="portraitAssetList">
+                        <li class="empty">尚未分析。</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+
+        <section class="layout">
+            <div class="panel stack">
+                <div class="block">
+                    <h2>输入 JSON</h2>
+                    <p class="note">你可以先加载合法样例或非法样例，再直接修改这里的文本重新 Analyze。</p>
+                    <textarea id="inputJson" placeholder="加载合法样例、非法样例，或直接粘贴 level_map_pack JSON"></textarea>
+                </div>
+                <div class="block">
+                    <h2>当前问题码</h2>
+                    <div id="issueList" class="issue-list">
+                        <div class="empty">尚未执行分析。</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel stack">
+                <div class="block">
+                    <h2>规范化导出</h2>
+                    <p class="note">这里显示经过 `LevelMapWorkspace` 规范化后的地图包；用于证明导入导出链不是直接把页面状态原样塞回去。</p>
+                    <textarea id="outputJson" readonly></textarea>
+                </div>
+                <div class="block">
+                    <h2>Round-trip 说明</h2>
+                    <p class="note">round-trip 的意思是：导入原始地图包，走一次规范化导出，再重新读回；如果前后摘要计数完全一致，就说明这个地图包至少在结构层是稳定的。</p>
+                    <div id="roundTripResult" class="empty">尚未执行 round-trip。</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script type="module">
+        import {
+            analyzeLevelMapPack,
+            formatLevelMapIssues,
+            runLevelMapPackRoundTrip
+        } from '../script/editor/level/LevelMapPackIO.js';
+
+        const SAMPLE_VALID_URL = '../assets/data/level_map_pack_v1.example.json';
+        const SAMPLE_INVALID_URL = '../assets/data/level_map_pack_v1.invalid.example.json';
+        const LEVELS_URL = '../assets/data/levels.json';
+
+        const statusEl = document.getElementById('status');
+        const summaryGridEl = document.getElementById('summaryGrid');
+        const inputJsonEl = document.getElementById('inputJson');
+        const outputJsonEl = document.getElementById('outputJson');
+        const issueListEl = document.getElementById('issueList');
+        const roundTripResultEl = document.getElementById('roundTripResult');
+        const backgroundAssetListEl = document.getElementById('backgroundAssetList');
+        const nodeArtAssetListEl = document.getElementById('nodeArtAssetList');
+        const portraitAssetListEl = document.getElementById('portraitAssetList');
+
+        let levelsDocument = null;
+        let currentInputLabel = '未命名输入';
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function setStatus(text, isError = false) {
+            statusEl.textContent = text;
+            statusEl.style.color = isError ? '#9a3412' : '#166534';
+        }
+
+        function renderSummary(items) {
+            summaryGridEl.innerHTML = items.map((item) => `
+                <div class="summary-card">
+                    <strong>${escapeHtml(item.label)}</strong>
+                    <span>${escapeHtml(item.value)}</span>
+                    <p class="note">${escapeHtml(item.note)}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderIssues(issues) {
+            if (!issues.length) {
+                issueListEl.innerHTML = '<div class="empty">当前输入未发现问题码。</div>';
+                return;
+            }
+            issueListEl.innerHTML = issues.map((issue) => `
+                <div class="issue-item">
+                    <span class="issue-code">${escapeHtml(issue.code)}</span>
+                    <div class="mono">${escapeHtml([issue.mapId, issue.nodeId || issue.edgeId, issue.detail].filter(Boolean).join(' | ') || '无附加细节')}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderAssetList(host, items, emptyText) {
+            if (!host) return;
+            if (!items.length) {
+                host.innerHTML = `<li class="empty">${escapeHtml(emptyText)}</li>`;
+                return;
+            }
+            host.innerHTML = items.map((item) => `
+                <li>
+                    <strong>${escapeHtml(item.id)}</strong><br>
+                    <span>${escapeHtml(item.label || item.id)}</span><br>
+                    <span class="mono">${escapeHtml(item.src || item.thumbnailSrc || '未配置路径')}</span>
+                </li>
+            `).join('');
+        }
+
+        function renderAssetScheme(assetLibrary) {
+            const library = assetLibrary || {};
+            renderAssetList(backgroundAssetListEl, Array.isArray(library.backgrounds) ? library.backgrounds : [], '尚未发现背景图资源。');
+            renderAssetList(nodeArtAssetListEl, Array.isArray(library.nodeArts) ? library.nodeArts : [], '尚未发现节点素材图。');
+            renderAssetList(portraitAssetListEl, Array.isArray(library.portraits) ? library.portraits : [], '尚未发现立绘图。');
+        }
+
+        async function ensureLevelsDocument() {
+            if (levelsDocument) return levelsDocument;
+            const response = await fetch(LEVELS_URL, { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error(`levels.json 加载失败: ${response.status}`);
+            }
+            levelsDocument = await response.json();
+            return levelsDocument;
+        }
+
+        async function loadSample(url, label) {
+            setStatus(`正在加载${label}...`);
+            const response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error(`${label}加载失败: ${response.status}`);
+            }
+            const json = await response.json();
+            currentInputLabel = label;
+            inputJsonEl.value = JSON.stringify(json, null, 2);
+            analyzeCurrentInput();
+        }
+
+        async function analyzeCurrentInput() {
+            try {
+                const raw = JSON.parse(inputJsonEl.value || '{}');
+                const currentLevels = await ensureLevelsDocument();
+                const report = analyzeLevelMapPack(raw, { levelsDocument: currentLevels });
+                const issues = formatLevelMapIssues(report.issues);
+
+                outputJsonEl.value = JSON.stringify(report.normalized, null, 2);
+                renderIssues(issues);
+                renderSummary([
+                    { label: '当前输入', value: currentInputLabel, note: '本轮分析的地图包来源' },
+                    { label: '地图数', value: report.summary.mapCount, note: 'maps[] 数量' },
+                    { label: '节点 / 边', value: `${report.summary.nodeCount} / ${report.summary.edgeCount}`, note: '节点与边总数' },
+                    { label: '问题码', value: report.issueCount, note: '合法样例应为 0；非法样例应稳定报错' },
+                    { label: '背景图资源', value: report.summary.backgroundAssetCount, note: 'assetLibrary.backgrounds[] 数量' },
+                    { label: '节点素材图', value: report.summary.nodeArtAssetCount, note: 'assetLibrary.nodeArts[] 数量' },
+                    { label: '立绘图', value: report.summary.portraitAssetCount, note: 'assetLibrary.portraits[] 数量' }
+                ]);
+                renderAssetScheme(report.normalized.assetLibrary);
+                roundTripResultEl.textContent = '尚未执行 round-trip。';
+                setStatus(`${currentInputLabel} 已完成分析。`);
+            } catch (error) {
+                outputJsonEl.value = '';
+                renderIssues([]);
+                renderSummary([
+                        { label: '当前输入', value: currentInputLabel, note: '本轮分析失败' },
+                        { label: '地图数', value: '-', note: '等待合法 JSON' },
+                        { label: '节点 / 边', value: '-', note: '等待合法 JSON' },
+                        { label: '问题码', value: '-', note: '等待合法 JSON' },
+                        { label: '背景图资源', value: '-', note: '等待合法 JSON' },
+                        { label: '节点素材图', value: '-', note: '等待合法 JSON' },
+                        { label: '立绘图', value: '-', note: '等待合法 JSON' }
+                    ]);
+                    renderAssetScheme(null);
+                    roundTripResultEl.textContent = '尚未执行 round-trip。';
+                    setStatus(`分析失败：${error.message}`, true);
+                }
+        }
+
+        async function runRoundTrip() {
+            try {
+                const raw = JSON.parse(inputJsonEl.value || '{}');
+                const currentLevels = await ensureLevelsDocument();
+                const report = runLevelMapPackRoundTrip(raw, { levelsDocument: currentLevels });
+                roundTripResultEl.innerHTML = `
+                    <div><strong>当前输入：</strong>${escapeHtml(currentInputLabel)}</div>
+                    <div><strong>前置问题码：</strong>${escapeHtml(report.before.issueCount)}</div>
+                    <div><strong>回读后问题码：</strong>${escapeHtml(report.after.issueCount)}</div>
+                    <div><strong>结构是否稳定：</strong>${escapeHtml(report.structuralMatch ? '是' : '否')}</div>
+                `;
+                setStatus(`${currentInputLabel} 的 round-trip 已执行。`);
+            } catch (error) {
+                roundTripResultEl.textContent = 'round-trip 执行失败。';
+                setStatus(`round-trip 失败：${error.message}`, true);
+            }
+        }
+
+        document.getElementById('loadValidBtn').addEventListener('click', () => {
+            loadSample(SAMPLE_VALID_URL, '合法样例').catch((error) => setStatus(error.message, true));
+        });
+        document.getElementById('loadInvalidBtn').addEventListener('click', () => {
+            loadSample(SAMPLE_INVALID_URL, '非法样例').catch((error) => setStatus(error.message, true));
+        });
+        document.getElementById('analyzeInputBtn').addEventListener('click', () => {
+            analyzeCurrentInput();
+        });
+        document.getElementById('roundTripBtn').addEventListener('click', () => {
+            runRoundTrip();
+        });
+
+        renderSummary([
+            { label: '当前输入', value: '未加载', note: '先加载合法样例或非法样例' },
+            { label: '地图数', value: '-', note: '等待分析' },
+            { label: '节点 / 边', value: '-', note: '等待分析' },
+            { label: '问题码', value: '-', note: '等待分析' },
+            { label: '背景图资源', value: '-', note: '等待分析' },
+            { label: '节点素材图', value: '-', note: '等待分析' },
+            { label: '立绘图', value: '-', note: '等待分析' }
+        ]);
+        renderAssetScheme(null);
+    </script>
+</body>
+</html>

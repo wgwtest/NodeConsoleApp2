@@ -1,5 +1,7 @@
 import LevelPackWorkspace from './LevelPackWorkspace.js';
 import LevelEditorPage from './LevelEditorPage.js';
+import LevelMapWorkspace from './LevelMapWorkspace.js';
+import LevelMapEditorPage from './LevelMapEditorPage.js';
 import {
     clearContentPackOverride,
     getContentPackOverride,
@@ -43,4 +45,25 @@ export function bootLevelEditorPage(options = {}) {
     return page;
 }
 
-export { LevelPackWorkspace, LevelEditorPage };
+export function createLevelMapEditorPage(options = {}) {
+    return new LevelMapEditorPage({
+        document: options.document || globalThis.document,
+        mapSourceUrl: options.mapSourceUrl || '../assets/data/level_map_pack_v1.example.json',
+        levelSourceUrl: options.levelSourceUrl || '../assets/data/levels.json',
+        fetchImpl: options.fetchImpl || globalThis.fetch?.bind(globalThis),
+        workspaceFactory(rawMapPack, levelsDocument) {
+            return new LevelMapWorkspace(rawMapPack, { levelsDocument });
+        }
+    });
+}
+
+export function bootLevelMapEditorPage(options = {}) {
+    const page = createLevelMapEditorPage(options);
+    page.bind();
+    page.loadDefaultDocuments().catch((error) => {
+        page.setStatus(`默认地图包加载失败：${error.message}`);
+    });
+    return page;
+}
+
+export { LevelPackWorkspace, LevelEditorPage, LevelMapWorkspace, LevelMapEditorPage };
