@@ -58,6 +58,8 @@
                     <li><code>Pack Source</code>：`file` 表示走默认文件，`override` 表示运行时已经读到 override 存储。</li>
                     <li><code>Resolved Level Name</code>：运行时真正解析出来的关卡名。</li>
                     <li><code>Resolved Enemy Members</code>：运行时从关卡波次和敌人池映射出来的成员列表。</li>
+                    <li><code>Unlock Rules</code>：运行时读到的关卡解锁规则。</li>
+                    <li><code>Victory Condition</code> / <code>Failure Condition</code>：运行时读到的胜败条件。</li>
                     <li><code>Instantiated Enemy Names</code>：真正调用 <code>instantiateLevel()</code> 后实例化出来的敌人名。</li>
                 </ul>
             </div>
@@ -66,13 +68,13 @@
                 <ol>
                     <li>点 <code>Reload Runtime</code> 后，页面会重新读取当前关卡 pack。</li>
                     <li>若前一页已写入 override，则 <code>Pack Source</code> 应显示为 <code>override</code>。</li>
-                    <li><code>Resolved Level Name</code> 和 <code>Resolved Enemy Members</code> 应显示覆写后的样本值。</li>
+                    <li><code>Resolved Level Name</code>、<code>Resolved Enemy Members</code>、<code>Unlock Rules</code>、<code>Victory Condition</code>、<code>Failure Condition</code> 应显示 override 后的关卡配置。</li>
                     <li>点 <code>Instantiate Probe Level</code> 后，<code>Instantiated Enemy Names</code> 应显示运行时实例化出的敌人名。</li>
                 </ol>
             </div>
             <div class="guide-card">
                 <h3>为什么这能证明</h3>
-                <p>本页会重新加载 <code>DataManagerV2.js</code>，不共享 I/O 页内存。如果这里仍能读到 override 后的关卡名和敌人池成员，说明运行时消费的是“存储里的产物”而不是“上一页的内存对象”。再调用 <code>instantiateLevel()</code> 得到具体敌人名，就证明关卡 pack 到实例化链路已经贯通。</p>
+                <p>本页会重新加载 <code>DataManagerV2.js</code>，不共享 I/O 页内存。如果这里仍能读到 override 后的关卡名、敌人池成员、unlockRules、victoryCondition 和 failureCondition，说明运行时消费的是“存储里的产物”而不是“上一页的内存对象”。再调用 <code>instantiateLevel()</code> 得到具体敌人名，就证明关卡 pack 到实例化链路已经贯通。</p>
             </div>
         </div>
         <h3>按钮说明</h3>
@@ -126,6 +128,12 @@
             <div class="v" id="resolvedMembers">-</div>
             <div class="k">Slot Layout ID</div>
             <div class="v" id="slotLayoutId">-</div>
+            <div class="k">Unlock Rules</div>
+            <div class="v" id="resolvedUnlockRules">-</div>
+            <div class="k">Victory Condition</div>
+            <div class="v" id="resolvedVictoryCondition">-</div>
+            <div class="k">Failure Condition</div>
+            <div class="v" id="resolvedFailureCondition">-</div>
             <div class="k">Instantiated Enemy Names</div>
             <div class="v" id="instantiatedEnemies">-</div>
         </div>
@@ -156,6 +164,16 @@
         logsEl.textContent = logs.join('\n');
     }
 
+    function formatStructuredValue(value, fallback = '-') {
+        if (value == null) return fallback;
+        if (typeof value === 'string') return value || fallback;
+        try {
+            return JSON.stringify(value, null, 2);
+        } catch (error) {
+            return String(value);
+        }
+    }
+
     function renderPackMeta(levelConfig) {
         const meta = DataManager.getLevelPackMeta();
         const members = Array.isArray(levelConfig?.waves?.[0]?.enemies)
@@ -167,6 +185,9 @@
         document.getElementById('resolvedName').textContent = levelConfig?.name || '(missing)';
         document.getElementById('resolvedMembers').textContent = members;
         document.getElementById('slotLayoutId').textContent = levelConfig?.battleRules?.slotLayoutId || 'default_v1';
+        document.getElementById('resolvedUnlockRules').textContent = formatStructuredValue(levelConfig?.flow?.unlockRules, '-');
+        document.getElementById('resolvedVictoryCondition').textContent = formatStructuredValue(levelConfig?.battleRules?.victoryCondition, '-');
+        document.getElementById('resolvedFailureCondition').textContent = formatStructuredValue(levelConfig?.battleRules?.failureCondition, '-');
     }
 
     async function reloadRuntime() {
@@ -176,16 +197,19 @@
         try {
             await DataManager.loadConfigs();
             const levelConfig = DataManager.getLevelConfig(PROBE_LEVEL_ID);
-            if (!levelConfig) {
-                throw new Error(`Missing ${PROBE_LEVEL_ID} in loaded runtime definitions.`);
+                if (!levelConfig) {
+                    throw new Error(`Missing ${PROBE_LEVEL_ID} in loaded runtime definitions.`);
+                }
+                renderPackMeta(levelConfig);
+                appendLog(`Runtime loaded. source=${DataManager.getLevelPackMeta()?.source || 'file'} levelName=${levelConfig.name}`);
+                appendLog(`unlockRules=${formatStructuredValue(levelConfig?.flow?.unlockRules, '-')}`);
+                appendLog(`victoryCondition=${formatStructuredValue(levelConfig?.battleRules?.victoryCondition, '-')}`);
+                appendLog(`failureCondition=${formatStructuredValue(levelConfig?.battleRules?.failureCondition, '-')}`);
+                setStatus('Runtime ready.');
+            } catch (error) {
+                setStatus(`Runtime load failed: ${error.message}`, true);
+                appendLog(`[ERROR] ${error.message}`);
             }
-            renderPackMeta(levelConfig);
-            appendLog(`Runtime loaded. source=${DataManager.getLevelPackMeta()?.source || 'file'} levelName=${levelConfig.name}`);
-            setStatus('Runtime ready.');
-        } catch (error) {
-            setStatus(`Runtime load failed: ${error.message}`, true);
-            appendLog(`[ERROR] ${error.message}`);
-        }
     }
 
     function instantiateProbeLevel() {
