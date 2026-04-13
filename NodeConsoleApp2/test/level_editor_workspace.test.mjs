@@ -7,6 +7,7 @@ import { Buffer } from 'node:buffer';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const workspaceModulePath = path.join(repoRoot, 'script', 'editor', 'level', 'LevelPackWorkspace.js');
+const invalidExamplePath = path.join(repoRoot, 'assets', 'data', 'levels.invalid.example.json');
 
 function buildFixtureDoc() {
     return {
@@ -144,7 +145,7 @@ async function importWorkspaceModule() {
     return import(`data:text/javascript;base64,${encoded}`);
 }
 
-test('LevelPackWorkspace 能按 kind 列出关卡并补齐故事关卡 nextLevelIds', async () => {
+test('LevelPackWorkspace 能按 kind 列出关卡且 story flow 只保留正式字段', async () => {
     const { LevelPackWorkspace } = await importWorkspaceModule();
     const workspace = new LevelPackWorkspace(buildFixtureDoc());
 
@@ -153,9 +154,9 @@ test('LevelPackWorkspace 能按 kind 列出关卡并补齐故事关卡 nextLevel
 
     const level_1_1 = workspace.getLevel('level_1_1');
     assert.deepEqual(
-        level_1_1.flow.nextLevelIds,
-        ['level_1_2'],
-        '未显式配置关系时，应按当前 story 顺序补出默认 nextLevelIds'
+        Object.keys(level_1_1.flow).sort(),
+        ['chapterId', 'chapterLabel', 'chapterOrder', 'chapterTitle', 'kind', 'nodeLabel', 'objectiveText', 'order', 'unlockRules'].sort(),
+        '关卡工作区不应再导出额外的旧版后继字段'
     );
 });
 
@@ -193,7 +194,7 @@ test('LevelPackWorkspace 可以新增关卡并自动创建首波敌人池', asyn
     );
 });
 
-test('LevelPackWorkspace 删除关卡时会修剪其他关卡的 nextLevelIds', async () => {
+test('LevelPackWorkspace 删除关卡时仅移除目标关卡，不回写旧版后继字段', async () => {
     const { LevelPackWorkspace } = await importWorkspaceModule();
     const workspace = new LevelPackWorkspace(buildFixtureDoc());
 
@@ -204,19 +205,21 @@ test('LevelPackWorkspace 删除关卡时会修剪其他关卡的 nextLevelIds', 
         chapterId: 'chapter_1',
         chapterTitle: '测试章节'
     });
-    workspace.setNextLevelIds('level_1_2', ['level_1_3']);
 
     workspace.removeLevel('level_1_3');
 
-    assert.deepEqual(workspace.getLevel('level_1_2').flow.nextLevelIds, []);
     assert.equal(workspace.getLevel('level_1_3'), null);
+    assert.deepEqual(
+        Object.keys(workspace.getLevel('level_1_2').flow).sort(),
+        ['chapterId', 'chapterLabel', 'chapterOrder', 'chapterTitle', 'kind', 'nodeLabel', 'objectiveText', 'order', 'unlockRules'].sort(),
+        '删除关卡后其余关卡不应残留旧版后继字段'
+    );
 });
 
-test('LevelPackWorkspace 会报告缺失的关卡连接和敌人池引用', async () => {
+test('LevelPackWorkspace 会报告缺失的敌人池引用，且不再校验旧版后继字段', async () => {
     const { LevelPackWorkspace } = await importWorkspaceModule();
     const workspace = new LevelPackWorkspace(buildFixtureDoc());
 
-    workspace.setNextLevelIds('level_1_1', ['level_missing']);
     workspace.updateLevel('level_1_2', (level) => ({
         ...level,
         waves: [
@@ -228,7 +231,7 @@ test('LevelPackWorkspace 会报告缺失的关卡连接和敌人池引用', asyn
     }));
 
     const issueCodes = workspace.validateDocument().map(issue => issue.code).sort();
-    assert.deepEqual(issueCodes, ['missing_enemy_pool', 'missing_next_level']);
+    assert.deepEqual(issueCodes, ['missing_enemy_pool']);
 });
 
 test('LevelPackWorkspace 导出后仍保持 wrapped levels.json 结构', async () => {
@@ -249,4 +252,100 @@ test('LevelPackWorkspace 导出后仍保持 wrapped levels.json 结构', async (
     assert.equal(typeof exported.enemyPools, 'object');
     assert.equal(typeof exported.levels, 'object');
     assert.equal(exported.levels.level_1_1.rewards.kp, 3);
+    assert.deepEqual(
+        Object.keys(exported.levels.level_1_1.flow).sort(),
+        ['chapterId', 'chapterLabel', 'chapterOrder', 'chapterTitle', 'kind', 'nodeLabel', 'objectiveText', 'order', 'unlockRules'].sort(),
+        '导出结构中不应再包含旧版后继字段'
+    );
+});
+
+test('LevelPackWorkspace 会为关卡补齐 unlockRules 与胜败条件默认字段', async () => {
+    const { LevelPackWorkspace } = await importWorkspaceModule();
+    const workspace = new LevelPackWorkspace(buildFixtureDoc());
+
+    const level = workspace.getLevel('level_1_1');
+    assert.deepEqual(
+        level.flow.unlockRules,
+        {
+            mode: 'always',
+            requiredLevelIds: []
+        },
+        '关卡工作区应补齐默认 unlockRules，避免页面层自己猜默认值'
+    );
+    assert.deepEqual(
+        level.battleRules.victoryCondition,
+        {
+            type: 'defeat_all_enemies'
+        },
+        '关卡工作区应补齐默认 victoryCondition'
+    );
+    assert.deepEqual(
+        level.battleRules.failureCondition,
+        {
+            type: 'player_hp_zero'
+        },
+        '关卡工作区应补齐默认 failureCondition'
+    );
+});
+
+test('LevelPackWorkspace 会报告无效的 unlockRules、胜利条件、失败条件和奖励字段', async () => {
+    const { LevelPackWorkspace } = await importWorkspaceModule();
+    const workspace = new LevelPackWorkspace(buildFixtureDoc());
+
+    workspace.updateLevel('level_1_1', (level) => ({
+        ...level,
+        flow: {
+            ...level.flow,
+            unlockRules: {
+                mode: 'after_levels_cleared',
+                requiredLevelIds: ['level_missing']
+            }
+        },
+        battleRules: {
+            ...level.battleRules,
+            victoryCondition: {
+                type: 'survive_rounds',
+                value: 0
+            },
+            failureCondition: {
+                type: 'body_part_broken',
+                target: ''
+            }
+        },
+        rewards: {
+            ...level.rewards,
+            kp: -1
+        }
+    }));
+
+    const issueCodes = workspace.validateDocument().map(issue => issue.code).sort();
+    assert.deepEqual(
+        issueCodes,
+        [
+            'invalid_failure_condition',
+            'invalid_reward_value',
+            'invalid_unlock_rule_reference',
+            'invalid_victory_condition'
+        ],
+        '字段级校验应覆盖 unlockRules / 胜败条件 / 奖励值等关键作者字段'
+    );
+});
+
+test('levels.invalid.example.json 会被关卡工作区识别为非法样例', async () => {
+    const { LevelPackWorkspace } = await importWorkspaceModule();
+    const raw = JSON.parse(await fsp.readFile(invalidExamplePath, 'utf8'));
+    const workspace = new LevelPackWorkspace(raw);
+
+    const issueCodes = workspace.validateDocument().map(issue => issue.code).sort();
+    assert.deepEqual(
+        issueCodes,
+        [
+            'invalid_failure_condition',
+            'invalid_reward_value',
+            'invalid_unlock_rule_reference',
+            'invalid_victory_condition',
+            'missing_enemy_pool'
+        ],
+        '非法样例文件应稳定触发工作区关键校验码'
+    );
 });

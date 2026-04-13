@@ -1,4 +1,4 @@
-# 2026-04-10 21:10 WBS-3.2.4 正式关卡编辑器基础能力与 JSON 导出链人工验收清单
+# 2026-04-10 21:10 WBS-3.2.2 关卡编辑器基础能力与 JSON 导出链人工验收清单
 
 集中验收入口：【通过】
 
@@ -7,13 +7,13 @@
 
 对应节点：
 
-1. `#79 / WBS-3.2.4 正式关卡编辑器基础能力与 JSON 导出链`
+1. `#79 / WBS-3.2.2 关卡编辑器基础能力与 JSON 导出链`
 
 ## 1. 验收目标
 
 确认当前工程已经具备一个独立于主流程的正式关卡编辑器入口，能够在浏览器内直接编辑关卡 pack、导出 wrapped `levels.json`、写入 runtime override，并由独立运行时页面消费这份产物。
 
-本清单只对应 `WBS-3.2.4`，不再沿用旧 `C2.4` 的“样本页口径清理”验收目标。
+本清单只对应 `WBS-3.2.2`，不再沿用旧 `C2.4` 的“样本页口径清理”验收目标。
 
 ## 2. 验收入口
 
@@ -38,9 +38,9 @@ PORT=3101 node app.js
 4. `level_runtime_probe.html` 只负责验证运行时是否消费 override
 5. 旧 `level_editor_io_test.html` 是历史 I/O 样本页，不再作为本节点主验收入口
 
-## 4. 为什么这些步骤能证明 WBS-3.2.4
+## 4. 为什么这些步骤能证明 WBS-3.2.2
 
-1. `WBS-3.2.4` 的核心不是“再做一个样本页”，而是交付正式关卡编辑器
+1. `WBS-3.2.2` 的核心不是“再做一个样本页”，而是交付正式关卡编辑器
 2. 因此必须同时验证三件事：
    - 页面本身能否直接编辑关卡数据
    - 编辑结果能否导出成运行时可消费 JSON
@@ -65,7 +65,7 @@ PORT=3101 node app.js
 2. 修改以下字段：
    - `名称` 改成 `幽暗森林边缘·人工验收样本`
    - `KP` 改成 `7`
-   - 在 `nextLevelIds` 复选框里取消勾选 `level_1_2_story`
+   - 清理旧版后继字段后保存当前关卡
 3. 点击 `保存当前关卡`
 4. 在 `波次与敌人池` 区域修改：
    - `enemyPoolName` 改成 `幽暗森林边缘敌人池·人工验收样本`
@@ -81,7 +81,7 @@ enemy_acceptance_guard@2
 7. 观察点：
    - 导出区 JSON 中 `levels.level_1_1.name = 幽暗森林边缘·人工验收样本`
    - `levels.level_1_1.rewards.kp = 7`
-   - `levels.level_1_1.flow.nextLevelIds = []`
+   - `levels.level_1_1.flow` 中不再包含旧版后继字段
    - `enemyPools.pool_story_goblin_edge.name = 幽暗森林边缘敌人池·人工验收样本`
    - `enemyPools.pool_story_goblin_edge.members` 为两项：
      - `goblin_story_headhunter@1`

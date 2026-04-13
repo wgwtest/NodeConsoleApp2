@@ -101,9 +101,14 @@ export class LevelEditorPage {
             'chapterTitleInput',
             'nodeLabelInput',
             'objectiveTextInput',
-            'nextLevelList',
+            'unlockModeInput',
+            'unlockRequiredLevelIdsInput',
             'backgroundInput',
             'slotLayoutIdInput',
+            'victoryConditionTypeInput',
+            'victoryConditionValueInput',
+            'failureConditionTypeInput',
+            'failureConditionTargetInput',
             'difficultyLabelInput',
             'enemyStyleTagsInput',
             'buildHintInput',
@@ -117,6 +122,8 @@ export class LevelEditorPage {
             'waveEnemyPoolIdInput',
             'enemyPoolNameInput',
             'enemyMembersInput',
+            'importJsonInput',
+            'importJsonBtn',
             'exportOutput',
             'overrideStatus'
         ];
@@ -134,6 +141,7 @@ export class LevelEditorPage {
         this.bindAction('saveWaveBtn', () => this.saveSelectedWave());
         this.bindAction('exportBtn', () => this.exportCurrentPack());
         this.bindAction('downloadBtn', () => this.downloadCurrentPack());
+        this.bindAction('importJsonBtn', () => this.importSelectedFile());
         this.bindAction('applyOverrideBtn', () => this.applyRuntimeOverride());
         this.bindAction('clearOverrideBtn', () => this.clearRuntimeOverride());
     }
@@ -254,10 +262,16 @@ export class LevelEditorPage {
         const list = createElement(this.document, 'ul', 'validation-issues');
         issues.forEach((issue) => {
             const item = createElement(this.document, 'li');
-            if (issue.code === 'missing_next_level') {
-                item.textContent = `${issue.levelId} 指向了不存在的下一关 ${issue.nextLevelId}`;
-            } else if (issue.code === 'missing_enemy_pool') {
+            if (issue.code === 'missing_enemy_pool') {
                 item.textContent = `${issue.levelId}/${issue.waveId} 引用了不存在的敌人池 ${issue.enemyPoolId}`;
+            } else if (issue.code === 'invalid_unlock_rule_reference') {
+                item.textContent = `${issue.levelId} 的 unlockRules 引用了无效前置关卡 ${issue.requiredLevelId}`;
+            } else if (issue.code === 'invalid_victory_condition') {
+                item.textContent = `${issue.levelId} 的 victoryCondition 配置无效`;
+            } else if (issue.code === 'invalid_failure_condition') {
+                item.textContent = `${issue.levelId} 的 failureCondition 配置无效`;
+            } else if (issue.code === 'invalid_reward_value') {
+                item.textContent = `${issue.levelId} 的奖励字段 ${issue.rewardKey} 必须为非负数`;
             } else {
                 item.textContent = JSON.stringify(issue);
             }
@@ -280,51 +294,22 @@ export class LevelEditorPage {
         this.setValue('chapterTitleInput', level?.flow?.chapterTitle || '');
         this.setValue('nodeLabelInput', level?.flow?.nodeLabel || '');
         this.setValue('objectiveTextInput', level?.flow?.objectiveText || '');
+        this.setValue('unlockModeInput', level?.flow?.unlockRules?.mode || 'always');
+        this.setValue('unlockRequiredLevelIdsInput', asArray(level?.flow?.unlockRules?.requiredLevelIds).join(', '));
         this.setValue('backgroundInput', level?.background || '');
         this.setValue('slotLayoutIdInput', level?.battleRules?.slotLayoutId || '');
+        this.setValue('victoryConditionTypeInput', level?.battleRules?.victoryCondition?.type || 'defeat_all_enemies');
+        this.setValue('victoryConditionValueInput', level?.battleRules?.victoryCondition?.value ?? '');
+        this.setValue('failureConditionTypeInput', level?.battleRules?.failureCondition?.type || 'player_hp_zero');
+        this.setValue('failureConditionTargetInput', level?.battleRules?.failureCondition?.target || '');
         this.setValue('difficultyLabelInput', level?.selectionMeta?.difficultyLabel || '');
         this.setValue('enemyStyleTagsInput', asArray(level?.selectionMeta?.enemyStyleTags).join(', '));
         this.setValue('buildHintInput', level?.selectionMeta?.buildHint || '');
         this.setValue('rewardExpInput', level?.rewards?.exp ?? 0);
         this.setValue('rewardGoldInput', level?.rewards?.gold ?? 0);
         this.setValue('rewardKpInput', level?.rewards?.kp ?? 0);
-        this.renderNextLevelList(level);
         this.renderWaveList(level);
         this.renderSelectedWave(level);
-    }
-
-    renderNextLevelList(level) {
-        const host = this.elements.nextLevelList;
-        if (!host) return;
-        host.innerHTML = '';
-
-        if (!this.workspace || !level) {
-            host.textContent = '尚未选择关卡。';
-            return;
-        }
-
-        if (level.flow.kind !== 'story') {
-            host.textContent = '非 story 关卡无需维护 nextLevelIds。';
-            return;
-        }
-
-        const storyLevels = this.workspace.listLevels({ kind: 'story' }).filter(item => item.id !== level.id);
-        const currentNext = new Set(asArray(level.flow.nextLevelIds));
-        if (!storyLevels.length) {
-            host.textContent = '当前没有可连接的其他 story 关卡。';
-            return;
-        }
-
-        storyLevels.forEach((candidate) => {
-            const label = createElement(this.document, 'label', 'next-level-option');
-            const checkbox = createElement(this.document, 'input');
-            checkbox.type = 'checkbox';
-            checkbox.value = candidate.id;
-            checkbox.checked = currentNext.has(candidate.id);
-            label.appendChild(checkbox);
-            label.appendChild(this.document.createTextNode(` ${candidate.id} | ${candidate.name}`));
-            host.appendChild(label);
-        });
     }
 
     renderWaveList(level = null) {
@@ -372,7 +357,10 @@ export class LevelEditorPage {
         if (!this.workspace || !level) return null;
 
         const kind = this.elements.levelKindSelect?.value || level.flow.kind || 'story';
-        const nextLevelIds = this.collectCheckedNextLevelIds();
+        const unlockMode = this.elements.unlockModeInput?.value || 'always';
+        const unlockRequiredLevelIds = splitTextList(this.elements.unlockRequiredLevelIdsInput?.value || '');
+        const victoryConditionType = this.elements.victoryConditionTypeInput?.value || 'defeat_all_enemies';
+        const failureConditionType = this.elements.failureConditionTypeInput?.value || 'player_hp_zero';
         const nextLevel = {
             ...level,
             name: this.elements.levelNameInput?.value?.trim() || level.name,
@@ -385,7 +373,19 @@ export class LevelEditorPage {
             background: this.elements.backgroundInput?.value?.trim() || '',
             battleRules: {
                 ...asObject(level.battleRules),
-                slotLayoutId: this.elements.slotLayoutIdInput?.value?.trim() || ''
+                slotLayoutId: this.elements.slotLayoutIdInput?.value?.trim() || '',
+                victoryCondition: victoryConditionType === 'survive_rounds'
+                    ? {
+                        type: 'survive_rounds',
+                        value: toFiniteNumber(this.elements.victoryConditionValueInput?.value, 0)
+                    }
+                    : { type: 'defeat_all_enemies' },
+                failureCondition: failureConditionType === 'body_part_broken'
+                    ? {
+                        type: 'body_part_broken',
+                        target: this.elements.failureConditionTargetInput?.value?.trim() || ''
+                    }
+                    : { type: 'player_hp_zero' }
             },
             selectionMeta: {
                 difficultyLabel: this.elements.difficultyLabelInput?.value || '',
@@ -406,7 +406,6 @@ export class LevelEditorPage {
             nextLevel.flow.chapterTitle = this.elements.chapterTitleInput?.value || '';
             nextLevel.flow.nodeLabel = this.elements.nodeLabelInput?.value || '';
             nextLevel.flow.objectiveText = this.elements.objectiveTextInput?.value || '';
-            nextLevel.flow.nextLevelIds = nextLevelIds;
         } else {
             delete nextLevel.flow.chapterId;
             delete nextLevel.flow.chapterOrder;
@@ -414,20 +413,23 @@ export class LevelEditorPage {
             delete nextLevel.flow.chapterTitle;
             delete nextLevel.flow.nodeLabel;
             delete nextLevel.flow.objectiveText;
-            delete nextLevel.flow.nextLevelIds;
         }
+
+        nextLevel.flow.unlockRules = unlockMode === 'after_levels_cleared'
+            ? {
+                mode: 'after_levels_cleared',
+                requiredLevelIds: unlockRequiredLevelIds
+            }
+            : {
+                mode: 'always',
+                requiredLevelIds: []
+            };
 
         this.workspace.updateLevel(level.id, nextLevel);
         this.lastExportedDocument = null;
         this.setStatus(`已保存关卡 ${level.id}。`);
         this.renderAll();
         return this.getCurrentLevel();
-    }
-
-    collectCheckedNextLevelIds() {
-        return Array.from(this.elements.nextLevelList?.querySelectorAll('input[type="checkbox"]') || [])
-            .filter(input => input.checked)
-            .map(input => input.value);
     }
 
     saveSelectedWave() {
@@ -578,6 +580,30 @@ export class LevelEditorPage {
         anchor.click();
         this.revokeObjectURL(objectUrl);
         return objectUrl;
+    }
+
+    async importSelectedFile() {
+        const file = this.elements.importJsonInput?.files?.[0] || null;
+        if (!file) {
+            throw new Error('请先选择要导入的 JSON 文件。');
+        }
+        const text = typeof file.text === 'function'
+            ? await file.text()
+            : await new Response(file).text();
+        return this.importDocumentFromText(text);
+    }
+
+    async importDocumentFromText(text) {
+        let parsed;
+        try {
+            parsed = JSON.parse(String(text || ''));
+        } catch (error) {
+            throw new Error(`非法 JSON：${error.message}`);
+        }
+
+        this.loadDocument(parsed);
+        this.setStatus('已从 JSON 文本导入关卡包。');
+        return this.workspace;
     }
 
     applyRuntimeOverride() {

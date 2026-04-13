@@ -17,7 +17,7 @@ async function importDataManager() {
     return import(`data:text/javascript;base64,${encoded}`);
 }
 
-test('DataManager.getLevelContentSourceOverview 会把正式关卡编辑器纳入作者工具页摘要', async () => {
+test('DataManager.getLevelContentSourceOverview 会把地图 IO 校核页纳入作者工具页摘要', async () => {
     const { default: DataManager } = await importDataManager();
     const dm = Object.create(Object.getPrototypeOf(DataManager));
     dm.levelCatalog = {
@@ -41,9 +41,13 @@ test('DataManager.getLevelContentSourceOverview 会把正式关卡编辑器纳�
     const overview = dm.getLevelContentSourceOverview();
     const authoring = overview.find(item => item.kind === 'authoring');
 
-    assert.equal(authoring?.count, 3);
+    assert.equal(authoring?.count, 5);
     assert.ok(Array.isArray(authoring?.pages), 'authoring.pages 应为数组');
     assert.ok(authoring.pages.includes('test/level_editor_v1.html'));
+    assert.ok(authoring.pages.includes('test/level_map_editor_v1.html'));
     assert.ok(authoring.pages.includes('test/level_editor_io_test.html'));
+    assert.ok(authoring.pages.includes('test/level_map_editor_io_test.html'));
     assert.ok(authoring.pages.includes('test/level_runtime_probe.html'));
+    assert.ok(Array.isArray(authoring?.details), 'authoring.details 应为数组');
+    assert.ok(authoring.details.includes('地图编辑页已支持逻辑空间与显示配置编辑'));
 });

@@ -1,0 +1,87 @@
+{
+  "$schemaVersion": "levels_v1_wrapped",
+  "meta": {
+    "title": "Level Pack Invalid Example",
+    "notes": [
+      "用于 WBS-3.2.2.3 非法样例验证。",
+      "本文件故意包含坏引用、坏奖励值和坏胜败条件，不应直接投入运行时。"
+    ],
+    "enums": {
+      "waveTypes": [
+        "fixed"
+      ],
+      "slotLayoutIds": [
+        "default_v1"
+      ],
+      "backgrounds": [
+        "bg_forest_01"
+      ]
+    }
+  },
+  "enemyPools": {
+    "pool_valid_example": {
+      "id": "pool_valid_example",
+      "name": "合法敌人池",
+      "members": [
+        {
+          "templateId": "goblin_story_headhunter",
+          "position": 1
+        }
+      ]
+    }
+  },
+  "levels": {
+    "level_invalid_1": {
+      "id": "level_invalid_1",
+      "name": "非法样例关卡",
+      "description": "故意制造多个字段错误，供编辑器与工作区校验链演示。",
+      "flow": {
+        "kind": "story",
+        "order": 1,
+        "chapterId": "story_chapter_invalid",
+        "chapterOrder": 1,
+        "chapterLabel": "非法章",
+        "chapterTitle": "非法样例",
+        "nodeLabel": "X-1",
+        "objectiveText": "这不是可运行关卡，只用于校验示例。",
+        "unlockRules": {
+          "mode": "after_levels_cleared",
+          "requiredLevelIds": [
+            "level_missing_dependency"
+          ]
+        }
+      },
+      "selectionMeta": {
+        "difficultyLabel": "异常",
+        "enemyStyleTags": [
+          "非法样例"
+        ],
+        "buildHint": "此文件应在校验阶段被拦截。"
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "survive_rounds",
+          "value": 0
+        },
+        "failureCondition": {
+          "type": "body_part_broken",
+          "target": ""
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_missing_reference"
+        }
+      ],
+      "rewards": {
+        "exp": 50,
+        "gold": 20,
+        "kp": -1
+      }
+    }
+  }
+}

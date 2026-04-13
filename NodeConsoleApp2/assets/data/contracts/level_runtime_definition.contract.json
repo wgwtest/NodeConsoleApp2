@@ -17,12 +17,42 @@
     "name",
     "description",
     "flow",
+    "battleRules",
     "waves",
     "rewards"
   ],
   "flowRequiredFields": [
     "kind",
-    "order"
+    "order",
+    "unlockRules"
+  ],
+  "unlockRuleFields": [
+    "mode",
+    "requiredLevelIds"
+  ],
+  "battleRuleRequiredFields": [
+    "slotLayoutId",
+    "victoryCondition",
+    "failureCondition"
+  ],
+  "storyPresentationFields": [
+    "flow.chapterId",
+    "flow.chapterOrder",
+    "flow.chapterLabel",
+    "flow.chapterTitle",
+    "flow.nodeLabel",
+    "flow.objectiveText",
+    "selectionMeta.difficultyLabel",
+    "selectionMeta.enemyStyleTags",
+    "selectionMeta.buildHint"
+  ],
+  "victoryConditionTypes": [
+    "defeat_all_enemies",
+    "survive_rounds"
+  ],
+  "failureConditionTypes": [
+    "player_hp_zero",
+    "body_part_broken"
   ],
   "waveRequiredFields": [
     "waveId",
@@ -38,8 +68,15 @@
     "WBS-3.2.2",
     "WBS-3.2.3"
   ],
+  "ownershipNotes": [
+    "levels.*.background 表示战斗场景背景，不表示章节地图背景。",
+    "关卡运行时层不承载地图图结构；地图连接关系、节点坐标、地图背景与节点素材引用由 level_map_definition / level_map_pack 负责。",
+    "无地图模式下的推进提示由顺序、章节和解锁规则推导。"
+  ],
   "notes": [
     "levels.json 是该契约当前运行时落地载体。",
-    "关卡编辑器只能导出满足本契约的数据，不应绕过该契约直接拼页面态。"
+    "关卡编辑器只能导出满足本契约的数据，不应绕过该契约直接拼页面态。",
+    "unlockRules 负责关卡解锁约束；victoryCondition 和 failureCondition 负责战斗结算边界，它们都必须作为数据契约字段存在。",
+    "chapterLabel / chapterTitle / nodeLabel / objectiveText 属于线性 fallback 展示元数据；如果后续进入地图模式，应由地图包承担图结构与节点关系。"
   ]
 }

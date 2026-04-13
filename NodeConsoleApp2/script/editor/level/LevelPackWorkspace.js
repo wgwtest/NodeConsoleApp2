@@ -22,6 +22,21 @@ function uniqueStringList(value) {
     return result;
 }
 
+const ALLOWED_UNLOCK_MODES = new Set([
+    'always',
+    'after_levels_cleared'
+]);
+
+const ALLOWED_VICTORY_TYPES = new Set([
+    'defeat_all_enemies',
+    'survive_rounds'
+]);
+
+const ALLOWED_FAILURE_TYPES = new Set([
+    'player_hp_zero',
+    'body_part_broken'
+]);
+
 function toFiniteNumber(value, fallback = 0) {
     const next = Number(value);
     return Number.isFinite(next) ? next : fallback;
@@ -66,6 +81,57 @@ function normalizeWave(wave, index, defaultWaveType) {
     };
 }
 
+function normalizeUnlockRules(value) {
+    const source = asObject(value);
+    const mode = typeof source.mode === 'string' && ALLOWED_UNLOCK_MODES.has(source.mode.trim())
+        ? source.mode.trim()
+        : 'always';
+
+    if (mode === 'after_levels_cleared') {
+        return {
+            mode,
+            requiredLevelIds: uniqueStringList(source.requiredLevelIds)
+        };
+    }
+
+    return {
+        mode: 'always',
+        requiredLevelIds: []
+    };
+}
+
+function normalizeVictoryCondition(value) {
+    const source = asObject(value);
+    const type = typeof source.type === 'string' && ALLOWED_VICTORY_TYPES.has(source.type.trim())
+        ? source.type.trim()
+        : 'defeat_all_enemies';
+
+    if (type === 'survive_rounds') {
+        return {
+            type,
+            value: Math.max(0, Math.trunc(toFiniteNumber(source.value, 0)))
+        };
+    }
+
+    return { type };
+}
+
+function normalizeFailureCondition(value) {
+    const source = asObject(value);
+    const type = typeof source.type === 'string' && ALLOWED_FAILURE_TYPES.has(source.type.trim())
+        ? source.type.trim()
+        : 'player_hp_zero';
+
+    if (type === 'body_part_broken') {
+        return {
+            type,
+            target: typeof source.target === 'string' ? source.target.trim() : ''
+        };
+    }
+
+    return { type };
+}
+
 function normalizeEnemyPool(poolId, pool) {
     const source = asObject(pool);
     return {
@@ -105,7 +171,9 @@ function normalizeLevel(levelId, level, defaults = {}) {
         battleRules: {
             slotLayoutId: typeof battleRules.slotLayoutId === 'string' && battleRules.slotLayoutId.trim()
                 ? battleRules.slotLayoutId.trim()
-                : defaults.slotLayoutId
+                : defaults.slotLayoutId,
+            victoryCondition: normalizeVictoryCondition(battleRules.victoryCondition),
+            failureCondition: normalizeFailureCondition(battleRules.failureCondition)
         },
         waves: asArray(source.waves).map((wave, index) => normalizeWave(wave, index, defaults.waveType)),
         rewards: {
@@ -124,10 +192,9 @@ function normalizeLevel(levelId, level, defaults = {}) {
         normalized.flow.chapterTitle = typeof flow.chapterTitle === 'string' ? flow.chapterTitle : defaults.chapterTitle;
         normalized.flow.nodeLabel = typeof flow.nodeLabel === 'string' ? flow.nodeLabel : '';
         normalized.flow.objectiveText = typeof flow.objectiveText === 'string' ? flow.objectiveText : '';
-        normalized.flow.nextLevelIds = uniqueStringList(flow.nextLevelIds);
-    } else if (Array.isArray(flow.nextLevelIds)) {
-        normalized.flow.nextLevelIds = uniqueStringList(flow.nextLevelIds);
     }
+
+    normalized.flow.unlockRules = normalizeUnlockRules(flow.unlockRules);
 
     if (Object.keys(selectionMeta).length > 0 || flowKind === 'story') {
         normalized.selectionMeta = {
@@ -182,32 +249,8 @@ export class LevelPackWorkspace {
         });
 
         const rawLevels = asObject(source.levels);
-        const explicitNextLevelFlags = new Map();
         Object.keys(rawLevels).forEach((levelId) => {
-            explicitNextLevelFlags.set(levelId, Array.isArray(rawLevels[levelId]?.flow?.nextLevelIds));
             this.levels[levelId] = normalizeLevel(levelId, rawLevels[levelId], this.defaults);
-        });
-
-        this.applyDerivedStoryLinks(explicitNextLevelFlags);
-    }
-
-    applyDerivedStoryLinks(explicitFlags = new Map()) {
-        const storyLevels = this.listLevels({ kind: 'story' });
-        const byChapter = new Map();
-
-        storyLevels.forEach((level) => {
-            const chapterId = level.flow.chapterId || '__default_story_chapter__';
-            if (!byChapter.has(chapterId)) byChapter.set(chapterId, []);
-            byChapter.get(chapterId).push(level);
-        });
-
-        byChapter.forEach((levels) => {
-            levels.sort(compareLevels);
-            levels.forEach((level, index) => {
-                if (explicitFlags.get(level.id)) return;
-                const nextLevel = levels[index + 1];
-                this.levels[level.id].flow.nextLevelIds = nextLevel ? [nextLevel.id] : [];
-            });
         });
     }
 
@@ -265,7 +308,6 @@ export class LevelPackWorkspace {
             flow.chapterTitle = typeof options.chapterTitle === 'string' ? options.chapterTitle : this.defaults.chapterTitle;
             flow.nodeLabel = typeof options.nodeLabel === 'string' ? options.nodeLabel : '';
             flow.objectiveText = typeof options.objectiveText === 'string' ? options.objectiveText : '';
-            flow.nextLevelIds = [];
         }
 
         this.enemyPools[enemyPoolId] = normalizeEnemyPool(enemyPoolId, {
@@ -285,7 +327,9 @@ export class LevelPackWorkspace {
             },
             background: this.defaults.background,
             battleRules: {
-                slotLayoutId: this.defaults.slotLayoutId
+                slotLayoutId: this.defaults.slotLayoutId,
+                victoryCondition: { type: 'defeat_all_enemies' },
+                failureCondition: { type: 'player_hp_zero' }
             },
             waves: [
                 {
@@ -308,12 +352,6 @@ export class LevelPackWorkspace {
         if (!this.levels[levelId]) return false;
         const removedLevel = this.levels[levelId];
         delete this.levels[levelId];
-
-        Object.values(this.levels).forEach((level) => {
-            if (Array.isArray(level.flow?.nextLevelIds)) {
-                level.flow.nextLevelIds = level.flow.nextLevelIds.filter(nextLevelId => nextLevelId !== levelId);
-            }
-        });
 
         asArray(removedLevel.waves).forEach((wave) => {
             const poolId = typeof wave.enemyPoolId === 'string' ? wave.enemyPoolId : '';
@@ -339,16 +377,6 @@ export class LevelPackWorkspace {
         return this.getLevel(levelId);
     }
 
-    setNextLevelIds(levelId, nextLevelIds) {
-        return this.updateLevel(levelId, (level) => ({
-            ...level,
-            flow: {
-                ...level.flow,
-                nextLevelIds: uniqueStringList(nextLevelIds).filter(nextId => nextId !== levelId)
-            }
-        }));
-    }
-
     upsertEnemyPool(poolId, nextPool) {
         const nextId = this.createUniqueEnemyPoolId(poolId, poolId);
         this.enemyPools[nextId] = normalizeEnemyPool(nextId, nextPool);
@@ -371,13 +399,42 @@ export class LevelPackWorkspace {
         const issues = [];
 
         Object.values(this.levels).forEach((level) => {
-            const nextLevelIds = uniqueStringList(level.flow?.nextLevelIds);
-            nextLevelIds.forEach((nextLevelId) => {
-                if (!this.levels[nextLevelId]) {
+            const unlockRules = asObject(level.flow?.unlockRules);
+            if (unlockRules.mode === 'after_levels_cleared') {
+                uniqueStringList(unlockRules.requiredLevelIds).forEach((requiredLevelId) => {
+                    if (!this.levels[requiredLevelId] || requiredLevelId === level.id) {
+                        issues.push({
+                            code: 'invalid_unlock_rule_reference',
+                            levelId: level.id,
+                            requiredLevelId
+                        });
+                    }
+                });
+            }
+
+            const victoryCondition = asObject(level.battleRules?.victoryCondition);
+            if (victoryCondition.type === 'survive_rounds' && toFiniteNumber(victoryCondition.value, 0) <= 0) {
+                issues.push({
+                    code: 'invalid_victory_condition',
+                    levelId: level.id
+                });
+            }
+
+            const failureCondition = asObject(level.battleRules?.failureCondition);
+            if (failureCondition.type === 'body_part_broken' && !String(failureCondition.target || '').trim()) {
+                issues.push({
+                    code: 'invalid_failure_condition',
+                    levelId: level.id
+                });
+            }
+
+            ['exp', 'gold', 'kp'].forEach((rewardKey) => {
+                const rewardValue = toFiniteNumber(level.rewards?.[rewardKey], Number.NaN);
+                if (!Number.isFinite(rewardValue) || rewardValue < 0) {
                     issues.push({
-                        code: 'missing_next_level',
+                        code: 'invalid_reward_value',
                         levelId: level.id,
-                        nextLevelId
+                        rewardKey
                     });
                 }
             });

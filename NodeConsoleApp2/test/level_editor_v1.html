@@ -306,6 +306,18 @@
             margin-top: 14px;
         }
 
+        .import-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .import-row input[type="file"] {
+            flex: 1 1 280px;
+            background: #fff;
+        }
+
         @media (max-width: 1180px) {
             .workspace {
                 grid-template-columns: 1fr;
@@ -323,7 +335,7 @@
         <section class="hero">
             <div class="hero-meta">
                 <span class="tag">正式编辑器入口</span>
-                <span class="tag">WBS-3.2.4</span>
+                <span class="tag">WBS-3.2.2</span>
                 <span class="tag">作者工具页</span>
             </div>
             <h1>正式关卡编辑器 v1</h1>
@@ -337,24 +349,27 @@
                     <h3>本页用来验证什么</h3>
                     <ol>
                         <li>能否直接从默认 `levels.json` 加载出完整关卡包。</li>
-                        <li>能否修改关卡基本字段、章节关系、波次、敌人池成员。</li>
-                        <li>能否导出新的关卡包 JSON。</li>
+                        <li>能否修改关卡基本字段、章节 fallback 元数据、解锁规则、胜败条件、波次、敌人池成员。</li>
+                        <li>能否导入现有 JSON，再继续编辑并导出新的关卡包 JSON。</li>
                         <li>能否把导出产物写入 runtime override，供独立运行时消费。</li>
                     </ol>
                 </div>
                 <div class="guide-card">
-                    <h3>和其他页面的关系</h3>
+                    <h3>与其他页面的关系</h3>
                     <ul>
                         <li>`level_editor_v1.html`：正式编辑器主入口。</li>
                         <li>`level_runtime_probe.html`：独立运行时消费验证页。</li>
                         <li>`mock_ui_v11.html`：主流程烟测页，验证 override 是否不破坏战斗流程。</li>
-                        <li>旧 `level_editor_io_test.html`：历史 I/O 注入页，不再作为正式入口。</li>
+                        <li>旧 `level_editor_io_test.html`：历史 I/O 注入页，用来对照说明导入导出链，但不再作为正式入口。</li>
                     </ul>
                 </div>
                 <div class="guide-card">
                     <h3>关键字段怎么填</h3>
                     <ul>
-                        <li>`nextLevelIds`：通过复选框显式维护故事关卡后继关系。</li>
+                        <li>`unlockRules`：`after_levels_cleared` 表示需要满足前置关卡；多个 ID 用逗号或换行分隔。</li>
+                        <li>`victoryCondition`：当前支持 `defeat_all_enemies` 和 `survive_rounds`。</li>
+                        <li>`failureCondition`：当前支持 `player_hp_zero` 和 `body_part_broken`。</li>
+                        <li>`background`：这里填写的是战斗场景背景，不是章节地图背景；地图背景在地图编辑器维护。</li>
                         <li>`敌人风格标签`：用逗号或换行分隔多个标签。</li>
                         <li>`敌人池成员`：每行一条，格式为 `templateId@position`。</li>
                         <li>`关卡 ID`：当前版本只读展示，不支持直接改 ID。</li>
@@ -379,7 +394,7 @@
                     <tr>
                         <td>`保存当前关卡` / `保存波次与敌人池`</td>
                         <td>把详情表单和波次表单写回工作区，再刷新列表与校验面板。</td>
-                        <td>证明编辑页本身具备结构化修改能力，而不是单纯展示 JSON。</td>
+                        <td>证明编辑页本身具备结构化修改能力，而不是单纯展示 JSON；同时也证明关卡页只维护运行时关卡与章节展示元数据，不直接维护地图图结构。</td>
                     </tr>
                     <tr>
                         <td>`导出 JSON` / `下载 JSON`</td>
@@ -391,12 +406,18 @@
                         <td>把当前导出的关卡包写入浏览器 localStorage override。</td>
                         <td>这是“编辑器产物 -> 运行时消费”的桥接步骤；之后由 runtime probe 读取并实例化。</td>
                     </tr>
+                    <tr>
+                        <td>`导入现有 JSON`</td>
+                        <td>读取外部 JSON 文件，重建关卡编辑工作区。</td>
+                        <td>证明正式编辑器可以从已有产物继续编辑，而不是只能从默认样例起步。</td>
+                    </tr>
                 </tbody>
             </table>
 
             <div class="footer-link-row">
                 <button id="loadDefaultBtn" type="button">重新加载默认关卡包</button>
                 <button id="openRuntimeProbeBtn" type="button" class="secondary">打开 Runtime Probe</button>
+                <button id="openLegacyIoBtn" type="button" class="ghost">打开 level_editor_io_test.html</button>
                 <button id="openMockUiBtn" type="button" class="ghost">打开 mock_ui_v11.html</button>
             </div>
         </section>
@@ -466,7 +487,7 @@
                         </div>
 
                         <div class="card">
-                            <h3>章节与关系</h3>
+                            <h3>章节与选择展示</h3>
                             <div class="field-grid">
                                 <label class="field">
                                     <span>chapterId</span>
@@ -493,10 +514,6 @@
                                 <span>objectiveText</span>
                                 <textarea id="objectiveTextInput"></textarea>
                             </label>
-                            <div class="field" style="margin-top: 12px;">
-                                <span>nextLevelIds</span>
-                                <div id="nextLevelList" class="next-level-list"></div>
-                            </div>
                         </div>
 
                         <div class="card">
@@ -523,6 +540,46 @@
                                 <span>buildHint</span>
                                 <textarea id="buildHintInput"></textarea>
                             </label>
+                        </div>
+
+                        <div class="card">
+                            <h3>解锁与胜败条件</h3>
+                            <div class="field-grid">
+                                <label class="field">
+                                    <span>unlockMode</span>
+                                    <select id="unlockModeInput">
+                                        <option value="always">always</option>
+                                        <option value="after_levels_cleared">after_levels_cleared</option>
+                                    </select>
+                                </label>
+                                <label class="field">
+                                    <span>victoryCondition.type</span>
+                                    <select id="victoryConditionTypeInput">
+                                        <option value="defeat_all_enemies">defeat_all_enemies</option>
+                                        <option value="survive_rounds">survive_rounds</option>
+                                    </select>
+                                </label>
+                                <label class="field">
+                                    <span>victoryCondition.value</span>
+                                    <input id="victoryConditionValueInput" type="number" step="1">
+                                </label>
+                                <label class="field">
+                                    <span>failureCondition.type</span>
+                                    <select id="failureConditionTypeInput">
+                                        <option value="player_hp_zero">player_hp_zero</option>
+                                        <option value="body_part_broken">body_part_broken</option>
+                                    </select>
+                                </label>
+                                <label class="field">
+                                    <span>failureCondition.target</span>
+                                    <input id="failureConditionTargetInput" placeholder="例如 head">
+                                </label>
+                            </div>
+                            <label class="field" style="margin-top: 12px;">
+                                <span>unlockRequiredLevelIds</span>
+                                <textarea id="unlockRequiredLevelIdsInput" placeholder="level_1_1, level_1_2"></textarea>
+                            </label>
+                            <p class="hint">标准闭环：导入 -> 编辑 -> 导出 -> Runtime Override -> Probe。Probe 页会独立展示 unlockRules / victoryCondition / failureCondition 的运行时读取结果。</p>
                         </div>
 
                         <div class="card">
@@ -595,13 +652,23 @@
 
                 <div class="panel">
                     <div class="panel-header">
-                        <h2>导出与 Runtime Override</h2>
+                        <h2>导入 / 导出 / Runtime Override</h2>
                         <div class="toolbar">
                             <button id="exportBtn" type="button">导出 JSON</button>
                             <button id="downloadBtn" type="button" class="secondary">下载 JSON</button>
                             <button id="applyOverrideBtn" type="button">应用 Runtime Override</button>
                             <button id="clearOverrideBtn" type="button" class="ghost">清除 Runtime Override</button>
                         </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 14px;">
+                        <h3>导入现有 JSON</h3>
+                        <div class="import-row">
+                            <input id="importJsonInput" type="file" accept=".json,application/json">
+                            <button id="importJsonBtn" type="button">导入现有 JSON</button>
+                            <button id="openLegacyIoBtnInline" type="button" class="ghost">查看历史 I/O 页</button>
+                        </div>
+                        <p class="hint">如果你要继续编辑已有成果，请先选择一个关卡包 JSON 再点“导入现有 JSON”。历史对照入口是 `level_editor_io_test.html`，正式编辑入口仍是本页。</p>
                     </div>
 
                     <p class="hint">说明：`应用 Runtime Override` 只把当前导出产物写入浏览器存储；要验证运行时是否真正消费这份产物，请打开 `level_runtime_probe.html` 或刷新 `mock_ui_v11.html`。</p>
@@ -626,6 +693,13 @@
         document.getElementById('openMockUiBtn')?.addEventListener('click', () => {
             window.open('../mock_ui_v11.html', '_blank');
         });
+
+        const openLegacyIo = () => {
+            window.open('../test/level_editor_io_test.html', '_blank');
+        };
+
+        document.getElementById('openLegacyIoBtn')?.addEventListener('click', openLegacyIo);
+        document.getElementById('openLegacyIoBtnInline')?.addEventListener('click', openLegacyIo);
 
         window.__CODEX_LEVEL_EDITOR_PAGE__ = page;
     </script>

@@ -17,20 +17,29 @@
     "level CRUD",
     "enemy and reward editing",
     "battle rule editing",
+    "unlock rule editing",
+    "json import",
     "runtime export",
+    "runtime override bridge",
+    "runtime probe verification",
     "validation before export"
   ],
   "exportInvariants": [
     "levelId 唯一",
     "enemyPoolId 引用存在",
+    "unlockRules 引用存在且模式合法",
+    "victoryCondition / failureCondition 满足字段级约束",
     "关键 flow / waves / rewards 字段完整",
-    "导出结果可被 DataManagerV2 装载"
+    "导出结果可被 DataManagerV2 装载",
+    "导入后的 round-trip 结果仍满足导出契约"
   ],
   "consumerNodes": [
     "WBS-3.2.3"
   ],
   "notes": [
     "本契约把关卡编辑器输出固定为“运行时关卡包 + 编辑器验证链”，而不是单一页面截图。",
-    "地图编辑器只能消费满足本契约的 levels.json，不应自行定义另一套 levelId 语义。"
+    "地图编辑器只能消费满足本契约的 levels.json，不应自行定义另一套 levelId 语义。",
+    "正式闭环固定为：level_editor_v1.html 导入/编辑/导出 -> Runtime Override -> level_runtime_probe.html 重新装载验证。",
+    "关卡编辑器不负责地图节点、边关系、地图背景与节点素材引用的作者维护。"
   ]
 }

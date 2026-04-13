@@ -144,17 +144,49 @@ async function main() {
             "editor ready"
         );
 
-        report.editor = await evaluate(editorClient, `(() => {
+        report.editor = await evaluate(editorClient, `(async () => {
+            const page = window.__CODEX_LEVEL_EDITOR_PAGE__;
+            const imported = page.workspace.exportDocument();
+            imported.levels.level_1_1.name = "幽暗森林边缘·导入样本";
+            imported.levels.level_1_1.flow.unlockRules = {
+                mode: "after_levels_cleared",
+                requiredLevelIds: ["level_1_2_story"]
+            };
+            imported.levels.level_1_1.battleRules.victoryCondition = {
+                type: "survive_rounds",
+                value: 4
+            };
+            imported.levels.level_1_1.battleRules.failureCondition = {
+                type: "body_part_broken",
+                target: "head"
+            };
+            await page.importDocumentFromText(JSON.stringify(imported));
+
+            const importedState = {
+                levelName: document.getElementById("levelNameInput")?.value || "",
+                unlockMode: document.getElementById("unlockModeInput")?.value || "",
+                unlockRequiredLevelIds: document.getElementById("unlockRequiredLevelIdsInput")?.value || "",
+                victoryConditionType: document.getElementById("victoryConditionTypeInput")?.value || "",
+                victoryConditionValue: document.getElementById("victoryConditionValueInput")?.value || "",
+                failureConditionType: document.getElementById("failureConditionTypeInput")?.value || "",
+                failureConditionTarget: document.getElementById("failureConditionTargetInput")?.value || ""
+            };
+
             document.getElementById("levelNameInput").value = "幽暗森林边缘·正式编辑器自测";
+            document.getElementById("unlockModeInput").value = "after_levels_cleared";
+            document.getElementById("unlockRequiredLevelIdsInput").value = "level_1_2_story";
+            document.getElementById("victoryConditionTypeInput").value = "survive_rounds";
+            document.getElementById("victoryConditionValueInput").value = "5";
+            document.getElementById("failureConditionTypeInput").value = "body_part_broken";
+            document.getElementById("failureConditionTargetInput").value = "head";
             document.getElementById("rewardKpInput").value = "5";
-            const nextLevelCheckbox = document.querySelector("#nextLevelList input[type=checkbox]");
-            if (nextLevelCheckbox) nextLevelCheckbox.checked = false;
             document.getElementById("saveLevelBtn").click();
             document.getElementById("enemyPoolNameInput").value = "幽暗森林边缘敌人池·自测";
             document.getElementById("enemyMembersInput").value = "goblin_story_headhunter@1\\nenemy_acceptance_guard@2";
             document.getElementById("saveWaveBtn").click();
             document.getElementById("applyOverrideBtn").click();
             return {
+                importedState,
                 status: document.getElementById("status")?.textContent || "",
                 overrideStatus: document.getElementById("overrideStatus")?.textContent || "",
                 exported: JSON.parse(document.getElementById("exportOutput")?.value || "{}")
@@ -162,16 +194,54 @@ async function main() {
         })()`);
 
         assertCondition(
+            report.editor.importedState?.levelName === "幽暗森林边缘·导入样本",
+            "正式编辑器未通过 importDocumentFromText 导入关卡名"
+        );
+        assertCondition(
+            report.editor.importedState?.unlockMode === "after_levels_cleared",
+            "正式编辑器导入后未回填 unlockModeInput"
+        );
+        assertCondition(
+            report.editor.importedState?.unlockRequiredLevelIds.includes("level_1_2_story"),
+            "正式编辑器导入后未回填 unlockRequiredLevelIdsInput"
+        );
+        assertCondition(
+            report.editor.importedState?.victoryConditionType === "survive_rounds"
+                && report.editor.importedState?.victoryConditionValue === "4",
+            "正式编辑器导入后未回填 victoryCondition 字段"
+        );
+        assertCondition(
+            report.editor.importedState?.failureConditionType === "body_part_broken"
+                && report.editor.importedState?.failureConditionTarget === "head",
+            "正式编辑器导入后未回填 failureCondition 字段"
+        );
+        assertCondition(
             report.editor.exported?.levels?.level_1_1?.name === "幽暗森林边缘·正式编辑器自测",
             "正式编辑器未导出修改后的关卡名"
         );
         assertCondition(
-            (report.editor.exported?.levels?.level_1_1?.flow?.nextLevelIds || []).length === 0,
-            "正式编辑器未按预期清空 nextLevelIds"
+            JSON.stringify(Object.keys(report.editor.exported?.levels?.level_1_1?.flow || {}).sort())
+                === JSON.stringify(["chapterId", "chapterLabel", "chapterOrder", "chapterTitle", "kind", "nodeLabel", "objectiveText", "order", "unlockRules"].sort()),
+            "正式编辑器导出结果仍残留旧版后继字段"
         );
         assertCondition(
             report.editor.exported?.enemyPools?.pool_story_goblin_edge?.members?.length === 2,
             "正式编辑器未导出修改后的敌人池成员"
+        );
+        assertCondition(
+            report.editor.exported?.levels?.level_1_1?.flow?.unlockRules?.mode === "after_levels_cleared"
+                && report.editor.exported?.levels?.level_1_1?.flow?.unlockRules?.requiredLevelIds?.includes("level_1_2_story"),
+            "正式编辑器未导出 unlockRules"
+        );
+        assertCondition(
+            report.editor.exported?.levels?.level_1_1?.battleRules?.victoryCondition?.type === "survive_rounds"
+                && report.editor.exported?.levels?.level_1_1?.battleRules?.victoryCondition?.value === 5,
+            "正式编辑器未导出 victoryCondition"
+        );
+        assertCondition(
+            report.editor.exported?.levels?.level_1_1?.battleRules?.failureCondition?.type === "body_part_broken"
+                && report.editor.exported?.levels?.level_1_1?.battleRules?.failureCondition?.target === "head",
+            "正式编辑器未导出 failureCondition"
         );
         assertCondition(
             /Runtime override active/.test(report.editor.overrideStatus || ""),
@@ -198,6 +268,9 @@ async function main() {
             packSource: document.getElementById("packSource")?.textContent || "",
             resolvedName: document.getElementById("resolvedName")?.textContent || "",
             resolvedMembers: document.getElementById("resolvedMembers")?.textContent || "",
+            resolvedUnlockRules: document.getElementById("resolvedUnlockRules")?.textContent || "",
+            resolvedVictoryCondition: document.getElementById("resolvedVictoryCondition")?.textContent || "",
+            resolvedFailureCondition: document.getElementById("resolvedFailureCondition")?.textContent || "",
             instantiatedEnemies: document.getElementById("instantiatedEnemies")?.textContent || "",
             status: document.getElementById("status")?.textContent || ""
         }))()`);
@@ -208,6 +281,21 @@ async function main() {
             report.probeAfterOverride.resolvedMembers.includes("goblin_story_headhunter@1")
                 && report.probeAfterOverride.resolvedMembers.includes("enemy_acceptance_guard@2"),
             "probe 未读取 override 敌人池成员"
+        );
+        assertCondition(
+            report.probeAfterOverride.resolvedUnlockRules.includes("after_levels_cleared")
+                && report.probeAfterOverride.resolvedUnlockRules.includes("level_1_2_story"),
+            "probe 未读取 override unlockRules"
+        );
+        assertCondition(
+            report.probeAfterOverride.resolvedVictoryCondition.includes("survive_rounds")
+                && report.probeAfterOverride.resolvedVictoryCondition.includes("5"),
+            "probe 未读取 override victoryCondition"
+        );
+        assertCondition(
+            report.probeAfterOverride.resolvedFailureCondition.includes("body_part_broken")
+                && report.probeAfterOverride.resolvedFailureCondition.includes("head"),
+            "probe 未读取 override failureCondition"
         );
 
         await evaluate(editorClient, `window.__CODEX_LEVEL_EDITOR_PAGE__.clearRuntimeOverride()`);
@@ -220,7 +308,8 @@ async function main() {
 
         report.probeAfterClear = await evaluate(probeClient, `(() => ({
             packSource: document.getElementById("packSource")?.textContent || "",
-            resolvedName: document.getElementById("resolvedName")?.textContent || ""
+            resolvedName: document.getElementById("resolvedName")?.textContent || "",
+            resolvedUnlockRules: document.getElementById("resolvedUnlockRules")?.textContent || ""
         }))()`);
         assertCondition(report.probeAfterClear.packSource.trim() === "file", "clear override 后 probe 未回退到 file");
 
