@@ -2,9 +2,9 @@
 
 创建时间：2026-04-09
 
-最后整理时间：2026-04-10
+最后整理时间：2026-04-13 00:53:32 +0800
 
-状态：`当前有效，对应 #33 / WBS-4.2；已拆分待启动叶子 #90 ~ #92`
+状态：`当前有效，对应 #33 / WBS-4.2；#90 已开始落地主流程欢迎页与游戏菜单自解释说明，#91 ~ #92 仍待推进`
 
 编号口径：
 
@@ -65,6 +65,21 @@ Roadmap 时间：
 
 1. `2026-04-13 ~ 2026-04-14`
 
+当前已落地切片：
+
+1. `UI_SystemModal.renderLogin()` 已补充 `main-flow` 摘要区，明确：
+   - `新游戏` 会创建新的自动存档并进入游戏菜单
+   - `读取存档` 会直接恢复到存档对应页面
+   - 当前正式主流程顺序为 `新游戏 -> 游戏菜单 -> 关卡选择 -> 选择技能并部署到技能槽 -> 提交规划 -> 执行回合`
+2. `UI_SystemModal.renderMainMenu()` 已补充 `main-flow` 摘要区，明确：
+   - `关卡选择` 是当前正式主流程入口
+   - `技能树 / 构筑` 是主流程关联子流程，不直接开战
+   - 进入关卡后的典型顺序为 `选择技能并部署到技能槽 -> 提交规划 -> 执行回合`
+3. 已补自动化验证：
+   - `test/d1_ui_modal_semantics.test.mjs`
+   - `test/d1_information_priority.test.mjs`
+   - `test/c_growth_ui_regression.test.mjs`
+
 ### 4.2 `#91 / WBS-4.2.2 机制术语说明与关键规则提示收口`
 
 目标：
@@ -98,9 +113,11 @@ Roadmap 时间：
 3. `script/ui/UI_SystemModal.js`
 4. `script/ui/UI_BattleRow.js`
 5. `test/codex_regression_runner.html`
-6. `DOC/CODEX_DOC/01_需求分析/05-mock_ui_v11主流程测试基线.md`
-7. `DOC/CODEX_DOC/02_设计说明/16-战斗界面(UI_design)-设计说明.md`
-8. `DOC/CODEX_DOC/03_研制计划/13-WBS-L2-D2-新手与反馈.md`
+6. `test/d1_ui_modal_semantics.test.mjs`
+7. `test/d1_information_priority.test.mjs`
+8. `DOC/CODEX_DOC/01_需求分析/05-mock_ui_v11主流程测试基线.md`
+9. `DOC/CODEX_DOC/02_设计说明/16-战斗界面(UI_design)-设计说明.md`
+10. `DOC/CODEX_DOC/03_研制计划/13-WBS-L2-D2-新手与反馈.md`
 
 ## 6. 验收口径
 

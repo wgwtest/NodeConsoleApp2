@@ -1,6 +1,6 @@
 # 研制计划 README
 
-最后整理时间：2026-04-12
+最后整理时间：2026-04-13
 
 状态：`当前有效`
 
@@ -34,12 +34,12 @@
 4. 当前主执行节点：
    - `#83 / WBS-3.3（#84 / #85 已验收，#98 已通过人工验收并继续承接到 #99）`
    - `#29 / WBS-3.1（#63 / #64 / #65 / #74 / #75 / #76 已验收）`
-   - `#30 / WBS-3.2（已重整为“关卡与地图编辑”三段主树；#100 待验收，#79 / #101 / #102 / #103 待开发）`
+   - `#30 / WBS-3.2（已重整为“关卡与地图编辑”三段主树；#100 / #101 / #102 / #103 已验收，#79 已按 3.2.3 模式重构为父节点，当前下一推进叶子为 #104）`
 5. 当前并行 Prep 工作包：
    - `#70 / WBS-4.3 对战演出与动画展示层`
    - `#32 / WBS-4.1 UI 统一`
 6. 当前直接待人工验收节点：
-   - `#100 / WBS-3.2.3.1`
+   - `当前无`
 7. 当前待重写验收清单节点：
    - `#73 / WBS-4.3.2.1`
    - `#82 / WBS-4.3.5`
@@ -69,7 +69,10 @@
    - `#69 / WBS-3.2.1 关卡地图元数据设计`
    - `#77 / WBS-3.2.1.1 关卡元数据与奖励反馈设计`
    - `#78 / WBS-3.2.1.2 地图元数据与连接结构设计`
-   - `#79 / WBS-3.2.2 关卡编辑器基础能力与 JSON 导出链（需求已重整，待开发）`
+   - `#79 / WBS-3.2.2 关卡编辑器基础能力与 JSON 导出链（父节点；历史基线已通过，当前深化子树为 #104 / #105 / #106）`
+   - `#104 / WBS-3.2.2.1 关卡工作区数据核心与字段级校验`
+   - `#105 / WBS-3.2.2.2 关卡编辑工作区与关卡内要素编辑`
+   - `#106 / WBS-3.2.2.3 关卡 JSON 导入导出与运行时验证闭环`
    - `#101 / WBS-3.2.3 地图编辑器基础能力与地图包导出链`
    - `#100 / WBS-3.2.3.1 地图组织方案与效果图验证`
    - `#102 / WBS-3.2.3.2 地图编辑工作区与节点边背景编辑`
@@ -115,12 +118,11 @@
    - `#84 / WBS-3.3.1 技能效果矩阵与说明契约收口`
    - `#85 / WBS-3.3.2 技能运行时批量回归与异常归档`
 18. `WBS-3` 当前待人工验收叶子：
-   - `#100 / WBS-3.2.3.1 地图组织方案与效果图验证`
+   - `当前无`
 19. `WBS-3` 当前重整后待开发叶子：
-   - `#79 / WBS-3.2.2 关卡编辑器基础能力与 JSON 导出链`
-   - `#101 / WBS-3.2.3 地图编辑器基础能力与地图包导出链`
-   - `#102 / WBS-3.2.3.2 地图编辑工作区与节点边背景编辑`
-   - `#103 / WBS-3.2.3.3 地图包导入导出与校验`
+   - `#104 / WBS-3.2.2.1 关卡工作区数据核心与字段级校验`
+   - `#105 / WBS-3.2.2.2 关卡编辑工作区与关卡内要素编辑`
+   - `#106 / WBS-3.2.2.3 关卡 JSON 导入导出与运行时验证闭环`
 20. `WBS-4` 当前已完成并已验收的表现层叶子：
    - `#71 / WBS-4.3.1 动画展示驱动与验证页基线`
    - `#72 / WBS-4.3.2 SpineAssets协作规则与导入契约基线`
@@ -158,11 +160,15 @@
 15. [04-CODEX_DOC文档根深度迁移设计](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/04-CODEX_DOC文档根深度迁移设计.md)
 16. [05-CODEX_DOC文档根迁移实施计划](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/05-CODEX_DOC文档根迁移实施计划.md)
 17. [16-WBS-编号迁移映射表](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/16-WBS-编号迁移映射表.md)
-18. [WBS-3.3.3.1 技能旧标签退役与字段级契约迁移](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/18-WBS-3.3.3.1-技能旧标签退役与字段级契约迁移.md)
-19. [WBS-3.2.3.1 地图组织方案与效果图验证](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/19-WBS-3.2.3.1-关卡地图组织方案与效果图验证.md)
-20. [WBS-3.2.3 地图编辑器基础能力与地图包导出链](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/20-WBS-3.2.3-地图编辑器基础能力与地图包导出链.md)
-21. [WBS-3.2.3.2 地图编辑工作区与节点边背景编辑](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/21-WBS-3.2.3.2-地图编辑工作区与节点边背景编辑.md)
-22. [WBS-3.2.3.3 地图包导入导出与校验](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/22-WBS-3.2.3.3-地图包导入导出与校验.md)
+18. [WBS-3.2.2 关卡编辑器基础能力与 JSON 导出链](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/17-WBS-3.2.2-关卡编辑器实现计划.md)
+19. [WBS-3.3.3.1 技能旧标签退役与字段级契约迁移](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/18-WBS-3.3.3.1-技能旧标签退役与字段级契约迁移.md)
+20. [WBS-3.2.3.1 地图组织方案与效果图验证](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/19-WBS-3.2.3.1-关卡地图组织方案与效果图验证.md)
+21. [WBS-3.2.3 地图编辑器基础能力与地图包导出链](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/20-WBS-3.2.3-地图编辑器基础能力与地图包导出链.md)
+22. [WBS-3.2.3.2 地图编辑工作区与节点边背景编辑](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/21-WBS-3.2.3.2-地图编辑工作区与节点边背景编辑.md)
+23. [WBS-3.2.3.3 地图包导入导出与校验](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/22-WBS-3.2.3.3-地图包导入导出与校验.md)
+24. [WBS-3.2.2.1 关卡工作区数据核心与字段级校验](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/23-WBS-3.2.2.1-关卡工作区数据核心与字段级校验.md)
+25. [WBS-3.2.2.2 关卡编辑工作区与关卡内要素编辑](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/24-WBS-3.2.2.2-关卡编辑工作区与关卡内要素编辑.md)
+26. [WBS-3.2.2.3 关卡 JSON 导入导出与运行时验证闭环](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/25-WBS-3.2.2.3-关卡JSON导入导出与运行时验证闭环.md)
 
 ## 3. 协作规则
 
@@ -222,8 +228,8 @@
 6. `#29 / WBS-3.1` 已验收叶子：`#63 ~ #65`
 7. `#29 / WBS-3.1` 后续新增叶子：`#74 ~ #76` 已验收
 8. `#30 / WBS-3.2` 已闭合元数据树：`#69、#77 ~ #78`
-9. `#30 / WBS-3.2` 当前直接待验收叶子：`#100`
-10. `#30 / WBS-3.2` 当前待开发正式工具叶子：`#79、#101 ~ #103`
+9. `#30 / WBS-3.2` 当前直接待验收叶子：`#100、#102`
+10. `#30 / WBS-3.2` 当前待开发正式工具叶子：`#79、#101、#103`
 11. `#83 / WBS-3.3` 已进入正式执行：`#84 ~ #85` 已验收，`#98` 已通过人工验收并继续承接到 `#99`
 12. `#70 / WBS-4.3` 已验收叶子：`#71 ~ #72、#80 ~ #81、#86、#97`
 13. `#70 / WBS-4.3` 当前待重写验收清单叶子：`#73、#82`

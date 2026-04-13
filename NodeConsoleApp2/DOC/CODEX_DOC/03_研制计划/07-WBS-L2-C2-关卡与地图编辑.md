@@ -2,9 +2,9 @@
 
 创建时间：2026-04-07
 
-最后整理时间：2026-04-12
+最后整理时间：2026-04-13
 
-状态：`当前有效；对应 #30 / WBS-3.2；当前已按严格树形编号完成重编`
+状态：`当前有效；对应 #30 / WBS-3.2；当前按“元数据 -> 关卡编辑器 -> 地图编辑器”三段主树维护`
 
 编号口径：
 
@@ -42,9 +42,12 @@
 
 1. `#77 WBS-3.2.1.1 关卡元数据与奖励反馈设计`
 2. `#78 WBS-3.2.1.2 地图元数据与连接结构设计`
-3. `#100 WBS-3.2.3.1 地图组织方案与效果图验证`
-4. `#102 WBS-3.2.3.2 地图编辑工作区与节点边背景编辑`
-5. `#103 WBS-3.2.3.3 地图包导入导出与校验`
+3. `#104 WBS-3.2.2.1 关卡工作区数据核心与字段级校验`
+4. `#105 WBS-3.2.2.2 关卡编辑工作区与关卡内要素编辑`
+5. `#106 WBS-3.2.2.3 关卡 JSON 导入导出与运行时验证闭环`
+6. `#100 WBS-3.2.3.1 地图组织方案与效果图验证`
+7. `#102 WBS-3.2.3.2 地图编辑工作区与节点边背景编辑`
+8. `#103 WBS-3.2.3.3 地图包导入导出与校验`
 
 按树形关系展开为：
 
@@ -53,26 +56,31 @@
 3. `#77 WBS-3.2.1.1 关卡元数据与奖励反馈设计`
 4. `#78 WBS-3.2.1.2 地图元数据与连接结构设计`
 5. `#79 WBS-3.2.2 关卡编辑器基础能力与 JSON 导出链`
-6. `#101 WBS-3.2.3 地图编辑器基础能力与地图包导出链`
-7. `#100 WBS-3.2.3.1 地图组织方案与效果图验证`
-8. `#102 WBS-3.2.3.2 地图编辑工作区与节点边背景编辑`
-9. `#103 WBS-3.2.3.3 地图包导入导出与校验`
+6. `#104 WBS-3.2.2.1 关卡工作区数据核心与字段级校验`
+7. `#105 WBS-3.2.2.2 关卡编辑工作区与关卡内要素编辑`
+8. `#106 WBS-3.2.2.3 关卡 JSON 导入导出与运行时验证闭环`
+9. `#101 WBS-3.2.3 地图编辑器基础能力与地图包导出链`
+10. `#100 WBS-3.2.3.1 地图组织方案与效果图验证`
+11. `#102 WBS-3.2.3.2 地图编辑工作区与节点边背景编辑`
+12. `#103 WBS-3.2.3.3 地图包导入导出与校验`
 
 ## 3. 为什么必须这样拆
 
-这轮整编的核心要求只有一条：
+这轮整编的核心要求有两条：
 
-- `编号层级必须与父子树严格一致。`
+1. `编号层级必须与父子树严格一致`
+2. `进入正式实现的主树，都要像 3.2.3 一样具备可复用的父节点骨架`
 
 因此：
 
 1. `3.2.1` 是元数据设计父节点
-2. 它的直接子节点只能是 `3.2.1.1 / 3.2.1.2`
-3. `3.2.2` 不能再挂在 `3.2.1` 下面，只能是与 `3.2.1` 并列的正式关卡编辑器节点
-4. `3.2.3` 不能只剩效果图验证，而必须是正式地图编辑器父节点
-5. 效果图验证只能作为 `3.2.3.1` 存在
+2. `3.2.2` 是关卡编辑器父节点，不能再停留在单页执行清单
+3. `3.2.3` 是地图编辑器父节点，继续保持 `方案验证 -> 工作区 -> IO 校验` 的三叶结构
 
-如果不这样拆，就会出现“树关系是父子，但编号关系像并列”的问题，导致 reviewer 无法只看标题判断结构是否完整。
+如果不这样拆，就会再次出现：
+
+1. 同样是作者工具，有的节点有父子树，有的节点只有一页执行 checklist
+2. 看文档时无法只凭 WBS 编号判断输入输出和推进顺序
 
 ## 4. 稳定输入输出主链
 
@@ -120,7 +128,8 @@
 2. `assets/data/levels.json`
 3. `test/level_editor_v1.html`
 4. `test/level_runtime_probe.html`
-5. [17-WBS-3.2.2-关卡编辑器实现计划](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/17-WBS-3.2.2-关卡编辑器实现计划.md)
+5. `test/level_editor_io_test.html`
+6. [17-WBS-3.2.2-关卡编辑器实现计划](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/17-WBS-3.2.2-关卡编辑器实现计划.md)
 
 消费方：
 
@@ -183,7 +192,59 @@
 1. `assets/data/contracts/level_map_definition.contract.json`
 2. `assets/data/level_map_pack_v1.example.json` 的组织字段规范
 
-### 5.3 `#100 / WBS-3.2.3.1 地图组织方案与效果图验证`
+### 5.3 `#104 / WBS-3.2.2.1 关卡工作区数据核心与字段级校验`
+
+这是 `3.2.2` 的数据核心叶子。
+
+输入物：
+
+1. `assets/data/contracts/level_runtime_definition.contract.json`
+2. `assets/data/contracts/level_map_definition.contract.json`
+3. `assets/data/levels.json`
+
+输出物：
+
+1. `script/editor/level/LevelPackWorkspace.js`
+2. `test/level_editor_workspace.test.mjs`
+3. [23-WBS-3.2.2.1-关卡工作区数据核心与字段级校验](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/23-WBS-3.2.2.1-关卡工作区数据核心与字段级校验.md)
+
+### 5.4 `#105 / WBS-3.2.2.2 关卡编辑工作区与关卡内要素编辑`
+
+这是 `3.2.2` 的正式编辑工作区叶子。
+
+输入物：
+
+1. `script/editor/level/LevelPackWorkspace.js`
+2. `assets/data/levels.json`
+3. `assets/data/contracts/level_runtime_definition.contract.json`
+
+输出物：
+
+1. `script/editor/level/LevelEditorPage.js`
+2. `script/editor/level/index.js`
+3. `test/level_editor_v1.html`
+4. `test/level_editor_page.test.mjs`
+5. [24-WBS-3.2.2.2-关卡编辑工作区与关卡内要素编辑](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/24-WBS-3.2.2.2-关卡编辑工作区与关卡内要素编辑.md)
+
+### 5.5 `#106 / WBS-3.2.2.3 关卡 JSON 导入导出与运行时验证闭环`
+
+这是 `3.2.2` 的交付与验证叶子。
+
+输入物：
+
+1. `script/editor/level/LevelPackWorkspace.js`
+2. `script/editor/level/LevelEditorPage.js`
+3. `test/level_editor_v1.html`
+
+输出物：
+
+1. `assets/data/contracts/level_editor_export.contract.json`
+2. `test/level_runtime_probe.html`
+3. `test/level_editor_io_test.html`
+4. `test/codex_regression_runner.html`
+5. [25-WBS-3.2.2.3-关卡JSON导入导出与运行时验证闭环](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/25-WBS-3.2.2.3-关卡JSON导入导出与运行时验证闭环.md)
+
+### 5.6 `#100 / WBS-3.2.3.1 地图组织方案与效果图验证`
 
 这是 `3.2.3` 的前置验证叶子，不是最终成果本体。
 
@@ -198,7 +259,7 @@
 2. `assets/data/level_map_pack_v1.example.json`
 3. `test/wbs_3_2_3_1_level_map_mock.test.mjs`
 
-### 5.4 `#102 / WBS-3.2.3.2 地图编辑工作区与节点边背景编辑`
+### 5.7 `#102 / WBS-3.2.3.2 地图编辑工作区与节点边背景编辑`
 
 这是地图编辑器工作区本体叶子。
 
@@ -214,7 +275,7 @@
 2. `script/editor/level/`
 3. [21-WBS-3.2.3.2-地图编辑工作区与节点边背景编辑](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/21-WBS-3.2.3.2-地图编辑工作区与节点边背景编辑.md)
 
-### 5.5 `#103 / WBS-3.2.3.3 地图包导入导出与校验`
+### 5.8 `#103 / WBS-3.2.3.3 地图包导入导出与校验`
 
 这是地图编辑器导出与交付叶子。
 
@@ -236,9 +297,15 @@
 当前推进顺序固定为：
 
 1. `3.2.1` 先产出规范文件
-2. `3.2.2` 消费规范文件，产出标准关卡编辑器与关卡导出契约
-3. `3.2.3` 再消费前两者输出，产出标准地图编辑器与最终联合成果
-4. `3.2.3.1` 只是地图编辑器的前置验证，不得代替 `3.2.3` 本体
+2. `3.2.2.1` 先收口关卡工作区真值与字段级校验
+3. `3.2.2.2` 再落正式关卡编辑工作区
+4. `3.2.2.3` 最后闭合导入导出与运行时验证链
+5. `3.2.3` 再消费前两段输出，产出标准地图编辑器与最终联合成果
+6. `3.2.3.1` 只是地图编辑器的前置验证，不得代替 `3.2.3` 本体
+
+当前下一执行节点固定为：
+
+1. `#104 / WBS-3.2.2.1 关卡工作区数据核心与字段级校验`
 
 ## 7. 当前稳定产物
 
@@ -252,39 +319,12 @@
 6. `assets/data/enemies.json`
 7. `assets/data/level_map_pack_v1.example.json`
 8. `script/engine/DataManagerV2.js`
-9. `script/ui/UI_SystemModal.js`
-10. `test/codex_regression_runner.html`
-11. `test/level_editor_v1.html`
-12. `test/level_runtime_probe.html`
-13. `test/level_map_selection_mock.html`
-14. `test/wbs_3_2_3_1_level_map_mock.test.mjs`
-15. [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md)
-16. [26-关卡地图选择与地图包(level_map_selection)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/26-关卡地图选择与地图包(level_map_selection)-设计说明.md)
-17. [17-WBS-3.2.2-关卡编辑器实现计划](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/17-WBS-3.2.2-关卡编辑器实现计划.md)
-18. [19-WBS-3.2.3.1-关卡地图组织方案与效果图验证](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/19-WBS-3.2.3.1-关卡地图组织方案与效果图验证.md)
-19. [20-WBS-3.2.3-地图编辑器基础能力与地图包导出链](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/20-WBS-3.2.3-地图编辑器基础能力与地图包导出链.md)
-20. [21-WBS-3.2.3.2-地图编辑工作区与节点边背景编辑](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/21-WBS-3.2.3.2-地图编辑工作区与节点边背景编辑.md)
-21. [22-WBS-3.2.3.3-地图包导入导出与校验](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/22-WBS-3.2.3.3-地图包导入导出与校验.md)
-
-## 8. 验收口径
-
-判断 `WBS-3.2` 是否合理，不再看“有没有多做几个页面”，而是看这棵树是否让人一眼能回答：
-
-1. `3.2.1` 的子节点是否严格写成 `3.2.1.x`
-2. 关卡编辑器和地图编辑器是否都是正式主树
-3. 地图编辑器是否已经包含“方案验证 / 工作区实现 / IO 校验”三类子节点
-4. 看树标题时，是否已经足够判断当前结构能否覆盖全部需求
-
-## 9. 当前结论
-
-`WBS-3.2` 当前正式语义已经收束为：
-
-- `关卡与地图编辑`
-
-后续如果继续扩 `WBS-3.2.x`，必须继续围绕：
-
-1. `对象设计`
-2. `对应正式工具`
-3. `工具内部的正式子能力`
-
-这三条主轴拆分，而不是回退到抽象、混合、不可审计的命名。
+9. `script/editor/level/LevelPackWorkspace.js`
+10. `script/editor/level/LevelEditorPage.js`
+11. `script/editor/level/index.js`
+12. `test/codex_regression_runner.html`
+13. `test/level_editor_v1.html`
+14. `test/level_runtime_probe.html`
+15. `test/level_editor_io_test.html`
+16. `test/level_map_selection_mock.html`
+17. `test/wbs_3_2_3_1_level_map_mock.test.mjs`

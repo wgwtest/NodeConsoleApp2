@@ -1,6 +1,6 @@
 # 设计说明 README
 
-最后整理时间：2026-04-10
+最后整理时间：2026-04-11
 
 状态：`当前有效 / 已完成 design 目录迁移与命名规范化`
 
@@ -27,12 +27,14 @@
    - `11-敌人系统(enemy_design)-设计说明.md`
    - `12-关卡系统(level_design)-设计说明.md`
    - `24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md`
+   - `26-关卡地图选择与地图包(level_map_selection)-设计说明.md`
    - `19-关卡选择内容元数据(level_select_content)-设计说明.md`
    - `13-道具系统(item_design)-设计说明.md`
 3. 作者工具与验证设计：
    - `04-技能编辑器(skill_editor_design)-设计说明.md`
    - `05-技能规划(skill_planning_design)-设计说明.md`
    - `06-技能平衡(skill_balance_design)-设计说明.md`
+   - `25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md`
    - `07-技能测试(skill_test_design)-设计说明.md`
    - `08-技能头脑风暴(skill_design_brainStorm)-设计说明.md`
    - `10-Buff编辑器(buff_editor_design)-设计说明.md`
@@ -74,6 +76,8 @@
 | `22` | `22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md` | 主工程侧双仓库协作规则、消费边界与降级策略 |
 | `23` | `23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明.md` | 主工程侧 bundle 导入 probe、失败分类与降级壳 |
 | `24` | `24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md` | 关卡节点、章节组织、正式关卡编辑器与装载边界的上位设计 |
+| `25` | `25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md` | 旧技能附加字段依赖检索、去依赖迁移与正式退役方案 |
+| `26` | `26-关卡地图选择与地图包(level_map_selection)-设计说明.md` | 地图式关卡组织、地图包契约与主程序交接边界设计 |
 
 ## 4. 当前使用规则
 
