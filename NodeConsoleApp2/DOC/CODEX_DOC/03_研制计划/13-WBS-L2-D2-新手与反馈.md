@@ -4,7 +4,7 @@
 
 最后整理时间：2026-04-13 00:53:32 +0800
 
-状态：`当前有效，对应 #33 / WBS-4.2；#90 已开始落地主流程欢迎页与游戏菜单自解释说明，#91 ~ #92 仍待推进`
+状态：`当前有效，对应 #33 / WBS-4.2；#90 ~ #92 已完成实现与自测，待人工验收`
 
 编号口径：
 
@@ -79,6 +79,10 @@ Roadmap 时间：
    - `test/d1_ui_modal_semantics.test.mjs`
    - `test/d1_information_priority.test.mjs`
    - `test/c_growth_ui_regression.test.mjs`
+4. `2026-04-14` 进一步补齐：
+   - 主菜单与关卡选择页新增统一的 `page-usage` 摘要块，明确“本页用途 / 建议下一步 / 这里不做什么”
+   - 欢迎页同步使用相同结构，避免只在欢迎页写流程、不在后续页面解释边界
+   - 当前状态：`已实现 / 已自测 / 待人工验收`
 
 ### 4.2 `#91 / WBS-4.2.2 机制术语说明与关键规则提示收口`
 
@@ -92,6 +96,21 @@ Roadmap 时间：
 
 1. `2026-04-14 ~ 2026-04-15`
 
+当前已落地切片：
+
+1. `UI_AttentionGuide` 在战斗页新增 `机制术语` 卡，固定解释：
+   - `AP`
+   - `技能槽`
+   - `部位`
+   - `Buff / Debuff`
+   - `时间轴`
+2. 术语说明直接挂在 `mock_ui_v11.html` 正式主界面的状态摘要区，不再要求玩家跳出页面读聊天或临时测试说明
+3. 术语说明保持为纯展示层，不改技能、Buff、时间轴和伤害规则实现
+4. 已补自动化验证：
+   - `test/d2_feedback_guidance.test.mjs`
+   - `test/d1_information_priority.test.mjs`
+5. 当前状态：`已实现 / 已自测 / 待人工验收`
+
 ### 4.3 `#92 / WBS-4.2.3 错误、阻塞与空态反馈统一`
 
 目标：
@@ -104,6 +123,24 @@ Roadmap 时间：
 
 1. `2026-04-15 ~ 2026-04-16`
 
+当前已落地切片：
+
+1. `UI_AttentionGuide` 在战斗页新增 `阻塞反馈` 卡，默认解释：
+   - 为什么当前还不能执行
+   - 现在该先做什么
+2. `UI_TurnPanel` 从“原生 disabled 静默不可点”切为：
+   - 保持视觉禁用态
+   - 提供 `title / data-disabled-reason / aria-disabled`
+   - 点击时发出结构化 `UI:ACTION_FEEDBACK`
+3. 阻塞提示示例已覆盖：
+   - `请先提交规划，形成可执行时间轴`
+   - `当前没有可重置的规划`
+   - `当前正在执行阶段，请等待自动结算完成`
+4. 当前实现仍保持在展示与提示层，不改主流程状态机和战斗规则
+5. 已补自动化验证：
+   - `test/d2_feedback_guidance.test.mjs`
+6. 当前状态：`已实现 / 已自测 / 待人工验收`
+
 ## 5. 推荐输出物
 
 本节点当前应维护：
@@ -112,12 +149,14 @@ Roadmap 时间：
 2. `mock_ui_v11.css`
 3. `script/ui/UI_SystemModal.js`
 4. `script/ui/UI_BattleRow.js`
-5. `test/codex_regression_runner.html`
-6. `test/d1_ui_modal_semantics.test.mjs`
-7. `test/d1_information_priority.test.mjs`
-8. `DOC/CODEX_DOC/01_需求分析/05-mock_ui_v11主流程测试基线.md`
-9. `DOC/CODEX_DOC/02_设计说明/16-战斗界面(UI_design)-设计说明.md`
-10. `DOC/CODEX_DOC/03_研制计划/13-WBS-L2-D2-新手与反馈.md`
+5. `script/ui/UI_AttentionGuide.js`
+6. `script/ui/UI_TurnPanel.js`
+7. `test/d2_feedback_guidance.test.mjs`
+8. `test/codex_regression_runner.html`
+9. `test/d1_ui_modal_semantics.test.mjs`
+10. `test/d1_information_priority.test.mjs`
+11. `DOC/CODEX_DOC/01_需求分析/05-mock_ui_v11主流程测试基线.md`
+12. `DOC/CODEX_DOC/03_研制计划/13-WBS-L2-D2-新手与反馈.md`
 
 ## 6. 验收口径
 

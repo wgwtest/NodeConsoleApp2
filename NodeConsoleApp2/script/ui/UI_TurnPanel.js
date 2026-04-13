@@ -40,13 +40,19 @@ export default class UI_TurnPanel {
 
     bindDOMEvents() {
         this.btnExecute.addEventListener('click', () => {
-            if (this.isLocked()) return;
+            if (this.btnExecute.classList.contains('disabled')) {
+                this.emitBlockedFeedback('execute');
+                return;
+            }
             // 4.7.3: Play sound/animation (optional placeholder)
             this.engine.input.commitTurn();
         });
 
         this.btnReset.addEventListener('click', () => {
-            if (this.isLocked()) return;
+            if (this.btnReset.classList.contains('disabled')) {
+                this.emitBlockedFeedback('reset');
+                return;
+            }
             this.engine.input.resetTurn();
         });
 
@@ -77,6 +83,7 @@ export default class UI_TurnPanel {
     render(data) {
         const phase = data.phase;
         const queueLength = (data.queue || []).length;
+        const timelinePhase = data.timelinePhase;
 
         if (this.turnNumberLabel) {
             const t = Number(data.turn);
@@ -101,20 +108,94 @@ export default class UI_TurnPanel {
 
         // Apply State: Execute Button
         this.setButtonState(this.btnExecute, canExecute);
+        this.setButtonHint(this.btnExecute, canExecute, this.describeBlockedState('execute', {
+            phase,
+            queueLength,
+            timelinePhase
+        }));
 
         // Apply State: Reset Button
         this.setButtonState(this.btnReset, canReset);
+        this.setButtonHint(this.btnReset, canReset, this.describeBlockedState('reset', {
+            phase,
+            queueLength,
+            timelinePhase
+        }));
 
         // Menu is always active (neutral)
     }
 
     setButtonState(btn, isActive) {
         if (isActive) {
-            btn.removeAttribute('disabled');
+            btn.removeAttribute('aria-disabled');
             btn.classList.remove('disabled');
         } else {
-            btn.setAttribute('disabled', 'true');
+            btn.setAttribute('aria-disabled', 'true');
             btn.classList.add('disabled');
         }
+    }
+
+    setButtonHint(btn, isActive, reason) {
+        if (!btn) return;
+        if (isActive) {
+            btn.removeAttribute('title');
+            btn.removeAttribute('data-disabled-reason');
+            return;
+        }
+        if (reason) {
+            btn.setAttribute('title', reason);
+            btn.dataset.disabledReason = reason;
+        }
+    }
+
+    describeBlockedState(kind, snapshot = {}) {
+        const phase = snapshot.phase || this.engine?.battlePhase || 'IDLE';
+        const queueLength = Number(snapshot.queueLength ?? this.engine?.playerSkillQueue?.length ?? 0) || 0;
+        const timelinePhase = snapshot.timelinePhase || this.engine?.timeline?.phase;
+
+        if (kind === 'execute') {
+            if (phase === 'EXECUTION') {
+                return '当前正在执行阶段，请等待自动结算完成。';
+            }
+            if (timelinePhase === 'READY') {
+                return '';
+            }
+            return '请先提交规划，形成可执行时间轴。';
+        }
+
+        if (phase === 'EXECUTION') {
+            return '当前正在执行阶段，暂时不能重置规划。';
+        }
+        if (queueLength <= 0 && timelinePhase !== 'READY') {
+            return '当前没有可重置的规划。';
+        }
+        return '';
+    }
+
+    emitBlockedFeedback(kind) {
+        const message = this.describeBlockedState(kind, {
+            phase: this.engine?.battlePhase,
+            queueLength: this.engine?.playerSkillQueue?.length ?? 0,
+            timelinePhase: this.engine?.timeline?.phase
+        });
+
+        if (!message) return;
+
+        const payload = kind === 'execute'
+            ? {
+                level: 'blocked',
+                title: '无法执行回合',
+                message,
+                suggestion: '先选择技能并部署到技能槽，再点击“提交规划”。'
+            }
+            : {
+                level: 'blocked',
+                title: '无法重置规划',
+                message,
+                suggestion: '先完成一次规划，或等待执行阶段结束后再重置。'
+            };
+
+        this.eventBus?.emit?.('UI:ACTION_FEEDBACK', payload);
+        this.eventBus?.emit?.('BATTLE_LOG', { text: `${payload.title}：${payload.message}` });
     }
 }

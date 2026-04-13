@@ -71,6 +71,7 @@
     import { UI_SkillTreeModal } from '../script/ui/UI_SkillTreeModal.js';
     import { UI_SystemModal } from '../script/ui/UI_SystemModal.js';
     import { UI_AttentionGuide } from '../script/ui/UI_AttentionGuide.js';
+    import UI_TurnPanel from '../script/ui/UI_TurnPanel.js';
     import { UI_BattleRow } from '../script/ui/UI_BattleRow.js';
     import { CONTENT_PACK_OVERRIDE_STORAGE_KEY, buildContentPackOverrideKey, clearContentPackOverride, getContentPackOverride, setContentPackOverride } from '../script/tooling/ContentPackOverrideStore.js';
 
@@ -1198,6 +1199,33 @@
       assert(document.body.dataset.uiPhase === 'execution', `body[data-ui-phase] 未同步为 execution: ${document.body.dataset.uiPhase}`);
     }
 
+    async function testUiAttentionGuideProvidesGlossaryAndFeedback() {
+      const host = resetRegressionFixture(`
+        <div id="uiAttentionBadge"></div>
+        <section id="battleStateSummary"></section>
+      `);
+      const engine = buildUiSummaryRegressionEngine();
+      new UI_AttentionGuide(engine);
+
+      let summaryText = host.querySelector('#battleStateSummary')?.textContent || '';
+      assert(summaryText.includes('机制术语'), 'UI_AttentionGuide 未渲染机制术语卡');
+      assert(summaryText.includes('AP 是本回合可部署的技能预算'), 'UI_AttentionGuide 未解释 AP');
+      assert(summaryText.includes('技能槽代表技能实际部署位'), 'UI_AttentionGuide 未解释技能槽');
+      assert(summaryText.includes('阻塞反馈'), 'UI_AttentionGuide 未渲染阻塞反馈卡');
+      assert(summaryText.includes('尚未形成可执行规划'), 'UI_AttentionGuide 未给出默认空态反馈');
+
+      engine.eventBus.emit('UI:ACTION_FEEDBACK', {
+        level: 'blocked',
+        title: 'AP 不足',
+        message: '当前 AP 预算不足，无法继续加入该技能。',
+        suggestion: '先移除高消耗技能，或改用更低 AP 的技能。'
+      });
+
+      summaryText = host.querySelector('#battleStateSummary')?.textContent || '';
+      assert(summaryText.includes('AP 不足'), 'UI_AttentionGuide 未显示结构化阻塞标题');
+      assert(summaryText.includes('当前 AP 预算不足，无法继续加入该技能。'), 'UI_AttentionGuide 未显示结构化阻塞正文');
+    }
+
     async function testUiSystemModalUsesUnifiedSummarySectionClasses() {
       resetRegressionFixture(`
         <div id="systemModal" hidden aria-hidden="true">
@@ -1224,6 +1252,78 @@
       kinds = Array.from(document.querySelectorAll('#modalBody .summary-section')).map(node => node.dataset.summaryKind);
       assert(kinds.includes('story-progress'), '关卡选择页缺少 story-progress 摘要语义类');
       assert(kinds.includes('prebattle-build'), '关卡选择页缺少 prebattle-build 摘要语义类');
+    }
+
+    async function testUiSystemModalProvidesPageUsageGuide() {
+      resetRegressionFixture(`
+        <div id="systemModal" hidden aria-hidden="true">
+          <div class="modal-panel">
+            <div id="modalTitle"></div>
+            <div id="modalBody"></div>
+            <div id="modalFooter"></div>
+            <button id="modalCloseBtn" type="button"></button>
+          </div>
+        </div>
+        <button id="systemMenuBtn" type="button"></button>
+      `);
+
+      const modal = new UI_SystemModal();
+      modal.engine = buildUiSummaryRegressionEngine();
+      modal.bindDOM();
+
+      modal.renderMainMenu();
+      let bodyText = document.getElementById('modalBody')?.textContent || '';
+      let kinds = Array.from(document.querySelectorAll('#modalBody .summary-section')).map(node => node.dataset.summaryKind);
+      assert(kinds.includes('page-usage'), '主菜单缺少 page-usage 摘要语义类');
+      assert(bodyText.includes('本页用途'), '主菜单缺少本页用途标题');
+      assert(bodyText.includes('只负责选择下一步操作'), '主菜单未解释页面职责');
+      assert(bodyText.includes('不会直接开始战斗结算'), '主菜单未解释页面边界');
+
+      modal.renderLevelSelect();
+      bodyText = document.getElementById('modalBody')?.textContent || '';
+      kinds = Array.from(document.querySelectorAll('#modalBody .summary-section')).map(node => node.dataset.summaryKind);
+      assert(kinds.includes('page-usage'), '关卡选择页缺少 page-usage 摘要语义类');
+      assert(bodyText.includes('负责选择故事关卡并进入战斗规划'), '关卡选择页未解释页面职责');
+      assert(bodyText.includes('不会在这里修改技能树或作者工具数据'), '关卡选择页未解释页面边界');
+    }
+
+    async function testUiTurnPanelProvidesBlockedReasonFeedback() {
+      resetRegressionFixture(`
+        <button id="btnExecute" type="button">执行回合</button>
+        <button id="btnReset" type="button">重置</button>
+        <button id="btnMenu" type="button">设置</button>
+        <div id="turnNumberLabel"></div>
+      `);
+
+      const eventBus = createMiniEventBus();
+      const feedback = [];
+      eventBus.on('UI:ACTION_FEEDBACK', payload => feedback.push(payload));
+
+      const engine = {
+        eventBus,
+        battlePhase: 'PLANNING',
+        currentTurn: 1,
+        playerSkillQueue: [],
+        timeline: { phase: 'IDLE' },
+        input: {
+          commitTurn() {},
+          resetTurn() {}
+        }
+      };
+
+      new UI_TurnPanel(engine);
+
+      const execute = document.getElementById('btnExecute');
+      const reset = document.getElementById('btnReset');
+      assert((execute.getAttribute('title') || '').includes('请先提交规划'), '执行按钮缺少阻塞原因 title');
+      assert((reset.getAttribute('title') || '').includes('当前没有可重置的规划'), '重置按钮缺少阻塞原因 title');
+
+      execute.click();
+      reset.click();
+
+      assert(feedback.length === 2, `TurnPanel 未发出结构化阻塞反馈: ${feedback.length}`);
+      assert((feedback[0]?.message || '').includes('请先提交规划'), '执行阻塞反馈正文不正确');
+      assert((feedback[1]?.message || '').includes('当前没有可重置的规划'), '重置阻塞反馈正文不正确');
     }
 
     async function testMockUiProvidesBattleStateSummaryMount() {
@@ -6310,6 +6410,16 @@
         'UI_SystemModal 主菜单与关卡选择页使用统一摘要语义类',
         'mock_ui_v11 提供主界面摘要条挂载点'
       ]),
+      'WBS-4.2.1': new Set([
+        'UI_SystemModal 会渲染页面用途说明块'
+      ]),
+      'WBS-4.2.2': new Set([
+        'UI_AttentionGuide 会渲染机制术语与阻塞反馈'
+      ]),
+      'WBS-4.2.3': new Set([
+        'UI_AttentionGuide 会渲染机制术语与阻塞反馈',
+        'UI_TurnPanel 会暴露不可执行原因'
+      ]),
       'WBS-3.2.3.1': new Set([
         'level_map_selection_mock 提供可理解的地图方案说明',
         'level_map_selection_mock 会解释地图包与主程序交接面'
@@ -6363,7 +6473,10 @@
       ['mock_ui_v11 使用唯一引擎实例', testMockUiUsesSingletonEngine],
       ['mock_ui_v11 使用统一的主流程按钮语言', testMockUiUsesUnifiedMainFlowButtonLabels],
       ['UI_AttentionGuide 提供主界面摘要条', testUiAttentionGuideProvidesBattleSummary],
+      ['UI_AttentionGuide 会渲染机制术语与阻塞反馈', testUiAttentionGuideProvidesGlossaryAndFeedback],
       ['UI_SystemModal 主菜单与关卡选择页使用统一摘要语义类', testUiSystemModalUsesUnifiedSummarySectionClasses],
+      ['UI_SystemModal 会渲染页面用途说明块', testUiSystemModalProvidesPageUsageGuide],
+      ['UI_TurnPanel 会暴露不可执行原因', testUiTurnPanelProvidesBlockedReasonFeedback],
       ['mock_ui_v11 提供主界面摘要条挂载点', testMockUiProvidesBattleStateSummaryMount],
       ['BattlePresentationController 会在时间线启动时标记攻击态', testBattlePresentationControllerMarksActorOnTimelineEntry],
       ['BattlePresentationController 会在受击时生成伤害飘字', testBattlePresentationControllerCreatesFloatTextOnDamage],

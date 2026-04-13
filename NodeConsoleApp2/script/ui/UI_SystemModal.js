@@ -404,6 +404,10 @@ export class UI_SystemModal {
         if (flowGuide) {
             container.appendChild(flowGuide);
         }
+        const pageUsageGuide = this._buildPageUsageGuide({ view: 'LOGIN' });
+        if (pageUsageGuide) {
+            container.appendChild(pageUsageGuide);
+        }
 
         container.appendChild(input);
         actionRow.appendChild(newGameBtn);
@@ -575,6 +579,10 @@ export class UI_SystemModal {
         if (mainFlowGuide) {
             this.dom.body.appendChild(mainFlowGuide);
         }
+        const pageUsageGuide = this._buildPageUsageGuide({ view: 'MAIN_MENU' });
+        if (pageUsageGuide) {
+            this.dom.body.appendChild(pageUsageGuide);
+        }
         const contentSourceGuide = this._buildContentSourceGuide();
         if (contentSourceGuide) {
             this.dom.body.appendChild(contentSourceGuide);
@@ -727,6 +735,106 @@ export class UI_SystemModal {
                 '选择技能并部署到技能槽 -> 提交规划 -> 执行回合',
                 '提交规划只锁定本回合方案；执行回合才会开始自动结算。'
             );
+        }
+
+        section.appendChild(title);
+        section.appendChild(tip);
+        section.appendChild(detailStack);
+        return section;
+    }
+
+    _buildPageUsageGuide(options = {}) {
+        const view = options?.view || this.currentView || 'MAIN_MENU';
+        const section = document.createElement('section');
+        section.className = 'summary-section summary-section--page-usage';
+        section.dataset.summaryKind = 'page-usage';
+
+        const title = document.createElement('div');
+        title.className = 'summary-section__title';
+        title.textContent = '本页用途';
+
+        const tip = document.createElement('p');
+        tip.className = 'summary-section__description';
+        tip.textContent = '本块只解释当前页面负责什么、建议下一步是什么，以及哪些事情不应该在这里完成。';
+
+        const detailStack = document.createElement('div');
+        detailStack.className = 'summary-detail-stack';
+
+        const appendCard = (label, value, text) => {
+            const card = document.createElement('div');
+            card.className = 'summary-detail-card';
+
+            const labelEl = document.createElement('div');
+            labelEl.className = 'summary-detail-card__label';
+            labelEl.textContent = label;
+
+            const valueEl = document.createElement('div');
+            valueEl.className = 'summary-detail-card__value';
+            valueEl.textContent = value;
+
+            card.appendChild(labelEl);
+            card.appendChild(valueEl);
+
+            if (text) {
+                const textEl = document.createElement('div');
+                textEl.className = 'summary-detail-card__text';
+                textEl.textContent = text;
+                card.appendChild(textEl);
+            }
+
+            detailStack.appendChild(card);
+        };
+
+        if (view === 'MAIN_MENU') {
+            appendCard(
+                '这页做什么',
+                '只负责选择下一步操作',
+                '你会从这里进入关卡选择、技能树、存档读档或设置。'
+            );
+            appendCard(
+                '建议下一步',
+                '通常先去关卡选择',
+                '如果要继续正式主流程，默认先进入关卡选择，再决定本局要打哪一关。'
+            );
+            appendCard(
+                '这里不做什么',
+                '不会直接开始战斗结算',
+                '主菜单本身不承担战斗执行，也不在这里修改作者工具数据。'
+            );
+        } else if (view === 'LEVEL_SELECT') {
+            appendCard(
+                '这页做什么',
+                '负责选择故事关卡并进入战斗规划',
+                '点击关卡卡片后会进入对应关卡，然后才会看到技能部署和回合执行。'
+            );
+            appendCard(
+                '建议下一步',
+                '先看推荐节点，再决定是否进入',
+                '优先阅读章节推进总览和当前推荐，再决定本局要推进哪一个关卡。'
+            );
+            appendCard(
+                '这里不做什么',
+                '不会在这里修改技能树或作者工具数据',
+                '关卡选择只负责进入关卡，不承担技能学习、地图编辑或其他作者工具配置。'
+            );
+        } else if (view === 'LOGIN') {
+            appendCard(
+                '这页做什么',
+                '负责选择新游戏或读取存档',
+                '它决定从哪里进入当前版本的正式入口。'
+            );
+            appendCard(
+                '建议下一步',
+                '第一次进入时优先新游戏',
+                '如果只是回到上次离开的页面，再使用读取存档。'
+            );
+            appendCard(
+                '这里不做什么',
+                '不会直接跳过到战斗执行',
+                '欢迎页只负责入口选择，不承担规划、执行或作者工具编辑。'
+            );
+        } else {
+            return null;
         }
 
         section.appendChild(title);
@@ -1140,6 +1248,11 @@ export class UI_SystemModal {
 
         if (introText) {
             this._appendGuideBlock(introText, { preserveLineBreaks: true });
+        }
+
+        const pageUsageGuide = this._buildPageUsageGuide({ view });
+        if (pageUsageGuide instanceof HTMLElement) {
+            this.dom.body.appendChild(pageUsageGuide);
         }
 
         const overviewSection = this._buildLevelSelectOverviewSection(overview);

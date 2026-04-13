@@ -6,6 +6,7 @@ export class UI_AttentionGuide {
         this.badge = document.getElementById('uiAttentionBadge');
         this.summary = document.getElementById('battleStateSummary');
         this.isSkillArmed = false;
+        this.latestActionFeedback = null;
 
         if (!this.root) {
             throw new Error('[UI_AttentionGuide] document.body not found.');
@@ -23,17 +24,36 @@ export class UI_AttentionGuide {
 
     bindEvents() {
         const refresh = () => this.render();
-        this.eventBus.on('BATTLE_START', refresh);
-        this.eventBus.on('BATTLE_UPDATE', refresh);
-        this.eventBus.on('TURN_START', refresh);
-        this.eventBus.on('TIMELINE_READY', refresh);
-        this.eventBus.on('TIMELINE_START', refresh);
+        const clearFeedbackAndRefresh = () => {
+            this.latestActionFeedback = null;
+            this.render();
+        };
+        this.eventBus.on('BATTLE_START', clearFeedbackAndRefresh);
+        this.eventBus.on('BATTLE_UPDATE', clearFeedbackAndRefresh);
+        this.eventBus.on('TURN_START', clearFeedbackAndRefresh);
+        this.eventBus.on('TIMELINE_READY', clearFeedbackAndRefresh);
+        this.eventBus.on('TIMELINE_START', clearFeedbackAndRefresh);
+        this.eventBus.on('TIMELINE_FINISHED', clearFeedbackAndRefresh);
         this.eventBus.on('TIMELINE_PAUSE', refresh);
         this.eventBus.on('TIMELINE_RESUME', refresh);
-        this.eventBus.on('TIMELINE_FINISHED', refresh);
 
         this.eventBus.on('UI:SKILL_ARMED_CHANGED', (payload) => {
             this.isSkillArmed = !!(payload && payload.isArmed);
+            if (this.isSkillArmed) {
+                this.latestActionFeedback = null;
+            }
+            this.render();
+        });
+
+        this.eventBus.on('UI:ACTION_FEEDBACK', (payload) => {
+            this.latestActionFeedback = payload && typeof payload === 'object'
+                ? {
+                    level: payload.level || 'info',
+                    title: payload.title || '当前反馈',
+                    message: payload.message || '',
+                    suggestion: payload.suggestion || ''
+                }
+                : null;
             this.render();
         });
     }
@@ -95,17 +115,27 @@ export class UI_AttentionGuide {
         const objective = this.buildObjectiveSummary(snapshot);
         const status = this.buildStatusSummary(snapshot);
         const action = this.buildActionSummary(snapshot);
+        const glossary = this.buildGlossarySummary();
+        const feedback = this.buildFeedbackSummary(snapshot);
 
         this.summary.dataset.phase = snapshot.battlePhase;
         this.summary.innerHTML = '';
-        this.summary.appendChild(this.createSummaryCard('当前目标', objective.value, objective.meta, objective.chips));
-        this.summary.appendChild(this.createSummaryCard('战斗态势', status.value, status.meta, status.chips));
-        this.summary.appendChild(this.createSummaryCard('当前操作', action.value, action.meta, action.chips));
+        this.summary.appendChild(this.createSummaryCard('当前目标', objective.value, objective.meta, objective.chips, { kind: 'objective' }));
+        this.summary.appendChild(this.createSummaryCard('战斗态势', status.value, status.meta, status.chips, { kind: 'status' }));
+        this.summary.appendChild(this.createSummaryCard('当前操作', action.value, action.meta, action.chips, { kind: 'action' }));
+        this.summary.appendChild(this.createSummaryCard('机制术语', glossary.value, glossary.meta, glossary.chips, { kind: 'glossary', wide: true }));
+        this.summary.appendChild(this.createSummaryCard('阻塞反馈', feedback.value, feedback.meta, feedback.chips, { kind: 'feedback' }));
     }
 
-    createSummaryCard(label, value, meta, chips = []) {
+    createSummaryCard(label, value, meta, chips = [], options = {}) {
         const card = document.createElement('article');
         card.className = 'summary-card';
+        if (options.wide) {
+            card.classList.add('summary-card--wide');
+        }
+        if (options.kind) {
+            card.dataset.summaryCard = options.kind;
+        }
 
         const eyebrow = document.createElement('div');
         eyebrow.className = 'summary-card__eyebrow';
@@ -241,6 +271,70 @@ export class UI_AttentionGuide {
         return {
             value: '从游戏菜单开始冒险',
             meta: '系统菜单负责入口选择；进入关卡后才会出现可规划的技能操作。',
+            chips: ['开始冒险', '关卡选择']
+        };
+    }
+
+    buildGlossarySummary() {
+        return {
+            value: '先理解 AP、技能槽、部位、Buff / Debuff、时间轴',
+            meta: 'AP 是本回合可部署的技能预算；技能槽代表技能实际部署位，部署后才会进入规划；部位决定攻击或防御聚焦点；Buff / Debuff 是增益与减益；时间轴是执行阶段的展示顺序。',
+            chips: ['AP', '技能槽', '部位', 'Buff / Debuff', '时间轴']
+        };
+    }
+
+    buildFeedbackSummary(snapshot) {
+        const latest = this.latestActionFeedback;
+        if (latest && (latest.title || latest.message || latest.suggestion)) {
+            const chips = [];
+            if (latest.level) {
+                chips.push(`级别 ${String(latest.level).toUpperCase()}`);
+            }
+            if (latest.suggestion) {
+                chips.push(latest.suggestion);
+            }
+            return {
+                value: latest.title || '当前反馈',
+                meta: latest.message || '请按当前提示继续。',
+                chips
+            };
+        }
+
+        if (snapshot.battlePhase === 'planning') {
+            if (this.isSkillArmed) {
+                return {
+                    value: '技能已选中，等待部署',
+                    meta: '先把当前技能放入高亮槽位；只有部署完成后，规划状态才会继续前进。',
+                    chips: ['先部署技能', '再继续选技能']
+                };
+            }
+
+            if (snapshot.timelinePhase === 'ready' && snapshot.queueLength > 0) {
+                return {
+                    value: '当前无阻塞，可以执行回合',
+                    meta: '本回合规划已经锁定为可执行状态；如果要改动，先点“重置”，否则直接执行回合。',
+                    chips: ['执行回合', '或重置重排']
+                };
+            }
+
+            return {
+                value: '尚未形成可执行规划',
+                meta: '先从技能库选择技能，再把技能放入技能槽。提交规划后，“执行回合”才会解锁。',
+                chips: ['先选技能', '再提交规划']
+            };
+        }
+
+        if (snapshot.battlePhase === 'execution') {
+            return {
+                value: '执行阶段输入已锁定',
+                meta: '当前正在自动结算；技能规划和重置会暂时锁定，等待本轮执行结束后再继续。',
+                chips: ['等待自动结算']
+            };
+        }
+
+        return {
+            value: '当前不在战斗流程内',
+            meta: '先从游戏菜单开始冒险并选择关卡；进入关卡后，才会出现技能规划与执行反馈。',
             chips: ['开始冒险', '关卡选择']
         };
     }
