@@ -38,11 +38,11 @@
         }
 
         .guide-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .layout-grid {
-            grid-template-columns: minmax(360px, 470px) minmax(620px, 1fr);
+            grid-template-columns: minmax(340px, 420px) minmax(760px, 1fr);
             align-items: start;
         }
 
@@ -174,19 +174,57 @@
             padding: 16px;
         }
 
-        .probe-shell .battle-row {
+        .preview-status-strip {
             display: grid;
-            grid-template-columns: 260px 1fr 260px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
+            margin: 14px 0 12px;
         }
 
-        .probe-shell .hud-panel {
+        .preview-status-card {
+            display: grid;
+            gap: 6px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(129, 165, 255, 0.24);
+            background: linear-gradient(180deg, rgba(31, 36, 64, 0.94), rgba(18, 22, 38, 0.82));
             color: #eef4ff;
-            overflow: hidden;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
+        }
+
+        .preview-status-card--player {
+            border-color: rgba(87, 194, 255, 0.4);
+        }
+
+        .preview-status-card--enemy {
+            border-color: rgba(255, 119, 159, 0.36);
+        }
+
+        .preview-status-card__eyebrow {
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(210, 224, 255, 0.72);
+        }
+
+        .preview-status-card__value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .preview-status-card__meta {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #d6e3ff;
+        }
+
+        .probe-shell .battle-row {
+            display: block;
         }
 
         .probe-shell .battle-scene {
-            min-height: 320px;
+            min-height: 420px;
         }
 
         .preview-heading {
@@ -263,8 +301,9 @@
         }
 
         @media (max-width: 1280px) {
+            .guide-grid,
             .layout-grid,
-            .probe-shell .battle-row {
+            .preview-status-strip {
                 grid-template-columns: 1fr;
             }
 
@@ -348,7 +387,7 @@
         <div class="preview-stack">
             <div class="tool-card">
                 <h3 class="preview-heading">实时预览</h3>
-                <p class="preview-note">下面的按钮只触发展示事件，帮助你确认参数改动是否产生可观察差异。这里保留角色动作、受击和状态提示，但不再提供屏幕晃动类入口。</p>
+                <p class="preview-note">下面的按钮只触发展示事件，帮助你确认参数改动是否产生可观察差异。这里保留角色动作、受击和状态提示，但不再提供屏幕晃动类入口；角色场景优先展示，状态改为精简条，不再用完整 HUD 挤压角色区。</p>
                 <div class="probe-shell">
                     <div class="preview-controls">
                         <button type="button" id="btnPreviewAttack">攻击前冲</button>
@@ -356,35 +395,19 @@
                         <button type="button" id="btnPreviewHeal">治疗</button>
                         <button type="button" id="btnPreviewStatus">Buff 提示</button>
                     </div>
-                    <div class="battle-row">
-                        <section class="hud-panel player-hud labeled-block">
-                            <h2>玩家：参数样本</h2>
-                            <div class="hud-stat">
-                                <span>HP 112 / 120</span>
-                                <div class="bar hp"><span style="width:93%"></span></div>
-                            </div>
-                            <div class="status-row">
-                                <span class="status-label">BUFF</span>
-                                <div class="status-icons"></div>
-                            </div>
-                            <div class="status-row">
-                                <span class="status-label">DEBUFF</span>
-                                <div class="status-icons"></div>
-                            </div>
-                            <div class="armor-list-wrapper">
-                                <div class="armor-row" data-key="head">
-                                    <span class="armor-name">头部</span>
-                                    <div class="armor-bar"><span style="width:100%"></span></div>
-                                    <span class="armor-value">18 / 18</span>
-                                </div>
-                                <div class="armor-row" data-key="chest">
-                                    <span class="armor-name">胸部</span>
-                                    <div class="armor-bar"><span style="width:100%"></span></div>
-                                    <span class="armor-value">24 / 24</span>
-                                </div>
-                            </div>
+                    <div class="preview-status-strip">
+                        <section class="preview-status-card preview-status-card--player">
+                            <div class="preview-status-card__eyebrow">玩家样本</div>
+                            <div id="previewPlayerHp" class="preview-status-card__value">HP 112 / 120</div>
+                            <div id="previewPlayerMeta" class="preview-status-card__meta">BUFF 0 · DEBUFF 0 · 护甲 42 / 42</div>
                         </section>
-
+                        <section class="preview-status-card preview-status-card--enemy">
+                            <div class="preview-status-card__eyebrow">敌人样本</div>
+                            <div id="previewEnemyHp" class="preview-status-card__value">HP 96 / 96</div>
+                            <div id="previewEnemyMeta" class="preview-status-card__meta">BUFF 0 · DEBUFF 0 · 护甲 30 / 30</div>
+                        </section>
+                    </div>
+                    <div class="battle-row">
                         <section class="battle-scene labeled-block">
                             <div class="sub-area-tag">预览场景</div>
                             <div class="battle-presentation-meta" data-role="battle-presentation-meta">演出配置资产：加载中</div>
@@ -410,34 +433,6 @@
                                 </div>
                             </div>
                             <div class="fx-layer"></div>
-                        </section>
-
-                        <section class="hud-panel enemy-hud labeled-block">
-                            <h2>敌人：参数样本</h2>
-                            <div class="hud-stat">
-                                <span>HP 96 / 96</span>
-                                <div class="bar hp"><span style="width:100%"></span></div>
-                            </div>
-                            <div class="status-row">
-                                <span class="status-label">BUFF</span>
-                                <div class="status-icons"></div>
-                            </div>
-                            <div class="status-row">
-                                <span class="status-label">DEBUFF</span>
-                                <div class="status-icons"></div>
-                            </div>
-                            <div class="armor-list-wrapper">
-                                <div class="armor-row" data-key="head">
-                                    <span class="armor-name">头部</span>
-                                    <div class="armor-bar"><span style="width:100%"></span></div>
-                                    <span class="armor-value">12 / 12</span>
-                                </div>
-                                <div class="armor-row" data-key="chest">
-                                    <span class="armor-name">胸部</span>
-                                    <div class="armor-bar"><span style="width:100%"></span></div>
-                                    <span class="armor-value">18 / 18</span>
-                                </div>
-                            </div>
                         </section>
                     </div>
                 </div>
@@ -475,7 +470,7 @@
         { path: ['motion', 'values', 'hitShakeLeftPx'], label: '受击左摆', min: -32, max: 0, step: 1, note: '受击第一段向左摆动的像素' },
         { path: ['motion', 'values', 'hitShakeRightPx'], label: '受击右摆', min: 0, max: 32, step: 1, note: '受击第二段向右摆动的像素' },
         { path: ['motion', 'values', 'healLiftPx'], label: '治疗抬升', min: 0, max: 32, step: 1, note: '治疗回弹向上的像素' },
-        { path: ['motion', 'values', 'sceneBeatOffsetPx'], label: '场景聚焦偏移', min: 0, max: 18, step: 1, note: 'scene-beat-* 的轻量水平偏移' },
+        { path: ['motion', 'values', 'sceneBeatBrightness'], label: '场景聚焦亮度', min: 1, max: 1.4, step: 0.01, note: 'scene-beat-* 只保留亮度强调，不再推动场景位移' },
         { path: ['motion', 'values', 'floatEndPx'], label: '飘字终点高度', min: -120, max: -12, step: 1, note: '飘字结束时的垂直位置（px）' }
     ];
 
@@ -555,13 +550,43 @@
     const profileSelect = document.getElementById('profileSelect');
     const fieldGrid = document.getElementById('fieldGrid');
     const jsonEditor = document.getElementById('jsonEditor');
+    const previewPlayerHp = document.getElementById('previewPlayerHp');
+    const previewPlayerMeta = document.getElementById('previewPlayerMeta');
+    const previewEnemyHp = document.getElementById('previewEnemyHp');
+    const previewEnemyMeta = document.getElementById('previewEnemyMeta');
 
     function appendLog(text) {
         logEl.textContent = logEl.textContent ? `${logEl.textContent}\n${text}` : text;
     }
 
+    function readHp(entity) {
+        return Number(entity?.stats?.hp ?? entity?.hp ?? 0) || 0;
+    }
+
+    function readMaxHp(entity) {
+        return Number(entity?.stats?.maxHp ?? entity?.maxHp ?? 0) || 0;
+    }
+
+    function summarizeArmor(bodyParts = {}) {
+        let current = 0;
+        let max = 0;
+        Object.values(bodyParts || {}).forEach(part => {
+            current += Number(part?.current ?? 0) || 0;
+            max += Number(part?.max ?? 0) || 0;
+        });
+        return `${current} / ${max}`;
+    }
+
+    function renderPreviewStatusStrip() {
+        previewPlayerHp.textContent = `HP ${readHp(previewState.player)} / ${readMaxHp(previewState.player)}`;
+        previewPlayerMeta.textContent = `BUFF ${previewState.player.buffs.length} · DEBUFF ${previewState.player.debuffs.length} · 护甲 ${summarizeArmor(previewState.player.bodyParts)}`;
+        previewEnemyHp.textContent = `HP ${readHp(previewState.enemy)} / ${readMaxHp(previewState.enemy)}`;
+        previewEnemyMeta.textContent = `BUFF ${previewState.enemy.buffs.length} · DEBUFF ${previewState.enemy.debuffs.length} · 护甲 ${summarizeArmor(previewState.enemy.bodyParts)}`;
+    }
+
     function resetPreviewState() {
         previewState = clone(previewBaseState);
+        renderPreviewStatusStrip();
         eventBus.emit('BATTLE_START', {
             player: previewState.player,
             enemies: [previewState.enemy]
@@ -677,6 +702,7 @@
                 player: previewState.player,
                 enemies: [previewState.enemy]
             });
+            renderPreviewStatusStrip();
             appendLog('[PREVIEW] 受击');
         });
         document.getElementById('btnPreviewHeal').addEventListener('click', () => {
@@ -685,6 +711,7 @@
                 player: previewState.player,
                 enemies: [previewState.enemy]
             });
+            renderPreviewStatusStrip();
             appendLog('[PREVIEW] 治疗');
         });
         document.getElementById('btnPreviewStatus').addEventListener('click', () => {
@@ -698,6 +725,7 @@
                 player: previewState.player,
                 enemies: [previewState.enemy]
             });
+            renderPreviewStatusStrip();
             appendLog('[PREVIEW] Buff 提示');
         });
     }

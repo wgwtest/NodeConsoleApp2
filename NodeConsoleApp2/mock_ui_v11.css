@@ -586,50 +586,37 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 546px 286
 
 @keyframes sceneTurnPulse {
   0% {
-    transform: scale(1);
     filter: saturate(1);
   }
   40% {
-    transform: scale(var(--battle-scene-turn-scale));
-    filter: saturate(var(--battle-scene-turn-saturate));
+    filter: saturate(var(--battle-scene-turn-saturate)) brightness(1.05);
   }
   100% {
-    transform: scale(1);
     filter: saturate(1);
   }
 }
 
 @keyframes sceneBeatFocusSelf {
   0% {
-    transform: translateX(0);
     filter: brightness(1);
   }
   35% {
-    transform: translateX(var(--battle-scene-beat-offset-px)) scale(var(--battle-scene-beat-scale));
     filter: brightness(var(--battle-scene-beat-brightness));
   }
-  75% {
-    transform: translateX(0);
-  }
   100% {
-    transform: translateX(0);
+    filter: brightness(1);
   }
 }
 
 @keyframes sceneBeatFocusEnemy {
   0% {
-    transform: translateX(0);
     filter: brightness(1);
   }
   35% {
-    transform: translateX(calc(var(--battle-scene-beat-offset-px) * -1)) scale(var(--battle-scene-beat-scale));
     filter: brightness(var(--battle-scene-beat-brightness));
   }
-  75% {
-    transform: translateX(0);
-  }
   100% {
-    transform: translateX(0);
+    filter: brightness(1);
   }
 }
 
