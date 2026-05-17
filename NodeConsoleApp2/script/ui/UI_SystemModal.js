@@ -58,6 +58,7 @@ export class UI_SystemModal {
      */
     bindDOM() {
         this.dom.backdrop = document.getElementById('systemModal');
+        this.dom.panel = this.dom.backdrop?.querySelector('.modal-panel') || document.querySelector('.modal-panel');
         this.dom.title = document.getElementById('modalTitle');
         this.dom.body = document.getElementById('modalBody');
         this.dom.footer = document.getElementById('modalFooter');
@@ -334,13 +335,6 @@ export class UI_SystemModal {
         // 隐藏关闭按钮，强制用户登录
         this._setCloseButtonState({ visible: false });
 
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-        container.style.gap = '20px';
-        container.style.padding = '40px';
-        container.style.alignItems = 'center';
-
         const input = document.createElement('input');
         input.type = 'text';
         input.placeholder = '请输入玩家名称';
@@ -396,25 +390,16 @@ export class UI_SystemModal {
         tip.style.fontSize = '0.88rem';
         tip.style.color = '#cfe8ff';
         tip.style.textAlign = 'center';
-        tip.textContent = hasAnySave
-            ? '“新游戏”会创建新的自动存档；“读取存档”用于读取自动存档或手动槽位。'
-            : '当前没有可读取的本地存档，请先创建新游戏。';
+        tip.textContent = hasAnySave ? '' : '当前没有可读取的本地存档。';
 
-        const flowGuide = this._buildMainFlowGuide({ view: 'LOGIN' });
-        if (flowGuide) {
-            container.appendChild(flowGuide);
-        }
-        const pageUsageGuide = this._buildPageUsageGuide({ view: 'LOGIN' });
-        if (pageUsageGuide) {
-            container.appendChild(pageUsageGuide);
-        }
-
-        container.appendChild(input);
+        const primaryActions = document.createElement('section');
+        primaryActions.className = 'modal-primary-actions';
+        primaryActions.appendChild(input);
         actionRow.appendChild(newGameBtn);
         actionRow.appendChild(loadBtn);
-        container.appendChild(actionRow);
-        container.appendChild(tip);
-        this.dom.body.appendChild(container);
+        primaryActions.appendChild(actionRow);
+        primaryActions.appendChild(tip);
+        this.dom.body.appendChild(primaryActions);
     }
 
     /**
@@ -440,7 +425,7 @@ export class UI_SystemModal {
             return;
         }
 
-        // 关卡选择页需要在技能学习提交后立即刷新关前构筑摘要
+        // 关卡选择页需要在技能学习提交后立即刷新关卡状态
         if (this.currentView === 'LEVEL_SELECT' && type === 'PLAYER_SKILLS') {
             this.renderLevelSelect();
         }
@@ -481,6 +466,9 @@ export class UI_SystemModal {
      */
     show() {
         console.log('[UI_SystemModal] Showing modal');
+        if (document.body) {
+            document.body.classList.add('modal-open');
+        }
         if (this.dom.backdrop) {
             this.dom.backdrop.classList.add('visible');
             this.dom.backdrop.hidden = false;
@@ -493,12 +481,18 @@ export class UI_SystemModal {
      */
     hide() {
         console.log('[UI_SystemModal] Hiding modal');
+        if (document.body) {
+            document.body.classList.remove('modal-open');
+        }
         if (this.dom.backdrop) {
             this.dom.backdrop.classList.remove('visible');
             this.dom.backdrop.hidden = true;
             this.dom.backdrop.setAttribute('aria-hidden', 'true');
         }
+        this.setTitle('');
         this.currentView = null;
+        this.clearContent();
+        this.clearFooter();
     }
 
     /**
@@ -532,10 +526,6 @@ export class UI_SystemModal {
         const growthSummary = this._buildMainMenuGrowthSummary();
 
         const items = [];
-        const acceptanceEntries = (this.engine.data && this.engine.data.getAcceptanceLevelSelectEntries)
-            ? this.engine.data.getAcceptanceLevelSelectEntries()
-            : [];
-
         if (canResume) {
             items.push({ label: '返回战斗', action: () => this.handleClose() });
         }
@@ -551,10 +541,6 @@ export class UI_SystemModal {
                 this.renderLevelSelect();
             }},
             { label: '技能树 / 构筑', action: () => this.openSkillTreeFromMainMenu() },
-            ...(acceptanceEntries.length > 0 ? [{
-                label: '验收样本',
-                action: () => this.renderAcceptanceLevelSelect()
-            }] : []),
             { label: '存档 / 读档', action: () => this.renderSaveLoad(undefined, '', { returnView: 'MAIN_MENU', title: '存档 / 读档' }) },
             { label: '设置', action: () => this.renderSettings() },
             { label: '注销', action: () => {
@@ -572,27 +558,10 @@ export class UI_SystemModal {
             menu.appendChild(btn);
         });
 
+        this.dom.body.appendChild(menu);
         if (growthSummary) {
             this.dom.body.appendChild(growthSummary);
         }
-        const mainFlowGuide = this._buildMainFlowGuide({ view: 'MAIN_MENU' });
-        if (mainFlowGuide) {
-            this.dom.body.appendChild(mainFlowGuide);
-        }
-        const pageUsageGuide = this._buildPageUsageGuide({ view: 'MAIN_MENU' });
-        if (pageUsageGuide) {
-            this.dom.body.appendChild(pageUsageGuide);
-        }
-        const contentSourceGuide = this._buildContentSourceGuide();
-        if (contentSourceGuide) {
-            this.dom.body.appendChild(contentSourceGuide);
-        }
-        this._appendGuideBlock(
-            canResume
-                ? '这里用于选择下一步操作。右上角“关闭并返回战斗”会直接回到当前战斗，列表按钮会进入对应页面或执行对应操作。'
-                : '这里用于选择下一步操作。列表按钮会进入对应页面或执行对应操作，不会直接启动战斗以外的隐藏流程。'
-        );
-        this.dom.body.appendChild(menu);
         this.clearFooter(); // 主菜单通常不需要 Footer 按钮
     }
 
@@ -610,10 +579,6 @@ export class UI_SystemModal {
         const title = document.createElement('div');
         title.className = 'summary-section__title';
         title.textContent = '成长摘要';
-
-        const tip = document.createElement('p');
-        tip.className = 'summary-section__description';
-        tip.textContent = '在进入关卡前先确认当前知识点和已学技能，再决定这局要走什么构筑方向。';
 
         const statGrid = document.createElement('div');
         statGrid.className = 'summary-metric-grid';
@@ -639,7 +604,6 @@ export class UI_SystemModal {
         statGrid.appendChild(createStatCard('已学技能', String(learned.length)));
 
         summary.appendChild(title);
-        summary.appendChild(tip);
         summary.appendChild(statGrid);
 
         const detailStack = document.createElement('div');
@@ -656,263 +620,6 @@ export class UI_SystemModal {
 
         summary.appendChild(detailStack);
         return summary;
-    }
-
-    _buildMainFlowGuide(options = {}) {
-        const view = options?.view || this.currentView || 'MAIN_MENU';
-
-        const section = document.createElement('section');
-        section.className = 'summary-section summary-section--main-flow';
-        section.dataset.summaryKind = 'main-flow';
-
-        const title = document.createElement('div');
-        title.className = 'summary-section__title';
-        title.textContent = '主流程怎么走';
-
-        const tip = document.createElement('p');
-        tip.className = 'summary-section__description';
-        tip.textContent = view === 'LOGIN'
-            ? '先决定是创建新档还是恢复旧档，再进入正式入口；不要把欢迎页、读档和战斗规划混成同一种操作。'
-            : '这里负责把“正式主流程入口”和“关联子流程入口”分开说清楚，避免只看到按钮名却不知道下一步。';
-
-        const detailStack = document.createElement('div');
-        detailStack.className = 'summary-detail-stack';
-
-        const appendCard = (label, value, text) => {
-            const card = document.createElement('div');
-            card.className = 'summary-detail-card';
-
-            const labelEl = document.createElement('div');
-            labelEl.className = 'summary-detail-card__label';
-            labelEl.textContent = label;
-
-            const valueEl = document.createElement('div');
-            valueEl.className = 'summary-detail-card__value';
-            valueEl.textContent = value;
-
-            card.appendChild(labelEl);
-            card.appendChild(valueEl);
-
-            if (text) {
-                const textEl = document.createElement('div');
-                textEl.className = 'summary-detail-card__text';
-                textEl.textContent = text;
-                card.appendChild(textEl);
-            }
-
-            detailStack.appendChild(card);
-        };
-
-        if (view === 'LOGIN') {
-            appendCard(
-                '新游戏',
-                '创建新的自动存档并进入游戏菜单',
-                '适用于从当前版本的正式主流程重新开始。'
-            );
-            appendCard(
-                '读取存档',
-                '直接恢复到存档对应的页面',
-                '用于回到上次离开的页面，不会强制先经过游戏菜单。'
-            );
-            appendCard(
-                '正式主流程',
-                '新游戏 -> 游戏菜单 -> 关卡选择 -> 选择技能并部署到技能槽 -> 提交规划 -> 执行回合',
-                '如果只是验证主流程，默认按这条顺序推进。'
-            );
-        } else {
-            appendCard(
-                '关卡选择',
-                '当前正式主流程入口',
-                '从这里进入故事关卡，然后才会进入战斗规划与执行阶段。'
-            );
-            appendCard(
-                '技能树 / 构筑',
-                '主流程关联子流程',
-                '用于学习技能和确认当前技能池，不会直接开始战斗。'
-            );
-            appendCard(
-                '进入关卡后',
-                '选择技能并部署到技能槽 -> 提交规划 -> 执行回合',
-                '提交规划只锁定本回合方案；执行回合才会开始自动结算。'
-            );
-        }
-
-        section.appendChild(title);
-        section.appendChild(tip);
-        section.appendChild(detailStack);
-        return section;
-    }
-
-    _buildPageUsageGuide(options = {}) {
-        const view = options?.view || this.currentView || 'MAIN_MENU';
-        const section = document.createElement('section');
-        section.className = 'summary-section summary-section--page-usage';
-        section.dataset.summaryKind = 'page-usage';
-
-        const title = document.createElement('div');
-        title.className = 'summary-section__title';
-        title.textContent = '本页用途';
-
-        const tip = document.createElement('p');
-        tip.className = 'summary-section__description';
-        tip.textContent = '本块只解释当前页面负责什么、建议下一步是什么，以及哪些事情不应该在这里完成。';
-
-        const detailStack = document.createElement('div');
-        detailStack.className = 'summary-detail-stack';
-
-        const appendCard = (label, value, text) => {
-            const card = document.createElement('div');
-            card.className = 'summary-detail-card';
-
-            const labelEl = document.createElement('div');
-            labelEl.className = 'summary-detail-card__label';
-            labelEl.textContent = label;
-
-            const valueEl = document.createElement('div');
-            valueEl.className = 'summary-detail-card__value';
-            valueEl.textContent = value;
-
-            card.appendChild(labelEl);
-            card.appendChild(valueEl);
-
-            if (text) {
-                const textEl = document.createElement('div');
-                textEl.className = 'summary-detail-card__text';
-                textEl.textContent = text;
-                card.appendChild(textEl);
-            }
-
-            detailStack.appendChild(card);
-        };
-
-        if (view === 'MAIN_MENU') {
-            appendCard(
-                '这页做什么',
-                '只负责选择下一步操作',
-                '你会从这里进入关卡选择、技能树、存档读档或设置。'
-            );
-            appendCard(
-                '建议下一步',
-                '通常先去关卡选择',
-                '如果要继续正式主流程，默认先进入关卡选择，再决定本局要打哪一关。'
-            );
-            appendCard(
-                '这里不做什么',
-                '不会直接开始战斗结算',
-                '主菜单本身不承担战斗执行，也不在这里修改作者工具数据。'
-            );
-        } else if (view === 'LEVEL_SELECT') {
-            appendCard(
-                '这页做什么',
-                '负责选择故事关卡并进入战斗规划',
-                '点击关卡卡片后会进入对应关卡，然后才会看到技能部署和回合执行。'
-            );
-            appendCard(
-                '建议下一步',
-                '先看推荐节点，再决定是否进入',
-                '优先阅读章节推进总览和当前推荐，再决定本局要推进哪一个关卡。'
-            );
-            appendCard(
-                '这里不做什么',
-                '不会在这里修改技能树或作者工具数据',
-                '关卡选择只负责进入关卡，不承担技能学习、地图编辑或其他作者工具配置。'
-            );
-        } else if (view === 'LOGIN') {
-            appendCard(
-                '这页做什么',
-                '负责选择新游戏或读取存档',
-                '它决定从哪里进入当前版本的正式入口。'
-            );
-            appendCard(
-                '建议下一步',
-                '第一次进入时优先新游戏',
-                '如果只是回到上次离开的页面，再使用读取存档。'
-            );
-            appendCard(
-                '这里不做什么',
-                '不会直接跳过到战斗执行',
-                '欢迎页只负责入口选择，不承担规划、执行或作者工具编辑。'
-            );
-        } else {
-            return null;
-        }
-
-        section.appendChild(title);
-        section.appendChild(tip);
-        section.appendChild(detailStack);
-        return section;
-    }
-
-    _buildContentSourceGuide() {
-        const overview = (this.engine?.data?.getLevelContentSourceOverview)
-            ? this.engine.data.getLevelContentSourceOverview()
-            : [];
-        if (!Array.isArray(overview) || overview.length === 0) {
-            return null;
-        }
-
-        const section = document.createElement('section');
-        section.className = 'summary-section summary-section--content-sources';
-        section.dataset.summaryKind = 'content-sources';
-
-        const title = document.createElement('div');
-        title.className = 'summary-section__title';
-        title.textContent = '内容入口说明';
-
-        const tip = document.createElement('p');
-        tip.className = 'summary-section__description';
-        tip.textContent = '正式游戏菜单只承载 story 与验收样本入口；作者样本工具页保留在独立测试页，不直接进入主流程运行时。';
-
-        const list = document.createElement('div');
-        list.className = 'summary-detail-stack';
-
-        overview.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'summary-detail-card';
-
-            const heading = document.createElement('div');
-            heading.className = 'summary-detail-card__label';
-            heading.textContent = item?.title || item?.kind || '来源';
-
-            const entry = document.createElement('div');
-            entry.className = 'summary-detail-card__value';
-            const countText = Number.isFinite(item?.count) ? ` · ${item.count} 项` : '';
-            entry.textContent = item?.isRuntimeEntry
-                ? `${item?.entryLabel || '入口'}${countText}`
-                : `${item?.entryLabel || '入口'} · 不在游戏菜单`;
-
-            const desc = document.createElement('div');
-            desc.className = 'summary-detail-card__text';
-            desc.textContent = item?.description || '';
-
-            card.appendChild(heading);
-            card.appendChild(entry);
-            card.appendChild(desc);
-
-            if (Array.isArray(item?.details) && item.details.length > 0) {
-                const detailList = document.createElement('ul');
-                detailList.className = 'summary-detail-card__list';
-                item.details.forEach(detailText => {
-                    if (typeof detailText !== 'string' || !detailText.trim()) {
-                        return;
-                    }
-                    const detailItem = document.createElement('li');
-                    detailItem.className = 'summary-detail-card__list-item';
-                    detailItem.textContent = detailText.trim();
-                    detailList.appendChild(detailItem);
-                });
-                if (detailList.childElementCount > 0) {
-                    card.appendChild(detailList);
-                }
-            }
-
-            list.appendChild(card);
-        });
-
-        section.appendChild(title);
-        section.appendChild(tip);
-        section.appendChild(list);
-        return section;
     }
 
     _createGrowthSummaryDetail(label, text) {
@@ -1003,96 +710,6 @@ export class UI_SystemModal {
         return skillName || normalizedId;
     }
 
-    _buildPreBattleBuildSummaryData() {
-        const playerSkills = this.engine?.data?.playerData?.skills;
-        const progress = this.engine?.data?.dataConfig?.global?.progress;
-        const learnedSkillIds = Array.isArray(playerSkills?.learned)
-            ? playerSkills.learned.filter(skillId => typeof skillId === 'string' && skillId.trim().length > 0)
-            : [];
-        const learnedSkillNames = learnedSkillIds.map(skillId => this._resolveSkillDisplayName(skillId));
-        const previewNames = learnedSkillNames.slice(0, 4).filter(Boolean);
-        const remainingCount = Math.max(0, learnedSkillNames.length - previewNames.length);
-
-        const lastLearnAction = (progress && typeof progress.lastLearnAction === 'object')
-            ? progress.lastLearnAction
-            : null;
-        const recentSkillIds = Array.isArray(lastLearnAction?.learnedSkillIds)
-            ? lastLearnAction.learnedSkillIds.filter(skillId => typeof skillId === 'string' && skillId.trim().length > 0)
-            : [];
-        const recentSkillNames = Array.isArray(lastLearnAction?.learnedSkillNames)
-            ? lastLearnAction.learnedSkillNames
-                .filter(name => typeof name === 'string' && name.trim().length > 0)
-                .map(name => name.trim())
-            : [];
-        const resolvedRecentNames = recentSkillNames.length > 0
-            ? recentSkillNames
-            : recentSkillIds.map(skillId => this._resolveSkillDisplayName(skillId)).filter(Boolean);
-
-        return {
-            skillPoints: Number.isFinite(playerSkills?.skillPoints) ? Number(playerSkills.skillPoints) : 0,
-            learnedSkillIds,
-            learnedSkillNames,
-            totalCount: learnedSkillIds.length,
-            previewNames,
-            remainingCount,
-            lastLearnAction,
-            recentSkillNames: resolvedRecentNames
-        };
-    }
-
-    _buildPreBattleBuildSummarySection() {
-        const summaryData = this._buildPreBattleBuildSummaryData();
-        const section = document.createElement('section');
-        section.className = 'summary-section summary-section--prebattle-build';
-        section.dataset.summaryKind = 'prebattle-build';
-
-        const title = document.createElement('div');
-        title.className = 'summary-section__title';
-        title.textContent = '关前构筑摘要';
-
-        const tip = document.createElement('p');
-        tip.className = 'summary-section__description';
-        tip.textContent = '当前版本会在进入本局时自动带入全部已学技能；这里的重点是先确认当前技能池和最近学习带来的新增差异。';
-
-        const detailStack = document.createElement('div');
-        detailStack.className = 'summary-detail-stack';
-
-        const skillPoolText = summaryData.previewNames.length > 0
-            ? `${summaryData.totalCount} 项：${summaryData.previewNames.join('、')}${summaryData.remainingCount > 0 ? ` 等 ${summaryData.totalCount} 项` : ''}`
-            : `${summaryData.totalCount} 项`;
-
-        detailStack.appendChild(this._createGrowthSummaryDetail(
-            '当前技能池',
-            skillPoolText
-        ));
-        detailStack.appendChild(this._createGrowthSummaryDetail(
-            '预装配说明',
-            '本版本无单独预装配步骤，进入关卡后会自动带入全部已学技能。'
-        ));
-        detailStack.appendChild(this._createGrowthSummaryDetail(
-            '最近学习带来的技能池差异',
-            this._describePreBattleSkillDiff(summaryData)
-        ));
-
-        section.appendChild(title);
-        section.appendChild(tip);
-        section.appendChild(detailStack);
-        return section;
-    }
-
-    _describePreBattleSkillDiff(summaryData) {
-        const data = (summaryData && typeof summaryData === 'object') ? summaryData : this._buildPreBattleBuildSummaryData();
-        const recentNames = Array.isArray(data.recentSkillNames) ? data.recentSkillNames.filter(Boolean) : [];
-        const spentKp = Number.isFinite(data?.lastLearnAction?.spentKp) ? Number(data.lastLearnAction.spentKp) : 0;
-        const remainingKp = Number.isFinite(data?.lastLearnAction?.remainingKp) ? Number(data.lastLearnAction.remainingKp) : 0;
-
-        if (recentNames.length === 0) {
-            return '暂无最近学习差异；当前技能池会直接沿用全部已学技能。';
-        }
-
-        return `最近学习新增：${recentNames.join('、')}。本轮无额外预装配步骤，进入关卡后即可在技能池中使用；本次学习消耗 ${spentKp} KP，剩余 ${remainingKp} KP。`;
-    }
-
     openSkillTreeFromMainMenu() {
         this.openSkillTree('MAIN_MENU');
     }
@@ -1131,110 +748,97 @@ export class UI_SystemModal {
         return entries.filter(([, value]) => value > 0);
     }
 
-    _buildLevelCardExtraHtml(level) {
-        const flow = (level && typeof level.flow === 'object' && level.flow)
-            ? level.flow
-            : null;
-        const selectionMeta = (level && typeof level.selectionMeta === 'object' && level.selectionMeta)
-            ? level.selectionMeta
-            : null;
-        const progression = (level && typeof level.progression === 'object' && level.progression)
-            ? level.progression
-            : null;
-        const rewardPreview = this._buildLevelRewardPreview(level?.rewards);
-        const sections = [];
+    _getLevelFlow(level) {
+        return (level && typeof level.flow === 'object' && level.flow) ? level.flow : {};
+    }
 
-        if (flow?.chapterLabel || flow?.chapterTitle || flow?.nodeLabel) {
-            const chapterParts = [flow.chapterLabel, flow.chapterTitle, flow.nodeLabel].filter(Boolean);
-            sections.push(`
-                <div class="level-card-block">
-                    <div class="level-card-block-title">章节节点</div>
-                    <div class="level-card-inline">${this._escapeHtml(chapterParts.join(' · '))}</div>
-                </div>
-            `);
+    _getLevelSelectionMeta(level) {
+        return (level && typeof level.selectionMeta === 'object' && level.selectionMeta) ? level.selectionMeta : {};
+    }
+
+    _resolveLevelStatus(level) {
+        if (level?.isCompleted) return 'completed';
+        if (level?.isUnlocked === false) return 'locked';
+        const status = typeof level?.progression?.status === 'string' ? level.progression.status : '';
+        if (status) return status;
+        if (level?.progression?.stateLabel === '当前推荐') return 'recommended';
+        return 'unlocked';
+    }
+
+    _resolveLevelStatusLabel(level) {
+        const status = this._resolveLevelStatus(level);
+        if (status === 'completed') return '已完成';
+        if (status === 'locked') return '未解锁';
+        if (status === 'recommended') return '当前推荐';
+        return level?.progression?.stateLabel || '已解锁';
+    }
+
+    _buildLevelRewardChipsHtml(level) {
+        return this._buildLevelRewardPreview(level?.rewards)
+            .map(([label, value]) => `<span class="level-chip level-chip-reward">${this._escapeHtml(label)} ${this._escapeHtml(value)}</span>`)
+            .join('');
+    }
+
+    _buildCompactLevelMetaChipsHtml(level) {
+        const selectionMeta = this._getLevelSelectionMeta(level);
+        const chips = [];
+        if (selectionMeta.difficultyLabel) {
+            chips.push(`<span class="level-chip level-chip--difficulty">${this._escapeHtml(selectionMeta.difficultyLabel)}</span>`);
+        }
+        if (Array.isArray(selectionMeta.enemyStyleTags)) {
+            selectionMeta.enemyStyleTags.slice(0, 2).forEach(tag => {
+                if (tag) chips.push(`<span class="level-chip">${this._escapeHtml(tag)}</span>`);
+            });
+        }
+        return chips.join('');
+    }
+
+    _createLevelCard(level) {
+        const card = document.createElement('button');
+        const status = this._resolveLevelStatus(level);
+        const flow = this._getLevelFlow(level);
+        const levelDesc = level.description || level.desc || '';
+        const nodeLabel = flow.nodeLabel || level.id || '';
+        const rewardHtml = this._buildLevelRewardChipsHtml(level);
+        const metaHtml = this._buildCompactLevelMetaChipsHtml(level);
+        card.type = 'button';
+        card.className = `level-card level-card--compact is-${status}`;
+        card.dataset.levelId = level.id || '';
+        card.dataset.levelStatus = status;
+        card.innerHTML = `
+            <div class="level-card-topline">
+                <span class="level-card-node">${this._escapeHtml(nodeLabel)}</span>
+                <span class="level-card-status">${this._escapeHtml(this._resolveLevelStatusLabel(level))}</span>
+            </div>
+            <h4>${this._escapeHtml(level.name || level.id)}</h4>
+            ${levelDesc ? `<p class="level-card-desc">${this._escapeHtml(levelDesc)}</p>` : ''}
+            ${metaHtml ? `<div class="level-chip-row level-card-meta-row">${metaHtml}</div>` : ''}
+            ${rewardHtml ? `<div class="level-chip-row level-card-reward-row">${rewardHtml}</div>` : ''}
+        `;
+
+        if (level.isUnlocked === false) {
+            card.disabled = true;
+            card.setAttribute('aria-disabled', 'true');
+            return card;
         }
 
-        if (progression?.stateLabel || progression?.unlockHint) {
-            sections.push(`
-                <div class="level-card-block">
-                    <div class="level-card-block-title">推进关系</div>
-                    ${progression?.stateLabel ? `<div class="level-card-inline">${this._escapeHtml(progression.stateLabel)}</div>` : ''}
-                    ${progression?.unlockHint ? `<p class="level-card-hint">${this._escapeHtml(progression.unlockHint)}</p>` : ''}
-                </div>
-            `);
-        }
-
-        if (selectionMeta?.difficultyLabel) {
-            sections.push(`
-                <div class="level-card-block">
-                    <div class="level-card-block-title">难度</div>
-                    <div class="level-card-inline">${this._escapeHtml(selectionMeta.difficultyLabel)}</div>
-                </div>
-            `);
-        }
-
-        if (Array.isArray(selectionMeta?.enemyStyleTags) && selectionMeta.enemyStyleTags.length > 0) {
-            const tagsHtml = selectionMeta.enemyStyleTags
-                .map(tag => `<span class="level-chip">${this._escapeHtml(tag)}</span>`)
-                .join('');
-            sections.push(`
-                <div class="level-card-block">
-                    <div class="level-card-block-title">敌人风格</div>
-                    <div class="level-chip-row">${tagsHtml}</div>
-                </div>
-            `);
-        }
-
-        if (rewardPreview.length > 0) {
-            const rewardsHtml = rewardPreview
-                .map(([label, value]) => `<span class="level-chip level-chip-reward">${label} ${this._escapeHtml(value)}</span>`)
-                .join('');
-            sections.push(`
-                <div class="level-card-block">
-                    <div class="level-card-block-title">奖励预览</div>
-                    <div class="level-chip-row">${rewardsHtml}</div>
-                </div>
-            `);
-        }
-
-        if (level?.clearFeedback) {
-            const clearFeedback = level.clearFeedback;
-            const modeText = clearFeedback.currentMode === 'repeat' ? '当前已进入重复通关阶段' : '当前仍处于首次通关阶段';
-            sections.push(`
-                <div class="level-card-block">
-                    <div class="level-card-block-title">首次通关反馈</div>
-                    <p class="level-card-hint">${this._escapeHtml(clearFeedback.firstClearText || '首次通关会更新章节推进。')}</p>
-                </div>
-                <div class="level-card-block">
-                    <div class="level-card-block-title">重复通关收益</div>
-                    <p class="level-card-hint">${this._escapeHtml(clearFeedback.repeatClearText || '重复通关仍获得常规资源奖励。')}</p>
-                    <div class="level-card-inline" style="margin-top:8px;">${this._escapeHtml(modeText)}</div>
-                </div>
-            `);
-        }
-
-        if (selectionMeta?.buildHint) {
-            sections.push(`
-                <div class="level-card-block">
-                    <div class="level-card-block-title">构筑提示</div>
-                    <p class="level-card-hint">${this._escapeHtml(selectionMeta.buildHint)}</p>
-                </div>
-            `);
-        }
-
-        return sections.length > 0
-            ? `<div class="level-card-extra">${sections.join('')}</div>`
-            : '';
+        card.onclick = () => {
+            console.log(`[UI_SystemModal] Level card clicked: ${level.id}`);
+            if (this.engine.input && this.engine.input.selectLevel) {
+                this.engine.input.selectLevel(level.id);
+            } else {
+                console.error('[UI_SystemModal] engine.input.selectLevel is missing!');
+            }
+        };
+        return card;
     }
 
     _renderLevelCardsView(levels, options = {}) {
         const {
             view = 'LEVEL_SELECT',
             title = '选择关卡',
-            introText = '',
             emptyText = '暂无可用关卡',
             backLabel = '返回游戏菜单',
-            buildSummary = null,
             overview = null
         } = options;
 
@@ -1245,24 +849,6 @@ export class UI_SystemModal {
             visible: this._canResumeBattle(),
             label: '关闭并返回战斗'
         });
-
-        if (introText) {
-            this._appendGuideBlock(introText, { preserveLineBreaks: true });
-        }
-
-        const pageUsageGuide = this._buildPageUsageGuide({ view });
-        if (pageUsageGuide instanceof HTMLElement) {
-            this.dom.body.appendChild(pageUsageGuide);
-        }
-
-        const overviewSection = this._buildLevelSelectOverviewSection(overview);
-        if (overviewSection instanceof HTMLElement) {
-            this.dom.body.appendChild(overviewSection);
-        }
-
-        if (buildSummary instanceof HTMLElement) {
-            this.dom.body.appendChild(buildSummary);
-        }
 
         if (!Array.isArray(levels) || levels.length === 0) {
             const empty = document.createElement('p');
@@ -1276,57 +862,67 @@ export class UI_SystemModal {
 
         const grid = document.createElement('div');
         grid.className = 'level-grid';
-
         levels.forEach(lvl => {
-            const card = document.createElement('div');
-            card.className = 'level-card';
-            const levelDesc = lvl.description || lvl.desc || 'No description';
-            const stateTags = [];
-            if (lvl.isCompleted) stateTags.push('已完成');
-            if (lvl.isUnlocked === false) stateTags.push('未解锁');
-            const stateLine = stateTags.length > 0
-                ? `<div class="level-card-state" style="margin-top:8px; font-size:0.82rem; color:${lvl.isUnlocked === false ? '#ff9dbb' : '#7cf5d9'};">${stateTags.join(' · ')}</div>`
-                : '';
-            const extraHtml = this._buildLevelCardExtraHtml(lvl);
-            card.innerHTML = `
-                <h4>${this._escapeHtml(lvl.name || lvl.id)}</h4>
-                <p>${this._escapeHtml(levelDesc)}</p>
-                ${stateLine}
-                ${extraHtml}
-            `;
-
-            if (lvl.isUnlocked === false) {
-                card.setAttribute('aria-disabled', 'true');
-                card.style.opacity = '0.55';
-                card.style.cursor = 'not-allowed';
-                card.onclick = () => {
-                    console.warn(`[UI_SystemModal] Level card is locked: ${lvl.id}`);
-                };
-                grid.appendChild(card);
-                return;
-            }
-
-            card.onclick = () => {
-                console.log(`[UI_SystemModal] Level card clicked: ${lvl.id}`);
-                if (this.engine.input && this.engine.input.selectLevel) {
-                    this.engine.input.selectLevel(lvl.id);
-                } else {
-                    console.error('[UI_SystemModal] engine.input.selectLevel is missing!');
-                }
-            };
-            grid.appendChild(card);
+            grid.appendChild(this._createLevelCard(lvl));
         });
 
-        this.dom.body.appendChild(grid);
+        if (view === 'LEVEL_SELECT') {
+            const layout = document.createElement('div');
+            layout.className = 'level-select-layout';
+
+            const listPanel = document.createElement('section');
+            listPanel.className = 'level-list-panel';
+            const listHeader = document.createElement('div');
+            listHeader.className = 'level-list-header';
+            listHeader.innerHTML = `
+                <div>
+                    <div class="level-list-kicker">关卡</div>
+                    <div class="level-list-title">当前章节</div>
+                </div>
+                <span class="level-list-count">${this._escapeHtml(levels.filter(level => level.isUnlocked !== false).length)} / ${this._escapeHtml(levels.length)} 可选</span>
+            `;
+            listPanel.appendChild(listHeader);
+            listPanel.appendChild(grid);
+            layout.appendChild(listPanel);
+
+            const overviewSection = this._buildLevelSelectOverviewSection(overview, levels);
+            if (overviewSection instanceof HTMLElement) {
+                layout.appendChild(overviewSection);
+            }
+            this.dom.body.appendChild(layout);
+        } else {
+            this.dom.body.appendChild(grid);
+        }
+
         this.renderFooterBackBtn(backLabel, () => this.openMainMenu());
     }
 
-    _buildLevelSelectOverviewSection(overview) {
-        const data = (overview && typeof overview === 'object') ? overview : null;
-        if (!data) return null;
+    _buildLevelSelectOverviewSection(overview, levels = []) {
+        const firstLevel = Array.isArray(levels) ? levels[0] : null;
+        const firstFlow = this._getLevelFlow(firstLevel);
+        const fallbackNodes = Array.isArray(levels)
+            ? levels.map(level => ({
+                id: level?.id,
+                name: level?.name || level?.id,
+                nodeLabel: this._getLevelFlow(level).nodeLabel || '',
+                status: this._resolveLevelStatus(level)
+            }))
+            : [];
+        const data = (overview && typeof overview === 'object') ? overview : {
+            chapterLabel: firstFlow.chapterLabel || '',
+            chapterTitle: firstFlow.chapterTitle || '故事推进',
+            completedCount: fallbackNodes.filter(node => node.status === 'completed').length,
+            totalCount: fallbackNodes.length,
+            unlockedCount: fallbackNodes.filter(node => node.status !== 'locked').length,
+            recommendedLevelName: firstLevel?.name || '',
+            currentNodeLabel: firstFlow.nodeLabel || '',
+            currentObjectiveText: firstFlow.objectiveText || '',
+            nextLockedLevelName: '',
+            chapterNodes: fallbackNodes
+        };
 
         const section = document.createElement('section');
-        section.className = 'story-progress-panel summary-section summary-section--story-progress';
+        section.className = 'level-select-map-slot story-progress-panel summary-section summary-section--story-progress';
         section.dataset.summaryKind = 'story-progress';
         const heading = [data.chapterLabel, data.chapterTitle].filter(Boolean).join(' · ');
         const recommendedText = data.recommendedLevelName
@@ -1346,7 +942,7 @@ export class UI_SystemModal {
             : '';
 
         section.innerHTML = `
-            <div class="story-progress-eyebrow">章节推进总览</div>
+            <div class="story-progress-eyebrow">章节地图</div>
             <h3>${this._escapeHtml(heading || '故事推进')}</h3>
             <div class="story-progress-metrics">
                 <span class="story-progress-metric">已完成 ${this._escapeHtml(data.completedCount)} / ${this._escapeHtml(data.totalCount)}</span>
@@ -1358,7 +954,7 @@ export class UI_SystemModal {
                 <p class="story-progress-focus-hint">${this._escapeHtml(data.currentObjectiveText || '')}</p>
                 <div class="story-progress-focus-next">${this._escapeHtml(nextUnlockText)}</div>
             </div>
-            ${nodeChipsHtml ? `<div class="story-progress-node-row">${nodeChipsHtml}</div>` : ''}
+            ${nodeChipsHtml ? `<div class="story-map-track">${nodeChipsHtml}</div>` : ''}
         `;
         return section;
     }
@@ -1397,11 +993,9 @@ export class UI_SystemModal {
         this._renderLevelCardsView(levels, {
             view: 'LEVEL_SELECT',
             title: '选择关卡',
-            introText: '点击关卡卡片会直接进入对应关卡；如果只是离开本页，请使用底部“返回游戏菜单”。',
             backLabel: '返回游戏菜单',
             emptyText: '暂无可用关卡',
-            overview,
-            buildSummary: this._buildPreBattleBuildSummarySection()
+            overview
         });
     }
 
@@ -1415,13 +1009,6 @@ export class UI_SystemModal {
         this._renderLevelCardsView(levels, {
             view: 'ACCEPTANCE_LEVEL_SELECT',
             title: '选择验收样本',
-            introText: [
-                '本页用于人工验收样本，不影响故事推进。',
-                '敌人行为样本建议优先不部署攻击技能，或只部署“等待”，再提交规划并执行。',
-                '修甲 / 回血 / 弱点追击分别对应：先补残甲、先回低血量、先压迫玩家头部弱点。',
-                '这些样本是对 story 关卡敌人行为的稳定复核入口，不替代正常推进。',
-                '如果只是离开本页，请使用底部“返回游戏菜单”。'
-            ].join('\n'),
             backLabel: '返回游戏菜单',
             emptyText: '当前没有可用的验收样本'
         });
@@ -1445,7 +1032,6 @@ export class UI_SystemModal {
         });
 
         const returnMeta = this._getReturnViewMeta(this.saveLoadReturnView);
-        this._appendGuideBlock(returnMeta.guideText);
 
         const slots = saveList || (this.engine.data && this.engine.data.getSaveList ? this.engine.data.getSaveList() : [
             { id: 'auto', slotType: 'auto', title: '自动存档', date: '空', level: '-', turn: '-', isEmpty: true },
@@ -1537,9 +1123,11 @@ export class UI_SystemModal {
             label: '关闭并返回战斗'
         });
 
-        this._appendGuideBlock('这里用于调整系统选项。底部“返回游戏菜单”只回到菜单，右上角“关闭并返回战斗”会直接回到当前战斗。');
-
-        this.dom.body.innerHTML += '<p style="text-align:center; color:#888;">设置功能开发中...</p>';
+        const placeholder = document.createElement('p');
+        placeholder.style.textAlign = 'center';
+        placeholder.style.color = '#888';
+        placeholder.textContent = '暂无可调整选项';
+        this.dom.body.appendChild(placeholder);
         
         this.renderFooterBackBtn('返回游戏菜单', () => this.openMainMenu());
     }
@@ -1551,7 +1139,12 @@ export class UI_SystemModal {
     }
 
     clearContent() {
-        if (this.dom.body) this.dom.body.innerHTML = '';
+        if (!this.dom.body) return;
+        this.dom.body.innerHTML = '';
+        const isLevelSelect = this.currentView === 'LEVEL_SELECT';
+        this.dom.body.classList.toggle('modal-body--level-select', isLevelSelect);
+        this.dom.panel?.classList.toggle('modal-panel--level-select', isLevelSelect);
+        this.dom.backdrop?.classList.toggle('modal-backdrop--level-select', isLevelSelect);
     }
 
     clearFooter() {
@@ -1579,28 +1172,15 @@ export class UI_SystemModal {
         }
     }
 
-    _appendGuideBlock(text, options = {}) {
-        if (!this.dom.body || !text) return;
-        const guide = document.createElement('div');
-        guide.className = 'modal-guide';
-        guide.textContent = text;
-        if (options.preserveLineBreaks) {
-            guide.style.whiteSpace = 'pre-line';
-        }
-        this.dom.body.appendChild(guide);
-    }
-
     _getReturnViewMeta(returnView) {
         if (returnView === 'LOGIN') {
             return {
-                label: '返回欢迎页',
-                guideText: '读取后会直接进入存档对应的页面；如果只是离开读档页，请使用底部“返回欢迎页”。'
+                label: '返回欢迎页'
             };
         }
 
         return {
-            label: '返回游戏菜单',
-            guideText: '读取后会直接进入存档对应的页面；如果只是离开本页，请使用底部“返回游戏菜单”。'
+            label: '返回游戏菜单'
         };
     }
 

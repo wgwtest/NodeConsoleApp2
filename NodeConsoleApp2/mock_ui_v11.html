@@ -9,10 +9,8 @@
 <div class="app-shell">
 <div id="uiAttentionBadge" class="ui-attention-badge" aria-live="polite">阶段：IDLE</div>
 <main>
-  <section class="scene-wrapper labeled-block">
-    <div class="area-tag">场景区</div>
-    <section class="timeline labeled-block">
-      <div class="sub-area-tag" style="display:none;">行动顺序区域</div>
+  <section class="scene-wrapper">
+    <section class="timeline">
       <div class="timeline-head">
         <div class="timeline-meta">
           <span id="timelineRoundLabel">回合 -</span>
@@ -36,7 +34,7 @@
       <ul class="timeline-log-list" id="timelineLogList"></ul>
     </section>
     <div class="battle-row">
-      <section class="hud-panel player-hud labeled-block">
+      <section class="hud-panel player-hud">
       <h2>玩家：王国骑士</h2>
       <div class="hud-stat">
         <span>HP 120 / 150</span>
@@ -93,9 +91,7 @@
         </div>
        </div>
        </section>
-      <section class="battle-scene labeled-block">
-        <div class="sub-area-tag">战斗场景区域</div>
-        <div class="battle-presentation-meta" data-role="battle-presentation-meta">演出配置资产：加载中</div>
+      <section class="battle-scene">
         
         <!-- 1. 背景层 (Stage Background) -->
         <div class="stage-background">
@@ -135,7 +131,7 @@
           <!-- 用于播放打击火花、伤害数字等 -->
         </div>
       </section>
-      <section class="hud-panel enemy-hud labeled-block">
+      <section class="hud-panel enemy-hud">
       <h2>敌人：暗影刺客</h2>
       <div class="hud-stat">
         <span>HP 80 / 120</span>
@@ -184,8 +180,7 @@
     </div>
   </section>
 
-  <section class="action-panel labeled-block">
-    <div class="area-tag">技能操作区域</div>
+  <section class="action-panel">
     <div class="skill-panel skill-deck-layout">
       <!-- 1. Left Column: Skill Pool (技能库) -->
       <div class="skill-pool-column">
@@ -342,11 +337,9 @@
       </div>
     </aside>
    </section>
-  <section id="battleStateSummary" class="battle-state-summary labeled-block" aria-live="polite">
-    <div class="area-tag">状态摘要区域</div>
-  </section>
+  <section id="battleStateSummary" class="battle-state-summary" aria-live="polite"></section>
 </main>
-<footer>示意图仅供策划沟通，最终表现由 UI / 美术进一步设计。</footer>
+<footer></footer>
 
 <button class="system-menu-btn" id="systemMenuBtn">⚙️</button>
 

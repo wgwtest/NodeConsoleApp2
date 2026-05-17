@@ -277,17 +277,158 @@ test('UI_SystemModal 主菜单与关卡选择页会挂统一摘要语义类', as
     let sections = Array.from(document.querySelectorAll('#modalBody .summary-section'));
     let kinds = sections.map(node => node.getAttribute('data-summary-kind'));
     assert.ok(kinds.includes('growth'), '主菜单缺少 growth 摘要语义类');
-    assert.ok(kinds.includes('content-sources'), '主菜单缺少 content-sources 摘要语义类');
+    assert.equal(kinds.includes('content-sources'), false, '主菜单不应再显示 content-sources 说明块');
+    assert.equal(kinds.includes('main-flow'), false, '主菜单不应再显示 main-flow 说明块');
+    assert.equal(kinds.includes('page-usage'), false, '主菜单不应再显示 page-usage 说明块');
 
     modal.renderLevelSelect();
     sections = Array.from(document.querySelectorAll('#modalBody .summary-section'));
     kinds = sections.map(node => node.getAttribute('data-summary-kind'));
     assert.ok(kinds.includes('story-progress'), '关卡选择页缺少 story-progress 摘要语义类');
-    assert.ok(kinds.includes('prebattle-build'), '关卡选择页缺少 prebattle-build 摘要语义类');
+    assert.equal(kinds.includes('prebattle-build'), false, '关卡选择页不应再显示 prebattle-build 说明块');
+    assert.equal(kinds.includes('page-usage'), false, '关卡选择页不应再显示 page-usage 说明块');
   } finally {
     dom.window.close();
     cleanupDomGlobals();
   }
+});
+
+test('UI_SystemModal 欢迎页与主菜单会把主要动作放在说明块之前', async () => {
+  const dom = createSystemModalFixture();
+  try {
+    const { UI_SystemModal } = await importSourceModule('script/ui/UI_SystemModal.js');
+    const modal = new UI_SystemModal();
+    modal.engine = buildSystemModalEngine({
+      input: {
+        login() {},
+        loadGame() {},
+        selectLevel() {},
+        resumeGame() {}
+      }
+    });
+    modal.bindDOM();
+
+    modal.renderLogin();
+    let firstBlock = document.querySelector('#modalBody > *');
+    assert.ok(firstBlock?.classList.contains('modal-primary-actions'), '欢迎页第一块应是主要入口动作');
+    assert.match(firstBlock?.textContent || '', /新游戏/);
+
+    modal.renderMainMenu();
+    firstBlock = document.querySelector('#modalBody > *');
+    assert.ok(firstBlock?.classList.contains('menu-list'), '主菜单第一块应是可点击菜单动作');
+    assert.match(firstBlock?.textContent || '', /关卡选择/);
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
+
+test('UI_SystemModal 显示和隐藏时会同步背景滚动锁定与语义状态', async () => {
+  const dom = createSystemModalFixture();
+  try {
+    const { UI_SystemModal } = await importSourceModule('script/ui/UI_SystemModal.js');
+    const modal = new UI_SystemModal();
+    modal.engine = buildSystemModalEngine();
+    modal.bindDOM();
+
+    modal.renderLevelSelect();
+    modal.show();
+    assert.equal(document.body.classList.contains('modal-open'), true, '打开 modal 时应锁定背景滚动');
+    assert.equal(document.getElementById('systemModal')?.getAttribute('aria-hidden'), 'false');
+    assert.match(document.getElementById('modalTitle')?.textContent || '', /选择关卡/);
+
+    modal.hide();
+    assert.equal(document.body.classList.contains('modal-open'), false, '隐藏 modal 后应释放背景滚动');
+    assert.equal(document.getElementById('systemModal')?.getAttribute('aria-hidden'), 'true');
+    assert.equal(document.getElementById('modalTitle')?.textContent || '', '', '隐藏 modal 后不应残留旧标题');
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
+
+test('UI_SystemModal 关卡选择页使用宽面板与紧凑地图布局', async () => {
+  const dom = createSystemModalFixture();
+  try {
+    const { UI_SystemModal } = await importSourceModule('script/ui/UI_SystemModal.js');
+    const modal = new UI_SystemModal();
+    modal.engine = buildSystemModalEngine();
+    modal.bindDOM();
+
+    modal.renderLevelSelect();
+
+    assert.equal(document.querySelector('#systemModal .modal-panel')?.classList.contains('modal-panel--level-select'), true);
+    assert.equal(document.getElementById('modalBody')?.classList.contains('modal-body--level-select'), true);
+    assert.ok(document.querySelector('#modalBody > .level-select-layout'), '关卡选择页应使用专用宽布局容器');
+    assert.ok(document.querySelector('#modalBody .level-list-panel .level-grid'), '关卡列表应放在专用列表区域');
+    assert.ok(document.querySelector('#modalBody .level-select-map-slot[data-summary-kind="story-progress"]'), '章节信息应放在地图承载区');
+    assert.equal(document.querySelector('#modalBody select'), null, '关卡选择不应依赖下拉菜单');
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
+
+test('UI_SystemModal 关卡卡片压缩为选择所需信息，不再渲染长说明', async () => {
+  const dom = createSystemModalFixture();
+  try {
+    const { UI_SystemModal } = await importSourceModule('script/ui/UI_SystemModal.js');
+    const modal = new UI_SystemModal();
+    modal.engine = buildSystemModalEngine();
+    modal.bindDOM();
+
+    modal.renderLevelSelect();
+
+    const card = document.querySelector('#modalBody .level-card');
+    const cardText = card?.textContent || '';
+    assert.ok(card?.classList.contains('level-card--compact'), '关卡卡片应使用紧凑样式');
+    assert.match(cardText, /密林前哨/);
+    assert.match(cardText, /1-2/);
+    assert.match(cardText, /EXP 100/);
+    assert.equal(card?.querySelector('details.level-card-extra-details'), null);
+    assert.equal(card?.querySelector('.level-card-extra'), null);
+    assert.doesNotMatch(cardText, /章节节点|推进关系|首次通关反馈|重复通关收益|构筑提示|更多信息/);
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
+
+test('UI_SystemModal 关卡列表与章节地图在同一首屏布局内并列呈现', async () => {
+  const dom = createSystemModalFixture();
+  try {
+    const { UI_SystemModal } = await importSourceModule('script/ui/UI_SystemModal.js');
+    const modal = new UI_SystemModal();
+    modal.engine = buildSystemModalEngine();
+    modal.bindDOM();
+
+    modal.renderLevelSelect();
+
+    const layout = document.querySelector('#modalBody > .level-select-layout');
+    const layoutChildren = Array.from(layout?.children || []);
+    const listIndex = layoutChildren.findIndex(node => node.classList.contains('level-list-panel'));
+    const mapIndex = layoutChildren.findIndex(node => node.classList.contains('level-select-map-slot'));
+    assert.ok(listIndex >= 0, '关卡选择页缺少关卡列表区域');
+    assert.ok(mapIndex >= 0, '关卡选择页缺少章节地图区域');
+    assert.ok(listIndex < mapIndex, '关卡列表应在左侧优先呈现，章节地图作为右侧上下文');
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
+
+test('mock_ui_v11.css 为关卡选择提供 1920 首屏验收所需的宽面板布局', async () => {
+  const css = await fs.readFile(path.join(projectRoot, 'mock_ui_v11.css'), 'utf8');
+  assert.match(css, /\.modal-panel--level-select\s*\{[^}]*width:\s*min\(1180px,\s*calc\(100vw - 160px\)\)/s);
+  assert.match(css, /\.modal-body--level-select\s*\{[^}]*overflow:\s*hidden/s);
+  assert.match(css, /\.level-select-layout\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+360px/s);
+});
+
+test('mock_ui_v11.css 会在系统弹窗打开时锁定背景并隐藏底层注意力提示', async () => {
+  const css = await fs.readFile(path.join(projectRoot, 'mock_ui_v11.css'), 'utf8');
+  assert.match(css, /body\.modal-open\s*\{[^}]*overflow:\s*hidden/s);
+  assert.match(css, /body\.modal-open\s+\.ui-attention-badge/s);
+  assert.match(css, /body\.modal-open\s+\.battle-state-summary/s);
 });
 
 test('mock_ui_v11.html 提供主界面摘要条挂载点', async () => {
@@ -295,10 +436,25 @@ test('mock_ui_v11.html 提供主界面摘要条挂载点', async () => {
   assert.match(html, /id="battleStateSummary"/);
 });
 
+test('mock_ui_v11.html 不再展示开发阶段策划沟通页脚', async () => {
+  const html = await fs.readFile(path.join(projectRoot, 'mock_ui_v11.html'), 'utf8');
+  assert.doesNotMatch(html, /示意图仅供策划沟通/);
+  assert.doesNotMatch(html, /最终表现由 UI \/ 美术进一步设计/);
+});
+
+test('mock_ui_v11.html 不再展示开发阶段区域标签与演出配置读数', async () => {
+  const html = await fs.readFile(path.join(projectRoot, 'mock_ui_v11.html'), 'utf8');
+  assert.doesNotMatch(html, /class="area-tag"/);
+  assert.doesNotMatch(html, /class="sub-area-tag"/);
+  assert.doesNotMatch(html, /场景区|技能操作区域|状态摘要区域|战斗场景区域|行动顺序区域/);
+  assert.doesNotMatch(html, /battle-presentation-meta/);
+  assert.doesNotMatch(html, /演出配置资产/);
+});
+
 test('mock_ui_v11.html 不再把主界面摘要条插入场景区顶部', async () => {
   const html = await fs.readFile(path.join(projectRoot, 'mock_ui_v11.html'), 'utf8');
-  const sceneWrapperIdx = html.indexOf('<section class="scene-wrapper labeled-block">');
-  const actionPanelIdx = html.indexOf('<section class="action-panel labeled-block">');
+  const sceneWrapperIdx = html.indexOf('<section class="scene-wrapper">');
+  const actionPanelIdx = html.indexOf('<section class="action-panel">');
   const summaryIdx = html.indexOf('id="battleStateSummary"');
   assert.notEqual(summaryIdx, -1, '缺少 #battleStateSummary');
   assert.ok(summaryIdx > actionPanelIdx, 'battleStateSummary 仍位于 action-panel 之前，会压缩主显示区');

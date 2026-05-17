@@ -73,9 +73,11 @@ function createTurnPanelFixture() {
   const dom = new JSDOM(`
     <!DOCTYPE html>
     <body>
-      <button id="btnExecute" type="button">执行回合</button>
-      <button id="btnReset" type="button">重置</button>
-      <button id="btnMenu" type="button">设置</button>
+      <aside class="turn-panel">
+        <button id="btnExecute" type="button">执行回合</button>
+        <button id="btnReset" type="button">重置</button>
+        <button id="btnMenu" type="button">设置</button>
+      </aside>
       <div id="turnNumberLabel"></div>
     </body>
   `);
@@ -276,7 +278,33 @@ test('UI_TurnPanel 在按钮不可用时会暴露明确原因并发出结构化�
   }
 });
 
-test('UI_SystemModal 会为主菜单和关卡选择页渲染统一的页面用途说明块', async () => {
+test('UI_TurnPanel 会在回合控制区内渲染近按钮阻塞提示', async () => {
+  const dom = createTurnPanelFixture();
+  try {
+    const { default: UI_TurnPanel } = await importSourceModule('script/ui/UI_TurnPanel.js');
+    const eventBus = createMiniEventBus();
+    new UI_TurnPanel(buildTurnPanelEngine(eventBus));
+
+    const hint = document.querySelector('.turn-panel .turn-blocked-hint');
+    assert.ok(hint, '回合控制区缺少近按钮阻塞提示');
+    assert.equal(hint.getAttribute('aria-live'), 'polite');
+    assert.match(hint.textContent || '', /请先提交规划/);
+
+    eventBus.emit('BATTLE_UPDATE', {
+      phase: 'PLANNING',
+      queue: [{ skillId: 'skill_heal', cost: 2 }],
+      turn: 1,
+      timelinePhase: 'READY'
+    });
+
+    assert.match(hint.textContent || '', /可以执行回合/);
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
+
+test('UI_SystemModal 主菜单和关卡选择页不再渲染页面用途说明块', async () => {
   const dom = createSystemModalFixture();
   try {
     const { UI_SystemModal } = await importSourceModule('script/ui/UI_SystemModal.js');
@@ -288,21 +316,30 @@ test('UI_SystemModal 会为主菜单和关卡选择页渲染统一的页面用�
     let bodyText = document.getElementById('modalBody')?.textContent || '';
     let kinds = Array.from(document.querySelectorAll('#modalBody .summary-section'))
       .map(node => node.getAttribute('data-summary-kind'));
-    assert.match(bodyText, /本页用途/);
-    assert.match(bodyText, /只负责选择下一步操作/);
-    assert.match(bodyText, /不会直接开始战斗结算/);
-    assert.ok(kinds.includes('page-usage'), '主菜单缺少 page-usage 摘要块');
+    assert.doesNotMatch(bodyText, /本页用途/);
+    assert.doesNotMatch(bodyText, /只负责选择下一步操作/);
+    assert.doesNotMatch(bodyText, /不会直接开始战斗结算/);
+    assert.equal(kinds.includes('page-usage'), false, '主菜单不应再渲染 page-usage 摘要块');
+    assert.equal(document.querySelector('#modalBody .modal-guide'), null);
 
     modal.renderLevelSelect();
     bodyText = document.getElementById('modalBody')?.textContent || '';
     kinds = Array.from(document.querySelectorAll('#modalBody .summary-section'))
       .map(node => node.getAttribute('data-summary-kind'));
-    assert.match(bodyText, /本页用途/);
-    assert.match(bodyText, /负责选择故事关卡并进入战斗规划/);
-    assert.match(bodyText, /不会在这里修改技能树或作者工具数据/);
-    assert.ok(kinds.includes('page-usage'), '关卡选择页缺少 page-usage 摘要块');
+    assert.doesNotMatch(bodyText, /本页用途/);
+    assert.doesNotMatch(bodyText, /负责选择故事关卡并进入战斗规划/);
+    assert.doesNotMatch(bodyText, /不会在这里修改技能树或作者工具数据/);
+    assert.equal(kinds.includes('page-usage'), false, '关卡选择页不应再渲染 page-usage 摘要块');
+    assert.equal(document.querySelector('#modalBody .modal-guide'), null);
   } finally {
     dom.window.close();
     cleanupDomGlobals();
   }
+});
+
+test('mock_ui_v11.css 以 1920x1080 为首验视口压缩战斗主体高度', async () => {
+  const css = await fs.readFile(path.join(projectRoot, 'mock_ui_v11.css'), 'utf8');
+  assert.match(css, /grid-template-rows:\s*500px\s+300px\s+152px/, '主流程行高应适配 1920x1080 一屏验收');
+  assert.match(css, /\.timeline\s*\{[^}]*min-height:\s*104px/s, '时间轴高度应避免挤压战斗主体');
+  assert.match(css, /\.turn-blocked-hint/s, '缺少近按钮阻塞提示样式');
 });
