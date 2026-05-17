@@ -10,7 +10,15 @@ const projectRoot = path.resolve(import.meta.dirname, '..');
 
 async function importSourceModule(relativePath) {
   const filePath = path.join(projectRoot, relativePath);
-  const source = await fs.readFile(filePath, 'utf8');
+  let source = await fs.readFile(filePath, 'utf8');
+  if (relativePath === 'script/ui/UI_SystemModal.js') {
+    const viewSource = await fs.readFile(path.join(projectRoot, 'script/ui/LevelSelectMapView.js'), 'utf8');
+    const viewEncoded = Buffer.from(viewSource, 'utf8').toString('base64');
+    source = source.replace(
+      /^﻿?import\s+\{\s*LevelSelectMapView\s*\}\s+from\s+'\.\/*LevelSelectMapView\.js';\s*/u,
+      `import { LevelSelectMapView } from 'data:text/javascript;base64,${viewEncoded}';\n`
+    );
+  }
   const encoded = Buffer.from(source, 'utf8').toString('base64');
   return import(`data:text/javascript;base64,${encoded}`);
 }

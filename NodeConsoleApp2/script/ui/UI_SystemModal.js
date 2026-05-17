@@ -1,4 +1,6 @@
-﻿/**
+﻿import { LevelSelectMapView } from './LevelSelectMapView.js';
+
+/**
  * @file UI_SystemModal.js
  * @description 系统模态窗口 UI 组件，负责主菜单、关卡选择、存档读档等界面的显示与交互。
  * 遵循 16-战斗界面(UI_design)-设计说明.md 中的接口规范与代码规范。
@@ -25,6 +27,10 @@ export class UI_SystemModal {
         this.saveLoadStatusMessage = '';
         this.saveLoadReturnView = 'MAIN_MENU';
         this.saveLoadTitle = '存档 / 读档';
+        this.levelSelectMapView = new LevelSelectMapView({
+            document: typeof document !== 'undefined' ? document : null,
+            onSelectNode: ({ levelId }) => this._selectLevel(levelId)
+        });
 
         // 引擎引用 (仅用于发送指令和监听事件)
         this.engine = null;
@@ -822,15 +828,18 @@ export class UI_SystemModal {
             return card;
         }
 
-        card.onclick = () => {
-            console.log(`[UI_SystemModal] Level card clicked: ${level.id}`);
-            if (this.engine.input && this.engine.input.selectLevel) {
-                this.engine.input.selectLevel(level.id);
-            } else {
-                console.error('[UI_SystemModal] engine.input.selectLevel is missing!');
-            }
-        };
+        card.onclick = () => this._selectLevel(level.id);
         return card;
+    }
+
+    _selectLevel(levelId) {
+        if (!levelId) return;
+        console.log(`[UI_SystemModal] Level selected: ${levelId}`);
+        if (this.engine?.input && this.engine.input.selectLevel) {
+            this.engine.input.selectLevel(levelId);
+        } else {
+            console.error('[UI_SystemModal] engine.input.selectLevel is missing!');
+        }
     }
 
     _renderLevelCardsView(levels, options = {}) {
@@ -885,7 +894,12 @@ export class UI_SystemModal {
             listPanel.appendChild(grid);
             layout.appendChild(listPanel);
 
-            const overviewSection = this._buildLevelSelectOverviewSection(overview, levels);
+            const mapModel = this.engine?.data?.getLevelSelectMapModel
+                ? this.engine.data.getLevelSelectMapModel()
+                : null;
+            const overviewSection = mapModel
+                ? this._buildLevelSelectMapSection(mapModel)
+                : this._buildLevelSelectOverviewSection(overview, levels);
             if (overviewSection instanceof HTMLElement) {
                 layout.appendChild(overviewSection);
             }
@@ -956,6 +970,20 @@ export class UI_SystemModal {
             </div>
             ${nodeChipsHtml ? `<div class="story-map-track">${nodeChipsHtml}</div>` : ''}
         `;
+        return section;
+    }
+
+    _buildLevelSelectMapSection(mapModel) {
+        const section = document.createElement('section');
+        section.className = 'level-select-map-slot';
+        section.dataset.summaryKind = 'story-progress';
+        if (!this.levelSelectMapView) {
+            this.levelSelectMapView = new LevelSelectMapView({
+                document,
+                onSelectNode: ({ levelId }) => this._selectLevel(levelId)
+            });
+        }
+        this.levelSelectMapView.render(section, mapModel);
         return section;
     }
 

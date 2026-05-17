@@ -32,6 +32,12 @@
       "schemaVersion": "levels_v1_wrapped",
       "rootKey": "levels"
     },
+    "levelMapPack": {
+      "kind": "levelMapPack",
+      "path": "level_map_pack_v1.json",
+      "schemaVersion": "level_map_pack_v1",
+      "rootKey": "maps"
+    },
     "buffs": {
       "kind": "buffs",
       "path": "buffs_v2_7.json",
@@ -52,6 +58,7 @@
     "items": "items.json",
     "enemies": "enemies.json",
     "levels": "levels.json",
+    "levelMapPack": "level_map_pack_v1.json",
     "player": "player.json",
     "buffs": "buffs_v2_7.json",
     "slotLayouts": "slot_layouts.json"

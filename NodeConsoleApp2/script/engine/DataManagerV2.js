@@ -26,6 +26,7 @@ class DataManager {
         this.skillCatalog = null;
         this.buffCatalog = null;
         this.levelCatalog = null;
+        this.levelMapPack = null;
         this._enemySkillAliases = {
             skill_bite: 'skill_heavy_swing',
             skill_throw_stone: 'skill_skull_cracker',
@@ -138,6 +139,7 @@ class DataManager {
             enemies: normalizePathEntry(inputRegistry.enemies, fallbackSources.enemies, 'enemies'),
             levels: normalizePathEntry(inputRegistry.levels, fallbackSources.levels, 'levels', { rootKey: 'levels' }),
             buffs: normalizePathEntry(inputRegistry.buffs, fallbackSources.buffs, 'buffs', { rootKey: 'buffs' }),
+            levelMapPack: normalizePathEntry(inputRegistry.levelMapPack, fallbackSources.levelMapPack, 'levelMapPack', { rootKey: 'maps' }),
             slotLayouts: normalizePathEntry(inputRegistry.slotLayouts, fallbackSources.slotLayouts, 'slotLayouts', { required: false })
         };
 
@@ -207,6 +209,14 @@ class DataManager {
                 }
                 if (!rawPack.enemyPools || typeof rawPack.enemyPools !== 'object') {
                     throw new Error('Levels data must provide an enemyPools object.');
+                }
+                break;
+            case 'levelMapPack':
+                if (!Array.isArray(rawPack.maps)) {
+                    throw new Error('Level map pack must provide a maps array.');
+                }
+                if (!rawPack.assetLibrary || typeof rawPack.assetLibrary !== 'object') {
+                    throw new Error('Level map pack must provide an assetLibrary object.');
                 }
                 break;
             default:
@@ -405,6 +415,133 @@ class DataManager {
             levelsList: list,
             schemaVersion: packMeta?.schemaVersion || null,
             meta: packMeta?.meta || null
+        };
+    }
+
+    _clonePlain(value) {
+        return JSON.parse(JSON.stringify(value ?? null));
+    }
+
+    _asObject(value) {
+        return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    }
+
+    _asArray(value) {
+        return Array.isArray(value) ? value : [];
+    }
+
+    _toFiniteNumber(value, fallback = 0) {
+        const next = Number(value);
+        return Number.isFinite(next) ? next : fallback;
+    }
+
+    _normalizeLevelMapAssetLibrary(rawLibrary) {
+        const source = this._asObject(rawLibrary);
+        const normalizeAssetEntry = item => {
+            const next = this._asObject(item);
+            return {
+                id: typeof next.id === 'string' ? next.id.trim() : '',
+                label: typeof next.label === 'string' ? next.label.trim() : '',
+                src: typeof next.src === 'string' ? next.src.trim() : '',
+                thumbnailSrc: typeof next.thumbnailSrc === 'string' ? next.thumbnailSrc.trim() : '',
+                previewGradient: typeof next.previewGradient === 'string' ? next.previewGradient : '',
+                shape: typeof next.shape === 'string' ? next.shape.trim() : ''
+            };
+        };
+        return {
+            backgrounds: this._asArray(source.backgrounds).map(normalizeAssetEntry).filter(item => item.id),
+            nodeSkins: this._asArray(source.nodeSkins).map(normalizeAssetEntry).filter(item => item.id),
+            nodeArts: this._asArray(source.nodeArts).map(normalizeAssetEntry).filter(item => item.id),
+            portraits: this._asArray(source.portraits).map(normalizeAssetEntry).filter(item => item.id)
+        };
+    }
+
+    _normalizeLevelMapSpace(map) {
+        const source = this._asObject(map?.space);
+        return {
+            logicalWidth: Math.max(1, this._toFiniteNumber(source.logicalWidth, 1600)),
+            logicalHeight: Math.max(1, this._toFiniteNumber(source.logicalHeight, 900))
+        };
+    }
+
+    _normalizeLevelMapDisplay(map) {
+        const source = this._asObject(map?.display);
+        return {
+            viewportAspect: typeof source.viewportAspect === 'string' && source.viewportAspect.trim()
+                ? source.viewportAspect.trim()
+                : '16:9',
+            backgroundFit: typeof source.backgroundFit === 'string' && source.backgroundFit.trim()
+                ? source.backgroundFit.trim()
+                : 'cover',
+            nodeScale: Math.min(2, Math.max(0.1, this._toFiniteNumber(source.nodeScale, 0.6))),
+            nodeAnchor: typeof source.nodeAnchor === 'string' && source.nodeAnchor.trim()
+                ? source.nodeAnchor.trim()
+                : 'center',
+            edgeAnchor: typeof source.edgeAnchor === 'string' && source.edgeAnchor.trim()
+                ? source.edgeAnchor.trim()
+                : 'center',
+            edgeLabelMode: typeof source.edgeLabelMode === 'string' && source.edgeLabelMode.trim()
+                ? source.edgeLabelMode.trim()
+                : 'midpoint'
+        };
+    }
+
+    _normalizeLevelMapNodePosition(node) {
+        const source = this._asObject(node);
+        const position = this._asObject(source.position);
+        return {
+            x: this._toFiniteNumber(position.x, this._toFiniteNumber(source.x, 0)),
+            y: this._toFiniteNumber(position.y, this._toFiniteNumber(source.y, 0))
+        };
+    }
+
+    _normalizeLevelMapPack(rawPack) {
+        const source = this._asObject(rawPack);
+        return {
+            schemaVersion: typeof source.$schemaVersion === 'string' ? source.$schemaVersion.trim() : '',
+            meta: this._clonePlain(this._asObject(source.meta)),
+            assetLibrary: this._normalizeLevelMapAssetLibrary(source.assetLibrary),
+            maps: this._asArray(source.maps).map((map, mapIndex) => {
+                const nextMap = this._asObject(map);
+                return {
+                    id: typeof nextMap.id === 'string' && nextMap.id.trim() ? nextMap.id.trim() : `map_${mapIndex + 1}`,
+                    name: typeof nextMap.name === 'string' ? nextMap.name.trim() : '',
+                    chapterId: typeof nextMap.chapterId === 'string' ? nextMap.chapterId.trim() : '',
+                    chapterLabel: typeof nextMap.chapterLabel === 'string' ? nextMap.chapterLabel.trim() : '',
+                    chapterTitle: typeof nextMap.chapterTitle === 'string' ? nextMap.chapterTitle.trim() : '',
+                    space: this._normalizeLevelMapSpace(nextMap),
+                    display: this._normalizeLevelMapDisplay(nextMap),
+                    backgroundRef: typeof nextMap.backgroundRef === 'string' ? nextMap.backgroundRef.trim() : '',
+                    entryNodeId: typeof nextMap.entryNodeId === 'string' ? nextMap.entryNodeId.trim() : '',
+                    nodes: this._asArray(nextMap.nodes).map((node, nodeIndex) => {
+                        const nextNode = this._asObject(node);
+                        return {
+                            id: typeof nextNode.id === 'string' && nextNode.id.trim() ? nextNode.id.trim() : `node_${nodeIndex + 1}`,
+                            levelId: typeof nextNode.levelId === 'string' ? nextNode.levelId.trim() : '',
+                            label: typeof nextNode.label === 'string' ? nextNode.label.trim() : '',
+                            title: typeof nextNode.title === 'string' ? nextNode.title.trim() : '',
+                            kind: typeof nextNode.kind === 'string' && nextNode.kind.trim() ? nextNode.kind.trim() : 'battle',
+                            nodeSkinRef: typeof nextNode.nodeSkinRef === 'string' ? nextNode.nodeSkinRef.trim() : '',
+                            iconLabel: typeof nextNode.iconLabel === 'string' ? nextNode.iconLabel.trim() : '',
+                            position: this._normalizeLevelMapNodePosition(nextNode),
+                            objectiveText: typeof nextNode.objectiveText === 'string' ? nextNode.objectiveText.trim() : '',
+                            difficultyLabel: typeof nextNode.difficultyLabel === 'string' ? nextNode.difficultyLabel.trim() : '',
+                            rewardPreview: this._asArray(nextNode.rewardPreview).map(item => String(item || '').trim()).filter(Boolean),
+                            artRefs: this._clonePlain(this._asObject(nextNode.artRefs))
+                        };
+                    }).filter(node => node.id),
+                    edges: this._asArray(nextMap.edges).map((edge, edgeIndex) => {
+                        const nextEdge = this._asObject(edge);
+                        return {
+                            id: typeof nextEdge.id === 'string' && nextEdge.id.trim() ? nextEdge.id.trim() : `edge_${edgeIndex + 1}`,
+                            fromNodeId: typeof nextEdge.fromNodeId === 'string' ? nextEdge.fromNodeId.trim() : '',
+                            toNodeId: typeof nextEdge.toNodeId === 'string' ? nextEdge.toNodeId.trim() : '',
+                            branchLabel: typeof nextEdge.branchLabel === 'string' ? nextEdge.branchLabel.trim() : '',
+                            type: typeof nextEdge.type === 'string' && nextEdge.type.trim() ? nextEdge.type.trim() : 'main'
+                        };
+                    }).filter(edge => edge.id && edge.fromNodeId && edge.toNodeId)
+                };
+            }).filter(map => map.id && map.nodes.length > 0)
         };
     }
 
@@ -759,11 +896,15 @@ class DataManager {
             const playerPack = await fetchContentPack('player');
             const player = playerPack.raw;
 
-            const [itemsPack, enemiesPack, levelsPack, buffsPack, slotLayoutsPack] = await Promise.all([
+            const [itemsPack, enemiesPack, levelsPack, buffsPack, levelMapPack, slotLayoutsPack] = await Promise.all([
                 fetchContentPack('items'),
                 fetchContentPack('enemies'),
                 fetchContentPack('levels'),
                 fetchContentPack('buffs'),
+                fetchContentPack('levelMapPack').catch((e) => {
+                    console.warn('?? [DataManager] Failed to load levelMapPack. Reason:', e.message);
+                    return null;
+                }),
                 fetchContentPack('slotLayouts').catch((e) => {
                     console.warn('?? [DataManager] Failed to load slotLayouts. Reason:', e.message);
                     return null;
@@ -774,6 +915,7 @@ class DataManager {
             const enemies = enemiesPack.raw;
             const levels = levelsPack.raw;
             const buffs = buffsPack.raw;
+            const rawLevelMapPack = levelMapPack ? levelMapPack.raw : null;
             const slotLayouts = slotLayoutsPack ? slotLayoutsPack.raw : null;
             const expandedLevels = this._expandLevelEnemyPools(levels);
 
@@ -816,6 +958,7 @@ class DataManager {
                     packMeta: buffsPack.meta
                 }),
                 buffMeta: (buffs && typeof buffs === 'object') ? (buffs.meta || null) : null,
+                levelMapPack: rawLevelMapPack ? this._normalizeLevelMapPack(rawLevelMapPack) : null,
                 slotLayouts,
                 contentRegistry: registry,
                 contentPacks: {
@@ -825,6 +968,7 @@ class DataManager {
                     levels: levelsPack.meta,
                     skills: skillsPack.meta,
                     buffs: buffsPack.meta,
+                    levelMapPack: levelMapPack ? levelMapPack.meta : null,
                     slotLayouts: slotLayoutsPack ? slotLayoutsPack.meta : null
                 }
             };
@@ -832,6 +976,7 @@ class DataManager {
             this.skillCatalog = this.gameConfig.skillCatalog;
             this.buffCatalog = this.gameConfig.buffCatalog;
             this.levelCatalog = this.gameConfig.levelCatalog;
+            this.levelMapPack = this.gameConfig.levelMapPack;
 
             console.log("? [DataManager] Configs successfully loaded from JSON files.", this.gameConfig);
         } catch (e) {
@@ -844,6 +989,7 @@ class DataManager {
             this.skillCatalog = null;
             this.buffCatalog = null;
             this.levelCatalog = null;
+            this.levelMapPack = null;
             throw e;
         }
     }
@@ -912,6 +1058,24 @@ class DataManager {
 
     getLevelPackMeta() {
         return (this.contentPacks && this.contentPacks.levels) ? this.contentPacks.levels : null;
+    }
+
+    getLevelMapPackMeta() {
+        return (this.contentPacks && this.contentPacks.levelMapPack) ? this.contentPacks.levelMapPack : null;
+    }
+
+    getLevelMapPack() {
+        const source = this.levelMapPack
+            || (this.gameConfig && this.gameConfig.levelMapPack ? this.gameConfig.levelMapPack : null);
+        if (!source) return null;
+        const normalized = source.schemaVersion && Array.isArray(source.maps)
+            ? source
+            : this._normalizeLevelMapPack(source);
+        this.levelMapPack = normalized;
+        if (this.gameConfig && typeof this.gameConfig === 'object') {
+            this.gameConfig.levelMapPack = normalized;
+        }
+        return normalized;
     }
 
     getLevelCatalog() {
@@ -1142,6 +1306,89 @@ class DataManager {
 
     getLevelSelectOverview() {
         return this._buildStoryLevelSelectModel().overview;
+    }
+
+    _findLevelSelectMap(pack, overview) {
+        if (!pack || !Array.isArray(pack.maps) || pack.maps.length === 0) return null;
+        const chapterId = overview?.chapterId || '';
+        return pack.maps.find(map => map.chapterId && map.chapterId === chapterId)
+            || pack.maps[0]
+            || null;
+    }
+
+    _resolveLevelMapNodeStatus(node, entryByLevelId, recommendedLevelId) {
+        const entry = entryByLevelId.get(node.levelId);
+        if (!entry) return 'locked';
+        if (entry.isCompleted) return 'completed';
+        if (recommendedLevelId && entry.id === recommendedLevelId) return 'recommended';
+        if (entry.isUnlocked) return 'unlocked';
+        return 'locked';
+    }
+
+    _buildLevelMapRewardPreview(node, entry) {
+        if (Array.isArray(node.rewardPreview) && node.rewardPreview.length > 0) {
+            return [...node.rewardPreview];
+        }
+        const rewards = this._normalizeBattleRewards(entry?.rewards);
+        return [
+            rewards.exp > 0 ? `EXP ${rewards.exp}` : '',
+            rewards.gold > 0 ? `金币 ${rewards.gold}` : '',
+            rewards.kp > 0 ? `KP +${rewards.kp}` : ''
+        ].filter(Boolean);
+    }
+
+    getLevelSelectMapModel() {
+        const pack = this.getLevelMapPack();
+        if (!pack) return null;
+
+        const storyModel = this._buildStoryLevelSelectModel();
+        const entries = Array.isArray(storyModel.entries) ? storyModel.entries : [];
+        const overview = storyModel.overview || null;
+        const map = this._findLevelSelectMap(pack, overview);
+        if (!map) return null;
+
+        const entryByLevelId = new Map(entries.map(entry => [entry.id, entry]));
+        const recommendedLevelId = overview?.recommendedLevelId || entries.find(entry => entry.isUnlocked && !entry.isCompleted)?.id || null;
+        const nodes = map.nodes.map(node => {
+            const entry = entryByLevelId.get(node.levelId) || null;
+            const status = this._resolveLevelMapNodeStatus(node, entryByLevelId, recommendedLevelId);
+            const selectionMeta = entry?.selectionMeta || null;
+            return {
+                ...this._clonePlain(node),
+                levelName: entry?.name || node.title || node.levelId,
+                levelDescription: entry?.description || '',
+                title: node.title || entry?.name || node.levelId,
+                objectiveText: node.objectiveText || entry?.flow?.objectiveText || selectionMeta?.buildHint || '',
+                difficultyLabel: node.difficultyLabel || selectionMeta?.difficultyLabel || '',
+                rewardPreview: this._buildLevelMapRewardPreview(node, entry),
+                status,
+                statusLabel: status === 'completed'
+                    ? '已完成'
+                    : (status === 'recommended' ? '当前推荐' : (status === 'unlocked' ? '已解锁' : '未解锁')),
+                isUnlocked: status !== 'locked',
+                isCompleted: status === 'completed',
+                isRecommended: status === 'recommended'
+            };
+        });
+        const selectedNode = nodes.find(node => node.status === 'recommended')
+            || nodes.find(node => node.status === 'unlocked')
+            || nodes.find(node => node.id === map.entryNodeId)
+            || nodes[0]
+            || null;
+
+        return {
+            schemaVersion: pack.schemaVersion,
+            meta: this._clonePlain(pack.meta),
+            assetLibrary: this._clonePlain(pack.assetLibrary),
+            map: {
+                ...this._clonePlain(map),
+                nodes
+            },
+            overview: this._clonePlain(overview),
+            recommendedLevelId,
+            recommendedNodeId: nodes.find(node => node.status === 'recommended')?.id || null,
+            selectedNodeId: selectedNode?.id || null
+        };
     }
 
     getAcceptanceLevelSelectEntries() {
