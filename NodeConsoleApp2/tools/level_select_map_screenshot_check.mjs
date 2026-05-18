@@ -200,6 +200,8 @@ try {
             })()
         }));
         const stageRect = rectOf(".level-select-runtime-map__stage");
+        const drawerRect = rectOf(".level-select-runtime-map__drawer");
+        const enterRect = rectOf("[data-action='enter-level']");
         const modalRect = rectOf(".modal-panel--level-select");
         const mapRect = rectOf(".level-select-runtime-map");
         const switcherRect = rectOf(".level-map-switcher");
@@ -214,6 +216,8 @@ try {
             mapRect,
             switcherRect,
             stageRect,
+            drawerRect,
+            enterRect,
             mapButtonCount: mapButtons.length,
             pressedMapButtonCount: mapButtons.filter(button => button.pressed).length,
             mapButtons,
@@ -239,6 +243,8 @@ try {
     assertCondition(report.stageRect.height >= 470, `地图舞台过矮：${report.stageRect.height}`);
     assertCondition(report.mapRect.right <= report.modalRect.right && report.mapRect.bottom <= report.modalRect.bottom, '地图区域溢出弹窗');
     assertCondition(report.switcherRect.right <= report.mapRect.right && report.switcherRect.bottom <= report.mapRect.bottom, '地图切换控件溢出地图区域');
+    assertCondition(report.drawerRect.right <= report.mapRect.right && report.drawerRect.bottom <= report.mapRect.bottom, '关卡详情抽屉溢出地图区域');
+    assertCondition(report.enterRect.right <= report.drawerRect.right && report.enterRect.bottom <= report.drawerRect.bottom, '进入关卡按钮溢出详情抽屉');
     for (const button of report.mapButtons) {
         assertCondition(button.rect.x >= report.mapRect.x - 8, `地图切换按钮 ${button.mapId} 左侧溢出地图区域`);
         assertCondition(button.rect.right <= report.mapRect.right + 8, `地图切换按钮 ${button.mapId} 右侧溢出地图区域`);

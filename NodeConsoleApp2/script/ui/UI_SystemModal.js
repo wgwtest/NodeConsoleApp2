@@ -29,7 +29,8 @@ export class UI_SystemModal {
         this.saveLoadTitle = '存档 / 读档';
         this.levelSelectMapView = new LevelSelectMapView({
             document: typeof document !== 'undefined' ? document : null,
-            onSelectNode: ({ levelId }) => this._selectLevel(levelId)
+            onSelectNode: () => {},
+            onConfirmNode: ({ levelId }) => this._selectLevel(levelId)
         });
 
         // 引擎引用 (仅用于发送指令和监听事件)
@@ -859,7 +860,11 @@ export class UI_SystemModal {
             label: '关闭并返回战斗'
         });
 
-        if (!Array.isArray(levels) || levels.length === 0) {
+        const mapModel = view === 'LEVEL_SELECT' && this.engine?.data?.getLevelSelectMapModel
+            ? this.engine.data.getLevelSelectMapModel()
+            : null;
+
+        if ((!Array.isArray(levels) || levels.length === 0) && !mapModel) {
             const empty = document.createElement('p');
             empty.style.textAlign = 'center';
             empty.style.color = '#888';
@@ -869,34 +874,10 @@ export class UI_SystemModal {
             return;
         }
 
-        const grid = document.createElement('div');
-        grid.className = 'level-grid';
-        levels.forEach(lvl => {
-            grid.appendChild(this._createLevelCard(lvl));
-        });
-
         if (view === 'LEVEL_SELECT') {
             const layout = document.createElement('div');
             layout.className = 'level-select-layout';
 
-            const listPanel = document.createElement('section');
-            listPanel.className = 'level-list-panel';
-            const listHeader = document.createElement('div');
-            listHeader.className = 'level-list-header';
-            listHeader.innerHTML = `
-                <div>
-                    <div class="level-list-kicker">关卡</div>
-                    <div class="level-list-title">当前章节</div>
-                </div>
-                <span class="level-list-count">${this._escapeHtml(levels.filter(level => level.isUnlocked !== false).length)} / ${this._escapeHtml(levels.length)} 可选</span>
-            `;
-            listPanel.appendChild(listHeader);
-            listPanel.appendChild(grid);
-            layout.appendChild(listPanel);
-
-            const mapModel = this.engine?.data?.getLevelSelectMapModel
-                ? this.engine.data.getLevelSelectMapModel()
-                : null;
             const overviewSection = mapModel
                 ? this._buildLevelSelectMapSection(mapModel)
                 : this._buildLevelSelectOverviewSection(overview, levels);
@@ -905,6 +886,11 @@ export class UI_SystemModal {
             }
             this.dom.body.appendChild(layout);
         } else {
+            const grid = document.createElement('div');
+            grid.className = 'level-grid';
+            levels.forEach(lvl => {
+                grid.appendChild(this._createLevelCard(lvl));
+            });
             this.dom.body.appendChild(grid);
         }
 
@@ -980,9 +966,12 @@ export class UI_SystemModal {
         if (!this.levelSelectMapView) {
             this.levelSelectMapView = new LevelSelectMapView({
                 document,
-                onSelectNode: ({ levelId }) => this._selectLevel(levelId)
+                onSelectNode: () => {},
+                onConfirmNode: ({ levelId }) => this._selectLevel(levelId)
             });
         }
+        this.levelSelectMapView.onSelectNode = () => {};
+        this.levelSelectMapView.onConfirmNode = ({ levelId }) => this._selectLevel(levelId);
         this.levelSelectMapView.render(section, mapModel);
         return section;
     }

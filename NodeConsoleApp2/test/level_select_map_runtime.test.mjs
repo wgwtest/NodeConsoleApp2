@@ -172,10 +172,36 @@ test('DataManagerV2 会把地图包转换为运行时关卡选择地图模型', 
   assert.deepEqual(model.map.nodes.map(node => [node.id, node.levelId, node.status]), [
     ['node_edge', 'level_1_1', 'completed'],
     ['node_scout', 'level_1_2_story', 'recommended'],
-    ['node_gate', 'level_1_3_story', 'locked']
+    ['node_gate', 'level_1_3_story', 'unlocked']
   ]);
   assert.equal(model.map.nodes[1].levelName, '密林前哨');
-  assert.equal(model.map.nodes[2].isUnlocked, false);
+  assert.equal(model.map.nodes[2].isUnlocked, true);
+  assert.equal(model.map.nodes[2].selectLevelId, 'level_1_3_story');
+});
+
+test('DataManagerV2 会临时开放全部故事关卡入口并保留原始进度标记', async () => {
+  const { default: dm } = await importSourceModule('script/engine/DataManagerV2.js');
+  dm.gameConfig = {
+    levels: {
+      level_1_1: buildStoryLevel('level_1_1', 1, '幽暗森林边缘'),
+      level_1_2_story: buildStoryLevel('level_1_2_story', 2, '密林前哨'),
+      level_1_3_story: buildStoryLevel('level_1_3_story', 3, '废墟关隘')
+    }
+  };
+  dm.dataConfig.global = {
+    progress: {
+      unlockedLevels: ['level_1_1'],
+      completedLevels: []
+    }
+  };
+
+  const entries = dm.getLevelSelectEntries();
+
+  assert.deepEqual(entries.map(entry => [entry.id, entry.isUnlocked, entry.progressUnlocked]), [
+    ['level_1_1', true, true],
+    ['level_1_2_story', true, false],
+    ['level_1_3_story', true, false]
+  ]);
 });
 
 test('DataManagerV2 会暴露全部运行时地图供关卡选择切换', async () => {
@@ -263,9 +289,22 @@ test('DataManagerV2 会暴露全部运行时地图供关卡选择切换', async 
     ['chapter_3_runtime', '第三章', '暮色古道', 'bg_map_glade_03']
   ]);
   assert.deepEqual(model.maps.map(map => [map.id, map.nodeCount, map.unlockedNodeCount]), [
-    ['chapter_1_runtime', 3, 1],
-    ['chapter_2_runtime', 1, 0],
-    ['chapter_3_runtime', 1, 0]
+    ['chapter_1_runtime', 3, 3],
+    ['chapter_2_runtime', 1, 1],
+    ['chapter_3_runtime', 1, 1]
+  ]);
+  assert.deepEqual(model.mapPackMaps.map(map => map.nodes.map(node => [node.levelId, node.selectLevelId, node.isUnlocked])), [
+    [
+      ['level_1_1', 'level_1_1', true],
+      ['level_1_2_story', 'level_1_2_story', true],
+      ['level_1_3_story', 'level_1_3_story', true]
+    ],
+    [
+      ['level_future_2_1', 'level_1_1', true]
+    ],
+    [
+      ['level_future_3_1', 'level_1_1', true]
+    ]
   ]);
 });
 

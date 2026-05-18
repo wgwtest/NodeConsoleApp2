@@ -155,6 +155,7 @@ function buildMapModel() {
           status: 'locked',
           statusLabel: '未解锁',
           isUnlocked: false,
+          selectLevelId: 'level_1_1',
           position: { x: 860, y: 260 },
           objectiveText: '进入章节首领战。',
           rewardPreview: ['KP +2'],
@@ -169,46 +170,94 @@ function buildMapModel() {
   };
 }
 
-test('LevelSelectMapView 会渲染运行时地图并把可选节点点击回传给关卡选择', async () => {
+test('LevelSelectMapView 会把节点选择、进入确认和视图缩放拆开', async () => {
   const dom = new JSDOM('<!DOCTYPE html><body><section id="host"></section></body>', {
     url: 'http://127.0.0.1:3101/mock_ui_v11.html'
   });
   installDomGlobals(dom);
   try {
     const { LevelSelectMapView } = await importSourceModule('script/ui/LevelSelectMapView.js');
-    const clicked = [];
+    const selected = [];
+    const confirmed = [];
     const view = new LevelSelectMapView({
       document,
       onSelectNode(payload) {
-        clicked.push(payload);
+        selected.push(payload);
+      },
+      onConfirmNode(payload) {
+        confirmed.push(payload);
       }
     });
 
     view.render(document.getElementById('host'), buildMapModel());
 
     const root = document.querySelector('.level-select-runtime-map');
+    const controls = [...document.querySelectorAll('[data-action]')];
     const stage = document.querySelector('.level-select-runtime-map__stage');
-    const selected = document.querySelector('.level-map-node[data-selected="true"]');
+    const selectedNode = document.querySelector('.level-map-node[data-selected="true"]');
     const nodes = [...document.querySelectorAll('.level-map-node')];
     const lockedNode = document.querySelector('.level-map-node.is-locked');
     const edgeLabels = [...document.querySelectorAll('.level-map-edge-label')].map(node => node.textContent);
+    const detail = document.querySelector('.level-select-runtime-map__drawer');
+    const enterBtn = document.querySelector('[data-action="enter-level"]');
+    const zoomInBtn = document.querySelector('[data-action="zoom-in"]');
+    const zoomOutBtn = document.querySelector('[data-action="zoom-out"]');
+    const fitBtn = document.querySelector('[data-action="fit-viewport"]');
 
     assert.ok(root, '缺少运行时地图根节点');
+    assert.ok(detail, '缺少关卡详情抽屉');
+    assert.ok(enterBtn, '缺少进入按钮');
+    assert.equal(controls.length >= 4, true, '缺少地图缩放控制');
+    assert.equal(nodes.every(node => node.querySelector('.level-map-node__pin')), true, '地图节点应使用地标 pin 视觉层');
+    assert.deepEqual(controls.map(item => item.getAttribute('aria-label')), ['缩小地图', '适配视图', '放大地图', '进入关卡']);
     assert.match(stage?.style.backgroundImage || '', /image_w2752_h1536_map-bg-01/u);
     assert.equal(stage?.style.aspectRatio, '16 / 9');
     assert.equal(nodes.length, 3);
-    assert.equal(selected?.dataset.nodeId, 'node_scout');
-    assert.equal(lockedNode?.getAttribute('aria-disabled'), 'true');
+    assert.equal(selectedNode?.dataset.nodeId, 'node_scout');
+    assert.equal(lockedNode?.getAttribute('aria-disabled'), null);
     assert.deepEqual(edgeLabels, ['林间路线', '废墟入口']);
+    assert.match(root?.dataset.zoom || '', /^1(?:\.0+)?$/);
+    assert.match(detail?.textContent || '', /密林前哨/);
 
-    selected?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
-    lockedNode?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
-
-    assert.deepEqual(clicked, [
+    selectedNode?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    assert.deepEqual(selected, [
       {
         mapId: 'chapter_1_runtime',
         nodeId: 'node_scout',
-        levelId: 'level_1_2_story'
+        levelId: 'level_1_2_story',
+        sourceLevelId: 'level_1_2_story'
+      }
+    ]);
+    assert.deepEqual(confirmed, []);
+    assert.match(detail?.textContent || '', /密林前哨/);
+
+    zoomInBtn?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    assert.equal(root?.dataset.zoom, '1.10');
+    zoomOutBtn?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    assert.equal(root?.dataset.zoom, '1.00');
+    zoomOutBtn?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    assert.equal(root?.dataset.zoom, '0.90');
+    fitBtn?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    assert.equal(root?.dataset.zoom, '1.00');
+
+    lockedNode?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    assert.deepEqual(selected.at(-1), {
+      mapId: 'chapter_1_runtime',
+      nodeId: 'node_gate',
+      levelId: 'level_1_1',
+      sourceLevelId: 'level_1_3_story'
+    });
+    assert.match(detail?.textContent || '', /废墟关隘/);
+    assert.equal(enterBtn?.getAttribute('aria-disabled'), null);
+
+    document.querySelector('[data-action="enter-level"]')?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+
+    assert.deepEqual(confirmed, [
+      {
+        mapId: 'chapter_1_runtime',
+        nodeId: 'node_gate',
+        levelId: 'level_1_1',
+        sourceLevelId: 'level_1_3_story'
       }
     ]);
   } finally {
@@ -237,7 +286,10 @@ test('LevelSelectMapView 会渲染三张地图切换入口并回传目标地图'
     const switcher = document.querySelector('.level-map-switcher');
     const buttons = [...document.querySelectorAll('.level-map-switcher__button')];
     assert.ok(switcher, '缺少地图切换控件');
+    assert.equal(switcher.getAttribute('role'), 'tablist');
     assert.equal(buttons.length, 3);
+    assert.equal(buttons.every(button => button.getAttribute('role') === 'tab'), true);
+    assert.equal(buttons.every(button => button.querySelector('.level-map-switcher__progress')), true);
     assert.deepEqual(buttons.map(button => button.textContent.trim().replace(/\s+/g, ' ')), [
       '第一章 幽暗森林 2/3',
       '第二章 霜雾峡谷 0/2',

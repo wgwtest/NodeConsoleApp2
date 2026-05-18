@@ -5,6 +5,7 @@ const LAST_SAVE_SLOT_STORAGE_KEY = 'save_game_last_slot';
 const SAVE_SLOT_STORAGE_PREFIX = 'save_game_slot_';
 const SAVE_SLOT_COUNT = 3;
 const AUTO_SAVE_SLOT_ID = 'auto';
+const TEMPORARY_UNLOCK_ALL_LEVEL_SELECT = true;
 
 class DataManager {
     constructor() {
@@ -1203,6 +1204,7 @@ class DataManager {
         const completedLevels = Array.isArray(progress?.completedLevels) ? progress.completedLevels : [];
         const baseEntries = this._getStoryLevelsList().map(level => {
             const isCompleted = completedLevels.includes(level.id);
+            const isProgressUnlocked = unlockedLevels.includes(level.id);
             return {
                 id: level.id,
                 name: level.name || level.id,
@@ -1211,7 +1213,8 @@ class DataManager {
                 selectionMeta: this._normalizeLevelSelectionMeta(level.selectionMeta),
                 rewards: this._normalizeBattleRewards(level.rewards),
                 clearFeedback: this._buildLevelClearFeedback(level, { isCompleted }),
-                isUnlocked: unlockedLevels.includes(level.id),
+                isUnlocked: TEMPORARY_UNLOCK_ALL_LEVEL_SELECT || isProgressUnlocked,
+                progressUnlocked: isProgressUnlocked,
                 isCompleted
             };
         });
@@ -1318,11 +1321,18 @@ class DataManager {
 
     _resolveLevelMapNodeStatus(node, entryByLevelId, recommendedLevelId) {
         const entry = entryByLevelId.get(node.levelId);
-        if (!entry) return 'locked';
+        if (!entry) return TEMPORARY_UNLOCK_ALL_LEVEL_SELECT ? 'unlocked' : 'locked';
         if (entry.isCompleted) return 'completed';
         if (recommendedLevelId && entry.id === recommendedLevelId) return 'recommended';
-        if (entry.isUnlocked) return 'unlocked';
+        if (entry.isUnlocked || TEMPORARY_UNLOCK_ALL_LEVEL_SELECT) return 'unlocked';
         return 'locked';
+    }
+
+    _resolveTemporaryLevelSelectTarget(node, entryByLevelId, entries) {
+        if (entryByLevelId.has(node.levelId)) return node.levelId;
+        if (!TEMPORARY_UNLOCK_ALL_LEVEL_SELECT) return node.levelId;
+        const firstRunnableEntry = this._asArray(entries).find(entry => entry?.id);
+        return firstRunnableEntry?.id || node.levelId;
     }
 
     _buildLevelMapRewardPreview(node, entry) {
@@ -1337,13 +1347,15 @@ class DataManager {
         ].filter(Boolean);
     }
 
-    _buildLevelSelectMapRuntimeMap(map, entryByLevelId, recommendedLevelId) {
+    _buildLevelSelectMapRuntimeMap(map, entryByLevelId, recommendedLevelId, entries = []) {
         const nodes = this._asArray(map?.nodes).map(node => {
             const entry = entryByLevelId.get(node.levelId) || null;
             const status = this._resolveLevelMapNodeStatus(node, entryByLevelId, recommendedLevelId);
             const selectionMeta = entry?.selectionMeta || null;
+            const selectLevelId = this._resolveTemporaryLevelSelectTarget(node, entryByLevelId, entries);
             return {
                 ...this._clonePlain(node),
+                selectLevelId,
                 levelName: entry?.name || node.title || node.levelId,
                 levelDescription: entry?.description || '',
                 title: node.title || entry?.name || node.levelId,
@@ -1354,7 +1366,7 @@ class DataManager {
                 statusLabel: status === 'completed'
                     ? '已完成'
                     : (status === 'recommended' ? '当前推荐' : (status === 'unlocked' ? '已解锁' : '未解锁')),
-                isUnlocked: status !== 'locked',
+                isUnlocked: TEMPORARY_UNLOCK_ALL_LEVEL_SELECT || status !== 'locked',
                 isCompleted: status === 'completed',
                 isRecommended: status === 'recommended'
             };
@@ -1366,9 +1378,9 @@ class DataManager {
         };
     }
 
-    _buildLevelSelectMapSummaries(maps, activeMapId, entryByLevelId, recommendedLevelId) {
+    _buildLevelSelectMapSummaries(maps, activeMapId, entryByLevelId, recommendedLevelId, entries = []) {
         return this._asArray(maps).map(map => {
-            const runtimeMap = this._buildLevelSelectMapRuntimeMap(map, entryByLevelId, recommendedLevelId);
+            const runtimeMap = this._buildLevelSelectMapRuntimeMap(map, entryByLevelId, recommendedLevelId, entries);
             const nodes = this._asArray(runtimeMap.nodes);
             return {
                 id: runtimeMap.id,
@@ -1399,8 +1411,8 @@ class DataManager {
 
         const entryByLevelId = new Map(entries.map(entry => [entry.id, entry]));
         const recommendedLevelId = overview?.recommendedLevelId || entries.find(entry => entry.isUnlocked && !entry.isCompleted)?.id || null;
-        const mapPackMaps = pack.maps.map(item => this._buildLevelSelectMapRuntimeMap(item, entryByLevelId, recommendedLevelId));
-        const runtimeMap = this._buildLevelSelectMapRuntimeMap(map, entryByLevelId, recommendedLevelId);
+        const mapPackMaps = pack.maps.map(item => this._buildLevelSelectMapRuntimeMap(item, entryByLevelId, recommendedLevelId, entries));
+        const runtimeMap = this._buildLevelSelectMapRuntimeMap(map, entryByLevelId, recommendedLevelId, entries);
         const nodes = runtimeMap.nodes;
         const selectedNode = nodes.find(node => node.status === 'recommended')
             || nodes.find(node => node.status === 'unlocked')
@@ -1412,7 +1424,7 @@ class DataManager {
             schemaVersion: pack.schemaVersion,
             meta: this._clonePlain(pack.meta),
             assetLibrary: this._clonePlain(pack.assetLibrary),
-            maps: this._buildLevelSelectMapSummaries(pack.maps, runtimeMap.id, entryByLevelId, recommendedLevelId),
+            maps: this._buildLevelSelectMapSummaries(pack.maps, runtimeMap.id, entryByLevelId, recommendedLevelId, entries),
             mapPackMaps,
             map: runtimeMap,
             overview: this._clonePlain(overview),
