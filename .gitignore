@@ -286,6 +286,10 @@ FakesAssemblies/
 node_modules/
 NodeConsoleApp2/graphify-out/
 
+# Local git worktrees
+.worktree/
+.worktrees/
+
 # Visual Studio 6 build log
 *.plg
 
