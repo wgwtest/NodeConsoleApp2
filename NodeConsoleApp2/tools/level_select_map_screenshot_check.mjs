@@ -183,9 +183,26 @@ try {
                 };
             })()
         }));
+        const mapButtons = [...document.querySelectorAll(".level-map-switcher__button")].map(button => ({
+            mapId: button.dataset.mapId,
+            text: button.textContent.trim().replace(/\\s+/g, " "),
+            pressed: button.getAttribute("aria-pressed") === "true",
+            rect: (() => {
+                const rect = button.getBoundingClientRect();
+                return {
+                    x: Math.round(rect.x),
+                    y: Math.round(rect.y),
+                    width: Math.round(rect.width),
+                    height: Math.round(rect.height),
+                    right: Math.round(rect.right),
+                    bottom: Math.round(rect.bottom)
+                };
+            })()
+        }));
         const stageRect = rectOf(".level-select-runtime-map__stage");
         const modalRect = rectOf(".modal-panel--level-select");
         const mapRect = rectOf(".level-select-runtime-map");
+        const switcherRect = rectOf(".level-map-switcher");
         const listRect = rectOf(".level-list-panel");
         const screenshotText = document.querySelector(".level-select-runtime-map")?.textContent || "";
         const style = getComputedStyle(document.querySelector(".level-select-runtime-map__stage"));
@@ -195,7 +212,11 @@ try {
             modalRect,
             listRect,
             mapRect,
+            switcherRect,
             stageRect,
+            mapButtonCount: mapButtons.length,
+            pressedMapButtonCount: mapButtons.filter(button => button.pressed).length,
+            mapButtons,
             nodeCount: nodes.length,
             edgeCount: document.querySelectorAll(".level-map-edge").length,
             selectedNodeCount: nodes.filter(node => node.selected).length,
@@ -209,12 +230,19 @@ try {
     assertCondition(report.title === '选择关卡', '未停留在关卡选择弹窗');
     assertCondition(report.viewport.width === 1920 && report.viewport.height === 1080, '视口不是 1920x1080');
     assertCondition(report.nodeCount >= 3, '地图节点数量不足');
+    assertCondition(report.mapButtonCount === 3, `地图切换入口数量不是 3：${report.mapButtonCount}`);
+    assertCondition(report.pressedMapButtonCount === 1, `当前地图切换状态数量异常：${report.pressedMapButtonCount}`);
     assertCondition(report.edgeCount >= 2, '地图连线数量不足');
     assertCondition(report.selectedNodeCount >= 1, '缺少选中或推荐节点');
     assertCondition(report.stageBackgroundImage.includes('image_w2752_h1536_map-bg-01'), '地图背景图未加载到舞台');
     assertCondition(report.stageRect.width >= 850, `地图舞台过窄：${report.stageRect.width}`);
     assertCondition(report.stageRect.height >= 470, `地图舞台过矮：${report.stageRect.height}`);
     assertCondition(report.mapRect.right <= report.modalRect.right && report.mapRect.bottom <= report.modalRect.bottom, '地图区域溢出弹窗');
+    assertCondition(report.switcherRect.right <= report.mapRect.right && report.switcherRect.bottom <= report.mapRect.bottom, '地图切换控件溢出地图区域');
+    for (const button of report.mapButtons) {
+        assertCondition(button.rect.x >= report.mapRect.x - 8, `地图切换按钮 ${button.mapId} 左侧溢出地图区域`);
+        assertCondition(button.rect.right <= report.mapRect.right + 8, `地图切换按钮 ${button.mapId} 右侧溢出地图区域`);
+    }
     for (const node of report.nodes) {
         assertCondition(node.rect.x >= report.stageRect.x - 8, `节点 ${node.id} 左侧溢出舞台`);
         assertCondition(node.rect.right <= report.stageRect.right + 8, `节点 ${node.id} 右侧溢出舞台`);

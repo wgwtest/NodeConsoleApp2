@@ -212,6 +212,222 @@
           "type": "merge"
         }
       ]
+    },
+    {
+      "id": "chapter_2_story_map",
+      "name": "第二章故事地图",
+      "chapterId": "story_chapter_2",
+      "chapterLabel": "第二章",
+      "chapterTitle": "霜雾峡谷",
+      "space": {
+        "logicalWidth": 1600,
+        "logicalHeight": 900
+      },
+      "display": {
+        "viewportAspect": "16:9",
+        "backgroundFit": "cover",
+        "nodeScale": 0.56,
+        "nodeAnchor": "center",
+        "edgeAnchor": "center",
+        "edgeLabelMode": "none"
+      },
+      "backgroundRef": "bg_map_winter_02",
+      "entryNodeId": "node_frost_pass",
+      "nodes": [
+        {
+          "id": "node_frost_pass",
+          "levelId": "level_2_1_story",
+          "label": "2-1",
+          "title": "霜雾山口",
+          "kind": "battle",
+          "nodeSkinRef": "skin_story_battle",
+          "iconLabel": "入口",
+          "position": {
+            "x": 240,
+            "y": 500
+          },
+          "objectiveText": "穿越霜雾山口，确认第二章推进路线。",
+          "difficultyLabel": "待开放",
+          "rewardPreview": [
+            "章节素材",
+            "KP +1"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elemental",
+            "portrait": "enemy_skeleton_guard"
+          }
+        },
+        {
+          "id": "node_ice_watch",
+          "levelId": "level_2_2_story",
+          "label": "2-2",
+          "title": "寒塔哨站",
+          "kind": "battle",
+          "nodeSkinRef": "skin_story_battle",
+          "iconLabel": "哨站",
+          "position": {
+            "x": 660,
+            "y": 300
+          },
+          "objectiveText": "压制寒塔守军，打开峡谷中段通路。",
+          "difficultyLabel": "待开放",
+          "rewardPreview": [
+            "冰痕样本",
+            "金币"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_medic"
+          }
+        },
+        {
+          "id": "node_frost_core",
+          "levelId": "level_2_3_story",
+          "label": "2-3",
+          "title": "冰封中庭",
+          "kind": "boss",
+          "nodeSkinRef": "skin_story_boss",
+          "iconLabel": "收束",
+          "position": {
+            "x": 1110,
+            "y": 450
+          },
+          "objectiveText": "进入冰封中庭，完成霜雾峡谷收束战。",
+          "difficultyLabel": "待开放",
+          "rewardPreview": [
+            "章节奖励",
+            "KP +2"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_owlbear",
+            "portrait": "enemy_ruins_boss"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge_frost_pass_to_watch",
+          "fromNodeId": "node_frost_pass",
+          "toNodeId": "node_ice_watch",
+          "branchLabel": "峡谷上行",
+          "type": "main"
+        },
+        {
+          "id": "edge_watch_to_core",
+          "fromNodeId": "node_ice_watch",
+          "toNodeId": "node_frost_core",
+          "branchLabel": "中庭入口",
+          "type": "main"
+        }
+      ]
+    },
+    {
+      "id": "chapter_3_story_map",
+      "name": "第三章故事地图",
+      "chapterId": "story_chapter_3",
+      "chapterLabel": "第三章",
+      "chapterTitle": "暮色古道",
+      "space": {
+        "logicalWidth": 1600,
+        "logicalHeight": 900
+      },
+      "display": {
+        "viewportAspect": "16:9",
+        "backgroundFit": "cover",
+        "nodeScale": 0.56,
+        "nodeAnchor": "center",
+        "edgeAnchor": "center",
+        "edgeLabelMode": "none"
+      },
+      "backgroundRef": "bg_map_glade_03",
+      "entryNodeId": "node_dusk_gate",
+      "nodes": [
+        {
+          "id": "node_dusk_gate",
+          "levelId": "level_3_1_story",
+          "label": "3-1",
+          "title": "暮色关门",
+          "kind": "battle",
+          "nodeSkinRef": "skin_story_battle",
+          "iconLabel": "入口",
+          "position": {
+            "x": 220,
+            "y": 420
+          },
+          "objectiveText": "进入暮色古道，建立第三章入口节奏。",
+          "difficultyLabel": "待开放",
+          "rewardPreview": [
+            "古道补给",
+            "KP +1"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_goblin_warrior",
+            "portrait": "enemy_goblin_hunter"
+          }
+        },
+        {
+          "id": "node_dusk_bridge",
+          "levelId": "level_3_2_story",
+          "label": "3-2",
+          "title": "断桥伏击",
+          "kind": "battle",
+          "nodeSkinRef": "skin_story_battle",
+          "iconLabel": "伏击",
+          "position": {
+            "x": 610,
+            "y": 570
+          },
+          "objectiveText": "突破断桥伏击，打开古道深处路线。",
+          "difficultyLabel": "待开放",
+          "rewardPreview": [
+            "伏击情报",
+            "金币"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_skeleton_guard"
+          }
+        },
+        {
+          "id": "node_dusk_citadel",
+          "levelId": "level_3_3_story",
+          "label": "3-3",
+          "title": "暮堡外环",
+          "kind": "boss",
+          "nodeSkinRef": "skin_story_boss",
+          "iconLabel": "收束",
+          "position": {
+            "x": 1080,
+            "y": 330
+          },
+          "objectiveText": "抵达暮堡外环，完成古道收束战。",
+          "difficultyLabel": "待开放",
+          "rewardPreview": [
+            "章节奖励",
+            "KP +2"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_owlbear",
+            "portrait": "enemy_ruins_boss"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge_dusk_gate_to_bridge",
+          "fromNodeId": "node_dusk_gate",
+          "toNodeId": "node_dusk_bridge",
+          "branchLabel": "古道下行",
+          "type": "main"
+        },
+        {
+          "id": "edge_bridge_to_citadel",
+          "fromNodeId": "node_dusk_bridge",
+          "toNodeId": "node_dusk_citadel",
+          "branchLabel": "暮堡外环",
+          "type": "main"
+        }
+      ]
     }
   ]
 }

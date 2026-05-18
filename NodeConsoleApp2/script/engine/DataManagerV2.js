@@ -1065,8 +1065,8 @@ class DataManager {
     }
 
     getLevelMapPack() {
-        const source = this.levelMapPack
-            || (this.gameConfig && this.gameConfig.levelMapPack ? this.gameConfig.levelMapPack : null);
+        const source = (this.gameConfig && this.gameConfig.levelMapPack ? this.gameConfig.levelMapPack : null)
+            || this.levelMapPack;
         if (!source) return null;
         const normalized = source.schemaVersion && Array.isArray(source.maps)
             ? source
@@ -1337,19 +1337,8 @@ class DataManager {
         ].filter(Boolean);
     }
 
-    getLevelSelectMapModel() {
-        const pack = this.getLevelMapPack();
-        if (!pack) return null;
-
-        const storyModel = this._buildStoryLevelSelectModel();
-        const entries = Array.isArray(storyModel.entries) ? storyModel.entries : [];
-        const overview = storyModel.overview || null;
-        const map = this._findLevelSelectMap(pack, overview);
-        if (!map) return null;
-
-        const entryByLevelId = new Map(entries.map(entry => [entry.id, entry]));
-        const recommendedLevelId = overview?.recommendedLevelId || entries.find(entry => entry.isUnlocked && !entry.isCompleted)?.id || null;
-        const nodes = map.nodes.map(node => {
+    _buildLevelSelectMapRuntimeMap(map, entryByLevelId, recommendedLevelId) {
+        const nodes = this._asArray(map?.nodes).map(node => {
             const entry = entryByLevelId.get(node.levelId) || null;
             const status = this._resolveLevelMapNodeStatus(node, entryByLevelId, recommendedLevelId);
             const selectionMeta = entry?.selectionMeta || null;
@@ -1370,6 +1359,49 @@ class DataManager {
                 isRecommended: status === 'recommended'
             };
         });
+
+        return {
+            ...this._clonePlain(map),
+            nodes
+        };
+    }
+
+    _buildLevelSelectMapSummaries(maps, activeMapId, entryByLevelId, recommendedLevelId) {
+        return this._asArray(maps).map(map => {
+            const runtimeMap = this._buildLevelSelectMapRuntimeMap(map, entryByLevelId, recommendedLevelId);
+            const nodes = this._asArray(runtimeMap.nodes);
+            return {
+                id: runtimeMap.id,
+                name: runtimeMap.name || '',
+                chapterId: runtimeMap.chapterId || '',
+                chapterLabel: runtimeMap.chapterLabel || '',
+                chapterTitle: runtimeMap.chapterTitle || '',
+                backgroundRef: runtimeMap.backgroundRef || '',
+                entryNodeId: runtimeMap.entryNodeId || '',
+                nodeCount: nodes.length,
+                unlockedNodeCount: nodes.filter(node => node.isUnlocked).length,
+                completedNodeCount: nodes.filter(node => node.isCompleted).length,
+                recommendedNodeId: nodes.find(node => node.isRecommended)?.id || null,
+                isActive: runtimeMap.id === activeMapId
+            };
+        });
+    }
+
+    getLevelSelectMapModel() {
+        const pack = this.getLevelMapPack();
+        if (!pack) return null;
+
+        const storyModel = this._buildStoryLevelSelectModel();
+        const entries = Array.isArray(storyModel.entries) ? storyModel.entries : [];
+        const overview = storyModel.overview || null;
+        const map = this._findLevelSelectMap(pack, overview);
+        if (!map) return null;
+
+        const entryByLevelId = new Map(entries.map(entry => [entry.id, entry]));
+        const recommendedLevelId = overview?.recommendedLevelId || entries.find(entry => entry.isUnlocked && !entry.isCompleted)?.id || null;
+        const mapPackMaps = pack.maps.map(item => this._buildLevelSelectMapRuntimeMap(item, entryByLevelId, recommendedLevelId));
+        const runtimeMap = this._buildLevelSelectMapRuntimeMap(map, entryByLevelId, recommendedLevelId);
+        const nodes = runtimeMap.nodes;
         const selectedNode = nodes.find(node => node.status === 'recommended')
             || nodes.find(node => node.status === 'unlocked')
             || nodes.find(node => node.id === map.entryNodeId)
@@ -1380,10 +1412,9 @@ class DataManager {
             schemaVersion: pack.schemaVersion,
             meta: this._clonePlain(pack.meta),
             assetLibrary: this._clonePlain(pack.assetLibrary),
-            map: {
-                ...this._clonePlain(map),
-                nodes
-            },
+            maps: this._buildLevelSelectMapSummaries(pack.maps, runtimeMap.id, entryByLevelId, recommendedLevelId),
+            mapPackMaps,
+            map: runtimeMap,
             overview: this._clonePlain(overview),
             recommendedLevelId,
             recommendedNodeId: nodes.find(node => node.status === 'recommended')?.id || null,

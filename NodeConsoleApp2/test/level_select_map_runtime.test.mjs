@@ -178,12 +178,109 @@ test('DataManagerV2 会把地图包转换为运行时关卡选择地图模型', 
   assert.equal(model.map.nodes[2].isUnlocked, false);
 });
 
-test('生产关卡地图包是可解析的运行时 JSON 并压缩为主线节点', async () => {
+test('DataManagerV2 会暴露全部运行时地图供关卡选择切换', async () => {
+  const { default: dm } = await importSourceModule('script/engine/DataManagerV2.js');
+  const pack = buildFixtureMapPack();
+  pack.assetLibrary.backgrounds.push(
+    {
+      id: 'bg_map_winter_02',
+      label: '地图背景 02',
+      src: '../source/map/image_w2752_h1536_map-bg-02-winter.jpeg',
+      thumbnailSrc: '../source/map/image_w2752_h1536_map-bg-02-winter.jpeg',
+      previewGradient: 'linear-gradient(180deg, #13324e, #d8e6f4)'
+    },
+    {
+      id: 'bg_map_glade_03',
+      label: '地图背景 03',
+      src: '../source/map/image_w2752_h1536_map-bg-03.jpeg',
+      thumbnailSrc: '../source/map/image_w2752_h1536_map-bg-03.jpeg',
+      previewGradient: 'linear-gradient(180deg, #2f2330, #d59b63)'
+    }
+  );
+  pack.maps.push(
+    {
+      ...pack.maps[0],
+      id: 'chapter_2_runtime',
+      name: '第二章运行时地图',
+      chapterId: 'story_chapter_2',
+      chapterLabel: '第二章',
+      chapterTitle: '霜雾峡谷',
+      backgroundRef: 'bg_map_winter_02',
+      nodes: [
+        {
+          ...pack.maps[0].nodes[0],
+          id: 'node_frost_entry',
+          levelId: 'level_future_2_1',
+          label: '2-1',
+          title: '霜雾入口',
+          position: { x: 220, y: 420 }
+        }
+      ],
+      edges: []
+    },
+    {
+      ...pack.maps[0],
+      id: 'chapter_3_runtime',
+      name: '第三章运行时地图',
+      chapterId: 'story_chapter_3',
+      chapterLabel: '第三章',
+      chapterTitle: '暮色古道',
+      backgroundRef: 'bg_map_glade_03',
+      nodes: [
+        {
+          ...pack.maps[0].nodes[0],
+          id: 'node_dusk_entry',
+          levelId: 'level_future_3_1',
+          label: '3-1',
+          title: '暮色入口',
+          position: { x: 260, y: 460 }
+        }
+      ],
+      edges: []
+    }
+  );
+  dm.gameConfig = {
+    levels: {
+      level_1_1: buildStoryLevel('level_1_1', 1, '幽暗森林边缘'),
+      level_1_2_story: buildStoryLevel('level_1_2_story', 2, '密林前哨'),
+      level_1_3_story: buildStoryLevel('level_1_3_story', 3, '废墟关隘')
+    },
+    levelMapPack: pack
+  };
+  dm.dataConfig.global = {
+    progress: {
+      unlockedLevels: ['level_1_1'],
+      completedLevels: []
+    }
+  };
+
+  const model = dm.getLevelSelectMapModel();
+
+  assert.equal(model.map.id, 'chapter_1_runtime');
+  assert.deepEqual(model.maps.map(map => [map.id, map.chapterLabel, map.chapterTitle, map.backgroundRef]), [
+    ['chapter_1_runtime', '第一章', '幽暗森林', 'bg_map_glade_01'],
+    ['chapter_2_runtime', '第二章', '霜雾峡谷', 'bg_map_winter_02'],
+    ['chapter_3_runtime', '第三章', '暮色古道', 'bg_map_glade_03']
+  ]);
+  assert.deepEqual(model.maps.map(map => [map.id, map.nodeCount, map.unlockedNodeCount]), [
+    ['chapter_1_runtime', 3, 1],
+    ['chapter_2_runtime', 1, 0],
+    ['chapter_3_runtime', 1, 0]
+  ]);
+});
+
+test('生产关卡地图包是可解析的运行时 JSON 并开放三张地图', async () => {
   const raw = await fs.readFile(path.join(projectRoot, 'assets/data/level_map_pack_v1.json'), 'utf8');
   const pack = JSON.parse(raw);
   const map = pack.maps?.[0];
 
   assert.equal(pack.$schemaVersion, 'level_map_pack_v1');
+  assert.equal(pack.maps.length, 3);
+  assert.deepEqual(pack.maps.map(item => [item.id, item.chapterLabel, item.backgroundRef]), [
+    ['chapter_1_story_map', '第一章', 'bg_map_glade_01'],
+    ['chapter_2_story_map', '第二章', 'bg_map_winter_02'],
+    ['chapter_3_story_map', '第三章', 'bg_map_glade_03']
+  ]);
   assert.equal(map.id, 'chapter_1_story_map');
   assert.equal(map.display.edgeLabelMode, 'none');
   assert.deepEqual(map.nodes.map(node => [node.id, node.levelId]), [

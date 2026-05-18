@@ -156,12 +156,92 @@ export class LevelSelectMapView {
     constructor(options = {}) {
         this.document = options.document || globalThis.document;
         this.onSelectNode = typeof options.onSelectNode === 'function' ? options.onSelectNode : null;
+        this.onSelectMap = typeof options.onSelectMap === 'function' ? options.onSelectMap : null;
+        this.currentMapId = '';
+    }
+
+    getRuntimeMaps(model) {
+        const currentMap = model?.map || null;
+        const maps = asArray(model?.maps);
+        if (maps.length > 0) return maps;
+        if (!currentMap) return [];
+        return [{
+            id: currentMap.id || '',
+            name: currentMap.name || '',
+            chapterId: currentMap.chapterId || '',
+            chapterLabel: currentMap.chapterLabel || '',
+            chapterTitle: currentMap.chapterTitle || '',
+            backgroundRef: currentMap.backgroundRef || '',
+            nodeCount: asArray(currentMap.nodes).length,
+            unlockedNodeCount: asArray(currentMap.nodes).filter(node => node.isUnlocked).length,
+            completedNodeCount: asArray(currentMap.nodes).filter(node => node.isCompleted).length,
+            isActive: true
+        }];
+    }
+
+    resolveActiveMap(model) {
+        const maps = this.getRuntimeMaps(model);
+        const currentMap = model?.map || null;
+        const activeMapId = this.currentMapId
+            || maps.find(map => map.isActive)?.id
+            || currentMap?.id
+            || maps[0]?.id
+            || '';
+        const activeSummary = maps.find(map => map.id === activeMapId) || maps[0] || null;
+        const candidateMap = activeSummary?.id === currentMap?.id
+            ? currentMap
+            : asArray(model?.mapPackMaps).find(map => map.id === activeSummary?.id);
+        return {
+            maps,
+            activeMapId: activeSummary?.id || currentMap?.id || '',
+            map: candidateMap || currentMap
+        };
+    }
+
+    renderMapSwitcher(root, maps, activeMapId) {
+        if (maps.length <= 1) return null;
+        const switcher = createElement(this.document, 'div', 'level-map-switcher');
+        switcher.setAttribute('aria-label', '地图切换');
+        maps.forEach((map) => {
+            const button = createElement(this.document, 'button', 'level-map-switcher__button');
+            button.type = 'button';
+            button.dataset.mapId = map.id || '';
+            button.setAttribute('aria-pressed', map.id === activeMapId ? 'true' : 'false');
+            button.innerHTML = `
+                <span class="level-map-switcher__chapter">${escapeHtml(map.chapterLabel || map.name || map.id)}</span>
+                <strong>${escapeHtml(map.chapterTitle || map.name || '')}</strong>
+                <span>${escapeHtml(map.unlockedNodeCount ?? 0)}/${escapeHtml(map.nodeCount ?? 0)}</span>
+            `;
+            button.addEventListener('click', () => {
+                if (!map.id || map.id === activeMapId) return;
+                this.currentMapId = map.id;
+                if (this.onSelectMap) {
+                    this.onSelectMap({ mapId: map.id });
+                }
+                this.render(root.parentElement, {
+                    ...root.__levelSelectMapModel,
+                    map: root.__levelSelectMapModel?.mapPackMaps?.find(item => item.id === map.id)
+                        || root.__levelSelectMapModel?.map
+                });
+            });
+            switcher.appendChild(button);
+        });
+        root.appendChild(switcher);
+        return switcher;
     }
 
     render(host, model) {
         if (!host) return null;
         host.innerHTML = '';
-        const map = model?.map;
+        const normalizedModel = {
+            ...asObject(model),
+            mapPackMaps: asArray(model?.mapPackMaps)
+        };
+        if (normalizedModel.map && normalizedModel.mapPackMaps.length === 0) {
+            normalizedModel.mapPackMaps = [normalizedModel.map];
+        }
+        const active = this.resolveActiveMap(normalizedModel);
+        const map = active.map;
         if (!map || !Array.isArray(map.nodes) || map.nodes.length === 0) {
             return this.renderEmpty(host);
         }
@@ -169,6 +249,12 @@ export class LevelSelectMapView {
         const root = createElement(this.document, 'section', 'level-select-runtime-map summary-section');
         root.dataset.summaryKind = 'story-progress';
         root.dataset.mapId = map.id || '';
+        root.__levelSelectMapModel = {
+            ...normalizedModel,
+            map,
+            maps: active.maps,
+            mapPackMaps: normalizedModel.mapPackMaps
+        };
 
         const overview = asObject(model.overview);
         const heading = [map.chapterLabel || overview.chapterLabel, map.chapterTitle || overview.chapterTitle]
@@ -192,6 +278,8 @@ export class LevelSelectMapView {
                 </div>
             </div>
         `;
+
+        this.renderMapSwitcher(root, active.maps, active.activeMapId);
 
         const stage = createElement(this.document, 'div', 'level-select-runtime-map__stage');
         const canvas = createElement(this.document, 'div', 'level-select-runtime-map__canvas');
