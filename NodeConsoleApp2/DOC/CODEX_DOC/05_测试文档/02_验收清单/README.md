@@ -1,6 +1,6 @@
 # 验收清单 README
 
-最后整理时间：2026-04-08 23:25:00 +0800
+最后整理时间：2026-04-09 07:23:20 +0800
 
 状态：`当前有效`
 
@@ -41,7 +41,7 @@
 
 以下清单仍处于 `待验收` 或 `待重测` 状态，也是 [00-当前待验收功能总入口](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md) 应该覆盖的对象：
 
-当前共有 `11` 个待验收节点：
+当前共有 `14` 个待验收节点：
 
 1. `#69 / C2.1`
    - [C2.1-[待验收]-2026-04-07-013344-故事关卡内容元数据与选择页提示收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C2.1-[待验收]-2026-04-07-013344-故事关卡内容元数据与选择页提示收口-人工验收清单.md)
@@ -59,12 +59,18 @@
    - [C2.3-[待验收]-2026-04-08-162942-关卡章节组织与连续推进信息补足-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C2.3-[待验收]-2026-04-08-162942-关卡章节组织与连续推进信息补足-人工验收清单.md)
 8. `#79 / C2.4`
    - [C2.4-[待验收]-2026-04-08-171326-story-acceptance-编辑器样本层级口径清理-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C2.4-[待验收]-2026-04-08-171326-story-acceptance-编辑器样本层级口径清理-人工验收清单.md)
-9. `#80 / D3.3`
+9. `#84 / C3.1`
+   - [C3.1-[待验收]-2026-04-09-013215-技能效果矩阵与说明契约收口-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C3.1-[待验收]-2026-04-09-013215-技能效果矩阵与说明契约收口-人工验收清单.md)
+10. `#85 / C3.2`
+   - [C3.2-[待验收]-2026-04-09-013215-技能运行时批量回归与异常归档-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/C3.2-[待验收]-2026-04-09-013215-技能运行时批量回归与异常归档-人工验收清单.md)
+11. `#80 / D3.3`
    - [D3.3-[待验收]-2026-04-08-143159-场景节奏强化与镜头感补足-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.3-[待验收]-2026-04-08-143159-场景节奏强化与镜头感补足-人工验收清单.md)
-10. `#81 / D3.4`
+12. `#81 / D3.4`
    - [D3.4-[待验收]-2026-04-08-151153-更多角色与技能类别的表现模板扩展-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.4-[待验收]-2026-04-08-151153-更多角色与技能类别的表现模板扩展-人工验收清单.md)
-11. `#82 / D3.5`
+13. `#82 / D3.5`
    - [D3.5-[待验收]-2026-04-08-173505-演出配置化与内容驱动边界-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.5-[待验收]-2026-04-08-173505-演出配置化与内容驱动边界-人工验收清单.md)
+14. `#86 / D3.6`
+   - [D3.6-[待验收]-2026-04-09-010745-HUD比例与动作可观察性校准-人工验收清单.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.6-[待验收]-2026-04-09-010745-HUD比例与动作可观察性校准-人工验收清单.md)
 
 ## 3. 已通过节点索引
 
