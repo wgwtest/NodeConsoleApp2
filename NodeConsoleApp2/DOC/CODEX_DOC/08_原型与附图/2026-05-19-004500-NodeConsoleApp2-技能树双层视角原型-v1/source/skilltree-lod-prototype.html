@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NodeConsoleApp2 技能树双层视角原型</title>
+  <style>
+    :root {
+      --bg: #050607;
+      --panel: rgba(13, 16, 18, 0.96);
+      --panel-soft: rgba(255, 255, 255, 0.04);
+      --line: rgba(207, 214, 212, 0.24);
+      --gold: #e8c66f;
+      --green: #7be0b9;
+      --red: #c94f45;
+      --teal: #6ca7a7;
+      --muted: #aaa9a3;
+      --text: #f3eee4;
+      --text-soft: #d9d4ca;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      min-width: 1920px;
+      min-height: 1080px;
+      margin: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 12%, rgba(232, 198, 111, 0.10), transparent 18%),
+        radial-gradient(circle at 50% 52%, rgba(232, 198, 111, 0.07), transparent 28%),
+        linear-gradient(180deg, #090c0d 0%, #050607 100%);
+      color: var(--text);
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.10;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(circle at 50% 52%, black, transparent 78%);
+    }
+
+    #app {
+      width: 1920px;
+      height: 1080px;
+      min-width: 1920px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 50% 12%, rgba(232, 198, 111, 0.10), transparent 18%),
+        radial-gradient(circle at 50% 52%, rgba(232, 198, 111, 0.07), transparent 28%),
+        linear-gradient(180deg, #090c0d 0%, #050607 100%);
+    }
+
+    .frame {
+      width: 1920px;
+      height: 1080px;
+      padding: 56px 96px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .topbar {
+      height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 0 28px 0 32px;
+      border-bottom: 1px solid rgba(231, 214, 174, 0.13);
+      background: rgba(11, 14, 16, 0.95);
+      position: relative;
+      z-index: 2;
+    }
+
+    .identity {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(232, 198, 111, 0.72);
+      background: rgba(232, 198, 111, 0.08);
+      color: var(--gold);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      flex: 0 0 auto;
+    }
+
+    .titleBlock {
+      min-width: 0;
+    }
+
+    .titleBlock h1 {
+      margin: 0;
+      font-size: 1.55rem;
+      line-height: 1;
+      font-weight: 900;
+      color: #fff8e9;
+    }
+
+    .titleBlock p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 760px;
+    }
+
+    .chips {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      min-height: 40px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: #dfe5e2;
+      font-size: 0.86rem;
+      white-space: nowrap;
+    }
+
+    .chip.is-active {
+      border-color: rgba(232, 198, 111, 0.72);
+      background: rgba(232, 198, 111, 0.08);
+      color: #fff4d0;
+      font-weight: 800;
+    }
+
+    .chip.is-muted {
+      color: var(--muted);
+    }
+
+    .shell {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr) 334px;
+    }
+
+    .rail,
+    .panel {
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .rail {
+      padding: 24px;
+      border-right: 1px solid rgba(231, 214, 174, 0.11);
+      background: rgba(10, 14, 16, 0.54);
+    }
+
+    .railTitle,
+    .panelTitle {
+      margin: 0 0 18px;
+      color: #efe6d0;
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    .routeList {
+      display: grid;
+      gap: 10px;
+    }
+
+    .routeCard {
+      width: 100%;
+      min-height: 86px;
+      display: grid;
+      grid-template-columns: 8px 1fr;
+      gap: 12px;
+      align-items: stretch;
+      padding: 13px 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+      color: #ede7d8;
+    }
+
+    .routeCard.is-active {
+      border-color: rgba(232, 198, 111, 0.58);
+      background: rgba(232, 198, 111, 0.07);
+    }
+
+    .routeStripe { display: block; background: var(--gold); }
+    .routeCard[data-route="guard"] .routeStripe { background: var(--green); }
+    .routeCard[data-route="break"] .routeStripe { background: var(--teal); }
+    .routeCard[data-route="blood"] .routeStripe { background: var(--red); }
+
+    .routeCard b,
+    .routeCard small { display: block; }
+    .routeCard b {
+      margin-bottom: 5px;
+      font-size: 0.92rem;
+      line-height: 1.2;
+    }
+    .routeCard small {
+      color: var(--muted);
+      font-size: 0.74rem;
+      line-height: 1.38;
+    }
+
+    .legend {
+      margin-top: auto;
+      display: grid;
+      gap: 11px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      padding-top: 24px;
+    }
+
+    .legendRow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      line-height: 1.35;
+    }
+
+    .legendDot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #495258;
+      flex: 0 0 auto;
+    }
+
+    .legendDot.learned { background: var(--green); }
+    .legendDot.learnable { background: var(--gold); }
+    .legendDot.blood { background: var(--red); }
+
+    .canvas {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 52% 50%, rgba(232, 198, 111, 0.08), transparent 39%),
+        linear-gradient(180deg, rgba(255,255,255,0.018), transparent);
+      border-right: 1px solid rgba(231, 214, 174, 0.10);
+    }
+
+    .canvasBadge,
+    .canvasHint {
+      position: absolute;
+      z-index: 2;
+      pointer-events: none;
+      color: #ccd3d0;
+      font-size: 0.78rem;
+      letter-spacing: 0.02em;
+    }
+
+    .canvasBadge {
+      right: 28px;
+      top: 20px;
+      padding: 6px 10px;
+      border: 1px solid rgba(232, 198, 111, 0.28);
+      background: rgba(9, 16, 34, 0.72);
+      color: #dbeafe;
+    }
+
+    .canvasHint {
+      left: 28px;
+      top: 22px;
+    }
+
+    .graphWrap {
+      position: absolute;
+      inset: 0;
+      padding: 56px 24px 28px;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .grid line {
+      stroke: rgba(255,255,255,0.06);
+      stroke-width: 1;
+    }
+
+    .laneLabel {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    .laneSub {
+      font-size: 11px;
+      fill: var(--muted);
+    }
+
+    .edge {
+      fill: none;
+      stroke: var(--line);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .edge.is-focus {
+      stroke: rgba(232, 198, 111, 0.88);
+      stroke-width: 4;
+      filter: drop-shadow(0 0 8px rgba(232, 198, 111, 0.24));
+    }
+
+    .edge.is-dim {
+      opacity: 0.18;
+      stroke-dasharray: 8 10;
+    }
+
+    .node {
+      color: #f3eee4;
+    }
+
+    .node .nodeBox {
+      fill: rgba(20, 24, 26, 0.90);
+      stroke: rgba(255,255,255,0.16);
+      stroke-width: 1;
+    }
+
+    .node .icon {
+      fill: #111719;
+      stroke: currentColor;
+      stroke-width: 1;
+    }
+
+    .node .iconText {
+      fill: currentColor;
+      font-size: 14px;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .node .label {
+      fill: #f6f0e3;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      letter-spacing: 0;
+    }
+
+    .node .meta {
+      fill: var(--muted);
+      font-size: 11px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      letter-spacing: 0.02em;
+    }
+
+    .node--compact .nodeBox {
+      rx: 18;
+      ry: 18;
+    }
+
+    .node--dot .nodeBox {
+      fill: rgba(14, 18, 20, 0.92);
+      rx: 999;
+      ry: 999;
+    }
+
+    .node--compact .icon {
+      opacity: 0.92;
+    }
+
+    .node--dot .icon {
+      display: none;
+    }
+
+    .node--compact .label {
+      font-size: 14px;
+    }
+
+    .node--dot .label {
+      font-size: 12px;
+      opacity: 0;
+    }
+
+    .node--dot.node--key .label {
+      opacity: 1;
+      font-size: 13px;
+    }
+
+    .node--compact .meta {
+      font-size: 10px;
+    }
+
+    .node--dot .meta {
+      display: none;
+    }
+
+    .node--focus .nodeBox {
+      rx: 18;
+      ry: 18;
+      fill: rgba(28, 19, 16, 0.96);
+      stroke: rgba(255, 145, 136, 0.96);
+      filter: drop-shadow(0 18px 30px rgba(201, 79, 69, 0.28));
+    }
+
+    .node--focus .icon {
+      fill: rgba(201, 79, 69, 0.16);
+      stroke: rgba(255, 145, 136, 0.98);
+    }
+
+    .node--focus .label {
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .node--focus .meta {
+      font-size: 11px;
+      fill: #ffd9d4;
+    }
+
+    .node--ghost {
+      opacity: 0.16;
+    }
+
+    .node--dot.node--ghost {
+      opacity: 0.12;
+    }
+
+    .node--learned {
+      color: var(--green);
+    }
+
+    .node--learnable {
+      color: var(--gold);
+    }
+
+    .node--locked {
+      color: #8b9498;
+    }
+
+    .node--current {
+      color: #ff9188;
+    }
+
+    .panel {
+      padding: 24px;
+      border-left: 1px solid rgba(231, 214, 174, 0.11);
+      background: rgba(12, 15, 17, 0.80);
+    }
+
+    .statGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      min-height: 62px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .stat span {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .stat b {
+      display: block;
+      color: #f2eee4;
+      font-size: 0.95rem;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .callout {
+      padding: 14px;
+      border: 1px solid rgba(123, 224, 185, 0.24);
+      background: rgba(123, 224, 185, 0.05);
+      color: #c8f3e4;
+      font-size: 0.86rem;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .bulletList {
+      margin: 0;
+      padding-left: 18px;
+      color: #d7d2c8;
+      font-size: 0.84rem;
+      line-height: 1.7;
+    }
+
+    .detailCard {
+      padding: 18px;
+      border: 1px solid rgba(232, 198, 111, 0.36);
+      background: rgba(232, 198, 111, 0.06);
+      margin-bottom: 16px;
+    }
+
+    .detailCard h2 {
+      margin: 0 0 8px;
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: #fff5d8;
+    }
+
+    .detailCard p {
+      margin: 0;
+      color: #d9d4ca;
+      font-size: 0.86rem;
+      line-height: 1.55;
+    }
+
+    .chain {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0 18px;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    .chainItem {
+      min-height: 48px;
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+      color: #dedbd3;
+    }
+
+    .chainItem i {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid currentColor;
+      font-style: normal;
+      font-size: 0.72rem;
+      color: currentColor;
+    }
+
+    .chainItem span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chainItem b {
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    .chainItem.is-current {
+      color: #ff9188;
+      border-color: rgba(201, 79, 69, 0.38);
+      background: rgba(201, 79, 69, 0.07);
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .actionBtn {
+      min-height: 46px;
+      border: 1px solid rgba(232, 198, 111, 0.72);
+      background: var(--gold);
+      color: #16120c;
+      font-weight: 900;
+      font-size: 0.9rem;
+    }
+
+    .actionBtn.secondary {
+      border-color: rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: #ddd7c9;
+    }
+
+    .actionBtn, .chip, .routeCard, .chainItem {
+      transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .actionBtn:hover, .routeCard:hover, .chainItem:hover, .chip:hover {
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, ch => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[ch]));
+
+    const routeDefs = [
+      { id: 'guard', title: '稳固前线', desc: '护甲、格挡、反击', color: 'guard' },
+      { id: 'break', title: '破甲重击', desc: '高伤、处决、震击', color: 'break' },
+      { id: 'blood', title: '流血连段', desc: '撕裂、吸血、爆发', color: 'blood' }
+    ];
+
+    const states = {
+      global: {
+        bodyClass: 'state-global',
+        title: '技能树 / 双层视角',
+        subtitle: '全局只看结构、密度和状态色，节点文案在局部阅读态展开。',
+        chips: [
+          { label: '全局结构', active: true },
+          { label: '局部阅读', active: false },
+          { label: '32 节点 · 3 路线', muted: true }
+        ],
+        activeRoute: 'blood',
+        canvasBadge: '全局结构态 · LOD 低',
+        canvasHint: '节点压缩后只保留结构、状态和关键名称',
+        routes: [
+          { id: 'guard', title: '稳固前线', desc: '护甲、格挡、反击', count: '20 节点', learned: '0 可学', active: false },
+          { id: 'break', title: '破甲重击', desc: '高伤、处决、震击', count: '9 节点', learned: '1 可学', active: false },
+          { id: 'blood', title: '流血连段', desc: '撕裂、吸血、爆发', count: '3 节点', learned: '1 可学', active: true }
+        ],
+        panel: {
+          kind: 'summary',
+          title: '全局摘要',
+          stats: [
+            ['节点', '32'],
+            ['已学', '14'],
+            ['可学', '4'],
+            ['锁定', '14']
+          ],
+          callout: '全局态只回答三个问题：哪条路线最挤、哪条路线最亮、当前选中点位在哪。名称、KP 和解锁说明在局部阅读态展开。',
+          bullets: [
+            '节点缩小时隐藏长文案，只保留状态与关键名称。',
+            '选中或悬停时再放大局部卡片，避免整屏挤成一团。',
+            '路线之间用泳道组织，减少横向连线对视觉的干扰。'
+          ]
+        },
+        graph: {
+          viewBox: '0 0 1134 760',
+          lanes: [
+            { x: 188, title: '稳固前线', sub: '护甲 / 格挡 / 反击', color: 'guard' },
+            { x: 566, title: '破甲重击', sub: '高伤 / 处决 / 震击', color: 'break' },
+            { x: 944, title: '流血连段', sub: '撕裂 / 吸血 / 爆发', color: 'blood' }
+          ],
+          nodes: [
+            { id: 'g-guard-1', x: 158, y: 128, w: 26, h: 26, kind: 'dot', status: 'learned', icon: '✓', label: ['修理护甲'], meta: '已学', key: true },
+            { id: 'g-guard-2', x: 158, y: 248, w: 26, h: 26, kind: 'dot', status: 'learned', icon: '✓', label: ['铁手'], meta: '前置' },
+            { id: 'g-guard-3', x: 154, y: 365, w: 34, h: 34, kind: 'dot', status: 'learnable', icon: '+', label: ['重拳'], meta: '可学', key: true },
+            { id: 'g-guard-4', x: 158, y: 488, w: 26, h: 26, kind: 'dot', status: 'locked', icon: '×', label: ['堡垒姿态'], meta: '锁定' },
+            { id: 'g-guard-5', x: 158, y: 608, w: 26, h: 26, kind: 'dot', status: 'locked', icon: '×', label: ['绝对防御'], meta: '锁定', key: true },
+
+            { id: 'g-break-1', x: 536, y: 128, w: 26, h: 26, kind: 'dot', status: 'learned', icon: '✓', label: ['治疗'], meta: '已学', key: true },
+            { id: 'g-break-2', x: 536, y: 248, w: 26, h: 26, kind: 'dot', status: 'learned', icon: '✓', label: ['重锤'], meta: '前置' },
+            { id: 'g-break-3', x: 530, y: 365, w: 34, h: 34, kind: 'dot', status: 'locked', icon: '×', label: ['裂颅一击'], meta: '锁定', key: true },
+            { id: 'g-break-4', x: 536, y: 488, w: 26, h: 26, kind: 'dot', status: 'locked', icon: '×', label: ['斩首'], meta: '锁定' },
+            { id: 'g-break-5', x: 530, y: 604, w: 34, h: 34, kind: 'dot', status: 'locked', icon: '×', label: ['大地震击'], meta: '锁定', key: true },
+
+            { id: 'g-blood-1', x: 914, y: 128, w: 26, h: 26, kind: 'dot', status: 'learned', icon: '✓', label: ['剑砍'], meta: '已学', key: true },
+            { id: 'g-blood-2', x: 910, y: 245, w: 34, h: 34, kind: 'dot', status: 'learnable', icon: '+', label: ['锯齿斩'], meta: '可学', key: true },
+            { id: 'g-blood-3', x: 910, y: 365, w: 34, h: 34, kind: 'dot', status: 'locked', icon: '×', label: ['撕裂伤口'], meta: '后续' },
+            { id: 'g-blood-4', x: 914, y: 488, w: 26, h: 26, kind: 'dot', status: 'locked', icon: '×', label: ['吸血'], meta: '后续' },
+            { id: 'g-blood-5', x: 910, y: 604, w: 34, h: 34, kind: 'dot', status: 'locked', icon: '×', label: ['重新开始'], meta: '后续', key: true }
+          ],
+          edges: [
+            { from: 'g-guard-1', to: 'g-guard-2' },
+            { from: 'g-guard-2', to: 'g-guard-3' },
+            { from: 'g-guard-3', to: 'g-guard-4' },
+            { from: 'g-guard-4', to: 'g-guard-5' },
+            { from: 'g-break-1', to: 'g-break-2' },
+            { from: 'g-break-2', to: 'g-break-3', bend: -12 },
+            { from: 'g-break-3', to: 'g-break-4' },
+            { from: 'g-break-4', to: 'g-break-5' },
+            { from: 'g-blood-1', to: 'g-blood-2' },
+            { from: 'g-blood-2', to: 'g-blood-3' },
+            { from: 'g-blood-3', to: 'g-blood-4' },
+            { from: 'g-blood-4', to: 'g-blood-5' },
+            { from: 'g-break-2', to: 'g-blood-2', kind: 'dim', bend: 28 },
+            { from: 'g-guard-3', to: 'g-blood-3', kind: 'dim', bend: 44 }
+          ]
+        }
+      },
+      selected: {
+        bodyClass: 'state-selected',
+        title: '技能树 / 双层视角',
+        subtitle: '局部阅读态把关键路径放大，其他节点降噪，帮助你快速判断是否学习。',
+        chips: [
+          { label: '全局结构', active: false },
+          { label: '局部阅读', active: true },
+          { label: '选中后展开', muted: true }
+        ],
+        activeRoute: 'blood',
+        canvasBadge: '局部阅读态 · LOD 高',
+        canvasHint: '选中节点放大后，只读前置、后续和决策影响',
+        routes: [
+          { id: 'guard', title: '稳固前线', desc: '护甲、格挡、反击', count: '20 节点', learned: '0 可学', active: false },
+          { id: 'break', title: '破甲重击', desc: '高伤、处决、震击', count: '9 节点', learned: '0 可学', active: false },
+          { id: 'blood', title: '流血连段', desc: '撕裂、吸血、爆发', count: '3 节点', learned: '1 可学', active: true }
+        ],
+        panel: {
+          kind: 'detail',
+          title: '当前选择',
+          selectedName: '锯齿斩',
+          selectedDesc: '以锯齿刃撕开伤口，造成伤害并施加流血。',
+          stats: [
+            ['消耗', '2 KP'],
+            ['状态', '缺少前置'],
+            ['前置', '重锤'],
+            ['解锁后续', '后撤步、松绑、重新开始、撕裂伤口']
+          ],
+          callout: '缺少前置：重锤',
+          chain: [
+            ['重锤', '前置'],
+            ['锯齿斩', '当前'],
+            ['后撤步', '后续'],
+            ['松绑', '后续'],
+            ['重新开始', '后续']
+          ]
+        },
+        graph: {
+          viewBox: '0 0 1134 760',
+          lanes: [
+            { x: 206, title: '前置链', sub: '读前置与入口', color: 'guard' },
+            { x: 554, title: '当前节点', sub: '在这里做决定', color: 'blood' },
+            { x: 900, title: '后续链', sub: '看影响范围', color: 'break' }
+          ],
+          nodes: [
+            { id: 's-bg-1', x: 68, y: 96, w: 72, h: 72, kind: 'compact ghost', status: 'learned', icon: '✓', label: ['治疗'], meta: '背景' },
+            { id: 's-bg-2', x: 754, y: 84, w: 72, h: 72, kind: 'compact ghost', status: 'locked', icon: '×', label: ['裂颅', '一击'], meta: '背景' },
+            { id: 's-bg-3', x: 1008, y: 596, w: 72, h: 72, kind: 'compact ghost', status: 'locked', icon: '×', label: ['吸血'], meta: '背景' },
+
+            { id: 's-front', x: 122, y: 144, w: 96, h: 76, kind: 'compact', status: 'learned', icon: '✓', label: ['重锤'], meta: '前置' },
+            { id: 's-focus', x: 318, y: 232, w: 136, h: 102, kind: 'focus', status: 'current', icon: '+', label: ['锯齿', '斩'], meta: '2 KP' },
+            { id: 's-backstep', x: 122, y: 378, w: 96, h: 76, kind: 'compact', status: 'locked', icon: '×', label: ['后撤', '步'], meta: '后续' },
+            { id: 's-bind', x: 318, y: 378, w: 96, h: 76, kind: 'compact', status: 'locked', icon: '×', label: ['松绑'], meta: '后续' },
+            { id: 's-restart', x: 514, y: 378, w: 108, h: 76, kind: 'compact', status: 'locked', icon: '×', label: ['重新', '开始'], meta: '后续' },
+            { id: 's-tear', x: 318, y: 552, w: 120, h: 82, kind: 'compact', status: 'locked', icon: '×', label: ['撕裂', '伤口'], meta: '后续' },
+            { id: 's-vamp', x: 514, y: 552, w: 96, h: 76, kind: 'compact', status: 'locked', icon: '×', label: ['吸血'], meta: '后续' }
+          ],
+          edges: [
+            { from: 's-front', to: 's-focus', kind: 'focus' },
+            { from: 's-focus', to: 's-backstep', kind: 'focus', bend: -18 },
+            { from: 's-focus', to: 's-bind', kind: 'focus' },
+            { from: 's-focus', to: 's-restart', kind: 'focus', bend: 18 },
+            { from: 's-bind', to: 's-tear', kind: 'focus' },
+            { from: 's-tear', to: 's-vamp', kind: 'focus' },
+            { from: 's-restart', to: 's-vamp', kind: 'dim' }
+          ]
+        }
+      }
+    };
+
+    function lineTspans(text, x, y, cls = 'label') {
+      const source = Array.isArray(text) ? text.join('\n') : String(text);
+      const lines = source.split('\n');
+      return lines.map((line, index) => {
+        const dy = index === 0 ? 0 : 14;
+        return `<tspan x="${x}" dy="${index === 0 ? 0 : 14}">${escapeHtml(line)}</tspan>`;
+      }).join('');
+    }
+
+    function renderNode(node) {
+      const classes = ['node', `node--${node.kind.split(' ')[0]}`, `node--${node.status}`];
+      if (node.kind.includes('ghost')) classes.push('node--ghost');
+      if (node.key) classes.push('node--key');
+      const w = node.w;
+      const h = node.h;
+      const x = node.x;
+      const y = node.y;
+      const labelX = w / 2;
+      const isDot = node.kind.startsWith('dot');
+      const labelBaseY = isDot ? h + 18 : (node.kind.startsWith('focus') ? 48 : 40);
+      const metaY = node.kind.startsWith('focus') ? 76 : 58;
+      const iconY = node.kind.startsWith('focus') ? 20 : 18;
+      const iconR = node.kind.startsWith('focus') ? 16 : 14;
+      return `
+        <g class="${classes.join(' ')}" transform="translate(${x}, ${y})">
+          <rect class="nodeBox" width="${w}" height="${h}"></rect>
+          <circle class="icon" cx="${labelX - (node.kind.startsWith('focus') ? 20 : 0)}" cy="${iconY}" r="${iconR}"></circle>
+          <text class="iconText" x="${labelX - (node.kind.startsWith('focus') ? 20 : 0)}" y="${iconY + 1}">${escapeHtml(node.icon || '')}</text>
+          <text class="label" x="${labelX}" y="${labelBaseY}">
+            ${lineTspans(node.label, labelX, labelBaseY)}
+          </text>
+          <text class="meta" x="${labelX}" y="${metaY}">${escapeHtml(node.meta || '')}</text>
+        </g>
+      `;
+    }
+
+    function renderEdge(edge, graph) {
+      const source = graph.nodes.find(n => n.id === edge.from);
+      const target = graph.nodes.find(n => n.id === edge.to);
+      if (!source || !target) return '';
+      const sx = source.x + source.w / 2;
+      const sy = source.y + source.h;
+      const tx = target.x + target.w / 2;
+      const ty = target.y;
+      const cy = (sy + ty) / 2 + (edge.bend || 0);
+      const kind = edge.kind || 'base';
+      return `<path class="edge ${kind === 'focus' ? 'is-focus' : ''} ${kind === 'dim' ? 'is-dim' : ''}" d="M ${sx} ${sy} C ${sx} ${cy}, ${tx} ${cy}, ${tx} ${ty}"></path>`;
+    }
+
+    function renderGraph(graph) {
+      const laneLines = graph.lanes.map((lane, index) => {
+        const x = lane.x;
+        const titleY = 30;
+        const subY = 54;
+        return `
+          <g class="lane" transform="translate(${x}, 0)">
+            <text class="laneLabel" x="0" y="${titleY}" text-anchor="middle" fill="${lane.color === 'guard' ? 'var(--green)' : lane.color === 'break' ? 'var(--teal)' : 'var(--red)'}">${escapeHtml(lane.title)}</text>
+            <text class="laneSub" x="0" y="${subY}" text-anchor="middle">${escapeHtml(lane.sub)}</text>
+          </g>
+        `;
+      }).join('');
+
+      const grid = [];
+      for (let i = 0; i < 18; i++) {
+        const y = 60 + i * 38;
+        grid.push(`<line x1="20" y1="${y}" x2="1114" y2="${y}"></line>`);
+      }
+      for (let i = 0; i < 12; i++) {
+        const x = 40 + i * 90;
+        grid.push(`<line x1="${x}" y1="76" x2="${x}" y2="724"></line>`);
+      }
+
+      return `
+        <svg viewBox="${graph.viewBox}" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="4" result="blur"></feGaussianBlur>
+              <feMerge>
+                <feMergeNode in="blur"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+              </feMerge>
+            </filter>
+          </defs>
+          <g class="grid">${grid.join('')}</g>
+          <g class="lanes">${laneLines}</g>
+          <g class="edges">${graph.edges.map(edge => renderEdge(edge, graph)).join('')}</g>
+          <g class="nodes">${graph.nodes.map(renderNode).join('')}</g>
+        </svg>
+      `;
+    }
+
+    function renderRoutes(routes, activeRoute) {
+      return routes.map(route => `
+        <section class="routeCard ${route.id === activeRoute ? 'is-active' : ''}" data-route="${route.id}">
+          <span class="routeStripe"></span>
+          <div>
+            <b>${escapeHtml(route.title)}</b>
+            <small>${escapeHtml(route.desc)} · ${escapeHtml(route.count)} · ${escapeHtml(route.learned)}</small>
+          </div>
+        </section>
+      `).join('');
+    }
+
+    function renderPanel(panel) {
+      if (panel.kind === 'summary') {
+        return `
+          <h2 class="panelTitle">${escapeHtml(panel.title)}</h2>
+          <div class="statGrid">
+            ${panel.stats.map(([label, value]) => `
+              <div class="stat">
+                <span>${escapeHtml(label)}</span>
+                <b>${escapeHtml(value)}</b>
+              </div>
+            `).join('')}
+          </div>
+          <div class="callout">${escapeHtml(panel.callout)}</div>
+          <ol class="bulletList">
+            ${panel.bullets.map(text => `<li>${escapeHtml(text)}</li>`).join('')}
+          </ol>
+        `;
+      }
+
+      return `
+        <h2 class="panelTitle">${escapeHtml(panel.title)}</h2>
+        <div class="detailCard">
+          <h2>${escapeHtml(panel.selectedName)}</h2>
+          <p>${escapeHtml(panel.selectedDesc)}</p>
+        </div>
+        <div class="statGrid">
+          ${panel.stats.map(([label, value]) => `
+            <div class="stat">
+              <span>${escapeHtml(label)}</span>
+              <b>${escapeHtml(value)}</b>
+            </div>
+          `).join('')}
+        </div>
+        <div class="callout">${escapeHtml(panel.callout)}</div>
+        <div class="chain">
+          ${panel.chain.map(([name, role], index) => `
+            <div class="chainItem ${role === '当前' ? 'is-current' : ''}">
+              <i>${index + 1}</i>
+              <span>${escapeHtml(name)}</span>
+              <b>${escapeHtml(role)}</b>
+            </div>
+          `).join('')}
+        </div>
+        <div class="actions">
+          <button class="actionBtn" type="button">暂存学习：${escapeHtml(panel.selectedName)}</button>
+          <button class="actionBtn secondary" type="button">只查看影响路径</button>
+        </div>
+      `;
+    }
+
+    function renderState(state) {
+      const app = document.getElementById('app');
+      document.body.className = state.bodyClass;
+      app.innerHTML = `
+        <div class="frame">
+          <header class="topbar">
+            <div class="identity">
+              <div class="mark">技</div>
+              <div class="titleBlock">
+                <h1>${escapeHtml(state.title)}</h1>
+                <p>${escapeHtml(state.subtitle)}</p>
+              </div>
+            </div>
+            <div class="chips">
+              ${state.chips.map(chip => `<span class="chip ${chip.active ? 'is-active' : ''} ${chip.muted ? 'is-muted' : ''}">${escapeHtml(chip.label)}</span>`).join('')}
+            </div>
+          </header>
+          <section class="shell">
+            <aside class="rail">
+              <h2 class="railTitle">构筑路线</h2>
+              <div class="routeList">
+                ${renderRoutes(state.routes, state.activeRoute)}
+              </div>
+              <div class="legend">
+                <div class="legendRow"><span class="legendDot learned"></span><span>已学：能力已进入战斗技能池</span></div>
+                <div class="legendRow"><span class="legendDot learnable"></span><span>可学：满足前置与 KP</span></div>
+                <div class="legendRow"><span class="legendDot"></span><span>锁定：缺少前置或资源</span></div>
+                <div class="legendRow"><span class="legendDot blood"></span><span>分支：选择会影响后续路线</span></div>
+              </div>
+            </aside>
+            <main class="canvas">
+              <div class="canvasBadge">${escapeHtml(state.canvasBadge)}</div>
+              <div class="canvasHint">${escapeHtml(state.canvasHint)}</div>
+              <div class="graphWrap">
+                ${renderGraph(state.graph)}
+              </div>
+            </main>
+            <aside class="panel">
+              ${renderPanel(state.panel)}
+            </aside>
+          </section>
+        </div>
+      `;
+      window.__PROTOTYPE_READY__ = true;
+    }
+
+    const params = new URLSearchParams(location.search);
+    const stateName = params.get('state') === 'selected' ? 'selected' : 'global';
+    renderState(states[stateName]);
+  </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920,height=1080,initial-scale=1">
+  <title>技能树现状问题标注</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f5f0e6;
+      --muted: #b6b8c2;
+      --line: rgba(246, 199, 113, 0.92);
+      --warn: #f2b84b;
+      --danger: #ff665f;
+      --panel: rgba(9, 12, 18, 0.84);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #07090f;
+      font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+    }
+
+    .board {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      background:
+        radial-gradient(circle at 72% 18%, rgba(242, 184, 75, 0.13), transparent 26%),
+        linear-gradient(135deg, #080b12, #111827 44%, #07090f);
+    }
+
+    .source {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      object-fit: cover;
+      opacity: 0.58;
+      filter: saturate(0.88) contrast(0.96);
+    }
+
+    .shade {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(5, 7, 12, 0.68), transparent 22%, transparent 68%, rgba(5, 7, 12, 0.56)),
+        linear-gradient(0deg, rgba(5, 7, 12, 0.62), transparent 32%, transparent 88%, rgba(5, 7, 12, 0.46));
+    }
+
+    .title {
+      position: absolute;
+      left: 64px;
+      top: 42px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 36px;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    .title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .callout {
+      position: absolute;
+      width: 332px;
+      padding: 16px 18px;
+      border: 1px solid rgba(242, 184, 75, 0.52);
+      background: var(--panel);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.36);
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #ffd489;
+      font-size: 18px;
+    }
+
+    .callout span {
+      color: #ece7da;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .callout::after {
+      content: "";
+      position: absolute;
+      width: var(--w, 180px);
+      height: 2px;
+      left: var(--x, 100%);
+      top: var(--y, 50%);
+      background: var(--line);
+      transform: rotate(var(--r, 0deg));
+      transform-origin: 0 50%;
+      box-shadow: 0 0 18px rgba(242, 184, 75, 0.42);
+    }
+
+    .mark {
+      position: absolute;
+      border: 2px solid rgba(242, 184, 75, 0.92);
+      border-radius: 10px;
+      box-shadow: inset 0 0 0 9999px rgba(242, 184, 75, 0.04), 0 0 26px rgba(242, 184, 75, 0.22);
+    }
+
+    .mark--danger {
+      border-color: rgba(255, 102, 95, 0.96);
+      box-shadow: inset 0 0 0 9999px rgba(255, 102, 95, 0.05), 0 0 26px rgba(255, 102, 95, 0.22);
+    }
+
+    .metric {
+      position: absolute;
+      right: 58px;
+      bottom: 54px;
+      width: 388px;
+      padding: 14px 18px;
+      border: 1px solid rgba(135, 202, 255, 0.28);
+      border-radius: 8px;
+      background: rgba(8, 14, 22, 0.82);
+      color: #dbe8ff;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .metric b {
+      color: #78f0ce;
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <img class="source" src="../original/02-current-skilltree-overview-1920x1080.png" alt="">
+    <div class="shade"></div>
+
+    <section class="title">
+      <h1>当前技能树问题标注</h1>
+      <p>基于运行页 1920 x 1080 截图与 DOM 尺寸报告；这里标的是会直接影响体验的结构问题。</p>
+    </section>
+
+    <div class="mark mark--danger" style="left:274px;top:282px;width:1040px;height:520px"></div>
+    <div class="mark" style="left:1188px;top:596px;width:128px;height:88px"></div>
+    <div class="mark" style="left:1326px;top:282px;width:320px;height:520px"></div>
+    <div class="mark" style="left:274px;top:598px;width:1038px;height:204px"></div>
+    <div class="mark" style="left:274px;top:160px;width:1372px;height:110px"></div>
+
+    <article class="callout" style="left:74px;top:194px;--w:250px;--x:100%;--y:72%;--r:14deg">
+      <strong>1. 首屏没有把树放进视口</strong>
+      <span>节点坐标来自编辑器，默认 pan/zoom 没有自动 fit。打开后上方大面积空白，真正的分支被压在画布下半部。</span>
+    </article>
+
+    <article class="callout" style="left:64px;top:484px;--w:310px;--x:100%;--y:52%;--r:2deg">
+      <strong>2. 运行态混入测试节点</strong>
+      <span>“单攻测试 / 多攻测试 / 验收轻击”等节点出现在玩家技能树里，破坏世界观，也增加阅读噪音。</span>
+    </article>
+
+    <article class="callout" style="right:64px;top:206px;--w:270px;--x:-270px;--y:54%;--r:176deg">
+      <strong>3. 详情栏挤压并遮挡树</strong>
+      <span>画布宽 1040px，右侧固定 320px；右边缘节点会被详情栏附近裁切，看不完整。</span>
+    </article>
+
+    <article class="callout" style="right:84px;top:534px;--w:300px;--x:-300px;--y:55%;--r:186deg">
+      <strong>4. 路径语义不清</strong>
+      <span>连线和节点主要靠弱边框表达状态；玩家难以判断“已学、可学、锁定、推荐路径、互斥分支”的优先级。</span>
+    </article>
+
+    <article class="callout" style="left:520px;top:836px;--w:168px;--x:18%;--y:-34px;--r:-88deg">
+      <strong>5. 操作说明占高位但不解决决策</strong>
+      <span>提交/关闭说明必要，但当前没有转化成“下一步学什么、为什么不能学、学后影响什么”的构筑反馈。</span>
+    </article>
+
+    <aside class="metric">
+      DOM 报告：技能树渲染 <b>41</b> 个节点；数据坐标范围约 <b>1400 x 800</b>，默认画布仅 <b>1040 x 520</b>。
+    </aside>
+  </main>
+</body>
+</html>

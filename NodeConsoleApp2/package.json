@@ -1,10 +1,16 @@
 {
   "name": "nodeconsoleapp2",
   "version": "1.0.0",
-  "description": "",
+  "description": "NodeConsoleApp2 runtime, regression, and authoring toolchain",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",
+    "serve:3101": "PORT=3101 node app.js",
+    "test": "node --test test/wbs_release_baseline.test.mjs test/skill_legacy_field_retirement.test.mjs test/c3_skill_contract_remediation.test.mjs test/d2_feedback_guidance.test.mjs test/d1_ui_modal_semantics.test.mjs test/d1_information_priority.test.mjs test/c_growth_ui_regression.test.mjs",
+    "test:wbs-3.3.3.1": "node --test test/skill_legacy_field_retirement.test.mjs",
+    "test:wbs-4.2": "node --test test/d2_feedback_guidance.test.mjs test/d1_ui_modal_semantics.test.mjs test/d1_information_priority.test.mjs test/c_growth_ui_regression.test.mjs",
+    "test:acceptance-clicks": "node tools/acceptance_click_smoke.mjs",
+    "test:release-docs": "node --test test/wbs_release_baseline.test.mjs"
   },
   "keywords": [],
   "author": "",

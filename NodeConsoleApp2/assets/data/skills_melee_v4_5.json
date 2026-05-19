@@ -2869,7 +2869,8 @@
         "y": 314,
         "group": "melee",
         "locked": false,
-        "editState": "done"
+        "editState": "done",
+        "hiddenInSkillTree": true
       },
       "description": "攻击单个部位",
       "unlock": {
@@ -2936,7 +2937,8 @@
         "y": 314,
         "group": "melee",
         "locked": false,
-        "editState": "done"
+        "editState": "done",
+        "hiddenInSkillTree": true
       },
       "description": "",
       "unlock": {
@@ -2981,7 +2983,8 @@
         "y": 314,
         "group": "melee",
         "locked": false,
-        "editState": "done"
+        "editState": "done",
+        "hiddenInSkillTree": true
       },
       "description": "",
       "unlock": {
@@ -3034,7 +3037,8 @@
         "y": 314,
         "group": "melee",
         "locked": false,
-        "editState": "done"
+        "editState": "done",
+        "hiddenInSkillTree": true
       },
       "description": "为自身附加 1 回合 HP 免伤，用于人工验收。",
       "unlock": {
@@ -3090,7 +3094,8 @@
         "y": 314,
         "group": "melee",
         "locked": false,
-        "editState": "done"
+        "editState": "done",
+        "hiddenInSkillTree": true
       },
       "description": "为自身附加 1 回合护甲免伤，用于人工验收。",
       "unlock": {
@@ -3145,7 +3150,8 @@
         "y": 314,
         "group": "melee",
         "locked": false,
-        "editState": "done"
+        "editState": "done",
+        "hiddenInSkillTree": true
       },
       "description": "为自身附加受击获甲效果，用于人工验收。",
       "unlock": {
@@ -3181,7 +3187,8 @@
         "y": 314,
         "group": "melee",
         "locked": false,
-        "editState": "done"
+        "editState": "done",
+        "hiddenInSkillTree": true
       },
       "speed": 0,
       "target": {
@@ -3252,7 +3259,8 @@
         "y": 314,
         "group": "melee",
         "locked": false,
-        "editState": "done"
+        "editState": "done",
+        "hiddenInSkillTree": true
       },
       "speed": 0,
       "target": {
@@ -3323,7 +3331,8 @@
         "y": 314,
         "group": "melee",
         "locked": false,
-        "editState": "done"
+        "editState": "done",
+        "hiddenInSkillTree": true
       },
       "speed": 0,
       "target": {

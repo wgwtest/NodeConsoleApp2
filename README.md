@@ -1,69 +1,108 @@
 # NodeConsoleApp2
 
-一套面向回合制/战棋类**技能系统**的「数据规范 + 可视化编辑器」原型工程：使用 JSON 描述 `Skills / Buffs / Effects`，并通过 HTML 编辑器降低配置与迭代成本。
+当前仓库承载的是 `NodeConsoleApp2/` 这一份可运行工程，以及围绕它的 WBS、设计说明、测试文档与交接记录。
 
-适用人群：独立开发、数值/策划、工具开发者（希望把“设计文档—数据—编辑器”串成闭环）。
+如果你是第一次进入仓库，先记住两件事：
 
-## 主要特性
+1. 实际运行目录是 [`NodeConsoleApp2`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2)
+2. 正式本地文档根是 [`NodeConsoleApp2/DOC/CODEX_DOC`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC)
 
-- **数据驱动**：技能与 Buff 全部以 JSON 表达，便于版本化、对比与回滚。
-- **可视化编辑**：提供技能编辑器与 Buff 编辑器页面（HTML/JS），支持结构化字段编辑与原始 JSON 同步查看。
-- **设计文档同步**：`design/skill_design.md` 与 `design/buff_design.md` 用于定义字段/枚举/示例，目标是与数据文件保持一致。
-- **面向迭代**：仓库内存在多个版本的数据文件（例如 `buffs_v2_1.json` / `buffs_v2_2.json` / `buffs_v2_3.json`），用于承载结构演进。
+## 当前版本定位
 
-## 仓库结构（概览）
+当前版本是一个可持续推进的战斗竖切与内容工具链候选版，已经具备：
 
-- `design/`：技能与 Buff 的设计文档、枚举说明与示例
-- `DOC/`：工作计划、过程文档、TODO 等
-- `*.html`：编辑器页面（技能/ Buff）
-- `buffs*.json` / `skills*.json`：核心数据文件（可能按版本号逐步演进）
+1. `mock_ui_v11.html` 主流程可跑通
+2. 技能、Buff、关卡、地图等数据驱动工具链
+3. 共享回归页、专项 probe 页与人工验收清单
+4. GitHub Issue WBS 树 + 本地 `CODEX_DOC` 协同工作流
+
+当前不把以下内容视为“已经完全交付”：
+
+1. 安装包或分发器
+2. Spine 素材制作工程本体
+3. 所有遗留验收说明的全面重写
 
 ## 快速开始
 
-### 方式 A：直接打开 HTML（最简单）
+### 1. 进入运行目录
 
-1. 克隆仓库：
-   - `git clone https://github.com/hugowangguowei/NodeConsoleApp2.git`
-   在本地通过 python -m http.server 3000方式启动一个静态服务器，访问 http://localhost:3000/ 即可看到文件列表。
-2. 打开编辑器页面：
-   - `buff_editor_v4.html`
-   - `skill_editor_test_v3.html`
+```bash
+cd /home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2
+```
 
-提示：如果浏览器对本地文件读取有限制，建议用任意静态服务器启动（例如 VS Code Live Server、`npx serve` 等）。
+### 2. 安装依赖
 
-### 方式 B：结合数据文件进行导入/导出
+```bash
+npm install
+```
 
-- Buff 库：通常来自 `buffs*.json`
-- 技能库：通常来自 `skills*.json`
-- 编辑完成后导出 JSON 并提交版本管理，以便追踪数值迭代。
+### 3. 启动本地静态服务
 
-## 核心概念（简述）
+推荐直接使用：
 
-- **Skill（技能）**：由若干效果（Effects）组成，包含目标、触发、参数等。
-- **Buff（状态）**：包含生命周期（持续回合/次数等）与动作（Action），用于实现增益/减益/伤害/治疗/控制等。
-- **Effect / Action**：描述“发生了什么”，编辑器会根据类型动态显示字段。
+```bash
+npm run serve:3101
+```
 
-详细字段与枚举说明请查看：
+等价命令：
 
-- `design/skill_design.md`
-- `design/buff_design.md`
+```bash
+PORT=3101 node app.js
+```
 
-## 路线图 / TODO
+### 4. 打开正式入口
 
-`todoList.md`：按优先级整理的下一步计划（包含 2-3 人协作拆分）。
+1. 主流程入口：
+   - `http://127.0.0.1:3101/mock_ui_v11.html`
+2. 共享回归入口：
+   - `http://127.0.0.1:3101/test/codex_regression_runner.html`
+3. 当前人工验收入口：
+   - [`NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md)
 
-近期重点（示例）：
+## 仓库结构
 
-- 对齐并修复新版本 `buffs_v2_3.json` 的加载/解析
-- 给技能增加 `editorMeta.editState` 并在 UI 体现编辑状态
-- 明确并收敛 `effect.action` 枚举及其参数结构，并同步到文档/数据/编辑器
+### 运行工程
 
-## 贡献
+- [`NodeConsoleApp2/mock_ui_v11.html`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/mock_ui_v11.html)
+- [`NodeConsoleApp2/test/`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/test)
+- [`NodeConsoleApp2/assets/data/`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/assets/data)
+- [`NodeConsoleApp2/script/`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/script)
 
-欢迎提交 Issue / PR：
+### 本地文档根
 
-- Bug 反馈（建议附数据片段/复现步骤/截图）
-- 文档补齐（字段定义、枚举语义、示例数据）
-- 编辑器体验优化（校验、搜索、交互、可视化）
+- [`NodeConsoleApp2/DOC/CODEX_DOC/README.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/README.md)
+- [`NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md)
+- [`NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/README.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/README.md)
 
+## 常用命令
 
+在 `NodeConsoleApp2/` 目录下执行：
+
+```bash
+npm run serve:3101
+npm run test
+npm run test:wbs-3.3.3.1
+npm run test:wbs-4.2
+npm run test:acceptance-clicks
+npm run test:release-docs
+```
+
+`npm run test:acceptance-clicks` 需要先启动 `npm run serve:3101`，并启动带 `--remote-debugging-port=9222` 的 Chrome。它会自动点击 `mock_ui_v11.html` 主流程、`battle_presentation_probe.html` 和 `battle_presentation_configurator.html`，用于提供自动验收证据。
+
+## 常见问题
+
+### 页面能打开，但资源 404
+
+通常是因为服务启动目录不对。必须在 `NodeConsoleApp2/` 目录下运行 `node app.js`，不要在仓库外层目录直接启动。
+
+### 页面状态和预期不一致
+
+先确认浏览器里是否残留了 runtime override、本地存档或旧的测试数据。当前工程大量工具页会通过 `localStorage` 写入临时覆盖层。
+
+### 我只想知道当前该看哪些文档
+
+按下面顺序：
+
+1. [`CODEX_DOC README`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/README.md)
+2. [`03_研制计划/README.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md)
+3. [`05_测试文档/README.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/README.md)

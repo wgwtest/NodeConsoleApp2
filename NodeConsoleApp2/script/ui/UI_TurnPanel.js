@@ -16,11 +16,14 @@ export default class UI_TurnPanel {
         this.btnReset = document.getElementById('btnReset');
         this.btnMenu = document.getElementById('btnMenu');
         this.turnNumberLabel = document.getElementById('turnNumberLabel');
+        this.blockedHint = null;
 
         if (!this.btnExecute || !this.btnReset || !this.btnMenu) {
             console.warn('UI_TurnPanel: One or more buttons not found in DOM.');
             return;
         }
+
+        this.blockedHint = this.ensureBlockedHint();
 
         // -- Bind Events --
         this.bindDOMEvents();
@@ -108,11 +111,12 @@ export default class UI_TurnPanel {
 
         // Apply State: Execute Button
         this.setButtonState(this.btnExecute, canExecute);
-        this.setButtonHint(this.btnExecute, canExecute, this.describeBlockedState('execute', {
+        const executeReason = this.describeBlockedState('execute', {
             phase,
             queueLength,
             timelinePhase
-        }));
+        });
+        this.setButtonHint(this.btnExecute, canExecute, executeReason);
 
         // Apply State: Reset Button
         this.setButtonState(this.btnReset, canReset);
@@ -121,8 +125,48 @@ export default class UI_TurnPanel {
             queueLength,
             timelinePhase
         }));
+        this.renderBlockedHint({
+            canExecute,
+            executeReason,
+            phase,
+            timelinePhase
+        });
 
         // Menu is always active (neutral)
+    }
+
+    ensureBlockedHint() {
+        const host = this.btnExecute?.closest('.turn-panel') || this.btnExecute?.parentElement;
+        if (!host) return null;
+
+        let hint = host.querySelector('.turn-blocked-hint');
+        if (!hint) {
+            hint = document.createElement('div');
+            hint.className = 'turn-blocked-hint';
+            hint.setAttribute('aria-live', 'polite');
+            hint.setAttribute('role', 'status');
+
+            const buttons = host.querySelector('.turn-buttons');
+            if (buttons && buttons.parentElement === host) {
+                buttons.insertAdjacentElement('afterend', hint);
+            } else {
+                host.appendChild(hint);
+            }
+        }
+        return hint;
+    }
+
+    renderBlockedHint({ canExecute, executeReason, phase, timelinePhase } = {}) {
+        if (!this.blockedHint) return;
+        if (canExecute) {
+            this.blockedHint.textContent = '当前无阻塞，可以执行回合。';
+            this.blockedHint.dataset.level = 'ready';
+            return;
+        }
+
+        const reason = executeReason || this.describeBlockedState('execute', { phase, timelinePhase });
+        this.blockedHint.textContent = reason || '当前暂不可执行回合。';
+        this.blockedHint.dataset.level = 'blocked';
     }
 
     setButtonState(btn, isActive) {
