@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>关卡地图三章节点方案 v1</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #0b0d12;
+      color: #f6ebcc;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+    body {
+      display: grid;
+      place-items: center;
+    }
+    .board {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #10100c;
+    }
+    .map-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      filter: saturate(0.92) contrast(0.98);
+    }
+    .shade {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 236, 172, 0.24), transparent 28%),
+        linear-gradient(90deg, rgba(12, 11, 8, 0.18), rgba(12, 11, 8, 0.04) 48%, rgba(12, 11, 8, 0.34)),
+        linear-gradient(180deg, rgba(8, 8, 8, 0.16), rgba(8, 8, 8, 0.24));
+    }
+    .topbar {
+      position: absolute;
+      left: 46px;
+      top: 38px;
+      width: 920px;
+      padding: 18px 22px;
+      border-radius: 10px;
+      border: 1px solid rgba(233, 188, 92, 0.52);
+      background: rgba(20, 16, 10, 0.82);
+      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 240, 196, 0.08);
+      z-index: 5;
+    }
+    .eyebrow {
+      color: #d4a34a;
+      font-size: 15px;
+      letter-spacing: 0.16em;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 8px 0 8px;
+      font-size: 36px;
+      line-height: 1.08;
+      color: #fff1c8;
+      letter-spacing: 0;
+    }
+    .summary {
+      margin: 0;
+      color: #dfcfaa;
+      font-size: 18px;
+      line-height: 1.45;
+    }
+    .legend {
+      position: absolute;
+      right: 48px;
+      top: 42px;
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(233, 188, 92, 0.34);
+      background: rgba(20, 16, 10, 0.78);
+      z-index: 5;
+    }
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      color: #eadbb7;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid rgba(255,255,255,0.55);
+    }
+    .dot.main { background: #db9a36; }
+    .dot.branch { background: #5fa66d; }
+    .dot.event { background: #5f8dc7; }
+    .dot.elite { background: #b15b58; }
+    .dot.boss { background: #7b3f2f; }
+    .map-layer {
+      position: absolute;
+      left: 78px;
+      top: 154px;
+      width: 1390px;
+      height: 848px;
+      border-radius: 12px;
+      border: 1px solid rgba(90, 58, 30, 0.48);
+      overflow: hidden;
+      box-shadow: 0 24px 52px rgba(0,0,0,0.36), inset 0 0 0 1px rgba(255,245,215,0.08);
+      background-size: cover;
+      background-position: center;
+    }
+    .map-layer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(92, 58, 26, 0.12), transparent 10%, transparent 88%, rgba(92, 58, 26, 0.16)),
+        linear-gradient(180deg, rgba(255, 242, 202, 0.07), transparent 20%, transparent 82%, rgba(49, 29, 11, 0.18));
+    }
+    svg.paths {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .route {
+      fill: none;
+      stroke: rgba(92, 61, 30, 0.68);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 13 10;
+      filter: drop-shadow(0 1px 1px rgba(255, 236, 178, 0.35));
+    }
+    .route.branch {
+      stroke: rgba(58, 101, 68, 0.72);
+      stroke-dasharray: 7 8;
+    }
+    .route.elite {
+      stroke: rgba(130, 56, 44, 0.76);
+      stroke-dasharray: 16 8;
+    }
+    .node {
+      position: absolute;
+      z-index: 3;
+      width: 158px;
+      min-height: 66px;
+      transform: translate(-50%, -50%);
+      border-radius: 4px 16px 16px 4px;
+      border: 1px solid rgba(82, 52, 24, 0.48);
+      background:
+        linear-gradient(90deg, rgba(111, 78, 33, 0.94) 0 8px, transparent 8px),
+        linear-gradient(180deg, rgba(255, 231, 169, 0.94), rgba(205, 157, 74, 0.88));
+      box-shadow: 0 10px 18px rgba(53, 31, 12, 0.24), inset 0 1px 0 rgba(255, 246, 214, 0.68);
+      padding: 8px 10px 8px 46px;
+      color: #2a2116;
+    }
+    .node::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      bottom: -14px;
+      width: 10px;
+      height: 18px;
+      border-radius: 0 0 999px 999px;
+      transform: rotate(8deg);
+      background: linear-gradient(180deg, #8e5b23, #3b2412);
+      box-shadow: 0 6px 8px rgba(42, 24, 9, 0.28);
+    }
+    .node::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      bottom: -18px;
+      width: 38px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(44, 25, 10, 0.22);
+      filter: blur(2px);
+    }
+    .node .icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      width: 30px;
+      height: 30px;
+      transform: translateY(-50%);
+      border-radius: 50%;
+      border: 2px solid rgba(255, 241, 196, 0.78);
+      background: radial-gradient(circle at 42% 36%, rgba(255, 238, 180, 0.9), rgba(122, 75, 28, 0.92));
+      overflow: hidden;
+    }
+    .node .icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .node .code {
+      display: block;
+      color: #76511f;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+    .node strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 14px;
+      line-height: 1.12;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .node em {
+      position: absolute;
+      right: 8px;
+      top: -10px;
+      max-width: 66px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(73, 45, 20, 0.84);
+      color: #f7e4ad;
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .node.main { }
+    .node.branch {
+      background:
+        linear-gradient(90deg, rgba(55, 103, 61, 0.94) 0 8px, transparent 8px),
+        linear-gradient(180deg, rgba(223, 235, 175, 0.94), rgba(142, 174, 83, 0.9));
+    }
+    .node.event {
+      background:
+        linear-gradient(90deg, rgba(52, 92, 126, 0.96) 0 8px, transparent 8px),
+        linear-gradient(180deg, rgba(212, 230, 238, 0.94), rgba(110, 151, 173, 0.9));
+    }
+    .node.elite {
+      background:
+        linear-gradient(90deg, rgba(128, 52, 39, 0.98) 0 8px, transparent 8px),
+        linear-gradient(180deg, rgba(241, 207, 137, 0.94), rgba(164, 86, 48, 0.92));
+    }
+    .node.boss {
+      width: 176px;
+      border-color: rgba(255, 220, 142, 0.88);
+      background:
+        linear-gradient(90deg, rgba(99, 42, 24, 0.98) 0 9px, transparent 9px),
+        linear-gradient(180deg, rgba(255, 229, 160, 0.98), rgba(142, 66, 36, 0.94));
+      box-shadow:
+        0 0 0 3px rgba(255, 218, 107, 0.38),
+        0 14px 24px rgba(51, 28, 8, 0.42),
+        inset 0 1px 0 rgba(255, 255, 235, 0.82);
+    }
+    .side-panel {
+      position: absolute;
+      right: 46px;
+      top: 154px;
+      width: 342px;
+      height: 848px;
+      padding: 22px;
+      border-radius: 12px;
+      border: 1px solid rgba(233, 188, 92, 0.42);
+      background: rgba(20, 16, 10, 0.88);
+      box-shadow: 0 24px 52px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255, 240, 196, 0.08);
+    }
+    .side-panel h2 {
+      margin: 0 0 12px;
+      color: #fff0cc;
+      font-size: 25px;
+      line-height: 1.15;
+    }
+    .side-panel p {
+      margin: 0 0 16px;
+      color: #d9c69c;
+      font-size: 16px;
+      line-height: 1.48;
+    }
+    .beats {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .beat {
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(236, 205, 139, 0.07);
+      border: 1px solid rgba(236, 205, 139, 0.12);
+    }
+    .beat span {
+      color: #d9aa55;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .beat strong {
+      color: #efe1bd;
+      font-size: 14px;
+      line-height: 1.32;
+    }
+    .footer-note {
+      position: absolute;
+      left: 48px;
+      bottom: 28px;
+      color: rgba(234, 219, 183, 0.76);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="board"></div>
+  <script>
+    const ASSETS = {
+      bg1: '../../../../../source/map/image_w2752_h1536_map-bg-01.jpeg',
+      bg2: '../../../../../source/map/image_w2752_h1536_map-bg-02-winter.jpeg',
+      bg3: '../../../../../source/map/image_w2752_h1536_map-bg-03.jpeg',
+      archer: '../../../../../source/scene_icon/level-node-05-elf-archer_1000.png',
+      elemental: '../../../../../source/scene_icon/level-node-04-elemental_1000.png',
+      warrior: '../../../../../source/scene_icon/level-node-06-goblin-warrior_1000.png',
+      boss: '../../../../../source/scene_icon/level-node-07-owlbear_1000.png'
+    };
+
+    const maps = [
+      {
+        id: 'chapter-1',
+        title: '第一章 · 幽暗森林',
+        subtitle: '边境失联，玩家从森林外缘推进，寻找被劫的补给队并打开废墟关隘。',
+        bg: ASSETS.bg1,
+        panelTitle: '幽暗森林剧情节奏',
+        panelText: '第一章用于教学和建立分支选择：主线稳定推进，南侧补给线提供资源，北侧侦察线提供情报和精英挑战。',
+        beats: [
+          ['开局', '建立基本战斗节奏，解锁地图分支。'],
+          ['分岔', '侦察线、补给线、主线三路并行。'],
+          ['回流', '两条支线在废墟前汇合，影响 Boss 前资源。'],
+          ['收束', '废墟关隘作为第一章 Boss 与剧情门。']
+        ],
+        nodes: [
+          ['1-1', '森林外缘', 'main', 120, 490, '战斗', ASSETS.archer],
+          ['1-2', '失联路标', 'event', 250, 390, '事件', ASSETS.elemental],
+          ['1-3A', '北侧树冠', 'branch', 390, 285, '侦察', ASSETS.archer],
+          ['1-4A', '猎手埋伏', 'elite', 560, 245, '精英', ASSETS.warrior],
+          ['1-3B', '南侧补给道', 'branch', 390, 600, '补给', ASSETS.elemental],
+          ['1-4B', '破损营地', 'event', 555, 640, '事件', ASSETS.warrior],
+          ['1-5', '密林前哨', 'main', 710, 420, '战斗', ASSETS.archer],
+          ['1-6', '雾中岔口', 'branch', 860, 325, '选择', ASSETS.elemental],
+          ['1-7', '古井回声', 'event', 920, 560, '事件', ASSETS.elemental],
+          ['1-8', '废墟斜坡', 'main', 1060, 430, '战斗', ASSETS.warrior],
+          ['1-9', '关隘守卫', 'elite', 1190, 345, '精英', ASSETS.warrior],
+          ['1-10', '废墟关隘', 'boss', 1260, 520, 'Boss', ASSETS.boss]
+        ],
+        edges: [
+          ['1-1','1-2','main'], ['1-2','1-3A','branch'], ['1-3A','1-4A','branch'], ['1-4A','1-5','branch'],
+          ['1-2','1-3B','branch'], ['1-3B','1-4B','branch'], ['1-4B','1-5','branch'], ['1-5','1-6','main'],
+          ['1-6','1-8','main'], ['1-6','1-7','branch'], ['1-7','1-8','branch'], ['1-8','1-9','elite'], ['1-9','1-10','main'], ['1-8','1-10','main']
+        ]
+      },
+      {
+        id: 'chapter-2',
+        title: '第二章 · 霜雾峡谷',
+        subtitle: '追踪线索进入高寒峡谷，玩家需要在严寒、断桥和古代冰塔之间选择推进路线。',
+        bg: ASSETS.bg2,
+        panelTitle: '霜雾峡谷剧情节奏',
+        panelText: '第二章提高路线压力：部分支线能降低 Boss 难度，但会带来更高精英风险，形成“稳健推进或冒险破局”的选择。',
+        beats: [
+          ['环境', '寒冷地形压缩回复与行动窗口。'],
+          ['路线', '冰桥近路、哨塔路线、洞窟避风三选二。'],
+          ['装置', '激活古代热源可以削弱终战。'],
+          ['收束', '冰封中庭验证玩家构筑的持续作战能力。']
+        ],
+        nodes: [
+          ['2-1', '霜雾山口', 'main', 140, 510, '战斗', ASSETS.archer],
+          ['2-2', '冻土营火', 'event', 285, 610, '补给', ASSETS.elemental],
+          ['2-3A', '冰桥近路', 'branch', 390, 410, '捷径', ASSETS.archer],
+          ['2-4A', '裂冰伏击', 'elite', 555, 360, '精英', ASSETS.warrior],
+          ['2-3B', '哨塔外墙', 'main', 520, 560, '战斗', ASSETS.warrior],
+          ['2-4B', '寒塔哨站', 'elite', 690, 510, '精英', ASSETS.warrior],
+          ['2-5', '旧矿洞口', 'event', 780, 690, '事件', ASSETS.elemental],
+          ['2-6', '冰雾裂谷', 'main', 875, 420, '战斗', ASSETS.archer],
+          ['2-7', '古代热源', 'branch', 1005, 300, '机关', ASSETS.elemental],
+          ['2-8', '冰封军械库', 'event', 1050, 570, '奖励', ASSETS.warrior],
+          ['2-9', '中庭门卫', 'elite', 1190, 440, '精英', ASSETS.warrior],
+          ['2-10', '冰封中庭', 'boss', 1285, 585, 'Boss', ASSETS.boss]
+        ],
+        edges: [
+          ['2-1','2-2','main'], ['2-2','2-3A','branch'], ['2-3A','2-4A','elite'], ['2-4A','2-6','branch'],
+          ['2-2','2-3B','main'], ['2-3B','2-4B','main'], ['2-4B','2-6','main'], ['2-4B','2-5','branch'],
+          ['2-5','2-8','branch'], ['2-6','2-7','branch'], ['2-7','2-9','branch'], ['2-6','2-9','main'], ['2-8','2-10','branch'], ['2-9','2-10','main']
+        ]
+      },
+      {
+        id: 'chapter-3',
+        title: '第三章 · 暮色古道',
+        subtitle: '古道通向暮堡，敌方开始利用幻影与伏击切断退路，玩家需要处理多个风险回路。',
+        bg: ASSETS.bg3,
+        panelTitle: '暮色古道剧情节奏',
+        panelText: '第三章强调路线回路和高压选择：事件线揭示暮堡真相，战斗线快速推进，精英线提供强奖励但会抬高损耗。',
+        beats: [
+          ['入口', '古道关门关闭，玩家无法原路撤退。'],
+          ['回路', '断桥、祭坛、商队遗迹组成可选环路。'],
+          ['真相', '事件节点逐步揭示暮堡守卫的异常来源。'],
+          ['终局', '暮堡外环作为阶段 Boss，打开后续主城线。']
+        ],
+        nodes: [
+          ['3-1', '暮色关门', 'main', 130, 455, '战斗', ASSETS.archer],
+          ['3-2', '旧路碑', 'event', 265, 355, '事件', ASSETS.elemental],
+          ['3-3A', '断桥伏击', 'elite', 430, 520, '精英', ASSETS.warrior],
+          ['3-3B', '商队残骸', 'event', 445, 690, '补给', ASSETS.elemental],
+          ['3-4', '暮鸦林道', 'main', 610, 420, '战斗', ASSETS.archer],
+          ['3-5A', '祭坛侧阶', 'branch', 750, 280, '分支', ASSETS.elemental],
+          ['3-5B', '塌陷古井', 'branch', 760, 610, '分支', ASSETS.warrior],
+          ['3-6', '影卫巡路', 'elite', 910, 450, '精英', ASSETS.warrior],
+          ['3-7', '暮堡暗门', 'event', 1035, 315, '机关', ASSETS.elemental],
+          ['3-8', '外环营垒', 'main', 1085, 600, '战斗', ASSETS.archer],
+          ['3-9', '暮堡守门人', 'elite', 1220, 425, '精英', ASSETS.warrior],
+          ['3-10', '暮堡外环', 'boss', 1268, 565, 'Boss', ASSETS.boss]
+        ],
+        edges: [
+          ['3-1','3-2','main'], ['3-2','3-3A','elite'], ['3-2','3-3B','branch'], ['3-3A','3-4','main'],
+          ['3-3B','3-4','branch'], ['3-4','3-5A','branch'], ['3-4','3-5B','branch'], ['3-5A','3-6','branch'],
+          ['3-5B','3-6','branch'], ['3-6','3-7','branch'], ['3-6','3-8','main'], ['3-7','3-9','branch'], ['3-8','3-9','main'], ['3-9','3-10','main']
+        ]
+      }
+    ];
+
+    const selected = Math.max(1, Math.min(3, Number(new URLSearchParams(location.search).get('map') || '1')));
+    const data = maps[selected - 1];
+
+    function nodeByCode(code) {
+      return data.nodes.find(item => item[0] === code);
+    }
+    function routePath(from, to) {
+      const a = nodeByCode(from);
+      const b = nodeByCode(to);
+      const x1 = a[3], y1 = a[4], x2 = b[3], y2 = b[4];
+      const mx = Math.round((x1 + x2) / 2);
+      return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+    }
+    function render() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="map-bg" style="background-image:url('${data.bg}')"></div>
+        <div class="shade"></div>
+        <section class="topbar">
+          <div class="eyebrow">THREE CHAPTER MAP PROTOTYPE · V1</div>
+          <h1>${data.title}</h1>
+          <p class="summary">${data.subtitle}</p>
+        </section>
+        <div class="legend">
+          <span><i class="dot main"></i>主线</span>
+          <span><i class="dot branch"></i>分支</span>
+          <span><i class="dot event"></i>事件/补给</span>
+          <span><i class="dot elite"></i>精英</span>
+          <span><i class="dot boss"></i>Boss</span>
+        </div>
+        <main class="map-layer" style="background-image:url('${data.bg}')">
+          <svg class="paths" viewBox="0 0 1390 848" preserveAspectRatio="none">
+            ${data.edges.map(edge => `<path class="route ${edge[2] || 'main'}" d="${routePath(edge[0], edge[1])}"></path>`).join('')}
+          </svg>
+          ${data.nodes.map(node => `
+            <div class="node ${node[2]}" style="left:${node[3]}px;top:${node[4]}px">
+              <span class="icon"><img src="${node[6]}" alt=""></span>
+              <span class="code">${node[0]}</span>
+              <strong>${node[1]}</strong>
+              <em>${node[5]}</em>
+            </div>
+          `).join('')}
+        </main>
+        <aside class="side-panel">
+          <h2>${data.panelTitle}</h2>
+          <p>${data.panelText}</p>
+          <div class="beats">
+            ${data.beats.map(item => `<div class="beat"><span>${item[0]}</span><strong>${item[1]}</strong></div>`).join('')}
+          </div>
+        </aside>
+        <div class="footer-note">状态：待用户确认 · 本图为设计原型，不代表已写入运行时地图包。</div>
+      `;
+    }
+    render();
+  </script>
+</body>
+</html>
