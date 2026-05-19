@@ -93,6 +93,44 @@ async function screenshot(cdp, fileName) {
   await writeFile(path.join(outDir, fileName), Buffer.from(shot.data, 'base64'));
 }
 
+function runtimeReportExpression(extra = '') {
+  return `
+    (async () => {
+      ${extra}
+      await new Promise(resolve => setTimeout(resolve, 350));
+      const nodes = Array.from(document.querySelectorAll('.ui-skilltree__node'));
+      const overlay = document.getElementById('skillTreeOverlay')?.getBoundingClientRect();
+      const content = document.querySelector('.ui-skilltree__content')?.getBoundingClientRect();
+      const canvas = document.querySelector('.ui-skilltree__canvasViewport')?.getBoundingClientRect();
+      const detail = document.querySelector('.ui-skilltree__decisionPanel')?.getBoundingClientRect();
+      const selected = document.querySelector('.ui-skilltree__node.is-selected')?.getBoundingClientRect();
+      const chain = document.querySelector('.ui-skilltree__chain')?.getBoundingClientRect();
+      const actions = document.querySelector('.ui-skilltree__actions')?.getBoundingClientRect();
+      const tree = document.querySelector('.ui-skilltree');
+      const treeText = tree?.innerText || '';
+      return {
+        viewport: { width: innerWidth, height: innerHeight },
+        lod: tree?.dataset?.lod || null,
+        compactNodeCount: document.querySelectorAll('.ui-skilltree__node--compact').length,
+        metaCount: document.querySelectorAll('.ui-skilltree__nodeMeta').length,
+        canvasMeta: document.querySelector('.ui-skilltree__canvasMeta')?.innerText || '',
+        overlay: overlay && { left: overlay.left, top: overlay.top, width: overlay.width, height: overlay.height },
+        content: content && { left: content.left, top: content.top, width: content.width, height: content.height },
+        canvas: canvas && { left: canvas.left, top: canvas.top, width: canvas.width, height: canvas.height },
+        detail: detail && { left: detail.left, top: detail.top, width: detail.width, height: detail.height },
+        selected: selected && { left: selected.left, top: selected.top, right: selected.right, bottom: selected.bottom },
+        chain: chain && { left: chain.left, top: chain.top, right: chain.right, bottom: chain.bottom, height: chain.height },
+        actions: actions && { left: actions.left, top: actions.top, right: actions.right, bottom: actions.bottom, height: actions.height },
+        actionsOverlapChain: !!(chain && actions && actions.top < chain.bottom && actions.bottom > chain.top),
+        nodeCount: nodes.length,
+        hiddenRuntimeTextPresent: /单攻测试|多攻测试|验收轻击|等待/.test(treeText),
+        selectedText: document.querySelector('.ui-skilltree__decisionPanel')?.innerText || '',
+        transform: document.querySelector('.ui-skilltree__transform')?.style.transform || ''
+      };
+    })()
+  `;
+}
+
 await mkdir(outDir, { recursive: true });
 
 const chrome = spawn(chromePath, [
@@ -144,41 +182,28 @@ try {
   await sleep(800);
   await screenshot(cdp, '01-runtime-skilltree-overview-1920x1080.png');
 
-  const report = await evalExpr(cdp, `
-    (async () => {
+  const structureReport = await evalExpr(cdp, runtimeReportExpression(''));
+
+  const readingReport = await evalExpr(cdp, runtimeReportExpression(`
       const target = document.querySelector('[data-skill-id="skill_1771769351059"]')
         || document.querySelector('.ui-skilltree__node--route-blood')
         || document.querySelector('.ui-skilltree__node');
       target?.click();
-      await new Promise(resolve => setTimeout(resolve, 350));
-      const nodes = Array.from(document.querySelectorAll('.ui-skilltree__node'));
-      const overlay = document.getElementById('skillTreeOverlay')?.getBoundingClientRect();
-      const content = document.querySelector('.ui-skilltree__content')?.getBoundingClientRect();
-      const canvas = document.querySelector('.ui-skilltree__canvasViewport')?.getBoundingClientRect();
-      const detail = document.querySelector('.ui-skilltree__decisionPanel')?.getBoundingClientRect();
-      const selected = document.querySelector('.ui-skilltree__node.is-selected')?.getBoundingClientRect();
-      const chain = document.querySelector('.ui-skilltree__chain')?.getBoundingClientRect();
-      const actions = document.querySelector('.ui-skilltree__actions')?.getBoundingClientRect();
-      const treeText = document.querySelector('.ui-skilltree')?.innerText || '';
-      return {
-        viewport: { width: innerWidth, height: innerHeight },
-        overlay: overlay && { left: overlay.left, top: overlay.top, width: overlay.width, height: overlay.height },
-        content: content && { left: content.left, top: content.top, width: content.width, height: content.height },
-        canvas: canvas && { left: canvas.left, top: canvas.top, width: canvas.width, height: canvas.height },
-        detail: detail && { left: detail.left, top: detail.top, width: detail.width, height: detail.height },
-        selected: selected && { left: selected.left, top: selected.top, right: selected.right, bottom: selected.bottom },
-        chain: chain && { left: chain.left, top: chain.top, right: chain.right, bottom: chain.bottom, height: chain.height },
-        actions: actions && { left: actions.left, top: actions.top, right: actions.right, bottom: actions.bottom, height: actions.height },
-        actionsOverlapChain: !!(chain && actions && actions.top < chain.bottom && actions.bottom > chain.top),
-        nodeCount: nodes.length,
-        hiddenRuntimeTextPresent: /单攻测试|多攻测试|验收轻击|等待/.test(treeText),
-        selectedText: document.querySelector('.ui-skilltree__decisionPanel')?.innerText || '',
-        transform: document.querySelector('.ui-skilltree__transform')?.style.transform || ''
-      };
-    })()
-  `);
-  await screenshot(cdp, '02-runtime-skilltree-selected-path-1920x1080.png');
-  await writeFile(path.join(outDir, 'runtime-skilltree-redesign-report.json'), JSON.stringify(report, null, 2));
+      const wheelTarget = document.querySelector('.ui-skilltree__canvasViewport');
+      for (let i = 0; i < 3; i += 1) {
+        wheelTarget?.dispatchEvent(new WheelEvent('wheel', {
+          deltaY: -120,
+          bubbles: true,
+          cancelable: true
+        }));
+        await new Promise(resolve => setTimeout(resolve, 80));
+      }
+  `));
+  await screenshot(cdp, '02-runtime-skilltree-reading-lod-1920x1080.png');
+  await writeFile(path.join(outDir, 'runtime-skilltree-redesign-report.json'), JSON.stringify({
+    structure: structureReport,
+    reading: readingReport
+  }, null, 2));
   cdp.close();
 } finally {
   chrome.kill('SIGTERM');

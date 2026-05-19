@@ -5,12 +5,16 @@
 
 const NODE_W = 112;
 const NODE_H = 82;
+const STRUCTURE_NODE_W = 74;
+const STRUCTURE_NODE_H = 48;
 const CANVAS_W = 1180;
 const CANVAS_H = 760;
 const FIT_VIEW_W = 1000;
 const FIT_VIEW_H = 680;
 const FIT_PADDING = 76;
 const MIN_READABLE_ZOOM = 0.72;
+const LOD_STRUCTURE_MAX_ZOOM = 0.82;
+const LOD_READING_MIN_ZOOM = 0.86;
 const PROJECTED_POSITION_BOUNDS = Object.freeze({
 	left: 90,
 	top: 105,
@@ -105,6 +109,7 @@ export class UI_SkillTreeModal {
 		this._lastMouse = null;
 		this._layout = { minX: 0, minY: 0, maxX: CANVAS_W, maxY: CANVAS_H };
 		this._nodePositions = new Map();
+		this._lodMode = 'structure';
 
 		this._dom = {
 			root: null,
@@ -117,6 +122,7 @@ export class UI_SkillTreeModal {
 			btnCommitAndClose: null,
 			btnStageLearn: null,
 			content: null,
+			canvasMeta: null,
 			canvasWrap: null,
 			transformLayer: null,
 			svg: null,
@@ -171,6 +177,7 @@ export class UI_SkillTreeModal {
 			btnCommitAndClose: null,
 			btnStageLearn: null,
 			content: null,
+			canvasMeta: null,
 			canvasWrap: null,
 			transformLayer: null,
 			svg: null,
@@ -346,6 +353,24 @@ export class UI_SkillTreeModal {
 			return;
 		}
 		this._isDirty = this._stagedLearned.size > 0 || this._selectedSkillId !== this._sessionSnapshot.selectedSkillId;
+	}
+
+	_syncLodMode() {
+		const previous = this._lodMode || 'structure';
+		if (this._zoom >= LOD_READING_MIN_ZOOM) {
+			this._lodMode = 'reading';
+		} else if (this._zoom <= LOD_STRUCTURE_MAX_ZOOM) {
+			this._lodMode = 'structure';
+		} else if (!this._lodMode) {
+			this._lodMode = 'structure';
+		}
+
+		if (this._dom.root) {
+			this._dom.root.dataset.lod = this._lodMode;
+			this._dom.root.classList.toggle('ui-skilltree--structure', this._lodMode === 'structure');
+			this._dom.root.classList.toggle('ui-skilltree--reading', this._lodMode === 'reading');
+		}
+		return previous !== this._lodMode;
 	}
 
 	_restoreSnapshotState() {
@@ -558,6 +583,7 @@ export class UI_SkillTreeModal {
 			btnCommitAndClose,
 			btnStageLearn: null,
 			content,
+			canvasMeta,
 			canvasWrap,
 			transformLayer,
 			svg,
@@ -571,6 +597,7 @@ export class UI_SkillTreeModal {
 	}
 
 	_renderAll() {
+		this._syncLodMode();
 		this._renderHeader();
 		this._renderRoutes();
 		this._renderNodes();
@@ -584,6 +611,11 @@ export class UI_SkillTreeModal {
 		if (this._dom.learnedCount) {
 			const learnedVisible = this._getSessionLearned().filter(id => this._skillsList.some(skill => skill.id === id));
 			this._dom.learnedCount.textContent = `已学习 ${learnedVisible.length} / ${this._skillsList.length}`;
+		}
+		if (this._dom.canvasMeta) {
+			this._dom.canvasMeta.textContent = this._lodMode === 'reading'
+				? `局部阅读态 · LOD 高（zoom ≥ ${LOD_READING_MIN_ZOOM.toFixed(2)}） · 拖拽平移 · 滚轮缩放 · 双击回到全图`
+				: `全局结构态 · LOD 低（zoom < ${LOD_READING_MIN_ZOOM.toFixed(2)}） · 拖拽平移 · 滚轮缩放 · 双击回到全图`;
 		}
 		const learned = this._sessionSnapshot ? this._sessionSnapshot.learned : this._getLearned();
 		const hasSelection = !!this._selectedSkillId;
@@ -635,6 +667,7 @@ export class UI_SkillTreeModal {
 		this._dom.nodeLayer.innerHTML = '';
 		const focused = this._getRelatedSkillIds(this._selectedSkillId);
 		const hasFocus = !!this._selectedSkillId;
+		const isReadingMode = this._lodMode === 'reading';
 
 		for (const skill of this._skillsList) {
 			const pos = this._getNodePos(skill);
@@ -648,16 +681,19 @@ export class UI_SkillTreeModal {
 			node.dataset.skillId = skill.id;
 			node.dataset.route = route;
 			node.dataset.status = status.kind;
+			node.classList.toggle('ui-skilltree__node--compact', !isReadingMode);
 			if (skill.id === this._selectedSkillId) node.classList.add('is-selected');
 			if (focused.has(skill.id)) node.classList.add('is-path-focus');
 			else if (hasFocus) node.classList.add('is-dimmed');
 
 			const icon = el('div', 'ui-skilltree__nodeIcon', this._getRouteIcon(route));
 			const name = el('div', 'ui-skilltree__nodeName', skill.name || skill.id);
-			const meta = el('div', 'ui-skilltree__nodeMeta', this._getStatusMeta(status));
 			node.appendChild(icon);
 			node.appendChild(name);
-			node.appendChild(meta);
+			if (isReadingMode) {
+				const meta = el('div', 'ui-skilltree__nodeMeta', this._getStatusMeta(status));
+				node.appendChild(meta);
+			}
 			node.addEventListener('click', (e) => {
 				e.stopPropagation();
 				this._selectSkill(skill.id);
@@ -687,8 +723,9 @@ export class UI_SkillTreeModal {
 	_drawConnection(sourceSkill, targetSkill, options = {}) {
 		const s = this._getNodePos(sourceSkill);
 		const t = this._getNodePos(targetSkill);
-		const start = { x: s.x + NODE_W / 2, y: s.y + NODE_H };
-		const end = { x: t.x + NODE_W / 2, y: t.y };
+		const nodeSize = this._getRenderedNodeSize();
+		const start = { x: s.x + nodeSize.width / 2, y: s.y + nodeSize.height };
+		const end = { x: t.x + nodeSize.width / 2, y: t.y };
 		const midY = (start.y + end.y) / 2;
 		const points = [
 			[start.x, start.y],
@@ -705,6 +742,13 @@ export class UI_SkillTreeModal {
 			options.dimmed ? 'is-dimmed' : ''
 		].filter(Boolean).join(' '));
 		this._dom.svg.appendChild(polyline);
+	}
+
+	_getRenderedNodeSize() {
+		if (this._lodMode === 'structure') {
+			return { width: STRUCTURE_NODE_W, height: STRUCTURE_NODE_H };
+		}
+		return { width: NODE_W, height: NODE_H };
 	}
 
 	_renderDetail() {
@@ -970,6 +1014,12 @@ export class UI_SkillTreeModal {
 		e.preventDefault();
 		const factor = -e.deltaY > 0 ? 1.1 : 0.9;
 		this._zoom = clamp(this._zoom * factor, 0.35, 1.8);
+		const lodChanged = this._syncLodMode();
+		if (lodChanged) {
+			this._renderNodes();
+			this._renderConnections();
+			this._renderHeader();
+		}
 		this._applyTransform();
 	}
 

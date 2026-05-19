@@ -125,7 +125,7 @@ test('UI_SkillTreeModal renders approved tactical layout and filters hidden node
 
     const text = document.getElementById('mount')?.textContent || '';
     assert.match(text, /构筑路线/);
-    assert.match(text, /拖拽平移/);
+    assert.match(text, /全局结构态/);
     assert.match(text, /当前选择/);
     assert.match(text, /已学习 3/);
     assert.match(text, /可用 KP 4/);
@@ -161,6 +161,43 @@ test('UI_SkillTreeModal focuses selected path and renders Chinese decision detai
     assert.match(detailText, /撕裂伤口/);
     assert.match(detailText, /暂存学习：锯齿斩/);
     assert.doesNotMatch(detailText, /LEARNABLE|LOCKED|INSUFFICIENT_KP/);
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
+
+test('UI_SkillTreeModal switches between structure and reading LOD at explicit zoom thresholds', async () => {
+  const dom = new JSDOM('<!doctype html><body><main id="mount"></main></body>');
+  installDomGlobals(dom);
+  try {
+    const { UI_SkillTreeModal } = await importSourceModule('script/ui/UI_SkillTreeModal.js');
+    const modal = new UI_SkillTreeModal();
+    modal.init(createSkillTreeEngine());
+    modal.mountTo(document.getElementById('mount'), { title: '技能树 / 构筑' });
+
+    const root = document.querySelector('.ui-skilltree');
+    const getSampleNode = () => document.querySelector('[data-skill-id="skill_block"]');
+
+    assert.equal(root?.dataset.lod, 'structure', 'overview zoom should default to structure LOD');
+    assert.ok(root?.classList.contains('ui-skilltree--structure'), 'root should expose structure mode class');
+    assert.match(document.querySelector('.ui-skilltree__canvasMeta')?.textContent || '', /全局结构态/);
+    assert.equal(getSampleNode()?.querySelector('.ui-skilltree__nodeMeta'), null, 'structure LOD should hide node meta');
+
+    modal._zoom = 0.9;
+    modal._renderAll();
+
+    assert.equal(root?.dataset.lod, 'reading', 'zooming past the detail threshold should switch to reading LOD');
+    assert.ok(root?.classList.contains('ui-skilltree--reading'), 'root should expose reading mode class');
+    assert.match(document.querySelector('.ui-skilltree__canvasMeta')?.textContent || '', /局部阅读态/);
+    assert.ok(getSampleNode()?.querySelector('.ui-skilltree__nodeMeta'), 'reading LOD should render node meta');
+
+    modal._zoom = 0.76;
+    modal._renderAll();
+
+    assert.equal(root?.dataset.lod, 'structure', 'zooming back below the compact threshold should restore structure LOD');
+    assert.ok(root?.classList.contains('ui-skilltree--structure'), 'root should switch back to structure mode');
+    assert.equal(getSampleNode()?.querySelector('.ui-skilltree__nodeMeta'), null, 'structure LOD should hide node meta again');
   } finally {
     dom.window.close();
     cleanupDomGlobals();

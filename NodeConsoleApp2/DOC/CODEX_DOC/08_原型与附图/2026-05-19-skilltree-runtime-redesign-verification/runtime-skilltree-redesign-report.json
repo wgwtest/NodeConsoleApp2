@@ -1,55 +1,120 @@
 {
-  "viewport": {
-    "width": 1920,
-    "height": 1080
+  "structure": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "lod": "structure",
+    "compactNodeCount": 32,
+    "metaCount": 0,
+    "canvasMeta": "全局结构态 · LOD 低（zoom < 0.86） · 拖拽平移 · 滚轮缩放 · 双击回到全图",
+    "overlay": {
+      "left": 1,
+      "top": 1,
+      "width": 1918,
+      "height": 1078
+    },
+    "content": {
+      "left": 96,
+      "top": 143,
+      "width": 1728,
+      "height": 881
+    },
+    "canvas": {
+      "left": 356,
+      "top": 143,
+      "width": 1134,
+      "height": 881
+    },
+    "detail": {
+      "left": 1490,
+      "top": 143,
+      "width": 334,
+      "height": 881
+    },
+    "selected": {
+      "left": 864.3819580078125,
+      "top": 238.4510498046875,
+      "right": 924.6046142578125,
+      "bottom": 277.514404296875
+    },
+    "chain": {
+      "left": 1515,
+      "top": 585.34375,
+      "right": 1800,
+      "bottom": 880,
+      "height": 294.65625
+    },
+    "actions": {
+      "left": 1515,
+      "top": 898,
+      "right": 1800,
+      "bottom": 1000,
+      "height": 102
+    },
+    "actionsOverlapChain": false,
+    "nodeCount": 32,
+    "hiddenRuntimeTextPresent": false,
+    "selectedText": "当前选择\n治疗\n\n恢复少量生命值。\n\n消耗\n1 KP\n状态\nKP 不足\n前置\n无\n解锁后续\n无\nKP 不足：需要 1\n1\n治疗\n当前\n暂存学习：治疗\n只查看影响路径",
+    "transform": "translate(3px, 10px) scale(0.81382)"
   },
-  "overlay": {
-    "left": 1,
-    "top": 1,
-    "width": 1918,
-    "height": 1078
-  },
-  "content": {
-    "left": 96,
-    "top": 143,
-    "width": 1728,
-    "height": 881
-  },
-  "canvas": {
-    "left": 356,
-    "top": 143,
-    "width": 1134,
-    "height": 881
-  },
-  "detail": {
-    "left": 1490,
-    "top": 143,
-    "width": 334,
-    "height": 881
-  },
-  "selected": {
-    "left": 918.9078979492188,
-    "top": 344.24761962890625,
-    "right": 1010.0556640625,
-    "bottom": 410.9808044433594
-  },
-  "chain": {
-    "left": 1515,
-    "top": 625.671875,
-    "right": 1800,
-    "bottom": 880,
-    "height": 254.328125
-  },
-  "actions": {
-    "left": 1515,
-    "top": 898,
-    "right": 1800,
-    "bottom": 1000,
-    "height": 102
-  },
-  "actionsOverlapChain": false,
-  "nodeCount": 32,
-  "hiddenRuntimeTextPresent": false,
-  "selectedText": "当前选择\n锯齿斩\n\n以锯齿刃撕开伤口，造成伤害并施加流血。\n\n消耗\n2 KP\n状态\n缺少前置\n前置\n重锤\n解锁后续\n后撤步、松绑、重新开始、撕裂伤口\n缺少前置：重锤\n1\n重锤\n前置\n2\n锯齿斩\n当前\n3\n后撤步\n后续\n4\n松绑\n后续\n5\n重新开始\n后续\n暂存学习：锯齿斩\n只查看影响路径",
-  "transform": "translate(3px, 10px) scale(0.81382)"
+  "reading": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "lod": "reading",
+    "compactNodeCount": 0,
+    "metaCount": 32,
+    "canvasMeta": "局部阅读态 · LOD 高（zoom ≥ 0.86） · 拖拽平移 · 滚轮缩放 · 双击回到全图",
+    "overlay": {
+      "left": 1,
+      "top": 1,
+      "width": 1918,
+      "height": 1078
+    },
+    "content": {
+      "left": 96,
+      "top": 143,
+      "width": 1728,
+      "height": 881
+    },
+    "canvas": {
+      "left": 356,
+      "top": 143,
+      "width": 1134,
+      "height": 881
+    },
+    "detail": {
+      "left": 1490,
+      "top": 143,
+      "width": 334,
+      "height": 881
+    },
+    "selected": {
+      "left": 1104.2374267578125,
+      "top": 407.5505676269531,
+      "right": 1225.55517578125,
+      "bottom": 496.3724670410156
+    },
+    "chain": {
+      "left": 1515,
+      "top": 625.671875,
+      "right": 1800,
+      "bottom": 880,
+      "height": 254.328125
+    },
+    "actions": {
+      "left": 1515,
+      "top": 898,
+      "right": 1800,
+      "bottom": 1000,
+      "height": 102
+    },
+    "actionsOverlapChain": false,
+    "nodeCount": 32,
+    "hiddenRuntimeTextPresent": false,
+    "selectedText": "当前选择\n锯齿斩\n\n以锯齿刃撕开伤口，造成伤害并施加流血。\n\n消耗\n2 KP\n状态\n缺少前置\n前置\n重锤\n解锁后续\n后撤步、松绑、重新开始、撕裂伤口\n缺少前置：重锤\n1\n重锤\n前置\n2\n锯齿斩\n当前\n3\n后撤步\n后续\n4\n松绑\n后续\n5\n重新开始\n后续\n暂存学习：锯齿斩\n只查看影响路径",
+    "transform": "translate(3px, 10px) scale(1.08319)"
+  }
 }
