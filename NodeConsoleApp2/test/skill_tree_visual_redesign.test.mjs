@@ -21,6 +21,31 @@ function installDomGlobals(dom) {
   global.HTMLElement = dom.window.HTMLElement;
   global.Node = dom.window.Node;
   global.SVGElement = dom.window.SVGElement;
+  global.HTMLCanvasElement = dom.window.HTMLCanvasElement;
+  if (dom.window.HTMLCanvasElement && !dom.window.HTMLCanvasElement.prototype.getContext) {
+    dom.window.HTMLCanvasElement.prototype.getContext = () => null;
+  }
+  if (dom.window.HTMLCanvasElement) {
+    dom.window.HTMLCanvasElement.prototype.getContext = () => ({
+      save() {},
+      restore() {},
+      clearRect() {},
+      beginPath() {},
+      moveTo() {},
+      lineTo() {},
+      stroke() {},
+      fill() {},
+      closePath() {},
+      translate() {},
+      rotate() {},
+      setLineDash() {},
+      set strokeStyle(value) {},
+      set fillStyle(value) {},
+      set lineWidth(value) {},
+      set lineCap(value) {},
+      set lineJoin(value) {}
+    });
+  }
 }
 
 function cleanupDomGlobals() {
@@ -29,6 +54,26 @@ function cleanupDomGlobals() {
   delete global.HTMLElement;
   delete global.Node;
   delete global.SVGElement;
+  delete global.HTMLCanvasElement;
+}
+
+function createActivePackEngine(skillsList, skillsMap) {
+  return {
+    data: {
+      playerData: {
+        skills: {
+          skillTreeId: 'melee_v4_5',
+          skillPoints: 8,
+          learned: []
+        }
+      },
+      getSkillCatalog() {
+        return { skillsList, skillsMap };
+      }
+    },
+    eventBus: { emit() {} },
+    saveGame() {}
+  };
 }
 
 function buildSkill(id, name, x, y, options = {}) {
@@ -152,7 +197,10 @@ test('UI_SkillTreeModal focuses selected path and renders Chinese decision detai
     assert.ok(selected?.classList.contains('is-path-focus'), 'selected node should be path focused');
     assert.ok(document.querySelector('[data-skill-id="skill_double_thrust"]')?.classList.contains('is-path-focus'), 'prerequisite should be path focused');
     assert.ok(document.querySelector('[data-skill-id="skill_bleed_burst"]')?.classList.contains('is-path-focus'), 'downstream node should be path focused');
-    assert.ok(document.querySelector('.ui-skilltree__line.is-path-focus'), 'focused path line should exist');
+    assert.ok(
+      Number(document.querySelector('.ui-skilltree__connections')?.dataset.focusedEdgeCount || 0) > 0,
+      'focused path canvas edges should exist'
+    );
 
     const detailText = document.querySelector('.ui-skilltree__decisionPanel')?.textContent || '';
     assert.match(detailText, /锯齿斩/);
@@ -235,34 +283,19 @@ test('UI_SkillTreeModal normalizes active pack coordinates to readable runtime d
   try {
     const { UI_SkillTreeModal } = await importSourceModule('script/ui/UI_SkillTreeModal.js');
     const modal = new UI_SkillTreeModal();
-    modal.init({
-      data: {
-        playerData: {
-          skills: {
-            skillTreeId: 'melee_v4_5',
-            skillPoints: 8,
-            learned: []
-          }
-        },
-        getSkillCatalog() {
-          return { skillsList, skillsMap };
-        }
-      },
-      eventBus: { emit() {} },
-      saveGame() {}
-    });
+    modal.init(createActivePackEngine(skillsList, skillsMap));
     modal.mountTo(document.getElementById('mount'), { title: '技能树 / 构筑' });
 
-    assert.ok(modal._zoom >= 0.72, `default zoom should keep active pack readable, got ${modal._zoom}`);
-    assert.ok(modal._layout.maxX - modal._layout.minX <= 1060, 'runtime layout should compress wide editor coordinates');
-    assert.ok(modal._layout.maxY - modal._layout.minY <= 680, 'runtime layout should compress tall editor coordinates');
+    assert.ok(modal._zoom > 0.4, `default zoom should keep editor topology inspectable, got ${modal._zoom}`);
+    assert.ok(modal._layout.maxX - modal._layout.minX >= 1400, 'runtime layout should preserve editor-authored x span');
+    assert.ok(modal._layout.maxY - modal._layout.minY >= 850, 'runtime layout should preserve editor-authored y span');
   } finally {
     dom.window.close();
     cleanupDomGlobals();
   }
 });
 
-test('UI_SkillTreeModal avoids node rectangle overlap for the active skill pack', async () => {
+test('UI_SkillTreeModal preserves editor-authored relative topology for the active skill pack', async () => {
   const packPath = path.join(projectRoot, 'assets', 'data', 'skills_melee_v4_5.json');
   const pack = JSON.parse(await fs.readFile(packPath, 'utf8'));
   const skillsList = pack.skills || [];
@@ -272,55 +305,51 @@ test('UI_SkillTreeModal avoids node rectangle overlap for the active skill pack'
   try {
     const { UI_SkillTreeModal } = await importSourceModule('script/ui/UI_SkillTreeModal.js');
     const modal = new UI_SkillTreeModal();
-    modal.init({
-      data: {
-        playerData: {
-          skills: {
-            skillTreeId: 'melee_v4_5',
-            skillPoints: 8,
-            learned: []
-          }
-        },
-        getSkillCatalog() {
-          return { skillsList, skillsMap };
-        }
-      },
-      eventBus: { emit() {} },
-      saveGame() {}
-    });
+    modal.init(createActivePackEngine(skillsList, skillsMap));
     modal.mountTo(document.getElementById('mount'), { title: '技能树 / 构筑' });
 
-    const assertNoOverlaps = (nodeWidth, nodeHeight, label) => {
-      const nodes = [...document.querySelectorAll('.ui-skilltree__node')].map(node => ({
-        id: node.dataset.skillId,
-        name: node.textContent.trim().replace(/\s+/g, ' '),
+    const nodes = new Map([...document.querySelectorAll('.ui-skilltree__node')].map(node => [
+      node.dataset.skillId,
+      {
         left: Number.parseFloat(node.style.left),
         top: Number.parseFloat(node.style.top)
-      }));
-      const overlaps = [];
-      for (let i = 0; i < nodes.length; i += 1) {
-        for (let j = i + 1; j < nodes.length; j += 1) {
-          const a = nodes[i];
-          const b = nodes[j];
-          const overlapX = Math.min(a.left + nodeWidth, b.left + nodeWidth) - Math.max(a.left, b.left);
-          const overlapY = Math.min(a.top + nodeHeight, b.top + nodeHeight) - Math.max(a.top, b.top);
-          if (overlapX > 0 && overlapY > 0) {
-            overlaps.push(`${a.name} <-> ${b.name} (${Math.round(overlapX)}x${Math.round(overlapY)})`);
-          }
-        }
       }
-      assert.deepEqual(overlaps, [], `${label} should not overlap nodes`);
+    ]));
+    const raw = new Map(skillsList
+      .filter(skill => skill?.editorMeta?.hiddenInSkillTree !== true)
+      .map(skill => [skill.id, { x: skill.editorMeta.x, y: skill.editorMeta.y }]));
+    const assertDelta = (fromId, toId) => {
+      const actualFrom = nodes.get(fromId);
+      const actualTo = nodes.get(toId);
+      const rawFrom = raw.get(fromId);
+      const rawTo = raw.get(toId);
+      assert.ok(actualFrom && actualTo && rawFrom && rawTo, `missing topology sample ${fromId} -> ${toId}`);
+      assert.equal(actualTo.left - actualFrom.left, rawTo.x - rawFrom.x, `x delta should preserve editorMeta for ${fromId} -> ${toId}`);
+      assert.equal(actualTo.top - actualFrom.top, rawTo.y - rawFrom.y, `y delta should preserve editorMeta for ${fromId} -> ${toId}`);
     };
 
-    modal._zoom = 0.9;
-    modal._renderAll();
-    assert.equal(document.querySelector('.ui-skilltree')?.dataset.lod, 'reading');
-    assertNoOverlaps(112, 82, 'reading LOD');
+    assertDelta('skill_block', 'skill_heal');
+    assertDelta('skill_artery_slice_copy_1769789197982', 'skill_savage_charge');
+    assertDelta('skill_fortify_copy_1769873501141', 'skill_hold_the_line_copy_1769956923405');
+    assertDelta('skill_execute_copy_1770043820577', 'skill_execute_copy_1770044052832');
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
 
-    modal._zoom = 0.76;
-    modal._renderAll();
-    assert.equal(document.querySelector('.ui-skilltree')?.dataset.lod, 'structure');
-    assertNoOverlaps(74, 48, 'structure LOD');
+test('UI_SkillTreeModal renders connections on a canvas layer shared with DOM nodes', async () => {
+  const dom = new JSDOM('<!doctype html><body><main id="mount"></main></body>');
+  installDomGlobals(dom);
+  try {
+    const { UI_SkillTreeModal } = await importSourceModule('script/ui/UI_SkillTreeModal.js');
+    const modal = new UI_SkillTreeModal();
+    modal.init(createSkillTreeEngine());
+    modal.mountTo(document.getElementById('mount'), { title: '技能树 / 构筑' });
+
+    assert.ok(document.querySelector('canvas.ui-skilltree__connections'), 'connections should render on canvas');
+    assert.equal(document.querySelector('svg.ui-skilltree__connections'), null, 'runtime skill tree should not use SVG as the connection layer');
+    assert.match(document.querySelector('.ui-skilltree__connections')?.getAttribute('data-edge-count') || '', /^\d+$/);
   } finally {
     dom.window.close();
     cleanupDomGlobals();
@@ -360,7 +389,7 @@ test('mock_ui_v11.css includes approved skill tree visual layout classes', async
     '.ui-skilltree__decisionPanel',
     '.ui-skilltree__node--route-guard',
     '.ui-skilltree__node--route-blood',
-    '.ui-skilltree__line.is-path-focus'
+    '.ui-skilltree__connections'
   ]) {
     assert.match(css, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }

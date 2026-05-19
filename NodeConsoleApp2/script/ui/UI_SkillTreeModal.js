@@ -7,25 +7,18 @@ const NODE_W = 112;
 const NODE_H = 82;
 const STRUCTURE_NODE_W = 74;
 const STRUCTURE_NODE_H = 48;
-const CANVAS_W = 1180;
-const CANVAS_H = 760;
 const FIT_VIEW_W = 1000;
 const FIT_VIEW_H = 680;
 const FIT_PADDING = 76;
-const MIN_READABLE_ZOOM = 0.72;
+const MIN_READABLE_ZOOM = 0.42;
 const LOD_STRUCTURE_MAX_ZOOM = 0.82;
 const LOD_READING_MIN_ZOOM = 0.86;
-const PROJECTED_POSITION_BOUNDS = Object.freeze({
-	left: 90,
-	top: 105,
-	width: 930,
-	height: 520
-});
-const RUNTIME_LAYOUT_TOP = 82;
-const RUNTIME_MIN_NODE_GAP_X = 126;
-const RUNTIME_LANE_STEP_Y = 104;
-const RUNTIME_ROW_GAP_Y = 34;
-const RUNTIME_MAX_NODES_PER_LANE = Math.floor(PROJECTED_POSITION_BOUNDS.width / RUNTIME_MIN_NODE_GAP_X) + 1;
+const EDITOR_NODE_W = 72;
+const EDITOR_NODE_H = 72;
+const CANVAS_PADDING = 220;
+const GRID_SIZE = 100;
+const CONNECTION_MARGIN = 12;
+const ANCHOR_HYSTERESIS_PX = 14;
 
 const ROUTE_DEFS = Object.freeze([
 	{
@@ -112,8 +105,10 @@ export class UI_SkillTreeModal {
 		this._zoom = 1;
 		this._isPanning = false;
 		this._lastMouse = null;
-		this._layout = { minX: 0, minY: 0, maxX: CANVAS_W, maxY: CANVAS_H };
+		this._layout = { minX: 0, minY: 0, maxX: FIT_VIEW_W, maxY: FIT_VIEW_H };
+		this._surface = { width: FIT_VIEW_W, height: FIT_VIEW_H };
 		this._nodePositions = new Map();
+		this._edgeAnchorCache = new Map();
 		this._lodMode = 'structure';
 
 		this._dom = {
@@ -130,7 +125,7 @@ export class UI_SkillTreeModal {
 			canvasMeta: null,
 			canvasWrap: null,
 			transformLayer: null,
-			svg: null,
+			canvas: null,
 			nodeLayer: null,
 			detail: null,
 			footer: null
@@ -185,7 +180,7 @@ export class UI_SkillTreeModal {
 			canvasMeta: null,
 			canvasWrap: null,
 			transformLayer: null,
-			svg: null,
+			canvas: null,
 			nodeLayer: null,
 			detail: null,
 			footer: null
@@ -205,7 +200,6 @@ export class UI_SkillTreeModal {
 		const rawSkillsList = Array.isArray(catalog?.skillsList) ? catalog.skillsList : Object.values(skillsMap || Object.create(null));
 		this._skillsMap = skillsMap || Object.create(null);
 		this._skillsList = rawSkillsList.filter(skill => this._shouldRenderSkillNode(skill));
-		this._rebuildRuntimeNodePositions();
 
 		const learned = this._getLearned();
 		const firstLearnable = this._skillsList.find(skill => this._getStatus(skill.id).kind === 'LEARNABLE');
@@ -269,8 +263,8 @@ export class UI_SkillTreeModal {
 	}
 
 	_getNodePos(skill) {
-		const projected = this._nodePositions.get(skill?.id);
-		if (projected) return projected;
+		const cached = this._nodePositions.get(skill?.id);
+		if (cached) return cached;
 		return this._getRawNodePos(skill);
 	}
 
@@ -287,59 +281,8 @@ export class UI_SkillTreeModal {
 
 	_rebuildRuntimeNodePositions() {
 		this._nodePositions = new Map();
-		if (!this._skillsList.length) return;
-
-		const rawNodes = this._skillsList.map(skill => ({
-			skill,
-			pos: this._getRawNodePos(skill)
-		}));
-		const minX = Math.min(...rawNodes.map(item => item.pos.x));
-		const minY = Math.min(...rawNodes.map(item => item.pos.y));
-		const maxX = Math.max(...rawNodes.map(item => item.pos.x + NODE_W));
-		const maxY = Math.max(...rawNodes.map(item => item.pos.y + NODE_H));
-		const rawW = Math.max(1, maxX - minX);
-		const rawH = Math.max(1, maxY - minY);
-		const viewW = FIT_VIEW_W - FIT_PADDING * 2;
-		const viewH = FIT_VIEW_H - FIT_PADDING * 2;
-		const needsProjection = rawW > viewW / MIN_READABLE_ZOOM || rawH > viewH / MIN_READABLE_ZOOM;
-		if (!needsProjection) return;
-
-		const rawPosMinX = Math.min(...rawNodes.map(item => item.pos.x));
-		const rawRows = new Map();
-		for (const item of rawNodes) {
-			const rowKey = String(item.pos.y);
-			if (!rawRows.has(rowKey)) rawRows.set(rowKey, []);
-			rawRows.get(rowKey).push(item);
-		}
-
-		let cursorY = RUNTIME_LAYOUT_TOP;
-		const rows = Array.from(rawRows.entries())
-			.map(([rawY, items]) => ({
-				rawY: Number(rawY),
-				items: items.sort((a, b) => a.pos.x - b.pos.x)
-			}))
-			.sort((a, b) => a.rawY - b.rawY);
-
-		for (const row of rows) {
-			const laneCount = Math.max(1, Math.ceil(row.items.length / RUNTIME_MAX_NODES_PER_LANE));
-			const laneSize = Math.ceil(row.items.length / laneCount);
-			for (let laneIndex = 0; laneIndex < laneCount; laneIndex += 1) {
-				const laneItems = row.items.slice(laneIndex * laneSize, (laneIndex + 1) * laneSize);
-				if (!laneItems.length) continue;
-				const y = cursorY + laneIndex * RUNTIME_LANE_STEP_Y;
-				const lastIndex = laneItems.length - 1;
-				for (let itemIndex = 0; itemIndex < laneItems.length; itemIndex += 1) {
-					const item = laneItems[itemIndex];
-					const x = PROJECTED_POSITION_BOUNDS.left + (lastIndex === 0
-						? PROJECTED_POSITION_BOUNDS.width / 2
-						: (itemIndex / lastIndex) * PROJECTED_POSITION_BOUNDS.width);
-					this._nodePositions.set(item.skill.id, {
-						x: Math.round(x),
-						y: Math.round(y)
-					});
-				}
-			}
-			cursorY += (laneCount - 1) * RUNTIME_LANE_STEP_Y + NODE_H + RUNTIME_ROW_GAP_Y;
+		for (const skill of this._skillsList) {
+			this._nodePositions.set(skill.id, this._getRawNodePos(skill));
 		}
 	}
 
@@ -489,11 +432,13 @@ export class UI_SkillTreeModal {
 
 	_fitToNodes() {
 		if (!this._skillsList.length) {
-			this._layout = { minX: 0, minY: 0, maxX: CANVAS_W, maxY: CANVAS_H };
+			this._layout = { minX: 0, minY: 0, maxX: FIT_VIEW_W, maxY: FIT_VIEW_H };
+			this._surface = { width: FIT_VIEW_W, height: FIT_VIEW_H };
 			this._pan = { x: 0, y: 0 };
 			this._zoom = 1;
 			return;
 		}
+		this._rebuildRuntimeNodePositions();
 
 		const boxes = this._skillsList.map(skill => {
 			const pos = this._getNodePos(skill);
@@ -509,6 +454,10 @@ export class UI_SkillTreeModal {
 		const maxX = Math.max(...boxes.map(box => box.right));
 		const maxY = Math.max(...boxes.map(box => box.bottom));
 		this._layout = { minX, minY, maxX, maxY };
+		this._surface = {
+			width: Math.ceil(maxX + CANVAS_PADDING),
+			height: Math.ceil(maxY + CANVAS_PADDING)
+		};
 
 		const treeW = Math.max(1, maxX - minX);
 		const treeH = Math.max(1, maxY - minY);
@@ -571,14 +520,14 @@ export class UI_SkillTreeModal {
 		canvasWrap.setAttribute('aria-label', '技能树画布');
 		const canvasMeta = el('div', 'ui-skilltree__canvasMeta', '拖拽平移 · 滚轮缩放 · 双击回到全图');
 		const transformLayer = el('div', 'ui-skilltree__transform');
-		transformLayer.style.width = `${CANVAS_W}px`;
-		transformLayer.style.height = `${CANVAS_H}px`;
-		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		svg.classList.add('ui-skilltree__connections');
-		svg.setAttribute('viewBox', `0 0 ${CANVAS_W} ${CANVAS_H}`);
-		svg.setAttribute('aria-hidden', 'true');
+		transformLayer.style.width = `${this._surface.width}px`;
+		transformLayer.style.height = `${this._surface.height}px`;
+		const canvas = el('canvas', 'ui-skilltree__connections');
+		canvas.width = this._surface.width;
+		canvas.height = this._surface.height;
+		canvas.setAttribute('aria-hidden', 'true');
 		const nodeLayer = el('div', 'ui-skilltree__nodes');
-		transformLayer.appendChild(svg);
+		transformLayer.appendChild(canvas);
 		transformLayer.appendChild(nodeLayer);
 		canvasWrap.appendChild(canvasMeta);
 		canvasWrap.appendChild(transformLayer);
@@ -611,7 +560,7 @@ export class UI_SkillTreeModal {
 			canvasMeta,
 			canvasWrap,
 			transformLayer,
-			svg,
+			canvas,
 			nodeLayer,
 			detail,
 			footer
@@ -693,6 +642,14 @@ export class UI_SkillTreeModal {
 		const focused = this._getRelatedSkillIds(this._selectedSkillId);
 		const hasFocus = !!this._selectedSkillId;
 		const isReadingMode = this._lodMode === 'reading';
+		if (this._dom.transformLayer) {
+			this._dom.transformLayer.style.width = `${this._surface.width}px`;
+			this._dom.transformLayer.style.height = `${this._surface.height}px`;
+		}
+		if (this._dom.nodeLayer) {
+			this._dom.nodeLayer.style.width = `${this._surface.width}px`;
+			this._dom.nodeLayer.style.height = `${this._surface.height}px`;
+		}
 
 		for (const skill of this._skillsList) {
 			const pos = this._getNodePos(skill);
@@ -728,52 +685,140 @@ export class UI_SkillTreeModal {
 	}
 
 	_renderConnections() {
-		if (!this._dom.svg) return;
-		this._dom.svg.innerHTML = '';
+		const canvas = this._dom.canvas;
+		if (!canvas) return;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		if (canvas.width !== this._surface.width) canvas.width = this._surface.width;
+		if (canvas.height !== this._surface.height) canvas.height = this._surface.height;
+		canvas.style.width = `${this._surface.width}px`;
+		canvas.style.height = `${this._surface.height}px`;
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		this._drawGrid(ctx, canvas.width, canvas.height);
+
 		const focused = this._getRelatedSkillIds(this._selectedSkillId);
 		const hasFocus = !!this._selectedSkillId;
+		let edgeCount = 0;
+		let focusedEdgeCount = 0;
 
 		for (const skill of this._skillsList) {
 			for (const parentId of toArray(skill.prerequisites)) {
 				const parent = this._getSkillById(parentId);
 				if (!parent || !this._skillsList.some(item => item.id === parent.id)) continue;
-				this._drawConnection(parent, skill, {
-					focused: focused.has(parent.id) && focused.has(skill.id),
-					dimmed: hasFocus && !(focused.has(parent.id) && focused.has(skill.id))
+				const edgeFocused = focused.has(parent.id) && focused.has(skill.id);
+				this._drawConnection(ctx, parent, skill, {
+					focused: edgeFocused,
+					dimmed: hasFocus && !edgeFocused
 				});
+				edgeCount += 1;
+				if (edgeFocused) focusedEdgeCount += 1;
 			}
 		}
+		canvas.dataset.edgeCount = String(edgeCount);
+		canvas.dataset.focusedEdgeCount = String(focusedEdgeCount);
 	}
 
-	_drawConnection(sourceSkill, targetSkill, options = {}) {
+	_drawGrid(ctx, width, height) {
+		ctx.save();
+		ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+		ctx.lineWidth = 1;
+		for (let x = 0; x <= width; x += GRID_SIZE) {
+			ctx.beginPath();
+			ctx.moveTo(x, 0);
+			ctx.lineTo(x, height);
+			ctx.stroke();
+		}
+		for (let y = 0; y <= height; y += GRID_SIZE) {
+			ctx.beginPath();
+			ctx.moveTo(0, y);
+			ctx.lineTo(width, y);
+			ctx.stroke();
+		}
+		ctx.restore();
+	}
+
+	_snapToGridLine(value) {
+		return Math.round(value / GRID_SIZE) * GRID_SIZE;
+	}
+
+	_getAdaptiveAnchors(sourceSkill, targetSkill) {
 		const s = this._getNodePos(sourceSkill);
 		const t = this._getNodePos(targetSkill);
 		const nodeSize = this._getRenderedNodeSize();
-		const start = { x: s.x + nodeSize.width / 2, y: s.y + nodeSize.height };
-		const end = { x: t.x + nodeSize.width / 2, y: t.y };
-		const midY = (start.y + end.y) / 2;
+		const sCenterY = s.y + nodeSize.height / 2;
+		const tCenterY = t.y + nodeSize.height / 2;
+		const key = `${sourceSkill.id}->${targetSkill.id}`;
+		const prev = this._edgeAnchorCache?.get(key);
+		const dy = sCenterY - tCenterY;
+		let verticalDir;
+		if (prev && Math.abs(dy) < ANCHOR_HYSTERESIS_PX) {
+			verticalDir = prev;
+		} else {
+			verticalDir = sCenterY <= tCenterY ? 'down' : 'up';
+		}
+		if (!this._edgeAnchorCache) this._edgeAnchorCache = new Map();
+		this._edgeAnchorCache.set(key, verticalDir);
+		if (verticalDir === 'down') {
+			return [
+				{ x: s.x + nodeSize.width / 2, y: s.y + nodeSize.height, dir: 'bottom' },
+				{ x: t.x + nodeSize.width / 2, y: t.y, dir: 'top' }
+			];
+		}
+		return [
+			{ x: s.x + nodeSize.width / 2, y: s.y, dir: 'top' },
+			{ x: t.x + nodeSize.width / 2, y: t.y + nodeSize.height, dir: 'bottom' }
+		];
+	}
+
+	_drawConnection(ctx, sourceSkill, targetSkill, options = {}) {
+		const [start, end] = this._getAdaptiveAnchors(sourceSkill, targetSkill);
+		const leaveY = start.dir === 'bottom' ? start.y + CONNECTION_MARGIN : start.y - CONNECTION_MARGIN;
+		const enterY = end.dir === 'top' ? end.y - CONNECTION_MARGIN : end.y + CONNECTION_MARGIN;
+		const midY = this._snapToGridLine((leaveY + enterY) / 2);
 		const points = [
 			[start.x, start.y],
-			[start.x, midY],
+			[start.x, leaveY],
 			[end.x, midY],
+			[end.x, enterY],
 			[end.x, end.y]
 		];
+		const alpha = options.dimmed ? 0.22 : 1;
+		const stroke = options.focused ? `rgba(232, 198, 111, ${0.92 * alpha})` : `rgba(130, 146, 143, ${0.62 * alpha})`;
+		ctx.save();
+		ctx.strokeStyle = stroke;
+		ctx.lineWidth = options.focused ? 4 : 2.5;
+		ctx.lineCap = 'round';
+		ctx.lineJoin = 'round';
+		if (options.dimmed) ctx.setLineDash([8, 10]);
+		ctx.beginPath();
+		ctx.moveTo(points[0][0], points[0][1]);
+		for (const point of points.slice(1)) {
+			ctx.lineTo(point[0], point[1]);
+		}
+		ctx.stroke();
+		ctx.setLineDash([]);
+		this._drawArrowHead(ctx, points.at(-2), points.at(-1), stroke, options.focused ? 10 : 8);
+		ctx.restore();
+	}
 
-		const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-		polyline.setAttribute('points', points.map(p => `${p[0]},${p[1]}`).join(' '));
-		polyline.setAttribute('class', [
-			'ui-skilltree__line',
-			options.focused ? 'is-path-focus' : '',
-			options.dimmed ? 'is-dimmed' : ''
-		].filter(Boolean).join(' '));
-		this._dom.svg.appendChild(polyline);
+	_drawArrowHead(ctx, from, to, color, size) {
+		const angle = Math.atan2(to[1] - from[1], to[0] - from[0]);
+		ctx.save();
+		ctx.fillStyle = color;
+		ctx.translate(to[0], to[1]);
+		ctx.rotate(angle);
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.lineTo(-size, -size * 0.45);
+		ctx.lineTo(-size, size * 0.45);
+		ctx.closePath();
+		ctx.fill();
+		ctx.restore();
 	}
 
 	_getRenderedNodeSize() {
-		if (this._lodMode === 'structure') {
-			return { width: STRUCTURE_NODE_W, height: STRUCTURE_NODE_H };
-		}
-		return { width: NODE_W, height: NODE_H };
+		return { width: STRUCTURE_NODE_W, height: STRUCTURE_NODE_H };
 	}
 
 	_renderDetail() {
