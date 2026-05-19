@@ -173,6 +173,28 @@ function resolveNodeTitle(node) {
     return node?.levelName || node?.title || node?.levelId || '';
 }
 
+function renderDrawerRow(label, value) {
+    const text = String(value ?? '').trim();
+    if (!text) return '';
+    return `
+        <div class="level-map-drawer__meta-row">
+            <span>${escapeHtml(label)}</span>
+            <strong>${escapeHtml(text)}</strong>
+        </div>
+    `;
+}
+
+function renderDrawerSection(title, body, className = '') {
+    const content = String(body ?? '').trim();
+    if (!content) return '';
+    return `
+        <section class="level-map-drawer__section ${escapeHtml(className)}">
+            <span>${escapeHtml(title)}</span>
+            <p>${escapeHtml(content)}</p>
+        </section>
+    `;
+}
+
 export class LevelSelectMapView {
     constructor(options = {}) {
         this.document = options.document || globalThis.document;
@@ -191,6 +213,7 @@ export class LevelSelectMapView {
         this._drawer = null;
         this._confirmButton = null;
         this._dragState = null;
+        this._layoutRefreshTimer = null;
         this._viewState = {
             zoom: 1,
             panX: 0,
@@ -318,6 +341,10 @@ export class LevelSelectMapView {
     render(host, model) {
         if (!host) return null;
         this._detachGlobalListeners();
+        if (this._layoutRefreshTimer && this.window?.clearTimeout) {
+            this.window.clearTimeout(this._layoutRefreshTimer);
+            this._layoutRefreshTimer = null;
+        }
         host.innerHTML = '';
         this._host = host;
         const normalizedModel = {
@@ -385,11 +412,14 @@ export class LevelSelectMapView {
         const drawer = createElement(this.document, 'aside', 'level-select-runtime-map__drawer');
         drawer.setAttribute('aria-label', '关卡详情');
         drawer.innerHTML = `
-            <div class="level-map-drawer__status"></div>
-            <div class="level-map-drawer__label"></div>
-            <h4 class="level-map-drawer__title"></h4>
-            <p class="level-map-drawer__objective"></p>
-            <div class="level-map-drawer__chips"></div>
+            <div class="level-map-drawer__hero">
+                <div class="level-map-drawer__status"></div>
+                <div class="level-map-drawer__label"></div>
+                <h4 class="level-map-drawer__title"></h4>
+            </div>
+            <div class="level-map-drawer__meta" aria-label="关卡元数据"></div>
+            <div class="level-map-drawer__body"></div>
+            <div class="level-map-drawer__rewards" aria-label="奖励预览"></div>
             <button type="button" class="level-map-drawer__enter" data-action="enter-level" aria-label="进入关卡" title="进入关卡">进入关卡</button>
         `;
         this._drawer = drawer;
@@ -399,6 +429,8 @@ export class LevelSelectMapView {
 
         host.appendChild(root);
         this.renderStage(stage, viewport, surface, this._model);
+        this._refreshStageAfterLayout(stage, viewport, surface);
+        this._scheduleStageLayoutRefresh(stage, viewport, surface);
         this._bindViewportInteractions();
         this._attachGlobalListeners();
         this._applyTransform();
@@ -427,13 +459,17 @@ export class LevelSelectMapView {
         const display = metrics.display;
         const layers = buildStageImageLayers(map, model.assetLibrary);
 
-        stage.style.backgroundImage = layers.backgroundImage;
-        stage.style.backgroundSize = layers.backgroundSize;
-        stage.style.backgroundPosition = layers.backgroundPosition;
-        stage.style.backgroundRepeat = layers.backgroundRepeat;
+        stage.style.backgroundImage = '';
+        stage.style.backgroundSize = '';
+        stage.style.backgroundPosition = '';
+        stage.style.backgroundRepeat = '';
         stage.style.aspectRatio = toCssAspectRatio(display.viewportAspect);
         surface.style.width = `${metrics.width}px`;
         surface.style.height = `${metrics.height}px`;
+        surface.style.backgroundImage = layers.backgroundImage;
+        surface.style.backgroundSize = layers.backgroundSize;
+        surface.style.backgroundPosition = layers.backgroundPosition;
+        surface.style.backgroundRepeat = layers.backgroundRepeat;
 
         const svg = createSvgElement(this.document, 'svg', 'level-map-edges');
         svg.setAttribute('viewBox', `0 0 ${metrics.width} ${metrics.height}`);
@@ -500,14 +536,12 @@ export class LevelSelectMapView {
                 });
             }
             button.innerHTML = `
-                <span class="level-map-node__pin" aria-hidden="true">
-                    <span class="level-map-node__art"></span>
-                    <span class="level-map-node__ring"></span>
-                </span>
-                <span class="level-map-node__caption">
+                <span class="level-map-node__plate">
                     <span class="level-map-node__label">${escapeHtml(node.label || '')}</span>
                     <strong class="level-map-node__title">${escapeHtml(resolveNodeTitle(node))}</strong>
                     <span class="level-map-node__status">${escapeHtml(node.statusLabel || '')}</span>
+                    <span class="level-map-node__kind">${escapeHtml(node.iconLabel || node.kind || '')}</span>
+                    <span class="level-map-node__art"></span>
                 </span>
             `;
             if (artImage) {
@@ -520,6 +554,51 @@ export class LevelSelectMapView {
             }
             surface.appendChild(button);
         });
+    }
+
+    _refreshStageAfterLayout(stage, viewport, surface) {
+        if (surface !== this._surface) return false;
+        const stageRect = typeof stage?.getBoundingClientRect === 'function'
+            ? stage.getBoundingClientRect()
+            : null;
+        const surfaceRect = typeof surface?.getBoundingClientRect === 'function'
+            ? surface.getBoundingClientRect()
+            : null;
+        const stageWidth = Math.round(stage?.clientWidth || stageRect?.width || 0);
+        const stageHeight = Math.round(stage?.clientHeight || stageRect?.height || 0);
+        const surfaceWidth = Math.round(surface?.clientWidth || surfaceRect?.width || 0);
+        const surfaceHeight = Math.round(surface?.clientHeight || surfaceRect?.height || 0);
+        const hasVisibleStage = stageWidth > 0 && stageHeight > 0;
+        const needsRefresh = hasVisibleStage
+            && (surfaceWidth < stageWidth - 4 || surfaceHeight < stageHeight - 4);
+
+        if (!needsRefresh || !this._model) return false;
+        surface.innerHTML = '';
+        this.renderStage(stage, viewport, surface, this._model);
+        this._applyTransform();
+        this._renderSelection();
+        return true;
+    }
+
+    _scheduleStageLayoutRefresh(stage, viewport, surface) {
+        if (!this.window) return;
+        let attempts = 0;
+        const run = () => {
+            if (surface !== this._surface) return;
+            const refreshed = this._refreshStageAfterLayout(stage, viewport, surface);
+            attempts += 1;
+            if (refreshed || attempts >= 6) return;
+            if (typeof this.window.requestAnimationFrame === 'function') {
+                this.window.requestAnimationFrame(run);
+                return;
+            }
+            this._layoutRefreshTimer = this.window.setTimeout(run, 50);
+        };
+        if (typeof this.window.requestAnimationFrame === 'function') {
+            this.window.requestAnimationFrame(run);
+            return;
+        }
+        this._layoutRefreshTimer = this.window.setTimeout(run, 50);
     }
 
     _getSelectedNode() {
@@ -560,20 +639,36 @@ export class LevelSelectMapView {
         const status = this._drawer.querySelector('.level-map-drawer__status');
         const label = this._drawer.querySelector('.level-map-drawer__label');
         const title = this._drawer.querySelector('.level-map-drawer__title');
-        const objective = this._drawer.querySelector('.level-map-drawer__objective');
-        const chips = this._drawer.querySelector('.level-map-drawer__chips');
+        const meta = this._drawer.querySelector('.level-map-drawer__meta');
+        const body = this._drawer.querySelector('.level-map-drawer__body');
+        const rewards = this._drawer.querySelector('.level-map-drawer__rewards');
         const canEnter = Boolean(node.isUnlocked || node.selectLevelId);
         if (status) {
             status.className = `level-map-drawer__status is-${escapeHtml(node.status || 'locked')}`;
             status.textContent = node.statusLabel || '未解锁';
         }
-        if (label) label.textContent = node.label || '';
+        if (label) label.textContent = [node.label || '', node.kind || ''].filter(Boolean).join(' · ');
         if (title) title.textContent = resolveNodeTitle(node);
-        if (objective) objective.textContent = node.objectiveText || node.levelDescription || '';
-        if (chips) {
-            const rewardChips = asArray(node.rewardPreview).map(item => `<span>${escapeHtml(item)}</span>`).join('');
-            const difficultyChip = node.difficultyLabel ? `<span>${escapeHtml(node.difficultyLabel)}</span>` : '';
-            chips.innerHTML = `${difficultyChip}${rewardChips}`;
+        if (meta) {
+            meta.innerHTML = [
+                renderDrawerRow('关卡ID', node.levelId || ''),
+                renderDrawerRow('进入目标', node.selectLevelId && node.selectLevelId !== node.levelId ? node.selectLevelId : ''),
+                renderDrawerRow('难度', node.difficultyLabel || ''),
+                renderDrawerRow('节点状态', node.statusLabel || '')
+            ].join('');
+        }
+        if (body) {
+            body.innerHTML = [
+                renderDrawerSection('作战目标', node.objectiveText || node.levelDescription || ''),
+                renderDrawerSection('关卡描述', node.levelDescription || ''),
+                renderDrawerSection('解锁说明', node.unlockHint || '')
+            ].join('');
+        }
+        if (rewards) {
+            const rewardItems = asArray(node.rewardPreview).map(item => `<span>${escapeHtml(item)}</span>`).join('');
+            rewards.innerHTML = rewardItems
+                ? `<span class="level-map-drawer__section-title">奖励预览</span><div>${rewardItems}</div>`
+                : '';
         }
         if (this._confirmButton) {
             this._confirmButton.disabled = !canEnter;

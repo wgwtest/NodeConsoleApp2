@@ -1362,6 +1362,7 @@ class DataManager {
                 objectiveText: node.objectiveText || entry?.flow?.objectiveText || selectionMeta?.buildHint || '',
                 difficultyLabel: node.difficultyLabel || selectionMeta?.difficultyLabel || '',
                 rewardPreview: this._buildLevelMapRewardPreview(node, entry),
+                unlockHint: entry?.progression?.unlockHint || '',
                 status,
                 statusLabel: status === 'completed'
                     ? '已完成'
