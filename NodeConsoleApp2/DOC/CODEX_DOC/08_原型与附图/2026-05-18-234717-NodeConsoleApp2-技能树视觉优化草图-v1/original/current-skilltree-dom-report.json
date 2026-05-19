@@ -1,0 +1,439 @@
+{
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "overlay": {
+    "left": 1,
+    "top": 1,
+    "width": 1918,
+    "height": 1078
+  },
+  "canvas": {
+    "left": 274,
+    "top": 281.75,
+    "width": 1040,
+    "height": 520
+  },
+  "detail": {
+    "left": 1326,
+    "top": 281.75,
+    "width": 320,
+    "height": 520
+  },
+  "nodeCount": 41,
+  "visibleNodeCount": 27,
+  "nodeRects": [
+    {
+      "id": "skill_heal",
+      "text": "治疗\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--insufficient_kp",
+      "left": 1289,
+      "top": 597,
+      "right": 1372,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_heavy_swing",
+      "text": "重锤\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--insufficient_kp",
+      "left": 1889,
+      "top": 597,
+      "right": 1972,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_savage_charge",
+      "text": "临期食品\nKP 2",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 989,
+      "top": 797,
+      "right": 1072,
+      "bottom": 880,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_skull_cracker",
+      "text": "裂颅一击\nKP 2",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1889,
+      "top": 797,
+      "right": 1972,
+      "bottom": 880,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_shockwave",
+      "text": "光脚\nKP 3",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 889,
+      "top": 997,
+      "right": 972,
+      "bottom": 1080,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_execute",
+      "text": "斩首\nKP 5",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1889,
+      "top": 1197,
+      "right": 1972,
+      "bottom": 1280,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_earthquake",
+      "text": "大地震击\nKP 5",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1789,
+      "top": 1197,
+      "right": 1872,
+      "bottom": 1280,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_ragnarok",
+      "text": "诸神黄昏\nKP 8",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1789,
+      "top": 1397,
+      "right": 1872,
+      "bottom": 1480,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_block",
+      "text": "修理护甲\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--insufficient_kp",
+      "left": 689,
+      "top": 597,
+      "right": 772,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_regroup",
+      "text": "受击备甲\nKP 2",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 989,
+      "top": 1197,
+      "right": 1072,
+      "bottom": 1280,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_hold_the_line",
+      "text": "重拳\nKP 3",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 689,
+      "top": 997,
+      "right": 772,
+      "bottom": 1080,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_fortify",
+      "text": "堡垒姿态\nKP 5",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 689,
+      "top": 1197,
+      "right": 772,
+      "bottom": 1280,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_aegis",
+      "text": "绝对防御\nKP 8",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 689,
+      "top": 1397,
+      "right": 772,
+      "bottom": 1480,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_artery_slice",
+      "text": "铁头\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 489,
+      "top": 797,
+      "right": 572,
+      "bottom": 880,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_double_thrust",
+      "text": "剑砍\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--insufficient_kp",
+      "left": 1489,
+      "top": 597,
+      "right": 1572,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_artery_slice_copy_1769788322314",
+      "text": "铁手\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 689,
+      "top": 797,
+      "right": 772,
+      "bottom": 880,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_artery_slice_copy_1769789197982",
+      "text": "铁腿\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 889,
+      "top": 797,
+      "right": 972,
+      "bottom": 880,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_hold_the_line_copy_1769790933469",
+      "text": "顺手捡漏\nKP 3",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 789,
+      "top": 997,
+      "right": 872,
+      "bottom": 1080,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_shockwave_copy_1769791396881",
+      "text": "光头\nKP 3",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 489,
+      "top": 997,
+      "right": 572,
+      "bottom": 1080,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_fortify_copy_1769873501141",
+      "text": "西海岸\nKP 5",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 789,
+      "top": 1197,
+      "right": 872,
+      "bottom": 1280,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_hold_the_line_copy_1769956923405",
+      "text": "泥巴装甲\nKP 3",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 889,
+      "top": 1197,
+      "right": 972,
+      "bottom": 1280,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_shockwave_copy_1770041956468",
+      "text": "后撤步\nKP 3",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1289,
+      "top": 997,
+      "right": 1372,
+      "bottom": 1080,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_aegis_copy_1770042764756",
+      "text": "重新开始\nKP 8",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1289,
+      "top": 1397,
+      "right": 1372,
+      "bottom": 1480,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_skull_cracker_copy_1770042860426",
+      "text": "转进如风\nKP 2",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1589,
+      "top": 797,
+      "right": 1672,
+      "bottom": 880,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_execute_copy_1769961767095",
+      "text": "松绑\nKP 5",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1289,
+      "top": 1197,
+      "right": 1372,
+      "bottom": 1280,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_shockwave_copy_1770042951717",
+      "text": "撕裂伤口\nKP 3",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1389,
+      "top": 997,
+      "right": 1472,
+      "bottom": 1080,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_execute_copy_1770043820577",
+      "text": "迸发\nKP 5",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1389,
+      "top": 1197,
+      "right": 1472,
+      "bottom": 1280,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_execute_copy_1770044052832",
+      "text": "吸血\nKP 5",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1489,
+      "top": 1197,
+      "right": 1572,
+      "bottom": 1280,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_double_thrust_copy_1770395861178",
+      "text": "提桶跑路\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1589,
+      "top": 997,
+      "right": 1672,
+      "bottom": 1080,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_1770396871360",
+      "text": "愤怒\nKP 5",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1589,
+      "top": 1197,
+      "right": 1672,
+      "bottom": 1280,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_1770474698976",
+      "text": "鲜血打击\nKP 8",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1589,
+      "top": 1397,
+      "right": 1672,
+      "bottom": 1480,
+      "visibleInViewport": false
+    },
+    {
+      "id": "skill_1771769351059",
+      "text": "锯齿斩\nKP 2",
+      "className": "ui-skilltree__node ui-skilltree__node--locked",
+      "left": 1389,
+      "top": 797,
+      "right": 1472,
+      "bottom": 880,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_1771952067028",
+      "text": "单攻测试\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--insufficient_kp",
+      "left": 1089,
+      "top": 597,
+      "right": 1172,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_1771952147024",
+      "text": "多攻测试\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--insufficient_kp",
+      "left": 1189,
+      "top": 597,
+      "right": 1272,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_1771952209174",
+      "text": "全攻测试\nKP 1",
+      "className": "ui-skilltree__node ui-skilltree__node--insufficient_kp",
+      "left": 989,
+      "top": 597,
+      "right": 1072,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_demo_hp_guard",
+      "text": "HP免伤演示\nKP 0",
+      "className": "ui-skilltree__node ui-skilltree__node--learnable is-selected",
+      "left": 1385,
+      "top": 597,
+      "right": 1468,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_demo_armor_guard",
+      "text": "护甲免伤演示\nKP 0",
+      "className": "ui-skilltree__node ui-skilltree__node--learnable",
+      "left": 1445,
+      "top": 597,
+      "right": 1528,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_demo_on_hit_armor",
+      "text": "受击获甲演示\nKP 0",
+      "className": "ui-skilltree__node ui-skilltree__node--learnable",
+      "left": 1505,
+      "top": 597,
+      "right": 1588,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_demo_enemy_head_tap",
+      "text": "验收轻击\nKP 0",
+      "className": "ui-skilltree__node ui-skilltree__node--learnable",
+      "left": 1565,
+      "top": 597,
+      "right": 1648,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_demo_enemy_head_break",
+      "text": "验收重击\nKP 0",
+      "className": "ui-skilltree__node ui-skilltree__node--learnable",
+      "left": 1595,
+      "top": 597,
+      "right": 1678,
+      "bottom": 680,
+      "visibleInViewport": true
+    },
+    {
+      "id": "skill_demo_wait",
+      "text": "等待\nKP 0",
+      "className": "ui-skilltree__node ui-skilltree__node--learnable",
+      "left": 1625,
+      "top": 597,
+      "right": 1708,
+      "bottom": 680,
+      "visibleInViewport": true
+    }
+  ],
+  "selectedText": "HP免伤演示KP 0"
+}

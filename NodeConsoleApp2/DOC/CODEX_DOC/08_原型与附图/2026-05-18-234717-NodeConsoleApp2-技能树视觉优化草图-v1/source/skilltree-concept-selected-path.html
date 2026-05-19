@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920,height=1080,initial-scale=1">
+  <title>技能树视觉优化草图 - 选中路径态</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050607;
+      --text: #f3eee4;
+      --muted: #aaa9a3;
+      --gold: #e8c66f;
+      --green: #7be0b9;
+      --red: #c94f45;
+      --teal: #6ca7a7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+    }
+
+    .mock {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      background:
+        radial-gradient(circle at 47% 52%, rgba(201, 79, 69, 0.12), transparent 28%),
+        linear-gradient(180deg, #0a0d0e, #050607);
+    }
+
+    .mock::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.15;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(circle at 50% 52%, black, transparent 72%);
+    }
+
+    .panel {
+      position: absolute;
+      left: 96px;
+      top: 56px;
+      width: 1728px;
+      height: 968px;
+      border: 1px solid rgba(231, 214, 174, 0.19);
+      background: rgba(13, 16, 18, 0.93);
+      box-shadow: 0 32px 88px rgba(0, 0, 0, 0.62);
+      overflow: hidden;
+    }
+
+    .topbar {
+      height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px 0 32px;
+      border-bottom: 1px solid rgba(231, 214, 174, 0.13);
+      background: rgba(11, 14, 16, 0.95);
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(201, 79, 69, 0.72);
+      background: rgba(201, 79, 69, 0.12);
+      color: #ff9188;
+      font-weight: 900;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin-top: 6px;
+      display: flex;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .resources {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .pill {
+      min-width: 92px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: #dfe5e2;
+      font-size: 14px;
+    }
+
+    .pill.gold {
+      border-color: rgba(232, 198, 111, 0.58);
+      background: rgba(232, 198, 111, 0.10);
+      color: var(--gold);
+      font-weight: 800;
+    }
+
+    .workspace {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 86px;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: 1fr 384px;
+    }
+
+    .canvas {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 57% 45%, rgba(201, 79, 69, 0.10), transparent 32%),
+        radial-gradient(circle at 22% 60%, rgba(232, 198, 111, 0.06), transparent 22%),
+        rgba(8, 11, 12, 0.62);
+    }
+
+    .pathHeader {
+      position: absolute;
+      left: 34px;
+      top: 26px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1px solid rgba(201, 79, 69, 0.34);
+      background: rgba(201, 79, 69, 0.07);
+      color: #f0d6d2;
+      font-size: 14px;
+    }
+
+    .pathHeader b {
+      color: #ff9188;
+      font-size: 15px;
+    }
+
+    svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .edge {
+      fill: none;
+      stroke: rgba(207, 214, 212, 0.17);
+      stroke-width: 2;
+    }
+
+    .edge.dim {
+      opacity: 0.28;
+      stroke-dasharray: 7 10;
+    }
+
+    .edge.hot {
+      stroke: rgba(201, 79, 69, 0.90);
+      stroke-width: 4;
+      filter: drop-shadow(0 0 10px rgba(201, 79, 69, 0.36));
+    }
+
+    .edge.ready {
+      stroke: rgba(232, 198, 111, 0.80);
+      stroke-width: 3;
+    }
+
+    .node {
+      position: absolute;
+      width: 124px;
+      height: 88px;
+      display: grid;
+      grid-template-rows: 1fr 24px;
+      place-items: center;
+      padding: 14px 10px 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(18, 22, 24, 0.88);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.36);
+      opacity: 0.42;
+    }
+
+    .node::before {
+      content: attr(data-icon);
+      position: absolute;
+      top: -18px;
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid currentColor;
+      background: #111719;
+      color: currentColor;
+      font-size: 17px;
+    }
+
+    .node b {
+      text-align: center;
+      font-size: 15px;
+      line-height: 1.16;
+      max-width: 100px;
+    }
+
+    .node span {
+      min-width: 54px;
+      padding: 3px 9px;
+      border: 1px solid rgba(255,255,255,0.13);
+      background: rgba(0,0,0,0.30);
+      color: #d7d6cf;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .node.active {
+      opacity: 1;
+      color: var(--red);
+      border-color: rgba(201, 79, 69, 0.82);
+      background: rgba(37, 19, 18, 0.96);
+      box-shadow: 0 14px 34px rgba(201, 79, 69, 0.22), 0 0 0 4px rgba(201, 79, 69, 0.08);
+    }
+
+    .node.selected {
+      width: 146px;
+      height: 102px;
+      opacity: 1;
+      color: #ff9188;
+      border-color: rgba(255, 145, 136, 0.98);
+      background:
+        linear-gradient(180deg, rgba(70, 26, 23, 0.98), rgba(37, 19, 18, 0.98));
+      box-shadow: 0 18px 40px rgba(201, 79, 69, 0.34), 0 0 0 5px rgba(201, 79, 69, 0.11);
+      z-index: 5;
+    }
+
+    .node.ready {
+      opacity: 1;
+      color: var(--gold);
+      border-color: rgba(232, 198, 111, 0.82);
+      background: rgba(39, 34, 23, 0.96);
+    }
+
+    .node.learned {
+      opacity: 1;
+      color: var(--green);
+      border-color: rgba(123, 224, 185, 0.68);
+      background: rgba(19, 33, 29, 0.92);
+    }
+
+    .side {
+      position: relative;
+      padding: 26px 26px 24px;
+      border-left: 1px solid rgba(231, 214, 174, 0.11);
+      background: rgba(12, 15, 17, 0.80);
+    }
+
+    .side h2 {
+      margin-bottom: 18px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .skillTitle {
+      padding: 18px;
+      border: 1px solid rgba(201, 79, 69, 0.42);
+      background: rgba(201, 79, 69, 0.08);
+    }
+
+    .skillTitle h3 {
+      margin-bottom: 8px;
+      font-size: 25px;
+    }
+
+    .skillTitle p {
+      color: #ded5cf;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .chain {
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .chainItem {
+      display: grid;
+      grid-template-columns: 30px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      min-height: 54px;
+      padding: 11px 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+      color: #dedbd3;
+      font-size: 14px;
+    }
+
+    .chainItem i {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid currentColor;
+      font-style: normal;
+      font-size: 13px;
+    }
+
+    .chainItem.done { color: var(--green); }
+    .chainItem.now { color: #ff9188; border-color: rgba(201, 79, 69, 0.38); background: rgba(201, 79, 69, 0.07); }
+    .chainItem.next { color: var(--gold); }
+
+    .effect {
+      margin-top: 18px;
+      padding: 15px;
+      border: 1px solid rgba(232, 198, 111, 0.24);
+      background: rgba(232, 198, 111, 0.05);
+      color: #e8dcc5;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .compare {
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .compareRow {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .compareRow b {
+      color: #f2eee4;
+    }
+
+    .actions {
+      position: absolute;
+      left: 26px;
+      right: 26px;
+      bottom: 24px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .actions button {
+      height: 48px;
+      border: 1px solid rgba(201, 79, 69, 0.80);
+      background: #d75d53;
+      color: #170c0b;
+      font-weight: 900;
+      font-size: 15px;
+    }
+
+    .actions button.secondary {
+      border-color: rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: #ded8cb;
+    }
+  </style>
+</head>
+<body>
+  <main class="mock">
+    <section class="panel">
+      <header class="topbar">
+        <div class="title">
+          <div class="mark">血</div>
+          <div>
+            <h1>技能树 / 构筑</h1>
+            <div class="sub">
+              <span>流血连段路径</span>
+              <span>已显示关联前置与后续影响</span>
+              <span>其余分支自动降噪</span>
+            </div>
+          </div>
+        </div>
+        <div class="resources">
+          <div class="pill gold">可用 KP 4</div>
+          <div class="pill">全图</div>
+          <div class="pill">提交并关闭</div>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <div class="canvas">
+          <div class="pathHeader"><b>锯齿斩</b><span>选中后只高亮它的前置、兄弟分支和后续可达节点</span></div>
+          <svg viewBox="0 0 1344 882" aria-hidden="true">
+            <path class="edge dim" d="M186 126 L186 280" />
+            <path class="edge dim" d="M356 126 L356 280" />
+            <path class="edge hot" d="M620 126 L620 280" />
+            <path class="edge hot" d="M620 368 L620 530" />
+            <path class="edge hot" d="M620 632 L548 760" />
+            <path class="edge hot" d="M620 632 L702 760" />
+            <path class="edge ready" d="M620 368 L788 522" />
+            <path class="edge dim" d="M892 126 L892 280" />
+            <path class="edge dim" d="M1040 126 L1040 280" />
+            <path class="edge dim" d="M356 368 L282 530" />
+            <path class="edge dim" d="M356 368 L430 530" />
+          </svg>
+
+          <div class="node learned" data-icon="✚" style="left:130px;top:96px"><b>修理护甲</b><span>已学</span></div>
+          <div class="node" data-icon="▣" style="left:300px;top:96px"><b>重锤</b><span>已学</span></div>
+          <div class="node learned active" data-icon="⚔" style="left:558px;top:96px"><b>剑砍</b><span>已学</span></div>
+          <div class="node" data-icon="✚" style="left:830px;top:96px"><b>治疗</b><span>KP 1</span></div>
+          <div class="node" data-icon="◎" style="left:978px;top:96px"><b>单攻测试</b><span>隐藏</span></div>
+
+          <div class="node" data-icon="▣" style="left:130px;top:280px"><b>铁手</b><span>KP 1</span></div>
+          <div class="node" data-icon="⚔" style="left:300px;top:280px"><b>裂颅一击</b><span>KP 2</span></div>
+          <div class="node ready active" data-icon="🩸" style="left:558px;top:280px"><b>转进如风</b><span>KP 2</span></div>
+          <div class="node selected" data-icon="🩸" style="left:547px;top:530px"><b>锯齿斩</b><span>选中</span></div>
+          <div class="node ready active" data-icon="🩸" style="left:726px;top:522px"><b>撕裂伤口</b><span>KP 3</span></div>
+
+          <div class="node active" data-icon="🩸" style="left:492px;top:760px"><b>迸发</b><span>后续</span></div>
+          <div class="node active" data-icon="🩸" style="left:646px;top:760px"><b>吸血</b><span>后续</span></div>
+          <div class="node" data-icon="◆" style="left:226px;top:530px"><b>大地震击</b><span>前置</span></div>
+          <div class="node" data-icon="✦" style="left:374px;top:530px"><b>斩首</b><span>前置</span></div>
+        </div>
+
+        <aside class="side">
+          <h2>路径详情</h2>
+          <section class="skillTitle">
+            <h3>锯齿斩</h3>
+            <p>进入流血路线的关键节点。学习后，撕裂伤口、迸发、吸血会成为主要后续目标。</p>
+          </section>
+
+          <div class="chain">
+            <div class="chainItem done"><i>1</i><b>剑砍</b><span>已学</span></div>
+            <div class="chainItem next"><i>2</i><b>转进如风</b><span>可学</span></div>
+            <div class="chainItem now"><i>3</i><b>锯齿斩</b><span>选中</span></div>
+            <div class="chainItem"><i>4</i><b>撕裂伤口 / 吸血</b><span>后续</span></div>
+          </div>
+
+          <div class="effect">
+            设计重点：点击节点后，画布不是只换详情文案，而是立即把“为什么要学它”和“学完去哪”显示出来。未关联节点降低透明度，避免 41 个节点同时争夺注意力。
+          </div>
+
+          <div class="compare">
+            <div class="compareRow"><span>本次学习成本</span><b>2 KP</b></div>
+            <div class="compareRow"><span>剩余 KP</span><b>2</b></div>
+            <div class="compareRow"><span>解锁后续</span><b>3 个节点</b></div>
+            <div class="compareRow"><span>互斥风险</span><b>无</b></div>
+          </div>
+
+          <div class="actions">
+            <button type="button">暂存学习：锯齿斩</button>
+            <button type="button" class="secondary">只查看该路线</button>
+          </div>
+        </aside>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

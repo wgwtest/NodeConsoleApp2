@@ -1,0 +1,55 @@
+{
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "overlay": {
+    "left": 1,
+    "top": 1,
+    "width": 1918,
+    "height": 1078
+  },
+  "content": {
+    "left": 96,
+    "top": 143,
+    "width": 1728,
+    "height": 881
+  },
+  "canvas": {
+    "left": 356,
+    "top": 143,
+    "width": 1134,
+    "height": 881
+  },
+  "detail": {
+    "left": 1490,
+    "top": 143,
+    "width": 334,
+    "height": 881
+  },
+  "selected": {
+    "left": 918.9078979492188,
+    "top": 344.24761962890625,
+    "right": 1010.0556640625,
+    "bottom": 410.9808044433594
+  },
+  "chain": {
+    "left": 1515,
+    "top": 625.671875,
+    "right": 1800,
+    "bottom": 880,
+    "height": 254.328125
+  },
+  "actions": {
+    "left": 1515,
+    "top": 898,
+    "right": 1800,
+    "bottom": 1000,
+    "height": 102
+  },
+  "actionsOverlapChain": false,
+  "nodeCount": 32,
+  "hiddenRuntimeTextPresent": false,
+  "selectedText": "当前选择\n锯齿斩\n\n以锯齿刃撕开伤口，造成伤害并施加流血。\n\n消耗\n2 KP\n状态\n缺少前置\n前置\n重锤\n解锁后续\n后撤步、松绑、重新开始、撕裂伤口\n缺少前置：重锤\n1\n重锤\n前置\n2\n锯齿斩\n当前\n3\n后撤步\n后续\n4\n松绑\n后续\n5\n重新开始\n后续\n暂存学习：锯齿斩\n只查看影响路径",
+  "transform": "translate(3px, 10px) scale(0.81382)"
+}
