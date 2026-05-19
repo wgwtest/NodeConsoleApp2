@@ -175,6 +175,8 @@ test('DataManagerV2 会把地图包转换为运行时关卡选择地图模型', 
     ['node_gate', 'level_1_3_story', 'unlocked']
   ]);
   assert.equal(model.map.nodes[1].levelName, '密林前哨');
+  assert.equal(model.map.nodes[1].unlockHint, '当前已解锁，建议优先推进章节主线。');
+  assert.equal(model.map.nodes[1].levelDescription, '密林前哨 runtime description');
   assert.equal(model.map.nodes[2].isUnlocked, true);
   assert.equal(model.map.nodes[2].selectLevelId, 'level_1_3_story');
 });
