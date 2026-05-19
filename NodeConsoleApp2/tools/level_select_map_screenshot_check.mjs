@@ -200,6 +200,7 @@ try {
             })()
         }));
         const stageRect = rectOf(".level-select-runtime-map__stage");
+        const surfaceRect = rectOf(".level-select-runtime-map__surface");
         const drawerRect = rectOf(".level-select-runtime-map__drawer");
         const enterRect = rectOf("[data-action='enter-level']");
         const modalRect = rectOf(".modal-panel--level-select");
@@ -207,7 +208,8 @@ try {
         const switcherRect = rectOf(".level-map-switcher");
         const listRect = rectOf(".level-list-panel");
         const screenshotText = document.querySelector(".level-select-runtime-map")?.textContent || "";
-        const style = getComputedStyle(document.querySelector(".level-select-runtime-map__stage"));
+        const stageStyle = getComputedStyle(document.querySelector(".level-select-runtime-map__stage"));
+        const surfaceStyle = getComputedStyle(document.querySelector(".level-select-runtime-map__surface"));
         return {
             title: document.getElementById("modalTitle")?.textContent.trim(),
             viewport: { width: window.innerWidth, height: window.innerHeight },
@@ -216,6 +218,7 @@ try {
             mapRect,
             switcherRect,
             stageRect,
+            surfaceRect,
             drawerRect,
             enterRect,
             mapButtonCount: mapButtons.length,
@@ -225,8 +228,14 @@ try {
             edgeCount: document.querySelectorAll(".level-map-edge").length,
             selectedNodeCount: nodes.filter(node => node.selected).length,
             lockedNodeCount: nodes.filter(node => node.disabled).length,
+            markerPlateCount: document.querySelectorAll(".level-map-node__plate").length,
+            markerPinCount: document.querySelectorAll(".level-map-node__pin").length,
+            drawerMetaRows: document.querySelectorAll(".level-map-drawer__meta-row").length,
+            drawerSections: document.querySelectorAll(".level-map-drawer__section").length,
+            drawerRewardItems: document.querySelectorAll(".level-map-drawer__rewards div span").length,
             nodes,
-            stageBackgroundImage: style.backgroundImage,
+            stageBackgroundImage: stageStyle.backgroundImage,
+            surfaceBackgroundImage: surfaceStyle.backgroundImage,
             mapText: screenshotText.trim().replace(/\\s+/g, " ")
         };
     })()`);
@@ -238,9 +247,20 @@ try {
     assertCondition(report.pressedMapButtonCount === 1, `当前地图切换状态数量异常：${report.pressedMapButtonCount}`);
     assertCondition(report.edgeCount >= 2, '地图连线数量不足');
     assertCondition(report.selectedNodeCount >= 1, '缺少选中或推荐节点');
-    assertCondition(report.stageBackgroundImage.includes('image_w2752_h1536_map-bg-01'), '地图背景图未加载到舞台');
+    assertCondition(report.markerPlateCount === report.nodeCount, `地图节点未全部使用一体化标牌：${report.markerPlateCount}/${report.nodeCount}`);
+    assertCondition(report.markerPinCount === 0, `旧 pin 节点结构未移除：${report.markerPinCount}`);
+    assertCondition(report.stageBackgroundImage === 'none', '地图背景不应继续挂在固定舞台上');
+    assertCondition(report.surfaceBackgroundImage.includes('image_w2752_h1536_map-bg-01'), '地图背景图未加载到可缩放 surface');
+    assertCondition(report.drawerMetaRows >= 3, `关卡详情元数据过少：${report.drawerMetaRows}`);
+    assertCondition(report.drawerSections >= 2, `关卡详情正文区过少：${report.drawerSections}`);
+    assertCondition(report.drawerRewardItems >= 1, '关卡详情缺少奖励预览');
+    assertCondition(report.mapText.includes('关卡ID'), '关卡详情缺少关卡ID');
+    assertCondition(report.mapText.includes('解锁说明'), '关卡详情缺少解锁说明');
+    assertCondition(report.mapText.includes('奖励预览'), '关卡详情缺少奖励预览标题');
     assertCondition(report.stageRect.width >= 850, `地图舞台过窄：${report.stageRect.width}`);
     assertCondition(report.stageRect.height >= 470, `地图舞台过矮：${report.stageRect.height}`);
+    assertCondition(report.surfaceRect.width >= report.stageRect.width - 8, `地图可缩放 surface 没有铺满舞台宽度：${report.surfaceRect.width}/${report.stageRect.width}`);
+    assertCondition(report.surfaceRect.height >= report.stageRect.height - 8, `地图可缩放 surface 没有铺满舞台高度：${report.surfaceRect.height}/${report.stageRect.height}`);
     assertCondition(report.mapRect.right <= report.modalRect.right && report.mapRect.bottom <= report.modalRect.bottom, '地图区域溢出弹窗');
     assertCondition(report.switcherRect.right <= report.mapRect.right && report.switcherRect.bottom <= report.mapRect.bottom, '地图切换控件溢出地图区域');
     assertCondition(report.drawerRect.right <= report.mapRect.right && report.drawerRect.bottom <= report.mapRect.bottom, '关卡详情抽屉溢出地图区域');

@@ -121,12 +121,15 @@ function buildMapModel() {
           label: '1-1',
           title: '幽暗森林边缘',
           levelName: '幽暗森林边缘',
+          levelDescription: '作为森林入口的基础战斗，用于确认当前构筑能否撑过首轮压力。',
           kind: 'battle',
           status: 'completed',
           statusLabel: '已完成',
           isUnlocked: true,
           position: { x: 120, y: 240 },
           objectiveText: '建立第一波防线。',
+          difficultyLabel: '标准',
+          unlockHint: '已完成；可重复挑战补资源。',
           rewardPreview: ['KP +1'],
           artRefs: { nodeArt: 'node_icon_elf_archer' }
         },
@@ -136,12 +139,15 @@ function buildMapModel() {
           label: '1-2',
           title: '密林前哨',
           levelName: '密林前哨',
+          levelDescription: '前哨会提高敌人的节奏压力，适合检验防守与反击构筑。',
           kind: 'battle',
           status: 'recommended',
           statusLabel: '当前推荐',
           isUnlocked: true,
           position: { x: 480, y: 220 },
           objectiveText: '穿过前哨。',
+          difficultyLabel: '进阶',
+          unlockHint: '当前已解锁，建议优先推进章节主线。',
           rewardPreview: ['金币 80'],
           artRefs: { nodeArt: 'node_icon_elf_archer' }
         },
@@ -151,6 +157,7 @@ function buildMapModel() {
           label: '1-3',
           title: '废墟关隘',
           levelName: '废墟关隘',
+          levelDescription: '章节收束战，敌人配置更重，建议完成前哨后再进入。',
           kind: 'boss',
           status: 'locked',
           statusLabel: '未解锁',
@@ -158,6 +165,8 @@ function buildMapModel() {
           selectLevelId: 'level_1_1',
           position: { x: 860, y: 260 },
           objectiveText: '进入章节首领战。',
+          difficultyLabel: '高压',
+          unlockHint: '完成 密林前哨 后解锁。',
           rewardPreview: ['KP +2'],
           artRefs: {}
         }
@@ -194,6 +203,7 @@ test('LevelSelectMapView 会把节点选择、进入确认和视图缩放拆开'
     const root = document.querySelector('.level-select-runtime-map');
     const controls = [...document.querySelectorAll('[data-action]')];
     const stage = document.querySelector('.level-select-runtime-map__stage');
+    const surface = document.querySelector('.level-select-runtime-map__surface');
     const selectedNode = document.querySelector('.level-map-node[data-selected="true"]');
     const nodes = [...document.querySelectorAll('.level-map-node')];
     const lockedNode = document.querySelector('.level-map-node.is-locked');
@@ -208,9 +218,12 @@ test('LevelSelectMapView 会把节点选择、进入确认和视图缩放拆开'
     assert.ok(detail, '缺少关卡详情抽屉');
     assert.ok(enterBtn, '缺少进入按钮');
     assert.equal(controls.length >= 4, true, '缺少地图缩放控制');
-    assert.equal(nodes.every(node => node.querySelector('.level-map-node__pin')), true, '地图节点应使用地标 pin 视觉层');
+    assert.equal(nodes.every(node => node.querySelector('.level-map-node__plate')), true, '地图节点应使用一体化地图标牌');
+    assert.equal(nodes.some(node => node.querySelector('.level-map-node__pin')), false, '地图节点不应继续使用圆形 pin 视觉层');
+    assert.equal(nodes.some(node => node.querySelector('.level-map-node__caption')), false, '地图节点不应继续使用独立冒泡标签');
     assert.deepEqual(controls.map(item => item.getAttribute('aria-label')), ['缩小地图', '适配视图', '放大地图', '进入关卡']);
-    assert.match(stage?.style.backgroundImage || '', /image_w2752_h1536_map-bg-01/u);
+    assert.equal(stage?.style.backgroundImage || '', '');
+    assert.match(surface?.style.backgroundImage || '', /image_w2752_h1536_map-bg-01/u);
     assert.equal(stage?.style.aspectRatio, '16 / 9');
     assert.equal(nodes.length, 3);
     assert.equal(selectedNode?.dataset.nodeId, 'node_scout');
@@ -218,6 +231,10 @@ test('LevelSelectMapView 会把节点选择、进入确认和视图缩放拆开'
     assert.deepEqual(edgeLabels, ['林间路线', '废墟入口']);
     assert.match(root?.dataset.zoom || '', /^1(?:\.0+)?$/);
     assert.match(detail?.textContent || '', /密林前哨/);
+    assert.match(detail?.textContent || '', /前哨会提高敌人的节奏压力/u);
+    assert.match(detail?.textContent || '', /当前已解锁，建议优先推进章节主线/u);
+    assert.match(detail?.textContent || '', /关卡ID/u);
+    assert.match(detail?.textContent || '', /奖励预览/u);
 
     selectedNode?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
     assert.deepEqual(selected, [
@@ -233,6 +250,8 @@ test('LevelSelectMapView 会把节点选择、进入确认和视图缩放拆开'
 
     zoomInBtn?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
     assert.equal(root?.dataset.zoom, '1.10');
+    assert.match(surface?.style.transform || '', /scale\(1\.1\)/u);
+    assert.match(surface?.style.backgroundImage || '', /image_w2752_h1536_map-bg-01/u);
     zoomOutBtn?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
     assert.equal(root?.dataset.zoom, '1.00');
     zoomOutBtn?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
