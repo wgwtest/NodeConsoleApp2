@@ -21,6 +21,11 @@ const PROJECTED_POSITION_BOUNDS = Object.freeze({
 	width: 930,
 	height: 520
 });
+const RUNTIME_LAYOUT_TOP = 82;
+const RUNTIME_MIN_NODE_GAP_X = 126;
+const RUNTIME_LANE_STEP_Y = 104;
+const RUNTIME_ROW_GAP_Y = 34;
+const RUNTIME_MAX_NODES_PER_LANE = Math.floor(PROJECTED_POSITION_BOUNDS.width / RUNTIME_MIN_NODE_GAP_X) + 1;
 
 const ROUTE_DEFS = Object.freeze([
 	{
@@ -300,21 +305,41 @@ export class UI_SkillTreeModal {
 		if (!needsProjection) return;
 
 		const rawPosMinX = Math.min(...rawNodes.map(item => item.pos.x));
-		const rawPosMinY = Math.min(...rawNodes.map(item => item.pos.y));
-		const rawPosMaxX = Math.max(...rawNodes.map(item => item.pos.x));
-		const rawPosMaxY = Math.max(...rawNodes.map(item => item.pos.y));
-		const rawRangeX = Math.max(1, rawPosMaxX - rawPosMinX);
-		const rawRangeY = Math.max(1, rawPosMaxY - rawPosMinY);
-
+		const rawRows = new Map();
 		for (const item of rawNodes) {
-			const x = PROJECTED_POSITION_BOUNDS.left
-				+ ((item.pos.x - rawPosMinX) / rawRangeX) * PROJECTED_POSITION_BOUNDS.width;
-			const y = PROJECTED_POSITION_BOUNDS.top
-				+ ((item.pos.y - rawPosMinY) / rawRangeY) * PROJECTED_POSITION_BOUNDS.height;
-			this._nodePositions.set(item.skill.id, {
-				x: Math.round(x),
-				y: Math.round(y)
-			});
+			const rowKey = String(item.pos.y);
+			if (!rawRows.has(rowKey)) rawRows.set(rowKey, []);
+			rawRows.get(rowKey).push(item);
+		}
+
+		let cursorY = RUNTIME_LAYOUT_TOP;
+		const rows = Array.from(rawRows.entries())
+			.map(([rawY, items]) => ({
+				rawY: Number(rawY),
+				items: items.sort((a, b) => a.pos.x - b.pos.x)
+			}))
+			.sort((a, b) => a.rawY - b.rawY);
+
+		for (const row of rows) {
+			const laneCount = Math.max(1, Math.ceil(row.items.length / RUNTIME_MAX_NODES_PER_LANE));
+			const laneSize = Math.ceil(row.items.length / laneCount);
+			for (let laneIndex = 0; laneIndex < laneCount; laneIndex += 1) {
+				const laneItems = row.items.slice(laneIndex * laneSize, (laneIndex + 1) * laneSize);
+				if (!laneItems.length) continue;
+				const y = cursorY + laneIndex * RUNTIME_LANE_STEP_Y;
+				const lastIndex = laneItems.length - 1;
+				for (let itemIndex = 0; itemIndex < laneItems.length; itemIndex += 1) {
+					const item = laneItems[itemIndex];
+					const x = PROJECTED_POSITION_BOUNDS.left + (lastIndex === 0
+						? PROJECTED_POSITION_BOUNDS.width / 2
+						: (itemIndex / lastIndex) * PROJECTED_POSITION_BOUNDS.width);
+					this._nodePositions.set(item.skill.id, {
+						x: Math.round(x),
+						y: Math.round(y)
+					});
+				}
+			}
+			cursorY += (laneCount - 1) * RUNTIME_LANE_STEP_Y + NODE_H + RUNTIME_ROW_GAP_Y;
 		}
 	}
 

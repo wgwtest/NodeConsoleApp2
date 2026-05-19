@@ -262,6 +262,71 @@ test('UI_SkillTreeModal normalizes active pack coordinates to readable runtime d
   }
 });
 
+test('UI_SkillTreeModal avoids node rectangle overlap for the active skill pack', async () => {
+  const packPath = path.join(projectRoot, 'assets', 'data', 'skills_melee_v4_5.json');
+  const pack = JSON.parse(await fs.readFile(packPath, 'utf8'));
+  const skillsList = pack.skills || [];
+  const skillsMap = Object.fromEntries(skillsList.map(skill => [skill.id, skill]));
+  const dom = new JSDOM('<!doctype html><body><main id="mount"></main></body>');
+  installDomGlobals(dom);
+  try {
+    const { UI_SkillTreeModal } = await importSourceModule('script/ui/UI_SkillTreeModal.js');
+    const modal = new UI_SkillTreeModal();
+    modal.init({
+      data: {
+        playerData: {
+          skills: {
+            skillTreeId: 'melee_v4_5',
+            skillPoints: 8,
+            learned: []
+          }
+        },
+        getSkillCatalog() {
+          return { skillsList, skillsMap };
+        }
+      },
+      eventBus: { emit() {} },
+      saveGame() {}
+    });
+    modal.mountTo(document.getElementById('mount'), { title: '技能树 / 构筑' });
+
+    const assertNoOverlaps = (nodeWidth, nodeHeight, label) => {
+      const nodes = [...document.querySelectorAll('.ui-skilltree__node')].map(node => ({
+        id: node.dataset.skillId,
+        name: node.textContent.trim().replace(/\s+/g, ' '),
+        left: Number.parseFloat(node.style.left),
+        top: Number.parseFloat(node.style.top)
+      }));
+      const overlaps = [];
+      for (let i = 0; i < nodes.length; i += 1) {
+        for (let j = i + 1; j < nodes.length; j += 1) {
+          const a = nodes[i];
+          const b = nodes[j];
+          const overlapX = Math.min(a.left + nodeWidth, b.left + nodeWidth) - Math.max(a.left, b.left);
+          const overlapY = Math.min(a.top + nodeHeight, b.top + nodeHeight) - Math.max(a.top, b.top);
+          if (overlapX > 0 && overlapY > 0) {
+            overlaps.push(`${a.name} <-> ${b.name} (${Math.round(overlapX)}x${Math.round(overlapY)})`);
+          }
+        }
+      }
+      assert.deepEqual(overlaps, [], `${label} should not overlap nodes`);
+    };
+
+    modal._zoom = 0.9;
+    modal._renderAll();
+    assert.equal(document.querySelector('.ui-skilltree')?.dataset.lod, 'reading');
+    assertNoOverlaps(112, 82, 'reading LOD');
+
+    modal._zoom = 0.76;
+    modal._renderAll();
+    assert.equal(document.querySelector('.ui-skilltree')?.dataset.lod, 'structure');
+    assertNoOverlaps(74, 48, 'structure LOD');
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
+
 test('UI_SkillTreeModal exposes a visible direct close action in the redesigned topbar', async () => {
   const dom = new JSDOM('<!doctype html><body><main id="mount"></main></body>');
   installDomGlobals(dom);
