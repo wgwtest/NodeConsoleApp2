@@ -1,0 +1,40 @@
+{
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "screenshots": [
+    {
+      "state": "global",
+      "fileName": "01-skilltree-global-structure-1920x1080.png",
+      "label": "global structure",
+      "report": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "body": {
+          "width": 1920,
+          "height": 1080
+        },
+        "whiteBottomProbe": "rgba(0, 0, 0, 0)"
+      }
+    },
+    {
+      "state": "selected",
+      "fileName": "02-skilltree-selected-reading-1920x1080.png",
+      "label": "selected reading",
+      "report": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "body": {
+          "width": 1920,
+          "height": 1080
+        },
+        "whiteBottomProbe": "rgba(0, 0, 0, 0)"
+      }
+    }
+  ]
+}
