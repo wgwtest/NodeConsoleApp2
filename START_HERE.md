@@ -5,7 +5,6 @@ Purpose: keep the map and skill optimization worktrees easy to start from the pr
 ## Workspace
 
 - Main branch: `master`
-- Integration branch: `codex/integration-merge-20260519`
 - Map worktree: `/home/wgw/CodexProject/NodeConsoleApp2/.worktree/map-optimization-20260518`
 - Skill worktree: `/home/wgw/CodexProject/NodeConsoleApp2/.worktree/skill-optimization-20260518`
 
