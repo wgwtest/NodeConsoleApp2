@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920,height=1080,initial-scale=1">
+  <title>技能树视觉优化草图 - 总览态</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #060809;
+      --panel: rgba(16, 20, 24, 0.86);
+      --panel-strong: rgba(23, 29, 34, 0.92);
+      --line: rgba(210, 218, 220, 0.26);
+      --line-active: #e8c66f;
+      --text: #f3eee4;
+      --muted: #aaa9a3;
+      --locked: #495258;
+      --learned: #7be0b9;
+      --ready: #e8c66f;
+      --danger: #e66a5e;
+      --iron: #b9c1c2;
+      --blood: #c94f45;
+      --guard: #6ca7a7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+    }
+
+    .mock {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      background:
+        linear-gradient(120deg, rgba(100, 55, 44, 0.16), transparent 34%),
+        radial-gradient(circle at 48% 50%, rgba(228, 198, 118, 0.08), transparent 28%),
+        linear-gradient(180deg, #091010 0%, #0c1114 47%, #050607 100%);
+    }
+
+    .mock::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.16;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(circle at 50% 54%, black, transparent 74%);
+    }
+
+    .panel {
+      position: absolute;
+      left: 96px;
+      top: 56px;
+      width: 1728px;
+      height: 968px;
+      border: 1px solid rgba(231, 214, 174, 0.20);
+      background:
+        linear-gradient(180deg, rgba(20, 24, 26, 0.88), rgba(12, 15, 17, 0.92)),
+        radial-gradient(circle at 54% 52%, rgba(232, 198, 111, 0.08), transparent 38%);
+      box-shadow: 0 32px 88px rgba(0, 0, 0, 0.62);
+      overflow: hidden;
+    }
+
+    .topbar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px 0 32px;
+      border-bottom: 1px solid rgba(231, 214, 174, 0.13);
+      background: rgba(13, 16, 18, 0.92);
+    }
+
+    .titleGroup {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(232, 198, 111, 0.72);
+      color: var(--ready);
+      font-weight: 800;
+      background: rgba(232, 198, 111, 0.08);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    .sub {
+      margin-top: 6px;
+      display: flex;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .resources {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill {
+      min-width: 92px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: #dfe5e2;
+      font-size: 14px;
+    }
+
+    .pill.ready {
+      border-color: rgba(232, 198, 111, 0.52);
+      color: var(--ready);
+      background: rgba(232, 198, 111, 0.08);
+      font-weight: 700;
+    }
+
+    .pill.primary {
+      border-color: rgba(232, 198, 111, 0.72);
+      color: #15130e;
+      background: var(--ready);
+      font-weight: 800;
+    }
+
+    .workspace {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 86px;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: 260px 1fr 334px;
+    }
+
+    .rail {
+      position: relative;
+      padding: 24px;
+      border-right: 1px solid rgba(231, 214, 174, 0.11);
+      background: rgba(10, 14, 16, 0.54);
+    }
+
+    .rail h2,
+    .detail h2 {
+      margin: 0 0 18px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #efe6d0;
+    }
+
+    .routeList {
+      display: grid;
+      gap: 10px;
+    }
+
+    .route {
+      display: grid;
+      grid-template-columns: 8px 1fr;
+      gap: 12px;
+      min-height: 58px;
+      padding: 13px 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .route.is-active {
+      border-color: rgba(232, 198, 111, 0.52);
+      background: rgba(232, 198, 111, 0.07);
+    }
+
+    .route i {
+      display: block;
+      height: 100%;
+      background: var(--line-active);
+    }
+
+    .route:nth-child(2) i { background: var(--guard); }
+    .route:nth-child(3) i { background: var(--blood); }
+
+    .route b {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .route span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .legend {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 24px;
+      display: grid;
+      gap: 11px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legendRow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--locked);
+    }
+
+    .dot.learned { background: var(--learned); }
+    .dot.ready { background: var(--ready); }
+    .dot.path { background: var(--blood); }
+
+    .canvas {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 52% 50%, rgba(232, 198, 111, 0.08), transparent 39%),
+        linear-gradient(180deg, rgba(255,255,255,0.018), transparent);
+    }
+
+    .canvasLabel {
+      position: absolute;
+      left: 28px;
+      top: 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #ccd3d0;
+      font-size: 13px;
+    }
+
+    .zoom {
+      position: absolute;
+      right: 24px;
+      bottom: 22px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .zoom button {
+      width: 38px;
+      height: 34px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: #e6e1d5;
+      font-size: 17px;
+    }
+
+    svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .edge {
+      fill: none;
+      stroke: rgba(207, 214, 212, 0.24);
+      stroke-width: 2;
+    }
+
+    .edge.ready {
+      stroke: rgba(232, 198, 111, 0.82);
+      stroke-width: 3;
+      filter: drop-shadow(0 0 8px rgba(232, 198, 111, 0.24));
+    }
+
+    .edge.learned {
+      stroke: rgba(123, 224, 185, 0.64);
+      stroke-width: 3;
+    }
+
+    .edge.locked {
+      stroke-dasharray: 8 10;
+    }
+
+    .node {
+      position: absolute;
+      width: 112px;
+      height: 82px;
+      display: grid;
+      grid-template-rows: 1fr 24px;
+      place-items: center;
+      padding: 12px 10px 8px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(20, 24, 26, 0.90);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.34);
+    }
+
+    .node::before {
+      content: attr(data-icon);
+      position: absolute;
+      top: -17px;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid currentColor;
+      background: #111719;
+      font-size: 17px;
+      color: currentColor;
+    }
+
+    .node b {
+      display: block;
+      text-align: center;
+      font-size: 15px;
+      line-height: 1.18;
+      font-weight: 800;
+      max-width: 92px;
+    }
+
+    .node span {
+      min-width: 50px;
+      padding: 3px 9px;
+      border: 1px solid rgba(255,255,255,0.13);
+      background: rgba(0,0,0,0.30);
+      color: #d7d6cf;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .node.learned {
+      color: var(--learned);
+      border-color: rgba(123, 224, 185, 0.74);
+      background: rgba(20, 36, 31, 0.94);
+    }
+
+    .node.ready {
+      color: var(--ready);
+      border-color: rgba(232, 198, 111, 0.86);
+      background: rgba(39, 34, 23, 0.96);
+      box-shadow: 0 14px 34px rgba(232, 198, 111, 0.18), 0 0 0 4px rgba(232, 198, 111, 0.08);
+    }
+
+    .node.locked {
+      color: #8b9498;
+      border-color: rgba(255,255,255,0.10);
+      background: rgba(15, 18, 20, 0.82);
+      opacity: 0.78;
+    }
+
+    .node.path {
+      color: var(--blood);
+      border-color: rgba(201, 79, 69, 0.64);
+    }
+
+    .tier {
+      position: absolute;
+      left: 70px;
+      right: 70px;
+      height: 1px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .tier span {
+      position: absolute;
+      left: 0;
+      top: -24px;
+      color: rgba(255,255,255,0.34);
+      font-size: 12px;
+    }
+
+    .detail {
+      position: relative;
+      padding: 24px;
+      border-left: 1px solid rgba(231, 214, 174, 0.11);
+      background: rgba(12, 15, 17, 0.72);
+    }
+
+    .detailCard {
+      padding: 18px;
+      border: 1px solid rgba(232, 198, 111, 0.36);
+      background: rgba(232, 198, 111, 0.06);
+    }
+
+    .detailCard h3 {
+      margin: 0 0 8px;
+      font-size: 24px;
+    }
+
+    .detailCard p {
+      margin: 0;
+      color: #d9d4ca;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .statGrid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat {
+      min-height: 62px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .stat b {
+      font-size: 16px;
+      color: #f0eadf;
+    }
+
+    .unlock {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid rgba(123, 224, 185, 0.24);
+      background: rgba(123, 224, 185, 0.05);
+      color: #c8f3e4;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .action {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 24px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .action button {
+      height: 46px;
+      border: 1px solid rgba(232, 198, 111, 0.72);
+      background: var(--ready);
+      color: #16120c;
+      font-weight: 900;
+      font-size: 15px;
+    }
+
+    .action .ghost {
+      border-color: rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: #ddd7c9;
+    }
+  </style>
+</head>
+<body>
+  <main class="mock">
+    <section class="panel">
+      <header class="topbar">
+        <div class="titleGroup">
+          <div class="mark">技</div>
+          <div>
+            <h1>技能树 / 构筑</h1>
+            <div class="sub">
+              <span>近战流派</span>
+              <span>已学习 3 / 28</span>
+              <span>推荐：先补核心生存，再进入流血分支</span>
+            </div>
+          </div>
+        </div>
+        <div class="resources">
+          <div class="pill ready">可用 KP 4</div>
+          <div class="pill">撤销暂存</div>
+          <div class="pill primary">提交并关闭</div>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <aside class="rail">
+          <h2>构筑路线</h2>
+          <div class="routeList">
+            <div class="route is-active">
+              <i></i>
+              <div><b>稳固前线</b><span>护甲、格挡、反击</span></div>
+            </div>
+            <div class="route">
+              <i></i>
+              <div><b>破甲重击</b><span>高伤、处决、震击</span></div>
+            </div>
+            <div class="route">
+              <i></i>
+              <div><b>流血连段</b><span>撕裂、吸血、爆发</span></div>
+            </div>
+          </div>
+          <div class="legend">
+            <div class="legendRow"><i class="dot learned"></i><span>已学习：能力已进入战斗技能池</span></div>
+            <div class="legendRow"><i class="dot ready"></i><span>可学习：满足前置与 KP</span></div>
+            <div class="legendRow"><i class="dot"></i><span>锁定：缺少前置或资源</span></div>
+            <div class="legendRow"><i class="dot path"></i><span>互斥/分支：选择后影响路线</span></div>
+          </div>
+        </aside>
+
+        <section class="canvas">
+          <div class="canvasLabel">拖拽平移 · 滚轮缩放 · 双击回到全图</div>
+          <div class="tier" style="top:154px"><span>根技能</span></div>
+          <div class="tier" style="top:344px"><span>核心分支</span></div>
+          <div class="tier" style="top:544px"><span>进阶专精</span></div>
+          <div class="tier" style="top:744px"><span>终局能力</span></div>
+
+          <svg viewBox="0 0 1134 882" aria-hidden="true">
+            <path class="edge learned" d="M220 118 L220 210 L220 274" />
+            <path class="edge ready" d="M220 356 L220 452 L220 526" />
+            <path class="edge locked" d="M220 356 L374 438 L374 526" />
+            <path class="edge locked" d="M220 356 L96 438 L96 526" />
+            <path class="edge" d="M536 118 L536 210 L536 274" />
+            <path class="edge" d="M536 356 L478 452 L478 526" />
+            <path class="edge" d="M536 356 L616 452 L616 526" />
+            <path class="edge" d="M818 118 L746 214 L746 274" />
+            <path class="edge" d="M818 118 L894 214 L894 274" />
+            <path class="edge locked" d="M478 608 L452 700 L452 756" />
+            <path class="edge locked" d="M616 608 L646 700 L646 756" />
+            <path class="edge locked" d="M220 608 L220 700 L220 756" />
+            <path class="edge locked" d="M894 356 L894 526" />
+          </svg>
+
+          <div class="node learned" data-icon="✚" style="left:164px;top:86px"><b>修理护甲</b><span>已学</span></div>
+          <div class="node ready" data-icon="✚" style="left:164px;top:274px"><b>铁手</b><span>KP 1</span></div>
+          <div class="node ready" data-icon="▣" style="left:164px;top:526px"><b>重拳</b><span>KP 3</span></div>
+          <div class="node locked" data-icon="▣" style="left:164px;top:756px"><b>堡垒姿态</b><span>前置</span></div>
+
+          <div class="node locked" data-icon="◎" style="left:40px;top:526px"><b>光头</b><span>前置</span></div>
+          <div class="node ready" data-icon="▣" style="left:318px;top:526px"><b>顺手捡漏</b><span>KP 3</span></div>
+
+          <div class="node learned" data-icon="⚔" style="left:480px;top:86px"><b>重锤</b><span>已学</span></div>
+          <div class="node ready" data-icon="⚔" style="left:480px;top:274px"><b>裂颅一击</b><span>KP 2</span></div>
+          <div class="node locked" data-icon="◆" style="left:422px;top:526px"><b>大地震击</b><span>前置</span></div>
+          <div class="node locked" data-icon="✦" style="left:560px;top:526px"><b>斩首</b><span>前置</span></div>
+          <div class="node locked" data-icon="✦" style="left:396px;top:756px"><b>诸神黄昏</b><span>KP 8</span></div>
+          <div class="node locked" data-icon="✦" style="left:590px;top:756px"><b>重新开始</b><span>KP 8</span></div>
+
+          <div class="node learned path" data-icon="🩸" style="left:762px;top:86px"><b>剑砍</b><span>已学</span></div>
+          <div class="node ready path" data-icon="🩸" style="left:690px;top:274px"><b>转进如风</b><span>KP 2</span></div>
+          <div class="node ready path" data-icon="🩸" style="left:838px;top:274px"><b>锯齿斩</b><span>KP 2</span></div>
+          <div class="node locked path" data-icon="🩸" style="left:838px;top:526px"><b>撕裂伤口</b><span>前置</span></div>
+
+          <div class="zoom">
+            <button type="button">−</button>
+            <button type="button">⌖</button>
+            <button type="button">+</button>
+          </div>
+        </section>
+
+        <aside class="detail">
+          <h2>当前选择</h2>
+          <div class="detailCard">
+            <h3>铁手</h3>
+            <p>强化手部护甲与近战稳定性。适合先保证行动部位不被快速打断，再向重拳或顺手捡漏推进。</p>
+          </div>
+          <div class="statGrid">
+            <div class="stat"><span>消耗</span><b>1 KP</b></div>
+            <div class="stat"><span>状态</span><b>可学习</b></div>
+            <div class="stat"><span>前置</span><b>修理护甲</b></div>
+            <div class="stat"><span>授予</span><b>永久技能</b></div>
+          </div>
+          <div class="unlock">
+            推荐原因：它会打开“重拳”和“顺手捡漏”两条近战收益路线，且本轮 KP 足够，不会阻塞后续专精。
+          </div>
+          <div class="action">
+            <button type="button">暂存学习：铁手</button>
+            <button type="button" class="ghost">查看影响的后续节点</button>
+          </div>
+        </aside>
+      </section>
+    </section>
+  </main>
+</body>
+</html>
