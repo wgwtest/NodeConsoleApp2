@@ -193,3 +193,15 @@ test('SkillEditor saves the current pack through the project file API instead of
   assert.equal(JSON.parse(body.content).skills[0].id, 'skill_a');
   assert.match(editor.lastStatus, /已保存/);
 });
+
+test('skill editor toolbar uses Chinese labels for file and edit actions', async () => {
+  const html = await fs.readFile(path.join(projectRoot, 'test', 'skill_editor_test_v3.html'), 'utf8');
+  for (const label of ['加载 Buff', '技能库', '加载项目', '导入本地', '新建技能', '保存', '另存为', '下载', '清空', '自动布局']) {
+    assert.match(html, new RegExp(label), `toolbar should include ${label}`);
+  }
+  assert.doesNotMatch(
+    html,
+    />\s*(Load Buffs|Skills|Load Project|Import Local|New Skill|Save As|Download|Clear|Auto Layout)\b/,
+    'toolbar should not expose English action labels'
+  );
+});
