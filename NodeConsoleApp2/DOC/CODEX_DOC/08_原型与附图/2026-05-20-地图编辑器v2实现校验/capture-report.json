@@ -1,0 +1,12 @@
+{
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "leftWidth": "330px",
+  "rightWidth": "470px",
+  "nodeListCount": 12,
+  "edgeListCount": 14,
+  "hasBackgroundButton": true,
+  "exportText": "导出 / 写回地图包\n确认保存目标\n这个地图包是什么？\n\n它是一个 JSON 地图包，保存地图、节点、边、显示配置，以及资源 ID / 路径引用。图片文件仍然留在 source/ 或 assets/ 目录里，不会被嵌入 JSON。\n\n编辑源\nassets/data/level_map_pack_v1.authoring.json\n运行源\nassets/data/level_map_pack_v1.json\n影响\n更换背景或节点素材时，JSON 只改引用。只要资源库中对应文件还存在，显示不会丢；若资源文件被删或移动，校验会报错。\n取消\n只导出 JSON\n写回 authoring 文件"
+}

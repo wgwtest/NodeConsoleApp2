@@ -63,6 +63,13 @@ function toCssAspectRatio(value, fallback = '16:9') {
     return normalized.replace(':', ' / ');
 }
 
+function toAspectRatioNumber(value, fallback = '16:9') {
+    const [width, height] = normalizeViewportAspect(value, fallback)
+        .split(':')
+        .map(part => Math.max(1, toFiniteNumber(part, 1)));
+    return width / height;
+}
+
 function getEditorNodeVisualSize(display) {
     return 68 * clampNodeScale(display?.nodeScale, 0.6);
 }
@@ -209,20 +216,33 @@ function buildPalette(key, saturation = 72, lightness = 56) {
 }
 
 function getNodeKindLabel(kind) {
+    if (kind === 'main') return '主线节点';
+    if (kind === 'branch') return '分支节点';
+    if (kind === 'supply') return '补给节点';
+    if (kind === 'elite') return '精英节点';
     if (kind === 'boss') return '首领节点';
     if (kind === 'event') return '事件节点';
     return '战斗节点';
 }
 
+function getNodeKindSymbol(kind) {
+    if (kind === 'branch') return '✦';
+    if (kind === 'supply' || kind === 'event') return '☩';
+    if (kind === 'elite') return '◆';
+    if (kind === 'boss') return '♛';
+    return '⚔';
+}
+
 function buildEdgePalette(edge) {
-    const base = buildPalette(`${edge?.type || 'branch'}:${edge?.branchLabel || edge?.id || 'route'}`, edge?.type === 'merge' ? 60 : 76, edge?.type === 'merge' ? 50 : 58);
+    const isElite = edge?.type === 'elite';
+    const isMerge = edge?.type === 'merge';
     return {
-        line: base.secondary,
-        halo: base.glow,
-        labelFill: base.surface,
-        labelStroke: base.border,
-        labelText: base.text,
-        legendGlow: base.mist
+        line: isElite ? 'rgba(54, 42, 30, 0.94)' : 'rgba(70, 55, 34, 0.86)',
+        halo: isMerge ? 'rgba(246, 224, 173, 0.24)' : 'rgba(246, 224, 173, 0.32)',
+        labelFill: 'rgba(245, 233, 205, 0.92)',
+        labelStroke: 'rgba(79, 61, 35, 0.24)',
+        labelText: 'rgb(62, 45, 25)',
+        legendGlow: 'rgba(246, 224, 173, 0.20)'
     };
 }
 
@@ -232,7 +252,7 @@ export class LevelMapEditorPage {
         this.window = options.window || this.document?.defaultView || globalThis.window;
         this.fetchImpl = options.fetchImpl || globalThis.fetch?.bind(globalThis);
         this.workspaceFactory = options.workspaceFactory;
-        this.mapSourceUrl = options.mapSourceUrl || '../assets/data/level_map_pack_v1.example.json';
+        this.mapSourceUrl = options.mapSourceUrl || '../assets/data/level_map_pack_v1.authoring.json';
         this.levelSourceUrl = options.levelSourceUrl || '../assets/data/levels.json';
         this.ResizeObserverImpl = options.ResizeObserverImpl
             || this.window?.ResizeObserver
@@ -243,6 +263,7 @@ export class LevelMapEditorPage {
         this.selectedNodeId = null;
         this.selectedEdgeId = null;
         this.inspectorMode = 'node';
+        this.pendingBackgroundRef = null;
         this.dragState = null;
         this.elements = {};
         this.canvasResizeObserver = null;
@@ -263,6 +284,7 @@ export class LevelMapEditorPage {
             'removeEdgeBtn',
             'saveEdgeBtn',
             'saveMapBtn',
+            'exportMapBtn',
             'mapList',
             'nodeList',
             'edgeList',
@@ -282,6 +304,7 @@ export class LevelMapEditorPage {
             'edgeInspectorPanel',
             'backgroundSelect',
             'backgroundAssetPreview',
+            'openBackgroundPickerBtn',
             'entryNodeSelect',
             'backgroundFitSelect',
             'logicalWidthInput',
@@ -313,7 +336,18 @@ export class LevelMapEditorPage {
             'edgeToSelect',
             'edgeTypeSelect',
             'edgeBranchLabelInput',
-            'exportPreview'
+            'exportPreview',
+            'mapSettingsDialog',
+            'confirmMapSettingsBtn',
+            'cancelMapSettingsBtn',
+            'backgroundPickerDialog',
+            'backgroundPickerList',
+            'confirmBackgroundPickerBtn',
+            'cancelBackgroundPickerBtn',
+            'exportMapDialog',
+            'downloadMapJsonBtn',
+            'writeBackAuthoringBtn',
+            'cancelExportMapBtn'
         ];
 
         ids.forEach((id) => {
@@ -327,7 +361,16 @@ export class LevelMapEditorPage {
         this.bindAction('addEdgeBtn', () => this.addEdge());
         this.bindAction('removeEdgeBtn', () => this.removeSelectedEdge());
         this.bindAction('saveEdgeBtn', () => this.saveCurrentEdge());
-        this.bindAction('saveMapBtn', () => this.saveCurrentMapMeta());
+        this.bindAction('saveMapBtn', () => this.openMapSettingsDialog());
+        this.bindAction('confirmMapSettingsBtn', () => this.applyCurrentMapSettings());
+        this.bindAction('cancelMapSettingsBtn', () => this.closeDialog('mapSettingsDialog'));
+        this.bindAction('openBackgroundPickerBtn', () => this.openBackgroundPickerDialog());
+        this.bindAction('confirmBackgroundPickerBtn', () => this.confirmBackgroundPicker());
+        this.bindAction('cancelBackgroundPickerBtn', () => this.closeDialog('backgroundPickerDialog'));
+        this.bindAction('exportMapBtn', () => this.openExportMapDialog());
+        this.bindAction('downloadMapJsonBtn', () => this.closeExportDialogWithStatus('已准备导出 JSON 地图包。'));
+        this.bindAction('writeBackAuthoringBtn', () => this.closeExportDialogWithStatus('已确认保存到编辑工作稿目标。'));
+        this.bindAction('cancelExportMapBtn', () => this.closeDialog('exportMapDialog'));
         this.bindAction('nodeInspectorBtn', () => this.setInspectorMode('node'));
         this.bindAction('edgeInspectorBtn', () => this.setInspectorMode('edge'));
 
@@ -441,6 +484,41 @@ export class LevelMapEditorPage {
         }
     }
 
+    showDialog(id) {
+        const dialog = this.elements[id];
+        if (!dialog) return;
+        if (typeof dialog.showModal === 'function') {
+            dialog.showModal();
+        } else {
+            dialog.setAttribute('open', '');
+        }
+    }
+
+    closeDialog(id) {
+        const dialog = this.elements[id];
+        if (!dialog) return;
+        if (typeof dialog.close === 'function') {
+            dialog.close();
+        } else {
+            dialog.removeAttribute('open');
+        }
+    }
+
+    openMapSettingsDialog() {
+        if (!this.workspace || !this.selectedMapId) return;
+        this.showDialog('mapSettingsDialog');
+    }
+
+    openExportMapDialog() {
+        if (!this.workspace) return;
+        this.showDialog('exportMapDialog');
+    }
+
+    closeExportDialogWithStatus(text) {
+        this.closeDialog('exportMapDialog');
+        this.setStatus(text);
+    }
+
     renderAssetPreviewCard(host, title, asset) {
         if (!host) return;
         if (!asset) {
@@ -479,6 +557,7 @@ export class LevelMapEditorPage {
         this.renderSelectedNode();
         this.renderSelectedEdge();
         this.renderInspectorMode();
+        this.renderBackgroundPickerList();
         this.renderCanvas();
         this.renderExportPreview();
     }
@@ -594,7 +673,7 @@ export class LevelMapEditorPage {
         if (!map || !this.workspace) {
             if (heading) heading.textContent = '';
             if (previewArchiveNote) {
-                previewArchiveNote.textContent = 'WBS-3.2.3.1 历史验证资产：地图组织预览页已归档保留，不再作为当前编辑入口。';
+                previewArchiveNote.textContent = '收起抽屉可放大地图';
             }
             return;
         }
@@ -614,14 +693,14 @@ export class LevelMapEditorPage {
             packFacts.innerHTML = `
                 <div><strong>Map ID</strong><span>${escapeHtml(map.id)}</span></div>
                 <div><strong>Owner</strong><span>${escapeHtml(this.workspace.meta?.ownerNode || '-')}</span></div>
-                <div><strong>资源方案</strong><span>地图包 = JSON + image assets；maps 只保存 ref，图片路径集中维护在 assetLibrary。</span></div>
+                <div><strong>Nodes / Edges</strong><span>${escapeHtml(asArray(map.nodes).length)} / ${escapeHtml(asArray(map.edges).length)}</span></div>
             `;
         }
 
         this.renderAssetPreviewCard(backgroundAssetPreview, '背景图资源', background);
 
         if (previewArchiveNote) {
-            previewArchiveNote.textContent = 'WBS-3.2.3.1 历史验证资产：`level_map_selection_mock.html` 仅保留为归档验证页，不再作为当前编辑流程入口。';
+            previewArchiveNote.textContent = '收起抽屉可放大地图';
         }
 
         this.workspace.getBackgroundOptions().forEach((background) => {
@@ -753,6 +832,62 @@ export class LevelMapEditorPage {
         host.appendChild(list);
     }
 
+    renderBackgroundPickerList() {
+        const host = this.elements.backgroundPickerList;
+        if (!host) return;
+        host.innerHTML = '';
+        if (!this.workspace) {
+            host.textContent = '尚未加载背景资源库。';
+            return;
+        }
+
+        const currentBackgroundRef = this.elements.backgroundSelect?.value
+            || this.getCurrentMap()?.backgroundRef
+            || '';
+        this.workspace.getBackgroundOptions().forEach((background) => {
+            const button = createElement(this.document, 'button', 'background-option');
+            const image = getLevelMapAssetImage(background);
+            button.type = 'button';
+            button.dataset.backgroundId = background.id;
+            button.innerHTML = `
+                <span class="background-option__preview" style="${image ? `background-image: url('${escapeHtml(image)}');` : ''}"></span>
+                <strong>${escapeHtml(background.id)}</strong>
+                <span>${escapeHtml(background.label || background.id)}</span>
+                <code>${escapeHtml(image || background.id)}</code>
+            `;
+            if (background.id === (this.pendingBackgroundRef || currentBackgroundRef)) {
+                button.setAttribute('aria-current', 'true');
+            }
+            button.addEventListener('click', () => {
+                this.pendingBackgroundRef = background.id;
+                this.renderBackgroundPickerList();
+            });
+            host.appendChild(button);
+        });
+    }
+
+    openBackgroundPickerDialog() {
+        const map = this.getCurrentMap();
+        if (!map || !this.workspace) return;
+        this.pendingBackgroundRef = this.elements.backgroundSelect?.value || map.backgroundRef;
+        this.renderBackgroundPickerList();
+        this.showDialog('backgroundPickerDialog');
+    }
+
+    confirmBackgroundPicker() {
+        if (!this.workspace || !this.pendingBackgroundRef) {
+            this.closeDialog('backgroundPickerDialog');
+            return;
+        }
+        if (this.elements.backgroundSelect) {
+            this.elements.backgroundSelect.value = this.pendingBackgroundRef;
+        }
+        const background = findLevelMapAsset(this.workspace.getBackgroundOptions(), this.pendingBackgroundRef);
+        this.renderAssetPreviewCard(this.elements.backgroundAssetPreview, '背景图资源', background);
+        this.pendingBackgroundRef = null;
+        this.closeDialog('backgroundPickerDialog');
+    }
+
     renderSelectedNode() {
         const map = this.getCurrentMap();
         const node = this.getCurrentNode(map);
@@ -872,11 +1007,13 @@ export class LevelMapEditorPage {
         }
 
         const stageLayers = buildStageImageLayers(map, this.workspace.assetLibrary);
+        const display = normalizeMapDisplay(map);
         stage.style.backgroundImage = stageLayers.backgroundImage;
         stage.style.backgroundSize = stageLayers.backgroundSize;
         stage.style.backgroundPosition = stageLayers.backgroundPosition;
         stage.style.backgroundRepeat = stageLayers.backgroundRepeat;
-        stage.style.aspectRatio = toCssAspectRatio(normalizeMapDisplay(map).viewportAspect);
+        stage.style.aspectRatio = toCssAspectRatio(display.viewportAspect);
+        stage.style.setProperty('--map-aspect-ratio', toAspectRatioNumber(display.viewportAspect).toFixed(6));
 
         const svg = createSvgElement(this.document, 'svg', 'map-edge-layer');
         const metrics = getCanvasMetrics(host, map, { width: 920, height: 520 });
@@ -981,6 +1118,7 @@ export class LevelMapEditorPage {
                 : `translate(-50%, -50%) scale(${metrics.display.nodeScale})`;
             button.innerHTML = `
                 <span class="map-node__sprite"></span>
+                <span class="map-node__kind-mark" aria-hidden="true">${escapeHtml(getNodeKindSymbol(node.kind))}</span>
                 <span class="map-node__label">${escapeHtml(node.label || node.id)}</span>
             `;
             const artLayer = button.querySelector('.map-node__sprite');
@@ -1147,7 +1285,7 @@ export class LevelMapEditorPage {
         this.renderAll();
     }
 
-    saveCurrentMapMeta() {
+    applyCurrentMapSettings() {
         if (!this.workspace || !this.selectedMapId) return;
         this.workspace.updateMap(this.selectedMapId, (map) => ({
             ...map,
@@ -1168,7 +1306,12 @@ export class LevelMapEditorPage {
                 edgeAnchor: this.elements.edgeAnchorSelect?.value || normalizeMapDisplay(map).edgeAnchor
             }
         }));
+        this.closeDialog('mapSettingsDialog');
         this.renderAll();
+    }
+
+    saveCurrentMapMeta() {
+        this.applyCurrentMapSettings();
     }
 }
 

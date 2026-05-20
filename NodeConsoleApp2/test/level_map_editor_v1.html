@@ -21,8 +21,8 @@
             --blue-soft: rgba(36, 77, 119, 0.12);
             --warn: #b8431d;
             --shadow: 0 24px 64px rgba(31, 24, 18, 0.12);
-            --drawer-left-width: 320px;
-            --drawer-right-width: 360px;
+            --drawer-left-width: 330px;
+            --drawer-right-width: 470px;
         }
 
         * {
@@ -33,6 +33,7 @@
             margin: 0;
             color: var(--ink);
             font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+            overflow: hidden;
             background:
                 radial-gradient(circle at 0% 0%, rgba(143, 86, 37, 0.18), transparent 22%),
                 radial-gradient(circle at 100% 0%, rgba(36, 77, 119, 0.16), transparent 24%),
@@ -47,44 +48,77 @@
         }
 
         .page {
-            width: min(1800px, calc(100vw - 28px));
-            margin: 14px auto 22px;
+            width: min(1920px, calc(100vw - 16px));
+            height: 100vh;
+            margin: 0 auto;
+            padding: 8px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .hero,
+        .app-toolbar,
         .canvas-panel {
             background: var(--paper);
             border: 1px solid var(--line);
-            border-radius: 26px;
+            border-radius: 18px;
             box-shadow: var(--shadow);
             backdrop-filter: blur(10px);
         }
 
-        .hero {
-            padding: 24px 26px 22px;
-            margin-bottom: 18px;
-        }
-
         .badge-row,
-        .hero-actions,
+        .toolbar-actions,
+        .tool-cluster,
         .stage-topbar,
         .inspector-tabs,
         .toolbar {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
         }
 
-        .hero-head {
+        .app-toolbar {
+            min-height: 58px;
+            padding: 8px 12px;
             display: flex;
             justify-content: space-between;
-            gap: 18px;
-            align-items: flex-start;
+            gap: 12px;
+            align-items: center;
         }
 
-        .hero-copy {
-            max-width: 1120px;
+        .toolbar-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .toolbar-actions {
+            justify-content: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tool-cluster {
+            gap: 4px;
+            padding: 4px;
+            border-radius: 13px;
+            border: 1px solid rgba(76, 68, 54, 0.1);
+            background: rgba(255, 255, 255, 0.44);
+        }
+
+        .tool-cluster--project {
+            border-color: rgba(36, 77, 119, 0.16);
+            background: rgba(36, 77, 119, 0.07);
+        }
+
+        .tool-cluster--status {
+            flex: 0 1 330px;
+            justify-content: flex-end;
+            padding: 0;
+            border: 0;
+            background: transparent;
         }
 
         h1,
@@ -94,10 +128,19 @@
         }
 
         h1,
-        .hero-card strong,
         .drawer-title h2 {
             font-family: "Baskerville", "Palatino Linotype", "STZhongsong", serif;
             letter-spacing: 0.02em;
+        }
+
+        h1 {
+            white-space: nowrap;
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        h3 {
+            font-size: 15px;
         }
 
         .badge {
@@ -126,32 +169,15 @@
             background: linear-gradient(180deg, #d68436, #b7641d);
         }
 
-        .hero-copy h1 {
-            margin-top: 12px;
-            margin-bottom: 10px;
-            font-size: clamp(32px, 3vw, 46px);
-        }
-
-        .hero-copy p {
-            margin: 0;
-            color: var(--ink-soft);
-            line-height: 1.7;
-            font-size: 14px;
-        }
-
-        .hero-actions {
-            justify-content: flex-end;
-            min-width: 260px;
-        }
-
         button,
         .action-link {
             border: 0;
-            border-radius: 12px;
-            padding: 10px 15px;
+            border-radius: 10px;
+            padding: 7px 10px;
             font-weight: 800;
             cursor: pointer;
             text-decoration: none;
+            white-space: nowrap;
             transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
         }
 
@@ -163,12 +189,33 @@
         button {
             color: #fff;
             background: var(--accent);
-            box-shadow: 0 10px 24px rgba(143, 86, 37, 0.18);
+            box-shadow: 0 8px 18px rgba(143, 86, 37, 0.16);
         }
 
         button.warn {
             background: var(--warn);
-            box-shadow: 0 10px 24px rgba(184, 67, 29, 0.18);
+            box-shadow: 0 8px 18px rgba(184, 67, 29, 0.16);
+        }
+
+        .toolbar-btn {
+            box-shadow: none;
+        }
+
+        .toolbar-btn--primary {
+            background: var(--accent);
+        }
+
+        .toolbar-btn--secondary {
+            color: var(--ink);
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(76, 68, 54, 0.14);
+        }
+
+        .toolbar-btn--danger {
+            color: var(--warn);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(184, 67, 29, 0.26);
+            box-shadow: none;
         }
 
         .ghost-btn,
@@ -201,56 +248,39 @@
         }
 
         .status-bar {
-            margin-top: 16px;
-            padding: 12px 14px;
-            border-radius: 14px;
+            width: 100%;
+            max-width: 330px;
+            min-width: 0;
+            padding: 8px 10px;
+            border-radius: 10px;
             border: 1px solid var(--line);
             background: rgba(255, 255, 255, 0.82);
             color: var(--ink-soft);
-            font-weight: 700;
-        }
-
-        .hero-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .hero-card {
-            padding: 14px 16px;
-            border-radius: 18px;
-            border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.78);
-        }
-
-        .hero-card strong {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 17px;
-        }
-
-        .hero-card p {
-            margin: 0;
-            color: var(--ink-soft);
-            line-height: 1.65;
             font-size: 13px;
+            font-weight: 700;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .canvas-panel {
-            padding: 18px;
+            flex: 1;
+            min-height: 0;
+            padding: 8px;
         }
 
         .stage-shell {
             position: relative;
-            padding: 52px 0 0;
+            height: calc(100vh - 118px);
+            min-height: 680px;
+            overflow: hidden;
         }
 
         .stage-topbar {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 7px;
+            left: 116px;
+            right: 116px;
             justify-content: center;
             z-index: 4;
             pointer-events: none;
@@ -263,8 +293,8 @@
         .stage-note {
             display: inline-flex;
             align-items: center;
-            min-height: 30px;
-            padding: 5px 12px;
+            min-height: 24px;
+            padding: 3px 9px;
             border-radius: 999px;
             border: 1px solid rgba(255, 255, 255, 0.18);
             background: rgba(22, 26, 34, 0.66);
@@ -283,45 +313,58 @@
 
         .drawer-toggle {
             position: absolute;
-            top: 10px;
+            top: 8px;
             z-index: 5;
-            min-width: 100px;
+            min-width: 96px;
             font-size: 13px;
+            background: rgba(255, 255, 255, 0.92);
         }
 
         .drawer-toggle--left {
-            left: 0;
+            left: 8px;
         }
 
         .drawer-toggle--right {
-            right: 0;
+            right: 8px;
         }
 
         .stage-frame {
-            padding-left: 72px;
-            padding-right: 72px;
+            height: 100%;
+            padding: 34px 48px 8px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
             transition: padding 180ms ease;
         }
 
         .stage-shell[data-left-open="true"] .stage-frame {
-            padding-left: calc(var(--drawer-left-width) + 20px);
+            padding-left: calc(var(--drawer-left-width) + 16px);
         }
 
         .stage-shell[data-right-open="true"] .stage-frame {
-            padding-right: calc(var(--drawer-right-width) + 20px);
+            padding-right: calc(var(--drawer-right-width) + 16px);
         }
 
         .stage-shell[data-left-open="true"][data-right-open="true"] .stage-frame {
-            padding-left: calc(var(--drawer-left-width) + 20px);
-            padding-right: calc(var(--drawer-right-width) + 20px);
+            padding-left: calc(var(--drawer-left-width) + 16px);
+            padding-right: calc(var(--drawer-right-width) + 16px);
+        }
+
+        .stage-shell[data-left-open="false"] .stage-frame {
+            padding-left: 56px;
+        }
+
+        .stage-shell[data-right-open="false"] .stage-frame {
+            padding-right: 56px;
         }
 
         .map-stage {
             position: relative;
-            width: 100%;
+            width: min(100%, calc((100vh - 150px) * var(--map-aspect-ratio, 1.7778)));
+            max-height: 100%;
             aspect-ratio: 16 / 9;
             overflow: hidden;
-            border-radius: 28px;
+            border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.24);
             background:
                 linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(12, 15, 22, 0.14)),
@@ -349,12 +392,13 @@
 
         .drawer {
             position: absolute;
-            top: 44px;
-            bottom: 0;
+            top: 42px;
+            bottom: 8px;
             z-index: 4;
-            overflow: auto;
-            padding: 14px;
-            border-radius: 24px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding: 10px;
+            border-radius: 16px;
             border: 1px solid var(--line);
             background: rgba(250, 247, 241, 0.92);
             box-shadow: 0 18px 42px rgba(25, 18, 12, 0.16);
@@ -363,12 +407,12 @@
         }
 
         .drawer--left {
-            left: 0;
+            left: 8px;
             width: var(--drawer-left-width);
         }
 
         .drawer--right {
-            right: 0;
+            right: 8px;
             width: var(--drawer-right-width);
         }
 
@@ -387,8 +431,9 @@
         .drawer-shell {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 9px;
             min-height: 100%;
+            min-width: 0;
         }
 
         .drawer-title {
@@ -399,7 +444,8 @@
         }
 
         .drawer-title h2 {
-            font-size: 28px;
+            font-size: 22px;
+            line-height: 1.08;
         }
 
         .drawer-title p,
@@ -407,20 +453,21 @@
         .sub-copy {
             margin: 0;
             color: var(--ink-soft);
-            font-size: 13px;
-            line-height: 1.65;
+            font-size: 12px;
+            line-height: 1.45;
         }
 
         .section-block {
-            padding: 14px;
-            border-radius: 18px;
+            padding: 10px;
+            border-radius: 14px;
             border: 1px solid var(--line);
             background: var(--paper-strong);
+            min-width: 0;
         }
 
         .section-kicker {
             display: inline-block;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             color: var(--accent);
             font-size: 12px;
             font-weight: 800;
@@ -431,14 +478,53 @@
         .list-box {
             display: flex;
             flex-direction: column;
+            gap: 6px;
+            max-height: 168px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-width: 0;
+        }
+
+        .node-list-box,
+        .edge-list-box {
+            max-height: 360px;
+        }
+
+        .map-settings-block {
+            border-color: rgba(36, 77, 119, 0.32);
+            box-shadow: 0 0 0 3px rgba(36, 77, 119, 0.08);
+        }
+
+        .map-settings-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             gap: 8px;
-            max-height: 188px;
-            overflow: auto;
+            margin-bottom: 8px;
+        }
+
+        .resource-button {
+            width: 100%;
+            color: var(--ink);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--line);
+            box-shadow: none;
+        }
+
+        .selected-detail {
+            border-color: rgba(143, 86, 37, 0.22);
+            background: rgba(255, 252, 246, 0.98);
         }
 
         .list-box button {
             width: 100%;
+            max-width: 100%;
             text-align: left;
+            padding: 7px 9px;
+            font-size: 13px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .list-box button[aria-current="true"] {
@@ -450,17 +536,20 @@
         .validation-box,
         .summary-card,
         .fact-grid div {
-            min-height: 54px;
-            padding: 12px;
-            border-radius: 14px;
+            min-height: 42px;
+            padding: 9px;
+            border-radius: 11px;
             background: rgba(255, 255, 255, 0.84);
             border: 1px solid var(--line);
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .fact-grid,
         .inspector-summary {
             display: grid;
-            gap: 10px;
+            gap: 8px;
         }
 
         .fact-grid {
@@ -491,17 +580,42 @@
         .field-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
+            gap: 9px;
+        }
+
+        .field-grid > * {
+            min-width: 0;
         }
 
         .field-grid.single {
             grid-template-columns: 1fr;
         }
 
+        .levelid-panel {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .levelid-panel summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 10px;
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .levelid-panel summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .levelid-panel__body {
+            padding: 0 10px 10px;
+        }
+
         .field {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
 
         .field span {
@@ -515,15 +629,16 @@
         select,
         textarea {
             width: 100%;
+            min-width: 0;
             color: var(--ink);
             border: 1px solid rgba(80, 69, 53, 0.18);
-            border-radius: 12px;
-            padding: 9px 11px;
+            border-radius: 9px;
+            padding: 7px 9px;
             background: rgba(255, 255, 255, 0.94);
         }
 
         textarea {
-            min-height: 88px;
+            min-height: 70px;
             resize: vertical;
         }
 
@@ -579,6 +694,16 @@
             stroke-dasharray: 14 8;
         }
 
+        .map-edge-group[data-edge-type="branch"] .map-edge,
+        .map-edge-group[data-edge-type="branch"] .map-edge-halo {
+            stroke-dasharray: 9 8;
+        }
+
+        .map-edge-group[data-edge-type="elite"] .map-edge,
+        .map-edge-group[data-edge-type="elite"] .map-edge-halo {
+            stroke-dasharray: 18 6 4 6;
+        }
+
         .map-edge-group[aria-current="true"] .map-edge {
             stroke: #f5a623;
             stroke-width: 7;
@@ -627,18 +752,48 @@
             border-radius: 999px;
         }
 
+        .map-node.kind-main .map-node__sprite,
+        .map-node.kind-branch .map-node__sprite,
+        .map-node.kind-supply .map-node__sprite,
+        .map-node.kind-elite .map-node__sprite {
+            border-radius: 999px;
+        }
+
+        .map-node.kind-elite .map-node__sprite {
+            clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+        }
+
         .map-node.kind-boss .map-node__sprite {
             border-radius: 0;
             clip-path: polygon(14% 0, 86% 0, 100% 50%, 86% 100%, 14% 100%, 0 50%);
         }
 
+        .map-node__kind-mark {
+            position: absolute;
+            right: -7px;
+            top: -7px;
+            display: grid;
+            place-items: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 244, 212, 0.82);
+            background: rgba(40, 30, 20, 0.86);
+            color: #fff0be;
+            font-size: 14px;
+            font-weight: 900;
+            line-height: 1;
+            box-shadow: 0 8px 18px rgba(18, 13, 8, 0.24);
+            backdrop-filter: blur(8px);
+        }
+
         .map-node__label {
             position: absolute;
             left: 50%;
-            bottom: -12px;
+            bottom: -10px;
             transform: translateX(-50%);
             min-width: 42px;
-            padding: 3px 8px;
+            padding: 2px 7px;
             border-radius: 999px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             background: rgba(16, 19, 26, 0.74);
@@ -648,18 +803,26 @@
             letter-spacing: 0.03em;
             box-shadow: 0 10px 18px rgba(18, 15, 12, 0.18);
             backdrop-filter: blur(8px);
+            opacity: 0.82;
         }
 
         .map-node[aria-current="true"] .map-node__sprite {
-            border-color: #f5a623;
+            border-color: #ffd35f;
             box-shadow:
                 0 18px 32px rgba(17, 13, 10, 0.24),
-                0 0 0 6px rgba(245, 166, 35, 0.22),
-                0 0 0 10px rgba(255, 241, 204, 0.12);
+                0 0 0 5px rgba(245, 166, 35, 0.34),
+                0 0 0 11px rgba(255, 241, 204, 0.22),
+                0 0 28px rgba(255, 204, 94, 0.42);
+        }
+
+        .map-node[aria-current="true"] .map-node__label {
+            opacity: 1;
+            background: rgba(51, 34, 16, 0.9);
         }
 
         .export-block {
-            margin-top: 18px;
+            display: none;
+            margin-top: 8px;
             border-radius: 18px;
             overflow: hidden;
             border: 1px solid var(--line);
@@ -690,11 +853,11 @@
 
         .asset-preview-card {
             display: grid;
-            grid-template-columns: 96px minmax(0, 1fr);
-            gap: 12px;
+            grid-template-columns: 72px minmax(0, 1fr);
+            gap: 9px;
             align-items: center;
-            padding: 12px;
-            border-radius: 16px;
+            padding: 9px;
+            border-radius: 12px;
             border: 1px solid var(--line);
             background: rgba(255, 255, 255, 0.86);
         }
@@ -704,8 +867,8 @@
         }
 
         .asset-preview-card__thumb {
-            min-height: 78px;
-            border-radius: 14px;
+            min-height: 58px;
+            border-radius: 10px;
             border: 1px solid var(--line);
             background:
                 linear-gradient(135deg, rgba(36, 77, 119, 0.18), rgba(143, 86, 37, 0.18)),
@@ -730,7 +893,7 @@
 
         .asset-preview-card__meta code {
             color: var(--blue);
-            font-size: 12px;
+            font-size: 11px;
             font-family: "Cascadia Mono", "Consolas", monospace;
         }
 
@@ -740,29 +903,160 @@
             gap: 12px;
         }
 
+        .inspector-action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 9px;
+        }
+
+        .inspector-action-row .toolbar-btn {
+            flex: 1 1 112px;
+            min-width: 0;
+        }
+
         .inspector-panel[hidden] {
             display: none;
         }
 
+        dialog {
+            width: min(760px, calc(100vw - 48px));
+            border: 1px solid var(--line-strong);
+            border-radius: 18px;
+            padding: 0;
+            color: var(--ink);
+            background: var(--paper-strong);
+            box-shadow: 0 28px 90px rgba(18, 13, 9, 0.32);
+        }
+
+        dialog::backdrop {
+            background: rgba(21, 16, 10, 0.36);
+            backdrop-filter: blur(3px);
+        }
+
+        .dialog-head,
+        .dialog-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(250, 247, 240, 0.94);
+        }
+
+        .dialog-foot {
+            border-top: 1px solid var(--line);
+            border-bottom: 0;
+        }
+
+        .dialog-body {
+            display: grid;
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .dialog-box {
+            display: grid;
+            gap: 8px;
+            border: 1px solid rgba(36, 77, 119, 0.18);
+            border-radius: 14px;
+            padding: 12px;
+            background: rgba(36, 77, 119, 0.06);
+        }
+
+        .dialog-path {
+            display: grid;
+            grid-template-columns: 86px 1fr;
+            gap: 10px;
+            align-items: start;
+        }
+
+        .dialog-path b {
+            color: var(--ink-soft);
+        }
+
+        .dialog-path span,
+        .dialog-path code {
+            overflow-wrap: anywhere;
+            font-family: "Cascadia Mono", "Consolas", monospace;
+        }
+
+        .background-picker-dialog {
+            width: min(920px, calc(100vw - 48px));
+        }
+
+        .background-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .background-option {
+            display: grid;
+            gap: 7px;
+            min-width: 0;
+            color: var(--ink);
+            text-align: left;
+            white-space: normal;
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(76, 68, 54, 0.16);
+            box-shadow: none;
+        }
+
+        .background-option[aria-current="true"] {
+            border-color: rgba(36, 77, 119, 0.46);
+            box-shadow: 0 0 0 3px rgba(36, 77, 119, 0.1);
+        }
+
+        .background-option__preview {
+            height: 118px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .background-option code {
+            color: var(--blue);
+            font-size: 11px;
+            font-family: "Cascadia Mono", "Consolas", monospace;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
         @media (max-width: 1560px) {
             .stage-frame {
-                padding-left: 24px !important;
-                padding-right: 24px !important;
+                padding-left: 48px !important;
+                padding-right: 48px !important;
+            }
+
+            .drawer {
+                width: min(30vw, 328px);
             }
         }
 
         @media (max-width: 1120px) {
+            body {
+                overflow: auto;
+            }
+
             .page {
-                width: min(100vw - 14px, 100%);
-                margin: 8px auto 18px;
+                width: min(100vw - 12px, 100%);
+                height: auto;
+                min-height: 100vh;
             }
 
-            .hero-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .hero-head {
+            .app-toolbar {
+                align-items: flex-start;
                 flex-direction: column;
+            }
+
+            .toolbar-actions,
+            .tool-cluster--status {
+                justify-content: flex-start;
+                width: 100%;
             }
 
             .drawer {
@@ -775,42 +1069,31 @@
                 padding-left: 0 !important;
                 padding-right: 0 !important;
             }
+
+            .stage-shell {
+                height: min(760px, calc(100vh - 96px));
+                min-height: 520px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="page">
-        <header class="hero">
-            <div class="badge-row">
-                <span class="badge badge--green">WBS-3.2.3.2</span>
-                <span class="badge badge--blue">地图编辑工作区</span>
+        <header class="app-toolbar">
+            <div class="toolbar-title">
+                <h1>地图编辑工作区</h1>
                 <span class="badge badge--amber">16:9</span>
-                <span class="badge">抽屉式编辑</span>
+                <span class="badge">工作稿</span>
             </div>
-            <div class="hero-head">
-                <div class="hero-copy">
-                    <h1>地图编辑工作区</h1>
-                    <p>本页只负责地图作者编辑，不会直接改战斗主流程。这里消费 levels.json 中已存在的 levelId，并把 <strong>背景图</strong>、<strong>节点素材图</strong>、<strong>立绘图</strong> 维护成 <strong>JSON + image assets</strong>。运行时关卡内容编辑由 <strong>level_editor_v1.html</strong> 承接；导入导出与 round-trip 校验不在本页完成，而是继续由 <strong>WBS-3.2.3.3</strong> 负责。早期的地图组织预览页 <strong>level_map_selection_mock.html</strong> 现在只作为 <strong>WBS-3.2.3.1</strong> 的<strong>历史验证资产</strong>保留，不再是当前操作入口。</p>
+            <div class="toolbar-actions" aria-label="地图编辑操作">
+                <div class="tool-cluster tool-cluster--project">
+                    <button id="loadDefaultBtn" class="toolbar-btn toolbar-btn--secondary" type="button">加载工作稿</button>
+                    <button id="saveMapBtn" class="toolbar-btn toolbar-btn--primary" type="button">保存当前地图设置</button>
+                    <button id="exportMapBtn" class="toolbar-btn toolbar-btn--primary" type="button">导出 / 发布</button>
                 </div>
-                <div class="hero-actions">
-                    <button id="loadDefaultBtn" type="button">加载地图包样例</button>
-                    <button id="saveMapBtn" type="button">保存地图设置</button>
+                <div class="tool-cluster tool-cluster--status">
+                    <div id="status" class="status-bar">尚未加载地图包与关卡定义。</div>
                 </div>
-            </div>
-            <div id="status" class="status-bar">尚未加载地图包与关卡定义。</div>
-            <div class="hero-grid">
-                <article class="hero-card">
-                    <strong>地图抽屉</strong>
-                    <p>左侧抽屉只放地图列表、结构校验、背景图与入口节点，不把这些信息塞回中央画布。中央主舞台必须保持 16:9。</p>
-                </article>
-                <article class="hero-card">
-                    <strong>节点检查器 / 边检查器</strong>
-                    <p>右侧抽屉负责节点与边的字段编辑。新增节点、保存节点、新增边、保存边这些操作都在这里完成，不再用中央卡片承载说明。</p>
-                </article>
-                <article class="hero-card">
-                    <strong>交接边界</strong>
-                    <p>本页是作者工具，不是 IO 校验页。导入导出与 round-trip 校验不在本页完成，而是留给 <strong>WBS-3.2.3.3</strong>，这样地图编辑与交付校验保持解耦。</p>
-                </article>
             </div>
         </header>
 
@@ -823,15 +1106,52 @@
                     <div class="drawer-shell">
                         <div class="drawer-title">
                             <div>
-                                <span class="section-kicker">Map Drawer</span>
                                 <h2>地图与结构</h2>
-                                <p>背景图与地图绑定在这里编辑，避免压缩中央画布。</p>
                             </div>
                         </div>
 
                         <div class="section-block">
                             <h3>地图列表</h3>
                             <div id="mapList" class="list-box"></div>
+                        </div>
+
+                        <div class="section-block map-settings-block">
+                            <div class="map-settings-head">
+                                <h3>地图设置 / 背景资源</h3>
+                                <span class="badge badge--blue">背景入口</span>
+                            </div>
+                            <div id="backgroundAssetPreview" style="margin-bottom: 10px;"></div>
+                            <div class="field-grid single">
+                                <button id="openBackgroundPickerBtn" class="resource-button" type="button">更换背景图</button>
+                                <label class="field">
+                                    <span>背景资源</span>
+                                    <select id="backgroundSelect"></select>
+                                </label>
+                                <label class="field">
+                                    <span>入口节点</span>
+                                    <select id="entryNodeSelect"></select>
+                                </label>
+                                <label class="field">
+                                    <span>视口比例</span>
+                                    <select id="viewportAspectSelect">
+                                        <option value="16:9">16:9</option>
+                                        <option value="4:3">4:3</option>
+                                    </select>
+                                </label>
+                                <label class="field">
+                                    <span>节点缩放</span>
+                                    <input id="nodeScaleInput" type="number" min="0.1" max="2" step="0.05" value="0.6">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="section-block">
+                            <h3>保存与加载关系</h3>
+                            <div class="fact-grid">
+                                <div><strong>编辑工作稿</strong><span>assets/data/level_map_pack_v1.authoring.json</span></div>
+                                <div><strong>运行源</strong><span>assets/data/level_map_pack_v1.json</span></div>
+                                <div><strong>包结构</strong><span>JSON 地图包保存资源 ID / 路径引用，不把图片二进制塞进 JSON。</span></div>
+                            </div>
                         </div>
 
                         <div class="section-block">
@@ -844,23 +1164,16 @@
                             <div id="packFacts" class="fact-grid"></div>
                         </div>
 
-                        <div class="section-block">
-                            <h3>可绑定 levelId</h3>
-                            <div id="availableLevelsSummary" class="validation-box"></div>
-                        </div>
+                        <details class="section-block levelid-panel">
+                            <summary>可绑定 levelId</summary>
+                            <div class="levelid-panel__body">
+                                <div id="availableLevelsSummary" class="validation-box"></div>
+                            </div>
+                        </details>
 
                         <div class="section-block">
-                            <h3>地图设置</h3>
-                            <p class="section-note">这里维护的是 <strong>地图真值 + 显示配置</strong>。背景图、入口节点会写入地图数据；<strong>背景铺放</strong>、<strong>节点缩放</strong>、<strong>边标签模式</strong> 只改变当前地图的显示映射，不会把 DOM 像素状态写回地图真值。</p>
+                            <h3>高级显示设置</h3>
                             <div class="field-grid single">
-                                <label class="field">
-                                    <span>背景图</span>
-                                    <select id="backgroundSelect"></select>
-                                </label>
-                                <label class="field">
-                                    <span>入口节点</span>
-                                    <select id="entryNodeSelect"></select>
-                                </label>
                                 <label class="field">
                                     <span>背景铺放</span>
                                     <select id="backgroundFitSelect">
@@ -875,17 +1188,6 @@
                                 <label class="field">
                                     <span>逻辑高度</span>
                                     <input id="logicalHeightInput" type="number" min="1" step="1" value="900">
-                                </label>
-                                <label class="field">
-                                    <span>视口比例</span>
-                                    <select id="viewportAspectSelect">
-                                        <option value="16:9">16:9</option>
-                                        <option value="4:3">4:3</option>
-                                    </select>
-                                </label>
-                                <label class="field">
-                                    <span>节点缩放</span>
-                                    <input id="nodeScaleInput" type="number" min="0.1" max="2" step="0.05" value="0.6">
                                 </label>
                                 <label class="field">
                                     <span>边标签模式</span>
@@ -909,7 +1211,6 @@
                                     </select>
                                 </label>
                             </div>
-                            <div id="backgroundAssetPreview" style="margin-top: 12px;"></div>
                         </div>
                     </div>
                 </aside>
@@ -917,8 +1218,8 @@
                 <section class="stage-frame">
                         <div class="stage-topbar">
                             <span class="stage-note">16:9 主舞台</span>
-                            <span class="stage-note">背景图 / 节点素材图 / 边 直接可见</span>
-                            <span id="previewArchiveNote" class="stage-note stage-note--muted">WBS-3.2.3.1 历史验证资产：地图组织预览页已归档保留，不再作为当前编辑入口。</span>
+                            <span class="stage-note">拖拽节点调整位置</span>
+                            <span id="previewArchiveNote" class="stage-note stage-note--muted">收起抽屉可放大地图</span>
                         </div>
                     <div id="mapStage" class="map-stage">
                         <div id="mapCanvas" class="map-canvas"></div>
@@ -929,9 +1230,7 @@
                     <div class="drawer-shell">
                         <div class="drawer-title">
                             <div>
-                                <span class="section-kicker">Inspector Drawer</span>
-                                <h2>节点与边检查器</h2>
-                                <p>中央只展示图片节点与边，详细字段统一放到这个抽屉里编辑。</p>
+                                <h2>节点与边</h2>
                             </div>
                             <span id="inspectorModeLabel" class="badge badge--blue" aria-live="polite">node</span>
                         </div>
@@ -954,21 +1253,17 @@
 
                         <section id="nodeInspectorPanel" class="inspector-panel">
                             <div class="section-block">
-                                <div class="toolbar">
-                                    <button id="addNodeBtn" type="button">新增节点</button>
-                                    <button id="removeNodeBtn" class="warn" type="button">删除节点</button>
-                                    <button id="saveNodeBtn" type="button">保存节点</button>
-                                </div>
-                            </div>
-
-                            <div class="section-block">
                                 <h3>节点列表</h3>
-                                <div id="nodeList" class="list-box"></div>
+                                <div class="inspector-action-row" aria-label="节点操作">
+                                    <button id="addNodeBtn" class="toolbar-btn toolbar-btn--primary" type="button">新增节点</button>
+                                    <button id="saveNodeBtn" class="toolbar-btn toolbar-btn--secondary" type="button">保存节点</button>
+                                    <button id="removeNodeBtn" class="toolbar-btn toolbar-btn--danger" type="button">删除节点</button>
+                                </div>
+                                <div id="nodeList" class="list-box node-list-box"></div>
                             </div>
 
-                            <div class="section-block">
-                                <h3>节点字段</h3>
-                                <p class="section-note">节点图片在中央直接看效果，字段在这里改；切换 <strong>节点素材图</strong> 或 <strong>立绘图</strong> 后记得点 <strong>保存节点</strong>。</p>
+                            <div class="section-block selected-detail">
+                                <h3>已选节点详情</h3>
                                 <div class="field-grid">
                                     <label class="field">
                                         <span>节点 ID</span>
@@ -993,9 +1288,13 @@
                                     <label class="field">
                                         <span>类型</span>
                                         <select id="nodeKindSelect">
+                                            <option value="main">main</option>
+                                            <option value="branch">branch</option>
+                                            <option value="supply">supply</option>
+                                            <option value="elite">elite</option>
+                                            <option value="boss">boss</option>
                                             <option value="battle">battle</option>
                                             <option value="event">event</option>
-                                            <option value="boss">boss</option>
                                         </select>
                                     </label>
                                     <label class="field">
@@ -1038,20 +1337,17 @@
 
                         <section id="edgeInspectorPanel" class="inspector-panel" hidden>
                             <div class="section-block">
-                                <div class="toolbar">
-                                    <button id="addEdgeBtn" type="button">新增边</button>
-                                    <button id="removeEdgeBtn" class="warn" type="button">删除边</button>
-                                    <button id="saveEdgeBtn" type="button">保存边</button>
-                                </div>
-                            </div>
-
-                            <div class="section-block">
                                 <h3>边列表</h3>
-                                <div id="edgeList" class="list-box"></div>
+                                <div class="inspector-action-row" aria-label="边操作">
+                                    <button id="addEdgeBtn" class="toolbar-btn toolbar-btn--primary" type="button">新增边</button>
+                                    <button id="saveEdgeBtn" class="toolbar-btn toolbar-btn--secondary" type="button">保存边</button>
+                                    <button id="removeEdgeBtn" class="toolbar-btn toolbar-btn--danger" type="button">删除边</button>
+                                </div>
+                                <div id="edgeList" class="list-box edge-list-box"></div>
                             </div>
 
-                            <div class="section-block">
-                                <h3>边字段</h3>
+                            <div class="section-block selected-detail">
+                                <h3>已选边详情</h3>
                                 <div class="field-grid">
                                     <label class="field">
                                         <span>边 ID</span>
@@ -1086,12 +1382,74 @@
             <details class="export-block">
                 <summary>当前工作区导出预览</summary>
                 <div class="export-block__body">
-                    <p class="sub-copy">这里仅用于查看当前工作区状态，不承担正式导入导出。真正的导入导出与 round-trip 校验仍由 <strong>WBS-3.2.3.3</strong> 处理。</p>
                     <textarea id="exportPreview" readonly></textarea>
                 </div>
             </details>
         </main>
     </div>
+
+    <dialog id="mapSettingsDialog">
+        <div class="dialog-head">
+            <h2>保存当前地图设置</h2>
+            <span class="badge badge--blue">只更新当前工作区</span>
+        </div>
+        <div class="dialog-body">
+            <div class="dialog-box">
+                <h3>弹出条件</h3>
+                <p class="section-note">当背景、入口节点、视口比例、默认缩放或地图标题被修改后，点击“保存当前地图设置”弹出确认框。确认后只把这些设置应用到浏览器内存里的当前编辑工作区。</p>
+            </div>
+            <div class="dialog-box">
+                <div class="dialog-path"><b>不会写入</b><code>assets/data/level_map_pack_v1.authoring.json</code></div>
+                <div class="dialog-path"><b>不会影响</b><code>assets/data/level_map_pack_v1.json</code></div>
+                <div class="dialog-path"><b>下一步</b><span>确认画面无误后，必须再点“导出 / 发布”才会得到可保存或交付给主游戏的地图包结果。</span></div>
+            </div>
+        </div>
+        <div class="dialog-foot">
+            <button id="cancelMapSettingsBtn" class="toolbar-btn toolbar-btn--secondary" type="button">取消</button>
+            <button id="confirmMapSettingsBtn" class="toolbar-btn toolbar-btn--primary" type="button">应用到当前工作区</button>
+        </div>
+    </dialog>
+
+    <dialog id="backgroundPickerDialog" class="background-picker-dialog">
+        <div class="dialog-head">
+            <h2>更换地图背景</h2>
+            <span class="badge badge--blue">资源选择器</span>
+        </div>
+        <div class="dialog-body">
+            <div class="dialog-box">
+                <h3>背景来自资源库</h3>
+                <p class="section-note">这里选择的是背景资源 ID 和路径引用。地图包记录引用，图片文件继续放在 source/map/ 或 assets/ 中；资源被删除或移动时，结构校验会报错，避免游戏里静默丢图。</p>
+            </div>
+            <div id="backgroundPickerList" class="background-picker-grid"></div>
+        </div>
+        <div class="dialog-foot">
+            <button id="cancelBackgroundPickerBtn" class="toolbar-btn toolbar-btn--secondary" type="button">取消</button>
+            <button id="confirmBackgroundPickerBtn" class="toolbar-btn toolbar-btn--primary" type="button">使用选中背景</button>
+        </div>
+    </dialog>
+
+    <dialog id="exportMapDialog">
+        <div class="dialog-head">
+            <h2>导出 / 发布地图包</h2>
+            <span class="badge badge--blue">确认保存目标</span>
+        </div>
+        <div class="dialog-body">
+            <div class="dialog-box">
+                <h3>这个地图包是什么？</h3>
+                <p class="section-note">当前实现导出的是地图包 manifest JSON，保存地图、节点、边、显示配置，以及资源 ID / 路径引用。图片文件仍然留在 source/ 或 assets/ 目录里，不会被嵌入 JSON；完整目录式地图包将在顶层工作流设计中定义。</p>
+            </div>
+            <div class="dialog-box">
+                <div class="dialog-path"><b>编辑工作稿</b><code>assets/data/level_map_pack_v1.authoring.json</code></div>
+                <div class="dialog-path"><b>运行源</b><code>assets/data/level_map_pack_v1.json</code></div>
+                <div class="dialog-path"><b>影响</b><span>更换背景或节点素材时，JSON 只改引用。只要资源库中对应文件还存在，显示不会丢；若资源文件被删或移动，校验会报错。</span></div>
+            </div>
+        </div>
+        <div class="dialog-foot">
+            <button id="cancelExportMapBtn" class="toolbar-btn toolbar-btn--secondary" type="button">取消</button>
+            <button id="downloadMapJsonBtn" class="toolbar-btn toolbar-btn--secondary" type="button">导出 manifest JSON</button>
+            <button id="writeBackAuthoringBtn" class="toolbar-btn toolbar-btn--primary" type="button">保存到编辑工作稿</button>
+        </div>
+    </dialog>
 
     <script type="module">
         import LevelMapWorkspace from '../script/editor/level/LevelMapWorkspace.js';
@@ -1099,7 +1457,7 @@
 
         const page = new LevelMapEditorPage({
             document,
-            mapSourceUrl: '../assets/data/level_map_pack_v1.example.json',
+            mapSourceUrl: '../assets/data/level_map_pack_v1.authoring.json',
             levelSourceUrl: '../assets/data/levels.json',
             fetchImpl: window.fetch.bind(window),
             workspaceFactory(rawMapPack, levelsDocument) {

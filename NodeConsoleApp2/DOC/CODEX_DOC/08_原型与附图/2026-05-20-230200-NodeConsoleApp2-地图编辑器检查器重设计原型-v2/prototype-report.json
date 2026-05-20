@@ -1,0 +1,105 @@
+{
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "html": "source/map-editor-inspector-redesign-v2.html",
+  "screenshots": [
+    {
+      "fileName": "01-1920x1080-右侧节点列表优先.png",
+      "state": "node",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    {
+      "fileName": "02-1920x1080-右侧边列表优先.png",
+      "state": "edge",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    {
+      "fileName": "03-1920x1080-左侧背景资源更换入口.png",
+      "state": "bg",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    {
+      "fileName": "04-1920x1080-背景资源选择器弹窗.png",
+      "state": "picker",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    {
+      "fileName": "05-1920x1080-应用地图设置确认弹窗.png",
+      "state": "apply",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    {
+      "fileName": "06-1920x1080-导出写回地图包说明弹窗.png",
+      "state": "package",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      }
+    }
+  ]
+}

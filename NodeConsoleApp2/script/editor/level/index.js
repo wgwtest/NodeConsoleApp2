@@ -48,7 +48,7 @@ export function bootLevelEditorPage(options = {}) {
 export function createLevelMapEditorPage(options = {}) {
     return new LevelMapEditorPage({
         document: options.document || globalThis.document,
-        mapSourceUrl: options.mapSourceUrl || '../assets/data/level_map_pack_v1.example.json',
+        mapSourceUrl: options.mapSourceUrl || '../assets/data/level_map_pack_v1.authoring.json',
         levelSourceUrl: options.levelSourceUrl || '../assets/data/levels.json',
         fetchImpl: options.fetchImpl || globalThis.fetch?.bind(globalThis),
         workspaceFactory(rawMapPack, levelsDocument) {
