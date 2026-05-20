@@ -18,14 +18,22 @@
         <input type="file" id="buff-file-input" accept=".json" style="display: none;" onchange="editor.importBuffsFile(this)">
         <button class="btn btn-dark" onclick="document.getElementById('buff-file-input').click()">Load Buffs...</button>
         <button class="btn btn-dark" onclick="editor.toggleSkillDrawer()">Skills</button>
-        <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Import skills (v4_5 pack preferred)</button>
+        <label class="project-file-control" title="项目内 JSON 路径">
+            <span>文件</span>
+            <input id="project-file-path" type="text" value="assets/data/skills_melee_v4_5.json" spellcheck="false">
+        </label>
+        <button class="btn btn-primary" onclick="editor.loadProjectSkillPack()">Load Project</button>
+        <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Import Local...</button>
         <button class="btn btn-primary" onclick="editor.createNewSkill()">+ New Skill</button>
-        <button class="btn btn-success" onclick="editor.exportJson(true)">Export (dev)
+        <button class="btn btn-success" onclick="editor.saveProjectSkillPack()">Save</button>
+        <button class="btn btn-success" onclick="editor.saveProjectSkillPackAs()">Save As...</button>
+        <button class="btn btn-dark" onclick="editor.exportJson(true)">Download
         </button>
         <button class="btn btn-success" onclick="editor.exportJson(false)" style="display:none">Export (runtime)
         </button>
         <button class="btn btn-danger" onclick="editor.clearCanvas()">Clear</button>
         <span style="flex:1"></span>
+        <span id="project-file-status" class="project-file-status">未加载项目文件</span>
         <button class="btn btn-dark" onclick="editor.autoLayout()">Auto Layout</button>
     </div>
 

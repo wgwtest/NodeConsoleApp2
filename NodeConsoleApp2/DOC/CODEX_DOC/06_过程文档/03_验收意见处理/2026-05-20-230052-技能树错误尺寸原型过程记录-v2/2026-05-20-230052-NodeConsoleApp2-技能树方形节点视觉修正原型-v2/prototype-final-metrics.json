@@ -1,0 +1,61 @@
+{
+  "count": 32,
+  "overlaps": [],
+  "zoom": "0.52",
+  "sample": [
+    {
+      "id": "skill_heal",
+      "state": "learned",
+      "left": 717.4830932617188,
+      "top": 282.2799987792969,
+      "right": 754.923095703125,
+      "bottom": 319.719970703125,
+      "title": "治疗"
+    },
+    {
+      "id": "skill_heavy_swing",
+      "state": "learned",
+      "left": 1029.483154296875,
+      "top": 282.2799987792969,
+      "right": 1066.923095703125,
+      "bottom": 319.719970703125,
+      "title": "重锤"
+    },
+    {
+      "id": "skill_savage_charge",
+      "state": "learnable",
+      "left": 561.483154296875,
+      "top": 386.2799987792969,
+      "right": 598.923095703125,
+      "bottom": 423.7200012207031,
+      "title": "临期食品"
+    },
+    {
+      "id": "skill_skull_cracker",
+      "state": "learnable",
+      "left": 1029.483154296875,
+      "top": 386.2799987792969,
+      "right": 1066.923095703125,
+      "bottom": 423.7200012207031,
+      "title": "裂颅一击"
+    },
+    {
+      "id": "skill_shockwave",
+      "state": "pending",
+      "left": 509.4831237792969,
+      "top": 490.2799987792969,
+      "right": 546.923095703125,
+      "bottom": 527.719970703125,
+      "title": "光脚"
+    },
+    {
+      "id": "skill_execute",
+      "state": "locked",
+      "left": 1029.483154296875,
+      "top": 594.2799682617188,
+      "right": 1066.923095703125,
+      "bottom": 631.719970703125,
+      "title": "斩首"
+    }
+  ]
+}

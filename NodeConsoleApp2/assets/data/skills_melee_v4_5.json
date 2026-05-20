@@ -915,7 +915,7 @@
     {
       "id": "skill_regroup",
       "name": "受击备甲",
-      "rarity": "Epic",
+      "rarity": "Rare",
       "description": "进入受击备战姿态。在持续时间内，受到攻击前先获得 5 点护甲。",
       "prerequisites": [
         "skill_savage_charge"
@@ -932,7 +932,7 @@
       },
       "editorMeta": {
         "x": 714,
-        "y": 914,
+        "y": 714,
         "group": "melee",
         "locked": false,
         "editState": "done"
@@ -942,22 +942,10 @@
         "subject": "SUBJECT_SELF",
         "scope": "SCOPE_ENTITY",
         "selection": {
-          "mode": "multiple",
-          "candidateParts": [
-            "head",
-            "chest",
-            "abdomen",
-            "arm",
-            "leg"
-          ],
-          "selectedParts": [
-            "head",
-            "chest",
-            "abdomen",
-            "arm",
-            "leg"
-          ],
-          "selectCount": 5
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
         }
       },
       "requirements": {},
@@ -1103,7 +1091,7 @@
         }
       },
       "editorMeta": {
-        "x": 414,
+        "x": 714,
         "y": 914,
         "group": "melee",
         "locked": false,
@@ -1195,7 +1183,7 @@
         }
       },
       "editorMeta": {
-        "x": 414,
+        "x": 714,
         "y": 1114,
         "group": "melee",
         "locked": false,
@@ -2764,9 +2752,7 @@
           "selectCount": 1
         }
       },
-      "prerequisites": [
-        "skill_heavy_swing"
-      ],
+      "prerequisites": [],
       "buffRefs": {
         "apply": [
           {
@@ -3033,7 +3019,7 @@
       },
       "actions": [],
       "editorMeta": {
-        "x": 1110,
+        "x": 1114,
         "y": 314,
         "group": "melee",
         "locked": false,
@@ -3090,7 +3076,7 @@
       },
       "actions": [],
       "editorMeta": {
-        "x": 1170,
+        "x": 1214,
         "y": 314,
         "group": "melee",
         "locked": false,
@@ -3146,7 +3132,7 @@
       },
       "actions": [],
       "editorMeta": {
-        "x": 1230,
+        "x": 1214,
         "y": 314,
         "group": "melee",
         "locked": false,
@@ -3183,7 +3169,7 @@
         }
       },
       "editorMeta": {
-        "x": 1290,
+        "x": 1314,
         "y": 314,
         "group": "melee",
         "locked": false,
@@ -3255,7 +3241,7 @@
         }
       },
       "editorMeta": {
-        "x": 1320,
+        "x": 1314,
         "y": 314,
         "group": "melee",
         "locked": false,
@@ -3327,7 +3313,7 @@
         }
       },
       "editorMeta": {
-        "x": 1350,
+        "x": 1314,
         "y": 314,
         "group": "melee",
         "locked": false,
