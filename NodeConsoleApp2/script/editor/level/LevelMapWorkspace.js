@@ -138,6 +138,74 @@ function normalizeMap(index, map, availableLevelIds = []) {
     };
 }
 
+function normalizeStory(index, story, fallbackChapterIds = []) {
+    const source = asObject(story);
+    const chapterIds = uniqueStringList(source.chapterIds || fallbackChapterIds);
+    const id = typeof source.id === 'string' && source.id.trim() ? source.id.trim() : `story_${index + 1}`;
+    const entryChapterId = typeof source.entryChapterId === 'string' && source.entryChapterId.trim()
+        ? source.entryChapterId.trim()
+        : chapterIds[0] || '';
+    return {
+        id,
+        title: typeof source.title === 'string' && source.title.trim() ? source.title.trim() : `未命名故事 ${index + 1}`,
+        summary: typeof source.summary === 'string' ? source.summary : '',
+        entryChapterId,
+        chapterIds
+    };
+}
+
+function normalizeChapter(index, chapter, fallbackStoryId = 'story_default', fallbackMapIds = []) {
+    const source = asObject(chapter);
+    const mapIds = uniqueStringList(source.mapIds || fallbackMapIds);
+    const id = typeof source.id === 'string' && source.id.trim() ? source.id.trim() : `chapter_${index + 1}`;
+    const entryMapId = typeof source.entryMapId === 'string' && source.entryMapId.trim()
+        ? source.entryMapId.trim()
+        : mapIds[0] || '';
+    const order = Math.max(1, Math.round(toFiniteNumber(source.order, index + 1)));
+    return {
+        id,
+        storyId: typeof source.storyId === 'string' && source.storyId.trim() ? source.storyId.trim() : fallbackStoryId,
+        title: typeof source.title === 'string' && source.title.trim() ? source.title.trim() : `未命名章节 ${index + 1}`,
+        order,
+        description: typeof source.description === 'string' ? source.description : '',
+        entryMapId,
+        mapIds
+    };
+}
+
+function buildLegacyStructure(meta, maps) {
+    const chapterMap = new Map();
+    maps.forEach((map, index) => {
+        const chapterId = map.chapterId || `chapter_${index + 1}`;
+        map.chapterId = chapterId;
+        if (!chapterMap.has(chapterId)) {
+            chapterMap.set(chapterId, {
+                id: chapterId,
+                storyId: 'story_default',
+                title: map.chapterTitle || map.chapterLabel || map.name || `未命名章节 ${chapterMap.size + 1}`,
+                order: chapterMap.size + 1,
+                description: '',
+                entryMapId: map.id,
+                mapIds: []
+            });
+        }
+        chapterMap.get(chapterId).mapIds.push(map.id);
+    });
+
+    const chapters = Array.from(chapterMap.values()).map((chapter, index) => normalizeChapter(index, chapter, 'story_default', chapter.mapIds));
+    const story = normalizeStory(0, {
+        id: 'story_default',
+        title: typeof meta?.title === 'string' && meta.title.trim() ? meta.title.trim() : '默认故事',
+        summary: '',
+        entryChapterId: chapters[0]?.id || '',
+        chapterIds: chapters.map(chapter => chapter.id)
+    }, chapters.map(chapter => chapter.id));
+    return {
+        stories: [story],
+        chapters
+    };
+}
+
 function createUniqueId(existingIds, prefix) {
     let index = 1;
     while (existingIds.has(`${prefix}_${index}`)) {
@@ -146,7 +214,130 @@ function createUniqueId(existingIds, prefix) {
     return `${prefix}_${index}`;
 }
 
+function basenameFromPath(src) {
+    const text = typeof src === 'string' ? src.trim() : '';
+    if (!text) return '';
+    return text.split(/[\\/]/u).filter(Boolean).pop() || '';
+}
+
+function mapAssetDependencies(items, groupName) {
+    return asArray(items)
+        .filter(item => item && typeof item === 'object' && item.id)
+        .map((item) => {
+            const source = item.src || item.thumbnailSrc || '';
+            const fileName = basenameFromPath(source) || `${item.id}.asset`;
+            return {
+                id: item.id,
+                label: item.label || item.id,
+                source,
+                packagePath: `assets/${groupName}/${fileName}`
+            };
+        });
+}
+
+function buildAssetManifest(assetLibrary) {
+    const library = asObject(assetLibrary);
+    return {
+        backgrounds: mapAssetDependencies(library.backgrounds, 'backgrounds'),
+        nodeArts: mapAssetDependencies(library.nodeArts, 'nodeArts'),
+        portraits: mapAssetDependencies(library.portraits, 'portraits')
+    };
+}
+
 export class LevelMapWorkspace {
+    static createNewPackageDocument(options = {}) {
+        const packageId = typeof options.packageId === 'string' && options.packageId.trim()
+            ? options.packageId.trim()
+            : 'story_pack_v1';
+        const packageTitle = typeof options.packageTitle === 'string' && options.packageTitle.trim()
+            ? options.packageTitle.trim()
+            : packageId;
+        const baseDocument = asObject(options.baseDocument);
+        const levelsDocument = asObject(options.levelsDocument);
+        const assetLibrary = normalizeLevelMapAssetLibrary(baseDocument.assetLibrary);
+        const firstLevelId = Object.keys(asObject(levelsDocument.levels))[0] || '';
+        const firstBackgroundRef = assetLibrary.backgrounds[0]?.id || '';
+        const firstNodeSkinRef = assetLibrary.nodeSkins[0]?.id || '';
+        const firstNodeArtRef = assetLibrary.nodeArts[0]?.id || '';
+
+        return {
+            $schemaVersion: 'level_map_pack_v1',
+            meta: {
+                id: packageId,
+                title: packageTitle,
+                status: 'draft'
+            },
+            stories: [
+                {
+                    id: 'story_default',
+                    title: packageTitle,
+                    summary: '',
+                    entryChapterId: 'chapter_1',
+                    chapterIds: ['chapter_1']
+                }
+            ],
+            chapters: [
+                {
+                    id: 'chapter_1',
+                    storyId: 'story_default',
+                    title: '第一章',
+                    order: 1,
+                    description: '',
+                    entryMapId: 'map_chapter_1',
+                    mapIds: ['map_chapter_1']
+                }
+            ],
+            assetLibrary,
+            maps: [
+                {
+                    id: 'map_chapter_1',
+                    name: '第一章地图',
+                    chapterId: 'chapter_1',
+                    chapterLabel: '第一章',
+                    chapterTitle: '第一章',
+                    space: {
+                        logicalWidth: 1600,
+                        logicalHeight: 900
+                    },
+                    display: {
+                        viewportAspect: '16:9',
+                        backgroundFit: 'cover',
+                        nodeScale: 0.6,
+                        nodeAnchor: 'center',
+                        edgeAnchor: 'center',
+                        edgeLabelMode: 'midpoint'
+                    },
+                    backgroundRef: firstBackgroundRef,
+                    entryNodeId: 'node_1',
+                    nodes: [
+                        {
+                            id: 'node_1',
+                            levelId: firstLevelId,
+                            label: '1-1',
+                            title: '入口节点',
+                            kind: 'main',
+                            nodeSkinRef: firstNodeSkinRef,
+                            iconLabel: '入口',
+                            position: {
+                                x: 280,
+                                y: 450
+                            },
+                            objectiveText: '',
+                            difficultyLabel: '标准',
+                            rewardPreview: [],
+                            artRefs: {
+                                nodeArt: firstNodeArtRef,
+                                portrait: ''
+                            }
+                        }
+                    ],
+                    edges: [],
+                    previewModes: []
+                }
+            ]
+        };
+    }
+
     constructor(rawDocument, options = {}) {
         const source = asObject(rawDocument);
         const levelsDocument = asObject(options.levelsDocument);
@@ -157,15 +348,122 @@ export class LevelMapWorkspace {
         this.meta = clone(asObject(source.meta));
         this.assetLibrary = normalizeLevelMapAssetLibrary(source.assetLibrary);
         this.maps = asArray(source.maps).map((map, index) => normalizeMap(index, map, this.availableLevelIds));
+        const legacyStructure = buildLegacyStructure(this.meta, this.maps);
+        this.chapters = asArray(source.chapters).length
+            ? asArray(source.chapters).map((chapter, index) => normalizeChapter(index, chapter, 'story_default'))
+            : legacyStructure.chapters;
+        this.stories = asArray(source.stories).length
+            ? asArray(source.stories).map((story, index) => normalizeStory(index, story))
+            : legacyStructure.stories;
+        this.reconcileStoryStructure();
     }
 
     exportDocument() {
         return {
             $schemaVersion: this.schemaVersion,
             meta: clone(this.meta),
+            stories: clone(this.stories),
+            chapters: clone(this.chapters),
             assetLibrary: clone(this.assetLibrary),
             maps: clone(this.maps)
         };
+    }
+
+    exportPackageBundle(options = {}) {
+        const mapsJson = this.exportDocument();
+        const meta = asObject(mapsJson.meta);
+        const stories = asArray(mapsJson.stories);
+        const chapters = asArray(mapsJson.chapters);
+        const packageId = typeof options.packageId === 'string' && options.packageId.trim()
+            ? options.packageId.trim()
+            : (meta.id || 'story_pack_v1');
+        const title = typeof options.packageTitle === 'string' && options.packageTitle.trim()
+            ? options.packageTitle.trim()
+            : (meta.title || packageId);
+        const entryStoryId = meta.entryStoryId || stories[0]?.id || '';
+        const entryStory = stories.find(story => story.id === entryStoryId) || stories[0] || null;
+
+        return {
+            packageJson: {
+                $schemaVersion: 'level_map_package_v1',
+                packageId,
+                packageVersion: typeof options.packageVersion === 'string' && options.packageVersion.trim()
+                    ? options.packageVersion.trim()
+                    : '1.0.0',
+                title,
+                status: meta.status || 'draft',
+                entryStoryId: entryStory?.id || '',
+                entryChapterId: entryStory?.entryChapterId || chapters[0]?.id || '',
+                files: {
+                    maps: 'maps.json'
+                },
+                assets: {
+                    basePath: 'assets/',
+                    manifest: 'asset-manifest.json'
+                },
+                stories: stories.map(story => ({
+                    id: story.id,
+                    title: story.title,
+                    entryChapterId: story.entryChapterId,
+                    chapterIds: asArray(story.chapterIds).map(chapterId => String(chapterId))
+                }))
+            },
+            mapsJson,
+            assetManifest: buildAssetManifest(mapsJson.assetLibrary)
+        };
+    }
+
+    reconcileStoryStructure() {
+        const mapIds = new Set(this.maps.map(map => map.id));
+        const chapterIds = new Set(this.chapters.map(chapter => chapter.id));
+        const primaryStory = this.stories[0] || normalizeStory(0, {
+            id: 'story_default',
+            title: this.meta.title || '默认故事'
+        });
+        const primaryStoryId = primaryStory.id;
+        this.maps.forEach((map) => {
+            if (!map.chapterId || !chapterIds.has(map.chapterId)) {
+                const fallbackChapter = this.chapters[0] || normalizeChapter(0, { id: 'chapter_default', title: '默认章节' });
+                if (!chapterIds.has(fallbackChapter.id)) {
+                    this.chapters.push(fallbackChapter);
+                    chapterIds.add(fallbackChapter.id);
+                }
+                map.chapterId = fallbackChapter.id;
+            }
+        });
+        this.chapters = this.chapters.map((chapter, index) => {
+            const next = normalizeChapter(index, {
+                ...chapter,
+                storyId: primaryStoryId
+            }, primaryStoryId);
+            const explicitMapIds = next.mapIds.filter(mapId => mapIds.has(mapId));
+            const ownedMapIds = this.maps.filter(map => map.chapterId === next.id).map(map => map.id);
+            next.mapIds = uniqueStringList([...explicitMapIds, ...ownedMapIds]);
+            next.entryMapId = next.mapIds.includes(next.entryMapId) ? next.entryMapId : (next.mapIds[0] || '');
+            return next;
+        });
+
+        const knownChapterIds = new Set(this.chapters.map(chapter => chapter.id));
+        const chapterIdsForStory = this.chapters.map(chapter => chapter.id).filter(chapterId => knownChapterIds.has(chapterId));
+        const nextStory = normalizeStory(0, {
+            ...primaryStory,
+            chapterIds: uniqueStringList([...primaryStory.chapterIds, ...chapterIdsForStory])
+        }, chapterIdsForStory);
+        nextStory.entryChapterId = nextStory.chapterIds.includes(nextStory.entryChapterId)
+            ? nextStory.entryChapterId
+            : (nextStory.chapterIds[0] || '');
+        this.stories = [nextStory];
+    }
+
+    listStories() {
+        return this.stories.map(story => clone(story));
+    }
+
+    listChapters(storyId = '') {
+        const chapters = storyId
+            ? this.chapters.filter(chapter => chapter.storyId === storyId)
+            : this.chapters;
+        return chapters.map(chapter => clone(chapter));
     }
 
     listMaps() {
@@ -179,6 +477,115 @@ export class LevelMapWorkspace {
 
     getLevelIds() {
         return [...this.availableLevelIds];
+    }
+
+    createStory(options = {}) {
+        if (this.stories.length >= 1) {
+            throw new Error('一个地图包只能承载一个故事；请新建地图包来创建另一条故事线。');
+        }
+        const existingIds = new Set(this.stories.map(story => story.id));
+        const storyId = typeof options.id === 'string' && options.id.trim() && !existingIds.has(options.id.trim())
+            ? options.id.trim()
+            : createUniqueId(existingIds, 'story');
+        this.stories.push(normalizeStory(this.stories.length, {
+            ...options,
+            id: storyId,
+            chapterIds: []
+        }));
+        return storyId;
+    }
+
+    createChapter(storyId, options = {}) {
+        const story = this.stories.find(item => item.id === storyId);
+        if (!story) {
+            throw new Error(`故事不存在: ${storyId}`);
+        }
+        const existingIds = new Set(this.chapters.map(chapter => chapter.id));
+        const chapterId = typeof options.id === 'string' && options.id.trim() && !existingIds.has(options.id.trim())
+            ? options.id.trim()
+            : createUniqueId(existingIds, 'chapter');
+        const chapter = normalizeChapter(this.chapters.length, {
+            ...options,
+            id: chapterId,
+            storyId,
+            mapIds: []
+        }, storyId);
+        this.chapters.push(chapter);
+        story.chapterIds = uniqueStringList([...story.chapterIds, chapterId]);
+        if (!story.entryChapterId) {
+            story.entryChapterId = chapterId;
+        }
+        return chapterId;
+    }
+
+    createMap(chapterId, options = {}) {
+        const chapter = this.chapters.find(item => item.id === chapterId);
+        if (!chapter) {
+            throw new Error(`章节不存在: ${chapterId}`);
+        }
+        const existingIds = new Set(this.maps.map(map => map.id));
+        const mapId = typeof options.id === 'string' && options.id.trim() && !existingIds.has(options.id.trim())
+            ? options.id.trim()
+            : createUniqueId(existingIds, 'map');
+        const firstLevelId = this.availableLevelIds[0] || '';
+        const defaultNode = normalizeNode(0, {
+            id: 'node_1',
+            levelId: firstLevelId,
+            label: '1',
+            title: '新节点',
+            kind: 'main',
+            position: { x: 240, y: 450 }
+        }, firstLevelId);
+        const map = normalizeMap(this.maps.length, {
+            id: mapId,
+            name: options.name || `新地图 ${this.maps.length + 1}`,
+            chapterId,
+            chapterTitle: chapter.title,
+            backgroundRef: options.backgroundRef || this.assetLibrary.backgrounds[0]?.id || '',
+            entryNodeId: options.entryNodeId || defaultNode.id,
+            nodes: options.nodes || [defaultNode],
+            edges: options.edges || [],
+            space: options.space,
+            display: options.display,
+            previewModes: options.previewModes
+        }, this.availableLevelIds);
+        this.maps.push(map);
+        chapter.mapIds = uniqueStringList([...chapter.mapIds, mapId]);
+        if (!chapter.entryMapId) {
+            chapter.entryMapId = mapId;
+        }
+        return mapId;
+    }
+
+    duplicateMap(mapId, options = {}) {
+        const sourceMap = this.maps.find(map => map.id === mapId);
+        if (!sourceMap) {
+            throw new Error(`地图不存在: ${mapId}`);
+        }
+        const chapterId = options.chapterId || sourceMap.chapterId;
+        const existingIds = new Set(this.maps.map(map => map.id));
+        const copiedMapId = typeof options.id === 'string' && options.id.trim() && !existingIds.has(options.id.trim())
+            ? options.id.trim()
+            : createUniqueId(existingIds, `${sourceMap.id}_copy`);
+        return this.createMap(chapterId, {
+            ...clone(sourceMap),
+            ...options,
+            id: copiedMapId,
+            name: options.name || `${sourceMap.name} 副本`
+        });
+    }
+
+    removeMap(mapId) {
+        const map = this.maps.find(item => item.id === mapId);
+        if (!map) return false;
+        this.maps = this.maps.filter(item => item.id !== mapId);
+        this.chapters = this.chapters.map((chapter, index) => normalizeChapter(index, {
+            ...chapter,
+            mapIds: chapter.mapIds.filter(id => id !== mapId),
+            entryMapId: chapter.entryMapId === mapId ? '' : chapter.entryMapId
+        }, chapter.storyId));
+        this.reconcileStoryStructure();
+        return true;
     }
 
     getBackgroundOptions() {
@@ -205,8 +612,17 @@ export class LevelMapWorkspace {
 
         const current = clone(this.maps[index]);
         const next = updater(current);
-        this.maps[index] = normalizeMap(index, next, this.availableLevelIds);
-        return this.getMap(mapId);
+        const normalized = normalizeMap(index, next, this.availableLevelIds);
+        this.maps[index] = normalized;
+        if (normalized.id !== mapId) {
+            this.chapters = this.chapters.map((chapter, chapterIndex) => normalizeChapter(chapterIndex, {
+                ...chapter,
+                mapIds: chapter.mapIds.map(id => id === mapId ? normalized.id : id),
+                entryMapId: chapter.entryMapId === mapId ? normalized.id : chapter.entryMapId
+            }, chapter.storyId));
+        }
+        this.reconcileStoryStructure();
+        return this.getMap(normalized.id);
     }
 
     createNode(mapId, options = {}) {

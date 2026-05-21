@@ -270,3 +270,162 @@ test('LevelMapWorkspace 会校验 levelId、entryNodeId 与边引用完整性', 
         '地图工作区应能稳定产出字段级问题码'
     );
 });
+
+test('LevelMapWorkspace 会把旧 maps 兼容成单故事包章节结构并支持地图级管理', async () => {
+    const { LevelMapWorkspace } = await importWorkspaceModule();
+    const workspace = new LevelMapWorkspace(buildFixtureMapPack(), {
+        levelsDocument: buildFixtureLevelsDoc()
+    });
+
+    const initialDocument = workspace.exportDocument();
+    assert.equal(Array.isArray(initialDocument.stories), true, '导出结果应包含 stories[]');
+    assert.equal(initialDocument.stories[0].id, 'story_default');
+    assert.deepEqual(initialDocument.stories[0].chapterIds, ['chapter_1']);
+    assert.deepEqual(initialDocument.chapters.map(chapter => [chapter.id, chapter.mapIds]), [
+        ['chapter_1', ['map_chapter_1']]
+    ]);
+
+    assert.throws(
+        () => workspace.createStory({
+            id: 'story_north',
+            title: '北境故事',
+            summary: '霜雾边境线'
+        }),
+        /一个地图包只能承载一个故事/u,
+        '同一个地图包不应允许追加第二个故事'
+    );
+
+    const storyId = initialDocument.stories[0].id;
+    const chapterId = workspace.createChapter(storyId, {
+        id: 'chapter_north_1',
+        title: '霜雾峡谷',
+        description: '当前故事包内的第二个章节'
+    });
+    const mapId = workspace.createMap(chapterId, {
+        id: 'map_north_entry',
+        name: '霜雾入口'
+    });
+    const copiedMapId = workspace.duplicateMap(mapId, {
+        id: 'map_north_entry_copy',
+        name: '霜雾入口复制'
+    });
+    workspace.removeMap(mapId);
+
+    const exported = workspace.exportDocument();
+    const currentStory = exported.stories.find(story => story.id === storyId);
+    const northChapter = exported.chapters.find(chapter => chapter.id === chapterId);
+
+    assert.equal(exported.stories.length, 1, '一个地图包应只导出一个故事');
+    assert.deepEqual(currentStory.chapterIds, ['chapter_1', 'chapter_north_1']);
+    assert.equal(northChapter.storyId, storyId);
+    assert.equal(northChapter.entryMapId, copiedMapId);
+    assert.deepEqual(northChapter.mapIds, ['map_north_entry_copy']);
+    assert.equal(exported.maps.some(map => map.id === mapId), false, '删除地图后 maps[] 不应保留旧地图');
+    assert.equal(exported.maps.find(map => map.id === copiedMapId)?.chapterId, chapterId);
+});
+
+test('LevelMapWorkspace 会把导入的多故事地图包收口为单故事包', async () => {
+    const { LevelMapWorkspace } = await importWorkspaceModule();
+    const rawPack = buildFixtureMapPack();
+    rawPack.stories = [
+        {
+            id: 'story_default',
+            title: '主故事',
+            entryChapterId: 'chapter_1',
+            chapterIds: ['chapter_1']
+        },
+        {
+            id: 'story_extra',
+            title: '错误的第二故事',
+            entryChapterId: 'chapter_extra',
+            chapterIds: ['chapter_extra']
+        }
+    ];
+    rawPack.chapters = [
+        {
+            id: 'chapter_1',
+            storyId: 'story_default',
+            title: '第一章',
+            order: 1,
+            entryMapId: 'map_chapter_1',
+            mapIds: ['map_chapter_1']
+        },
+        {
+            id: 'chapter_extra',
+            storyId: 'story_extra',
+            title: '额外章节',
+            order: 2,
+            entryMapId: 'map_extra',
+            mapIds: ['map_extra']
+        }
+    ];
+    rawPack.maps.push({
+        ...JSON.parse(JSON.stringify(rawPack.maps[0])),
+        id: 'map_extra',
+        name: '额外地图',
+        chapterId: 'chapter_extra'
+    });
+
+    const workspace = new LevelMapWorkspace(rawPack, {
+        levelsDocument: buildFixtureLevelsDoc()
+    });
+    const exported = workspace.exportDocument();
+    const bundle = workspace.exportPackageBundle({
+        packageId: 'story_pack_v1',
+        packageTitle: '故事地图包 v1'
+    });
+
+    assert.deepEqual(exported.stories.map(story => story.id), ['story_default']);
+    assert.deepEqual(exported.chapters.map(chapter => chapter.storyId), ['story_default', 'story_default']);
+    assert.deepEqual(exported.stories[0].chapterIds, ['chapter_1', 'chapter_extra']);
+    assert.deepEqual(bundle.packageJson.stories.map(story => story.id), ['story_default']);
+});
+
+test('LevelMapWorkspace 能创建新的单故事地图包文档模板', async () => {
+    const { LevelMapWorkspace } = await importWorkspaceModule();
+    const baseWorkspace = new LevelMapWorkspace(buildFixtureMapPack(), {
+        levelsDocument: buildFixtureLevelsDoc()
+    });
+    const document = LevelMapWorkspace.createNewPackageDocument({
+        packageId: 'new_story_pack',
+        packageTitle: '新故事包',
+        baseDocument: baseWorkspace.exportDocument(),
+        levelsDocument: buildFixtureLevelsDoc()
+    });
+    const workspace = new LevelMapWorkspace(document, {
+        levelsDocument: buildFixtureLevelsDoc()
+    });
+    const exported = workspace.exportDocument();
+
+    assert.equal(exported.meta.id, 'new_story_pack');
+    assert.equal(exported.meta.title, '新故事包');
+    assert.deepEqual(exported.stories.map(story => [story.id, story.title]), [['story_default', '新故事包']]);
+    assert.deepEqual(exported.chapters.map(chapter => [chapter.id, chapter.storyId]), [['chapter_1', 'story_default']]);
+    assert.deepEqual(exported.maps.map(map => [map.id, map.chapterId]), [['map_chapter_1', 'chapter_1']]);
+    assert.equal(exported.maps[0].nodes[0].levelId, 'level_1_1');
+    assert.equal(exported.maps[0].backgroundRef, 'bg_map_glade_01');
+    assert.equal(exported.assetLibrary.backgrounds.length, 2, '新建包应继承当前资源库，避免新包没有背景可选');
+});
+
+test('LevelMapWorkspace 能导出目录式地图包 bundle 草稿', async () => {
+    const { LevelMapWorkspace } = await importWorkspaceModule();
+    const workspace = new LevelMapWorkspace(buildFixtureMapPack(), {
+        levelsDocument: buildFixtureLevelsDoc()
+    });
+
+    const bundle = workspace.exportPackageBundle({
+        packageId: 'story_pack_v1',
+        packageTitle: '故事地图包 v1'
+    });
+
+    assert.equal(bundle.packageJson.$schemaVersion, 'level_map_package_v1');
+    assert.equal(bundle.packageJson.packageId, 'story_pack_v1');
+    assert.equal(bundle.packageJson.files.maps, 'maps.json');
+    assert.equal(bundle.packageJson.assets.manifest, 'asset-manifest.json');
+    assert.equal(bundle.mapsJson.$schemaVersion, 'level_map_pack_v1');
+    assert.deepEqual(bundle.packageJson.stories.map(story => story.id), ['story_default']);
+    assert.equal(bundle.assetManifest.backgrounds.length >= 1, true);
+    assert.equal(bundle.assetManifest.backgrounds[0].packagePath.startsWith('assets/backgrounds/'), true);
+    assert.equal(bundle.assetManifest.nodeArts[0].packagePath.startsWith('assets/nodeArts/'), true);
+    assert.equal(bundle.assetManifest.portraits[0].packagePath.startsWith('assets/portraits/'), true);
+});

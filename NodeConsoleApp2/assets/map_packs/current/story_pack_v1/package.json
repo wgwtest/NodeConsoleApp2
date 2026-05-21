@@ -1,0 +1,28 @@
+{
+  "$schemaVersion": "level_map_package_v1",
+  "packageId": "story_pack_v1",
+  "packageVersion": "1.0.0",
+  "title": "故事地图包 v1",
+  "status": "authoring",
+  "entryStoryId": "story_default",
+  "entryChapterId": "story_chapter_1",
+  "files": {
+    "maps": "maps.json"
+  },
+  "assets": {
+    "basePath": "assets/",
+    "manifest": "asset-manifest.json"
+  },
+  "stories": [
+    {
+      "id": "story_default",
+      "title": "故事关卡地图 Authoring 工作包",
+      "entryChapterId": "story_chapter_1",
+      "chapterIds": [
+        "story_chapter_1",
+        "story_chapter_2",
+        "story_chapter_3"
+      ]
+    }
+  ]
+}

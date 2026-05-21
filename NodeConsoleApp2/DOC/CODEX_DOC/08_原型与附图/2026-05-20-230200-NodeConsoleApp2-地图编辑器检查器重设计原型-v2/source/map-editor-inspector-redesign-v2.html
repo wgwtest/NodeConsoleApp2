@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地图编辑器检查器重设计原型 v2</title>
+    <style>
+        :root {
+            --bg: #e5dccc;
+            --paper: rgba(251, 247, 239, 0.96);
+            --panel: rgba(255, 252, 246, 0.98);
+            --line: rgba(72, 61, 45, 0.16);
+            --line-strong: rgba(72, 61, 45, 0.28);
+            --ink: #261f17;
+            --muted: #665743;
+            --accent: #8f5625;
+            --accent-2: #24567f;
+            --warn: #b64624;
+            --ok: #2f7d51;
+            --shadow: 0 22px 54px rgba(35, 25, 16, 0.14);
+            --left: 330px;
+            --right: 470px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 4% 3%, rgba(143, 86, 37, 0.2), transparent 18%),
+                radial-gradient(circle at 96% 0%, rgba(36, 86, 127, 0.16), transparent 22%),
+                linear-gradient(180deg, #eee4d5 0%, #d8e2ea 100%);
+        }
+
+        body {
+            margin: 0;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            color: var(--ink);
+            font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(circle at 4% 3%, rgba(143, 86, 37, 0.2), transparent 18%),
+                radial-gradient(circle at 96% 0%, rgba(36, 86, 127, 0.16), transparent 22%),
+                linear-gradient(180deg, #eee4d5 0%, #d8e2ea 100%);
+        }
+
+        .board {
+            width: 1920px;
+            height: 1080px;
+            padding: 10px;
+            display: grid;
+            grid-template-rows: 64px 1fr;
+            gap: 10px;
+        }
+
+        .toolbar,
+        .workspace {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .toolbar {
+            display: grid;
+            grid-template-columns: 370px 1fr 560px;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+        }
+
+        .brand,
+        .action-strip,
+        .cluster,
+        .stage-notes,
+        .tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        h1,
+        h2,
+        h3,
+        p {
+            margin: 0;
+        }
+
+        h1,
+        h2 {
+            font-family: "Baskerville", "Palatino Linotype", "STZhongsong", serif;
+            letter-spacing: 0.02em;
+        }
+
+        h1 {
+            font-size: 28px;
+            white-space: nowrap;
+        }
+
+        h2 {
+            font-size: 24px;
+            line-height: 1.08;
+        }
+
+        h3 {
+            font-size: 14px;
+            letter-spacing: 0.02em;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            color: #fffdf8;
+            background: rgba(41, 43, 50, 0.82);
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .pill.amber {
+            background: #d27a2d;
+        }
+
+        .pill.blue {
+            background: var(--accent-2);
+        }
+
+        .pill.ok {
+            background: var(--ok);
+        }
+
+        .pill.light {
+            color: var(--ink);
+            border: 1px solid var(--line);
+            background: #fff;
+        }
+
+        .action-strip {
+            justify-content: center;
+        }
+
+        .cluster {
+            gap: 4px;
+            padding: 4px;
+            border: 1px solid rgba(72, 61, 45, 0.12);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.52);
+        }
+
+        .btn {
+            min-height: 36px;
+            border: 0;
+            border-radius: 10px;
+            padding: 7px 12px;
+            font-weight: 900;
+            color: #fff;
+            background: var(--accent);
+            white-space: nowrap;
+        }
+
+        .btn.secondary {
+            color: var(--ink);
+            border: 1px solid var(--line);
+            background: #fff;
+        }
+
+        .btn.danger {
+            color: var(--warn);
+            border: 1px solid rgba(182, 70, 36, 0.28);
+            background: rgba(255, 255, 255, 0.92);
+        }
+
+        .target-strip {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .target-card {
+            min-width: 0;
+            border: 1px solid rgba(36, 86, 127, 0.2);
+            border-radius: 12px;
+            padding: 7px 10px;
+            background: rgba(255, 255, 255, 0.82);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .target-card strong {
+            color: var(--accent-2);
+        }
+
+        .mono {
+            font-family: "Cascadia Mono", "Consolas", monospace;
+            overflow-wrap: anywhere;
+        }
+
+        .workspace {
+            position: relative;
+            display: grid;
+            grid-template-columns: var(--left) 1fr var(--right);
+            gap: 12px;
+            padding: 10px;
+            min-height: 0;
+        }
+
+        .drawer,
+        .inspector {
+            min-height: 0;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: rgba(250, 247, 241, 0.94);
+            box-shadow: 0 16px 38px rgba(22, 16, 10, 0.12);
+            overflow: hidden;
+        }
+
+        .drawer {
+            padding: 12px;
+            display: grid;
+            grid-template-rows: auto auto auto auto 1fr;
+            gap: 10px;
+        }
+
+        .drawer-toggle {
+            position: absolute;
+            top: 18px;
+            z-index: 4;
+            min-height: 34px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 6px 13px;
+            background: rgba(255, 255, 255, 0.92);
+            font-weight: 900;
+        }
+
+        .drawer-toggle.left {
+            left: 18px;
+        }
+
+        .drawer-toggle.right {
+            right: 18px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 10px;
+            background: var(--panel);
+        }
+
+        .map-list {
+            display: grid;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 8px;
+            min-height: 34px;
+            border: 1px solid rgba(72, 61, 45, 0.14);
+            border-radius: 10px;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.82);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .row.active {
+            border-color: rgba(142, 87, 41, 0.4);
+            background: rgba(142, 87, 41, 0.1);
+            color: var(--accent);
+        }
+
+        .tiny {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 800;
+        }
+
+        .source-panel {
+            display: grid;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .path-line {
+            display: grid;
+            grid-template-columns: 66px 1fr;
+            gap: 8px;
+            align-items: start;
+        }
+
+        .path-line b {
+            color: var(--muted);
+        }
+
+        .bg-resource {
+            display: grid;
+            grid-template-columns: 84px 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .bg-thumb {
+            width: 84px;
+            height: 58px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: url("../../../../../source/map/image_w2752_h1536_map-bg-01.jpeg") center / cover no-repeat;
+        }
+
+        .resource-meta {
+            display: grid;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .input {
+            min-height: 30px;
+            border: 1px solid rgba(72, 61, 45, 0.16);
+            border-radius: 9px;
+            padding: 5px 8px;
+            background: #fff;
+            font-weight: 800;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bg-settings {
+            position: relative;
+        }
+
+        .bg-state .bg-settings,
+        .picker-state .bg-settings {
+            border-color: rgba(36, 86, 127, 0.46);
+            box-shadow:
+                0 0 0 3px rgba(36, 86, 127, 0.12),
+                0 14px 32px rgba(36, 86, 127, 0.12);
+        }
+
+        .bg-settings::after {
+            content: "背景入口";
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            display: none;
+            min-height: 24px;
+            border-radius: 999px;
+            padding: 4px 9px;
+            color: #fff;
+            background: var(--accent-2);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .bg-state .bg-settings::after,
+        .picker-state .bg-settings::after {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .stage-wrap {
+            min-width: 0;
+            min-height: 0;
+            display: grid;
+            grid-template-rows: 34px 1fr;
+            gap: 8px;
+        }
+
+        .stage-notes {
+            justify-content: center;
+        }
+
+        .stage {
+            position: relative;
+            align-self: start;
+            justify-self: center;
+            width: min(100%, 1088px);
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 20px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(12, 15, 22, 0.14)),
+                url("../../../../../source/map/image_w2752_h1536_map-bg-01.jpeg") center / cover no-repeat;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.22),
+                0 22px 48px rgba(22, 15, 9, 0.18);
+        }
+
+        svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .route {
+            fill: none;
+            stroke: rgba(66, 50, 28, 0.82);
+            stroke-width: 5.5;
+            stroke-linecap: round;
+            stroke-dasharray: 11 7;
+        }
+
+        .route.main {
+            stroke: rgba(66, 50, 28, 0.92);
+            stroke-dasharray: none;
+        }
+
+        .route.active {
+            stroke: #f7b331;
+            stroke-width: 8;
+            filter: drop-shadow(0 0 8px rgba(255, 223, 141, 0.72));
+        }
+
+        .node {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 2px solid rgba(55, 45, 32, 0.38);
+            background-size: cover;
+            background-position: center;
+            box-shadow:
+                0 12px 24px rgba(18, 13, 8, 0.26),
+                0 0 0 7px rgba(86, 73, 116, 0.26);
+        }
+
+        .node.selected {
+            border-color: #ffd35f;
+            box-shadow:
+                0 12px 24px rgba(18, 13, 8, 0.26),
+                0 0 0 6px rgba(245, 166, 35, 0.34),
+                0 0 0 12px rgba(255, 241, 204, 0.24),
+                0 0 28px rgba(255, 204, 94, 0.48);
+        }
+
+        .node.one { left: 9%; top: 54%; background-image: url("../../../../../source/scene_icon/level-node-05-elf-archer_1000.png"); }
+        .node.two { left: 18%; top: 48%; background-image: url("../../../../../source/scene_icon/level-node-06-goblin-warrior_1000.png"); }
+        .node.three { left: 30%; top: 36%; background-image: url("../../../../../source/scene_icon/level-node-04-elemental_1000.png"); }
+        .node.four { left: 41%; top: 34%; background-image: url("../../../../../source/scene_icon/level-node-05-elf-archer_1000.png"); }
+        .node.five { left: 52%; top: 50%; background-image: url("../../../../../source/scene_icon/level-node-04-elemental_1000.png"); }
+        .node.six { left: 64%; top: 40%; background-image: url("../../../../../source/scene_icon/level-node-06-goblin-warrior_1000.png"); }
+        .node.seven { left: 71%; top: 62%; background-image: url("../../../../../source/scene_icon/level-node-06-goblin-warrior_1000.png"); }
+        .node.eight { left: 82%; top: 51%; background-image: url("../../../../../source/scene_icon/level-node-07-owlbear_1000.png"); }
+        .node.nine { left: 92%; top: 61%; background-image: url("../../../../../source/scene_icon/level-node-07-owlbear_1000.png"); }
+
+        .node::before {
+            content: attr(data-kind);
+            position: absolute;
+            right: -8px;
+            top: -8px;
+            display: grid;
+            place-items: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            color: #fff1be;
+            background: rgba(38, 28, 18, 0.9);
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .node::after {
+            content: attr(data-label);
+            position: absolute;
+            left: 50%;
+            bottom: -16px;
+            transform: translateX(-50%);
+            min-width: 38px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            color: #fff8eb;
+            background: rgba(17, 18, 24, 0.78);
+            font-size: 10px;
+            font-weight: 900;
+            text-align: center;
+        }
+
+        .inspector {
+            display: grid;
+            grid-template-rows: auto minmax(410px, 1fr) auto;
+            gap: 10px;
+            padding: 12px;
+        }
+
+        .inspector-head {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .object-switch {
+            min-height: 0;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--panel);
+            overflow: hidden;
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            min-height: 48px;
+            border-bottom: 1px solid var(--line);
+            padding: 8px 10px;
+            background: rgba(250, 247, 240, 0.92);
+        }
+
+        .tab {
+            min-height: 34px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            padding: 7px 11px;
+            background: #fff;
+            font-weight: 900;
+        }
+
+        .tab.active {
+            color: #fff;
+            border-color: var(--accent-2);
+            background: var(--accent-2);
+        }
+
+        .object-list {
+            min-height: 0;
+            overflow: auto;
+            padding: 8px;
+            display: grid;
+            align-content: start;
+            gap: 6px;
+        }
+
+        .node-row,
+        .edge-row {
+            display: grid;
+            grid-template-columns: 24px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 8px;
+            min-height: 38px;
+            border: 1px solid rgba(72, 61, 45, 0.14);
+            border-radius: 10px;
+            padding: 7px 8px;
+            background: rgba(255, 255, 255, 0.82);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .node-row.active,
+        .edge-row.active {
+            border-color: rgba(142, 87, 41, 0.4);
+            background: rgba(142, 87, 41, 0.1);
+            color: var(--accent);
+        }
+
+        .node-row strong,
+        .edge-row strong {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .detail-sheet {
+            width: 100%;
+            border: 1px solid var(--line-strong);
+            border-radius: 16px;
+            background: rgba(255, 252, 246, 0.98);
+            box-shadow: 0 14px 32px rgba(27, 20, 13, 0.14);
+            overflow: hidden;
+        }
+
+        .detail-sheet .panel-head {
+            min-height: 44px;
+        }
+
+        .detail-body {
+            display: grid;
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .edge-detail .detail-body {
+            gap: 9px;
+        }
+
+        .summary-card {
+            display: grid;
+            grid-template-columns: 44px 1fr;
+            gap: 9px;
+            align-items: center;
+            border: 1px solid rgba(142, 87, 41, 0.22);
+            border-radius: 13px;
+            padding: 8px;
+            background: rgba(142, 87, 41, 0.08);
+        }
+
+        .summary-icon {
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            color: #fff0be;
+            background: rgba(38, 29, 18, 0.9);
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+        }
+
+        .field {
+            display: grid;
+            gap: 4px;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .resource-card {
+            display: grid;
+            grid-template-columns: 70px 1fr;
+            gap: 9px;
+            align-items: center;
+            border: 1px solid rgba(36, 86, 127, 0.16);
+            border-radius: 13px;
+            padding: 7px;
+            background: rgba(255, 255, 255, 0.82);
+        }
+
+        .thumb {
+            width: 70px;
+            height: 52px;
+            border-radius: 11px;
+            border: 1px solid var(--line);
+            background-position: center;
+            background-size: cover;
+        }
+
+        .thumb.node-art {
+            background-image: url("../../../../../source/scene_icon/level-node-04-elemental_1000.png");
+        }
+
+        .thumb.portrait {
+            background-image: url("../../../../../assets/images/level_map/portraits/enemy_goblin_hunter.svg");
+        }
+
+        .note {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.45;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            place-items: center;
+            background: rgba(21, 16, 10, 0.34);
+            backdrop-filter: blur(2px);
+            z-index: 10;
+        }
+
+        .modal {
+            width: 760px;
+            border: 1px solid var(--line-strong);
+            border-radius: 18px;
+            background: var(--panel);
+            box-shadow: 0 28px 90px rgba(18, 13, 9, 0.32);
+            overflow: hidden;
+        }
+
+        .modal-head,
+        .modal-foot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: rgba(250, 247, 240, 0.94);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .modal-foot {
+            border-top: 1px solid var(--line);
+            border-bottom: 0;
+        }
+
+        .modal-body {
+            display: grid;
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .package-box {
+            display: grid;
+            gap: 8px;
+            border: 1px solid rgba(36, 86, 127, 0.18);
+            border-radius: 14px;
+            padding: 12px;
+            background: rgba(36, 86, 127, 0.06);
+        }
+
+        .apply-dialog,
+        .picker-dialog,
+        .package-dialog {
+            display: none;
+        }
+
+        .apply-state .overlay,
+        .picker-state .overlay,
+        .package-state .overlay,
+        .modal-state .overlay {
+            display: grid;
+        }
+
+        .apply-state .apply-dialog,
+        .picker-state .picker-dialog,
+        .package-state .package-dialog,
+        .modal-state .package-dialog {
+            display: block;
+        }
+
+        .picker-dialog {
+            width: 920px;
+        }
+
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .resource-option {
+            display: grid;
+            gap: 8px;
+            border: 1px solid rgba(72, 61, 45, 0.16);
+            border-radius: 14px;
+            padding: 9px;
+            background: rgba(255, 255, 255, 0.84);
+        }
+
+        .resource-option.active {
+            border-color: rgba(36, 86, 127, 0.46);
+            box-shadow: 0 0 0 3px rgba(36, 86, 127, 0.1);
+        }
+
+        .resource-preview {
+            height: 118px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: url("../../../../../source/map/image_w2752_h1536_map-bg-01.jpeg") center / cover no-repeat;
+        }
+
+        .resource-preview.alt-a {
+            filter: saturate(0.8) sepia(0.22);
+        }
+
+        .resource-preview.alt-b {
+            filter: hue-rotate(18deg) saturate(0.7) brightness(0.92);
+        }
+
+        .edge-state .node-list-view,
+        .edge-state .node-detail {
+            display: none;
+        }
+
+        .node-state .edge-list-view,
+        .node-state .edge-detail {
+            display: none;
+        }
+
+        .bg-state .detail-sheet,
+        .bg-state .overlay,
+        .picker-state .detail-sheet,
+        .apply-state .detail-sheet,
+        .package-state .detail-sheet,
+        .modal-state .detail-sheet {
+            display: none;
+        }
+    </style>
+</head>
+<body class="node-state">
+    <div class="board">
+        <header class="toolbar">
+            <div class="brand">
+                <h1>地图编辑工作区</h1>
+                <span class="pill amber">16:9</span>
+                <span class="pill">Authoring</span>
+            </div>
+            <div class="action-strip">
+                <div class="cluster">
+                    <button class="btn secondary">加载 Authoring</button>
+                    <button class="btn">应用地图设置</button>
+                </div>
+                <div class="cluster">
+                    <button class="btn">新增节点</button>
+                    <button class="btn secondary">应用节点</button>
+                    <button class="btn danger">删除节点</button>
+                </div>
+                <div class="cluster">
+                    <button class="btn">新增边</button>
+                    <button class="btn secondary">应用边</button>
+                    <button class="btn danger">删除边</button>
+                </div>
+            </div>
+            <div class="target-strip">
+                <div class="target-card">
+                    <strong>当前编辑源</strong>
+                    <div class="mono">assets/data/level_map_pack_v1.authoring.json</div>
+                </div>
+                <span class="pill ok">导出 / 写回</span>
+            </div>
+        </header>
+
+        <main class="workspace">
+            <button class="drawer-toggle left">地图抽屉</button>
+            <button class="drawer-toggle right">检查器抽屉</button>
+
+            <aside class="drawer">
+                <h2>地图与结构</h2>
+                <section class="panel">
+                    <h3>地图列表</h3>
+                    <div class="map-list">
+                        <div class="row active"><span>01</span><strong>第一章 Authoring 地图</strong><span>12/14</span></div>
+                        <div class="row"><span>02</span><strong>第二章 Authoring 地图</strong><span>12/14</span></div>
+                        <div class="row"><span>03</span><strong>第三章 Authoring 地图</strong><span>12/14</span></div>
+                    </div>
+                </section>
+                <section class="panel bg-settings">
+                    <h3>地图设置 / 背景资源</h3>
+                    <div class="bg-resource">
+                        <div class="bg-thumb"></div>
+                        <div class="resource-meta">
+                            <strong>当前背景</strong>
+                            <span class="mono tiny">bg_map_glade_01</span>
+                            <div class="input">更换背景图</div>
+                        </div>
+                    </div>
+                    <div class="field" style="margin-top: 10px;"><label>入口节点</label><div class="input">c1_node_01 | 森林外缘</div></div>
+                    <div class="field" style="margin-top: 8px;"><label>视口比例 / 节点缩放</label><div class="input">16:9 / 0.60</div></div>
+                </section>
+                <section class="panel source-panel">
+                    <h3>保存与加载关系</h3>
+                    <div class="path-line"><b>编辑源</b><span class="mono">level_map_pack_v1.authoring.json</span></div>
+                    <div class="path-line"><b>运行源</b><span class="mono">level_map_pack_v1.json</span></div>
+                    <div class="path-line"><b>包结构</b><span>JSON 地图包保存资源 ID / 路径引用，不把图片二进制塞进 JSON。</span></div>
+                </section>
+                <section class="panel">
+                    <h3>结构校验</h3>
+                    <p class="note">未发现结构问题。入口节点、边引用、背景资源、节点素材、立绘引用均可解析。</p>
+                </section>
+            </aside>
+
+            <section class="stage-wrap">
+                <div class="stage-notes">
+                    <span class="pill">16:9 主舞台</span>
+                    <span class="pill">拖拽节点调整位置</span>
+                    <span class="pill">收起抽屉后地图放大</span>
+                </div>
+                <div class="stage">
+                    <svg viewBox="0 0 1088 612" aria-hidden="true">
+                        <path class="route active" d="M96 330 C144 318 165 304 205 294"></path>
+                        <path class="route main" d="M205 294 C272 254 315 220 345 220 C398 219 432 216 478 210"></path>
+                        <path class="route" d="M205 294 C246 372 312 408 354 430 C404 458 446 480 492 486 C528 491 552 448 610 306"></path>
+                        <path class="route main" d="M478 210 C520 268 542 292 610 306 C672 326 702 282 745 244"></path>
+                        <path class="route" d="M610 306 C670 370 720 382 812 310 C868 270 904 300 950 374"></path>
+                        <path class="route main" d="M745 244 C806 272 860 312 950 374 C992 404 1016 388 1040 366"></path>
+                    </svg>
+                    <div class="node one selected" data-kind="⚔" data-label="1-1"></div>
+                    <div class="node two" data-kind="⚔" data-label="1-2"></div>
+                    <div class="node three" data-kind="✦" data-label="1-3A"></div>
+                    <div class="node four" data-kind="☩" data-label="1-4A"></div>
+                    <div class="node five" data-kind="◆" data-label="1-5"></div>
+                    <div class="node six" data-kind="⚔" data-label="1-6"></div>
+                    <div class="node seven" data-kind="☩" data-label="1-7"></div>
+                    <div class="node eight" data-kind="◆" data-label="1-8"></div>
+                    <div class="node nine" data-kind="♛" data-label="1-10"></div>
+                </div>
+            </section>
+
+            <aside class="inspector">
+                <div class="inspector-head">
+                    <h2>节点与边</h2>
+                    <span class="pill blue">先选对象，再编辑</span>
+                </div>
+                <section class="object-switch">
+                    <div class="panel-head">
+                        <div class="tabs">
+                            <button class="tab active">节点列表</button>
+                            <button class="tab">边列表</button>
+                        </div>
+                        <span class="tiny node-list-view">12 nodes</span>
+                        <span class="tiny edge-list-view">14 edges</span>
+                    </div>
+                    <div class="object-list node-list-view">
+                        <div class="node-row active"><span>⚔</span><strong>c1_node_01 | 1-1 | 森林外缘</strong><span>main</span></div>
+                        <div class="node-row"><span>⚔</span><strong>c1_node_02 | 1-2 | 失联路标</strong><span>main</span></div>
+                        <div class="node-row"><span>✦</span><strong>c1_node_03a | 1-3A | 北侧树冠</strong><span>branch</span></div>
+                        <div class="node-row"><span>☩</span><strong>c1_node_04a | 1-4A | 破损营地</strong><span>supply</span></div>
+                        <div class="node-row"><span>◆</span><strong>c1_node_05 | 1-5 | 密林前哨</strong><span>elite</span></div>
+                        <div class="node-row"><span>⚔</span><strong>c1_node_06 | 1-6 | 雾中岔口</strong><span>main</span></div>
+                        <div class="node-row"><span>♛</span><strong>c1_node_10 | 1-10 | 废墟关隘</strong><span>boss</span></div>
+                    </div>
+                    <div class="object-list edge-list-view">
+                        <div class="edge-row active"><span>→</span><strong>c1_edge_01 | c1_node_01 → c1_node_02</strong><span>main</span></div>
+                        <div class="edge-row"><span>↗</span><strong>c1_edge_03a | c1_node_02 → c1_node_03a</strong><span>branch</span></div>
+                        <div class="edge-row"><span>↘</span><strong>c1_edge_04a | c1_node_03a → c1_node_04a</strong><span>supply</span></div>
+                        <div class="edge-row"><span>⇢</span><strong>c1_edge_07 | c1_node_06 → c1_node_07</strong><span>merge</span></div>
+                        <div class="edge-row"><span>→</span><strong>c1_edge_10 | c1_node_09 → c1_node_10</strong><span>boss</span></div>
+                    </div>
+                </section>
+
+                <section class="detail-sheet node-detail">
+                    <div class="panel-head">
+                        <h3>已选节点详情</h3>
+                        <span class="tiny">列表之后显示详情</span>
+                    </div>
+                    <div class="detail-body">
+                        <div class="summary-card">
+                            <div class="summary-icon">⚔</div>
+                            <div><strong>c1_node_01 | 森林外缘</strong><p class="tiny">level_1_1 · main · 坐标 145 / 468</p></div>
+                        </div>
+                        <div class="field-grid">
+                            <div class="field"><label>节点 ID</label><div class="input">c1_node_01</div></div>
+                            <div class="field"><label>绑定 levelId</label><div class="input">level_1_1</div></div>
+                            <div class="field"><label>标签</label><div class="input">1-1</div></div>
+                            <div class="field"><label>标题</label><div class="input">森林外缘</div></div>
+                        </div>
+                        <h3>资源</h3>
+                        <div class="resource-card">
+                            <div class="thumb node-art"></div>
+                            <div><strong>节点素材图</strong><p class="mono tiny">node_icon_elemental</p><div class="input">更换素材图</div></div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="thumb portrait"></div>
+                            <div><strong>立绘图</strong><p class="mono tiny">enemy_goblin_hunter</p><div class="input">更换立绘图</div></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="detail-sheet edge-detail">
+                    <div class="panel-head">
+                        <h3>已选边详情</h3>
+                        <span class="tiny">从边列表选择后编辑</span>
+                    </div>
+                    <div class="detail-body">
+                        <div class="summary-card">
+                            <div class="summary-icon">→</div>
+                            <div><strong>c1_edge_01</strong><p class="tiny">c1_node_01 → c1_node_02 · main</p></div>
+                        </div>
+                        <div class="field-grid">
+                            <div class="field"><label>边 ID</label><div class="input">c1_edge_01</div></div>
+                            <div class="field"><label>类型</label><div class="input">main route</div></div>
+                            <div class="field"><label>起点</label><div class="input">c1_node_01</div></div>
+                            <div class="field"><label>终点</label><div class="input">c1_node_02</div></div>
+                        </div>
+                        <div class="field"><label>分支文本</label><div class="input">沿着林线继续追踪失联队伍。</div></div>
+                    </div>
+                </section>
+            </aside>
+
+            <div class="overlay">
+                <section class="modal apply-dialog">
+                    <div class="modal-head">
+                        <h2>应用地图设置</h2>
+                        <span class="pill blue">只更新当前工作区</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="package-box">
+                            <h3>弹出条件</h3>
+                            <p class="note">当背景、入口节点、视口比例、默认缩放或地图标题被修改后，点击“应用地图设置”弹出确认框。确认后只把这些设置应用到浏览器内存里的当前编辑工作区。</p>
+                        </div>
+                        <div class="package-box">
+                            <div class="path-line"><b>不会写入</b><span class="mono">assets/data/level_map_pack_v1.authoring.json</span></div>
+                            <div class="path-line"><b>不会影响</b><span class="mono">assets/data/level_map_pack_v1.json</span></div>
+                            <div class="path-line"><b>下一步</b><span>确认画面无误后，必须再点“导出 / 写回”才会得到可保存的地图包结果。</span></div>
+                        </div>
+                    </div>
+                    <div class="modal-foot">
+                        <button class="btn secondary">取消</button>
+                        <button class="btn">应用到当前工作区</button>
+                    </div>
+                </section>
+
+                <section class="modal picker-dialog">
+                    <div class="modal-head">
+                        <h2>更换地图背景</h2>
+                        <span class="pill blue">资源选择器</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="package-box">
+                            <h3>背景来自资源库</h3>
+                            <p class="note">这里选择的是背景资源 ID 和路径引用。地图包记录引用，图片文件继续放在 `source/map/` 或 `assets/` 中；资源被删除或移动时，结构校验会报错，避免游戏里静默丢图。</p>
+                        </div>
+                        <div class="resource-grid">
+                            <div class="resource-option active">
+                                <div class="resource-preview"></div>
+                                <strong>bg_map_glade_01</strong>
+                                <span class="mono tiny">source/map/image_w2752_h1536_map-bg-01.jpeg</span>
+                            </div>
+                            <div class="resource-option">
+                                <div class="resource-preview alt-a"></div>
+                                <strong>bg_map_ruins_02</strong>
+                                <span class="mono tiny">source/map/map-bg-ruins-02.jpeg</span>
+                            </div>
+                            <div class="resource-option">
+                                <div class="resource-preview alt-b"></div>
+                                <strong>bg_map_canyon_03</strong>
+                                <span class="mono tiny">source/map/map-bg-canyon-03.jpeg</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-foot">
+                        <button class="btn secondary">取消</button>
+                        <button class="btn">使用选中背景</button>
+                    </div>
+                </section>
+
+                <section class="modal package-dialog">
+                    <div class="modal-head">
+                        <h2>导出 / 写回地图包</h2>
+                        <span class="pill blue">确认保存目标</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="package-box">
+                            <h3>这个地图包是什么？</h3>
+                            <p class="note">它是一个 JSON 地图包，保存地图、节点、边、显示配置，以及资源 ID / 路径引用。图片文件仍然留在 `source/` 或 `assets/` 目录里，不会被嵌入 JSON。</p>
+                        </div>
+                        <div class="package-box">
+                            <div class="path-line"><b>编辑源</b><span class="mono">assets/data/level_map_pack_v1.authoring.json</span></div>
+                            <div class="path-line"><b>运行源</b><span class="mono">assets/data/level_map_pack_v1.json</span></div>
+                            <div class="path-line"><b>影响</b><span>更换背景或节点素材时，JSON 只改引用。只要资源库中对应文件还存在，显示不会丢；若资源文件被删或移动，校验会报错。</span></div>
+                        </div>
+                    </div>
+                    <div class="modal-foot">
+                        <button class="btn secondary">只导出 JSON</button>
+                        <button class="btn">写回 authoring 文件</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(location.search);
+        const state = params.get('state') || 'node';
+        document.body.className = `${state}-state`;
+        if (state === 'edge') {
+            document.querySelectorAll('.tab').forEach((tab, index) => {
+                tab.classList.toggle('active', index === 1);
+            });
+        }
+    </script>
+</body>
+</html>

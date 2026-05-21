@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地图编辑器检查器重设计原型 v1</title>
+    <style>
+        :root {
+            --bg: #e7ded0;
+            --paper: rgba(251, 247, 239, 0.96);
+            --panel: rgba(255, 252, 246, 0.98);
+            --line: rgba(72, 61, 45, 0.16);
+            --line-strong: rgba(72, 61, 45, 0.28);
+            --ink: #261f17;
+            --muted: #6a5945;
+            --accent: #8e5729;
+            --accent-2: #24567f;
+            --warn: #b64624;
+            --ok: #2f7d51;
+            --shadow: 0 22px 54px rgba(35, 25, 16, 0.14);
+            --left: 284px;
+            --right: 420px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            color: var(--ink);
+            font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(circle at 4% 3%, rgba(143, 86, 37, 0.2), transparent 18%),
+                radial-gradient(circle at 96% 0%, rgba(36, 86, 127, 0.16), transparent 22%),
+                linear-gradient(180deg, #eee4d5 0%, #d8e2ea 100%);
+        }
+
+        .board {
+            width: 1920px;
+            height: 1080px;
+            padding: 10px;
+            display: grid;
+            grid-template-rows: 64px 1fr;
+            gap: 10px;
+        }
+
+        .toolbar,
+        .workspace {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .toolbar {
+            display: grid;
+            grid-template-columns: 360px 1fr 540px;
+            align-items: center;
+            gap: 14px;
+            padding: 8px 12px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+        }
+
+        h1,
+        h2 {
+            font-family: "Baskerville", "Palatino Linotype", "STZhongsong", serif;
+            letter-spacing: 0.02em;
+        }
+
+        h1 {
+            font-size: 28px;
+            white-space: nowrap;
+        }
+
+        h2 {
+            font-size: 24px;
+            line-height: 1.08;
+        }
+
+        h3 {
+            font-size: 14px;
+            letter-spacing: 0.02em;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            color: #fffdf8;
+            background: rgba(41, 43, 50, 0.82);
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .pill.amber {
+            background: #d27a2d;
+        }
+
+        .pill.blue {
+            background: var(--accent-2);
+        }
+
+        .pill.ok {
+            background: var(--ok);
+        }
+
+        .action-strip {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .cluster {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            border: 1px solid rgba(72, 61, 45, 0.12);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.52);
+        }
+
+        .btn {
+            min-height: 36px;
+            border: 0;
+            border-radius: 10px;
+            padding: 7px 12px;
+            font-weight: 900;
+            color: #fff;
+            background: var(--accent);
+            white-space: nowrap;
+        }
+
+        .btn.secondary {
+            color: var(--ink);
+            border: 1px solid var(--line);
+            background: #fff;
+        }
+
+        .btn.danger {
+            color: var(--warn);
+            border: 1px solid rgba(182, 70, 36, 0.28);
+            background: rgba(255, 255, 255, 0.92);
+        }
+
+        .save-target {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .target-card {
+            min-width: 0;
+            border: 1px solid rgba(36, 86, 127, 0.2);
+            border-radius: 12px;
+            padding: 7px 10px;
+            background: rgba(255, 255, 255, 0.82);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .target-card strong {
+            color: var(--accent-2);
+        }
+
+        .mono {
+            font-family: "Cascadia Mono", "Consolas", monospace;
+            overflow-wrap: anywhere;
+        }
+
+        .workspace {
+            position: relative;
+            display: grid;
+            grid-template-columns: var(--left) 1fr var(--right);
+            gap: 12px;
+            padding: 10px;
+            min-height: 0;
+        }
+
+        .drawer,
+        .inspector {
+            min-height: 0;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: rgba(250, 247, 241, 0.94);
+            box-shadow: 0 16px 38px rgba(22, 16, 10, 0.12);
+        }
+
+        .drawer {
+            padding: 12px;
+            display: grid;
+            grid-template-rows: auto auto auto 1fr;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        .drawer-toggle {
+            position: absolute;
+            top: 18px;
+            z-index: 4;
+            min-height: 34px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 6px 13px;
+            background: rgba(255, 255, 255, 0.92);
+            font-weight: 900;
+        }
+
+        .drawer-toggle.left {
+            left: 18px;
+        }
+
+        .drawer-toggle.right {
+            right: 18px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 10px;
+            background: var(--panel);
+        }
+
+        .map-list {
+            display: grid;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .map-row,
+        .node-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 8px;
+            min-height: 34px;
+            border: 1px solid rgba(72, 61, 45, 0.14);
+            border-radius: 10px;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.82);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .map-row.active,
+        .node-row.active {
+            border-color: rgba(142, 87, 41, 0.4);
+            background: rgba(142, 87, 41, 0.1);
+            color: var(--accent);
+        }
+
+        .tiny {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 800;
+        }
+
+        .save-path-panel {
+            display: grid;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .path-line {
+            display: grid;
+            grid-template-columns: 68px 1fr;
+            gap: 8px;
+            align-items: start;
+        }
+
+        .path-line b {
+            color: var(--muted);
+        }
+
+        .stage-wrap {
+            min-width: 0;
+            min-height: 0;
+            display: grid;
+            grid-template-rows: 34px 1fr;
+            gap: 8px;
+        }
+
+        .stage-notes {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .stage {
+            position: relative;
+            align-self: start;
+            justify-self: center;
+            width: min(100%, 1176px);
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 20px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(12, 15, 22, 0.14)),
+                url("../../../../../source/map/image_w2752_h1536_map-bg-01.jpeg") center / cover no-repeat;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.22),
+                0 22px 48px rgba(22, 15, 9, 0.18);
+        }
+
+        svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .route {
+            fill: none;
+            stroke: rgba(66, 50, 28, 0.82);
+            stroke-width: 5.5;
+            stroke-linecap: round;
+            stroke-dasharray: 11 7;
+        }
+
+        .route.main {
+            stroke: rgba(66, 50, 28, 0.92);
+            stroke-dasharray: none;
+        }
+
+        .route.active {
+            stroke: #f7b331;
+            stroke-width: 8;
+            filter: drop-shadow(0 0 8px rgba(255, 223, 141, 0.72));
+        }
+
+        .node {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 2px solid rgba(55, 45, 32, 0.38);
+            background-size: cover;
+            background-position: center;
+            box-shadow:
+                0 12px 24px rgba(18, 13, 8, 0.26),
+                0 0 0 7px rgba(86, 73, 116, 0.26);
+        }
+
+        .node.selected {
+            border-color: #ffd35f;
+            box-shadow:
+                0 12px 24px rgba(18, 13, 8, 0.26),
+                0 0 0 6px rgba(245, 166, 35, 0.34),
+                0 0 0 12px rgba(255, 241, 204, 0.24),
+                0 0 28px rgba(255, 204, 94, 0.48);
+        }
+
+        .node.one { left: 9%; top: 54%; background-image: url("../../../../../source/scene_icon/level-node-05-elf-archer_1000.png"); }
+        .node.two { left: 18%; top: 48%; background-image: url("../../../../../source/scene_icon/level-node-06-goblin-warrior_1000.png"); }
+        .node.three { left: 30%; top: 36%; background-image: url("../../../../../source/scene_icon/level-node-04-elemental_1000.png"); }
+        .node.four { left: 41%; top: 34%; background-image: url("../../../../../source/scene_icon/level-node-05-elf-archer_1000.png"); }
+        .node.five { left: 52%; top: 50%; background-image: url("../../../../../source/scene_icon/level-node-04-elemental_1000.png"); }
+        .node.six { left: 64%; top: 40%; background-image: url("../../../../../source/scene_icon/level-node-06-goblin-warrior_1000.png"); }
+        .node.seven { left: 71%; top: 62%; background-image: url("../../../../../source/scene_icon/level-node-06-goblin-warrior_1000.png"); }
+        .node.eight { left: 82%; top: 51%; background-image: url("../../../../../source/scene_icon/level-node-07-owlbear_1000.png"); }
+        .node.nine { left: 92%; top: 61%; background-image: url("../../../../../source/scene_icon/level-node-07-owlbear_1000.png"); }
+
+        .node::before {
+            content: attr(data-kind);
+            position: absolute;
+            right: -8px;
+            top: -8px;
+            display: grid;
+            place-items: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            color: #fff1be;
+            background: rgba(38, 28, 18, 0.9);
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .node::after {
+            content: attr(data-label);
+            position: absolute;
+            left: 50%;
+            bottom: -16px;
+            transform: translateX(-50%);
+            min-width: 38px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            color: #fff8eb;
+            background: rgba(17, 18, 24, 0.78);
+            font-size: 10px;
+            font-weight: 900;
+            text-align: center;
+        }
+
+        .inspector {
+            display: grid;
+            grid-template-rows: 172px 206px 1fr;
+            gap: 10px;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        .selection-head {
+            display: grid;
+            gap: 7px;
+            min-height: 0;
+        }
+
+        .selection-top {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: start;
+            gap: 10px;
+        }
+
+        .object-card {
+            display: grid;
+            grid-template-columns: 46px 1fr;
+            gap: 9px;
+            align-items: center;
+            border: 1px solid rgba(142, 87, 41, 0.22);
+            border-radius: 14px;
+            padding: 7px 8px;
+            background: rgba(142, 87, 41, 0.08);
+        }
+
+        .object-icon {
+            display: grid;
+            place-items: center;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            color: #fff0be;
+            background: rgba(38, 29, 18, 0.9);
+            font-size: 22px;
+            font-weight: 900;
+        }
+
+        .object-meta {
+            min-width: 0;
+            display: grid;
+            gap: 3px;
+        }
+
+        .object-meta strong {
+            font-size: 14px;
+        }
+
+        .object-meta span {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 6px;
+        }
+
+        .tab {
+            min-height: 34px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            padding: 7px 11px;
+            background: #fff;
+            font-weight: 900;
+        }
+
+        .tab.active {
+            color: #fff;
+            border-color: var(--accent-2);
+            background: var(--accent-2);
+        }
+
+        .commit-card {
+            display: grid;
+            gap: 3px;
+            border: 1px solid rgba(36, 86, 127, 0.22);
+            border-radius: 14px;
+            padding: 7px 8px;
+            background: rgba(36, 86, 127, 0.07);
+            font-size: 10.5px;
+        }
+
+        .commit-row {
+            display: grid;
+            grid-template-columns: 64px 1fr;
+            gap: 7px;
+        }
+
+        .commit-row b {
+            color: var(--muted);
+        }
+
+        .commit-row strong {
+            color: var(--accent-2);
+        }
+
+        .list-panel,
+        .edit-panel {
+            min-height: 0;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--panel);
+            overflow: hidden;
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--line);
+            padding: 9px 10px;
+            background: rgba(250, 247, 240, 0.9);
+        }
+
+        .node-list {
+            height: 156px;
+            overflow: auto;
+            padding: 8px;
+            display: grid;
+            align-content: start;
+            gap: 6px;
+        }
+
+        .node-row {
+            grid-template-columns: 24px minmax(0, 1fr) auto;
+        }
+
+        .node-row strong {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .edit-panel {
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        .form-scroll {
+            overflow: hidden;
+            padding: 9px;
+            display: grid;
+            align-content: start;
+            gap: 7px;
+        }
+
+        .form-section {
+            display: grid;
+            gap: 6px;
+            border: 1px solid rgba(72, 61, 45, 0.12);
+            border-radius: 12px;
+            padding: 7px 8px;
+            background: rgba(255, 255, 255, 0.66);
+        }
+
+        .form-section.position-section {
+            grid-template-columns: 60px 1fr;
+            align-items: center;
+        }
+
+        .form-section.resource-section {
+            gap: 6px;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .field {
+            display: grid;
+            gap: 4px;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .input {
+            min-height: 28px;
+            border: 1px solid rgba(72, 61, 45, 0.16);
+            border-radius: 9px;
+            padding: 5px 8px;
+            background: #fff;
+            font-weight: 800;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .resource-card {
+            display: grid;
+            grid-template-columns: 68px 1fr;
+            gap: 9px;
+            align-items: center;
+            border: 1px solid rgba(36, 86, 127, 0.16);
+            border-radius: 13px;
+            padding: 6px 7px;
+            background: rgba(255, 255, 255, 0.82);
+        }
+
+        .thumb {
+            width: 68px;
+            height: 50px;
+            border-radius: 11px;
+            border: 1px solid var(--line);
+            background-position: center;
+            background-size: cover;
+        }
+
+        .thumb.node-art {
+            background-image: url("../../../../../source/scene_icon/level-node-04-elemental_1000.png");
+        }
+
+        .thumb.portrait {
+            background-image: url("../../../../../assets/images/level_map/portraits/enemy_goblin_hunter.svg");
+        }
+
+        .resource-meta {
+            min-width: 0;
+            display: grid;
+            gap: 4px;
+        }
+
+        .resource-meta strong {
+            font-size: 13px;
+        }
+
+        .resource-meta .input {
+            min-height: 28px;
+            font-size: 12px;
+        }
+
+        .note {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.45;
+        }
+    </style>
+</head>
+<body>
+    <div class="board">
+        <header class="toolbar">
+            <div class="brand">
+                <h1>地图编辑工作区</h1>
+                <span class="pill amber">16:9</span>
+                <span class="pill">Authoring</span>
+            </div>
+            <div class="action-strip">
+                <div class="cluster">
+                    <button class="btn secondary">加载 Authoring</button>
+                    <button class="btn">应用地图设置</button>
+                </div>
+                <div class="cluster">
+                    <button class="btn">新增节点</button>
+                    <button class="btn secondary">应用节点</button>
+                    <button class="btn danger">删除节点</button>
+                </div>
+                <div class="cluster">
+                    <button class="btn">新增边</button>
+                    <button class="btn secondary">应用边</button>
+                    <button class="btn danger">删除边</button>
+                </div>
+            </div>
+            <div class="save-target">
+                <div class="target-card">
+                    <strong>当前编辑源</strong>
+                    <div class="mono">assets/data/level_map_pack_v1.authoring.json</div>
+                </div>
+                <span class="pill ok">应用后需导出 / 写回</span>
+            </div>
+        </header>
+
+        <main class="workspace">
+            <button class="drawer-toggle left">地图抽屉</button>
+            <button class="drawer-toggle right">检查器抽屉</button>
+
+            <aside class="drawer">
+                <h2>地图与结构</h2>
+                <section class="panel">
+                    <h3>地图列表</h3>
+                    <div class="map-list">
+                        <div class="map-row active"><span>01</span><strong>第一章 Authoring 地图</strong><span class="tiny">12/14</span></div>
+                        <div class="map-row"><span>02</span><strong>第二章 Authoring 地图</strong><span class="tiny">12/14</span></div>
+                        <div class="map-row"><span>03</span><strong>第三章 Authoring 地图</strong><span class="tiny">12/14</span></div>
+                    </div>
+                </section>
+                <section class="panel save-path-panel">
+                    <h3>保存与加载关系</h3>
+                    <div class="path-line"><b>编辑源</b><span class="mono">level_map_pack_v1.authoring.json</span></div>
+                    <div class="path-line"><b>运行源</b><span class="mono">level_map_pack_v1.json</span></div>
+                    <div class="path-line"><b>当前行为</b><span>应用按钮只更新浏览器工作区；导出或写回才会落到文件。</span></div>
+                </section>
+                <section class="panel">
+                    <h3>结构校验</h3>
+                    <p class="note">未发现结构问题。入口节点、边引用、资源引用均可解析。</p>
+                </section>
+                <section class="panel">
+                    <h3>地图设置</h3>
+                    <div class="field" style="margin-top: 8px;">
+                        <label>背景图</label>
+                        <div class="input">bg_map_glade_01 | 幽暗森林</div>
+                    </div>
+                    <div class="field" style="margin-top: 8px;">
+                        <label>入口节点</label>
+                        <div class="input">c1_node_01 | 森林外缘</div>
+                    </div>
+                    <div class="field" style="margin-top: 8px;">
+                        <label>视口比例 / 节点缩放</label>
+                        <div class="input">16:9 / 0.60</div>
+                    </div>
+                </section>
+            </aside>
+
+            <section class="stage-wrap">
+                <div class="stage-notes">
+                    <span class="pill">16:9 主舞台</span>
+                    <span class="pill">拖拽节点调整位置</span>
+                    <span class="pill">收起抽屉后地图放大</span>
+                </div>
+                <div class="stage">
+                    <svg viewBox="0 0 1176 662" aria-hidden="true">
+                        <path class="route active" d="M106 358 C150 348 170 330 212 318"></path>
+                        <path class="route main" d="M212 318 C280 275 326 238 352 238 C410 236 440 232 482 226"></path>
+                        <path class="route" d="M212 318 C260 405 312 442 354 466 C410 500 444 520 482 526 C520 532 554 488 612 331"></path>
+                        <path class="route main" d="M482 226 C512 275 536 306 612 331 C680 354 706 305 756 264"></path>
+                        <path class="route" d="M612 331 C678 398 732 410 838 336 C890 298 922 324 964 405"></path>
+                        <path class="route main" d="M756 264 C824 294 870 336 964 405 C1012 438 1038 420 1080 396"></path>
+                    </svg>
+                    <div class="node one selected" data-kind="⚔" data-label="1-1"></div>
+                    <div class="node two" data-kind="⚔" data-label="1-2"></div>
+                    <div class="node three" data-kind="✦" data-label="1-3A"></div>
+                    <div class="node four" data-kind="☩" data-label="1-4A"></div>
+                    <div class="node five" data-kind="◆" data-label="1-5"></div>
+                    <div class="node six" data-kind="⚔" data-label="1-6"></div>
+                    <div class="node seven" data-kind="☩" data-label="1-7"></div>
+                    <div class="node eight" data-kind="◆" data-label="1-8"></div>
+                    <div class="node nine" data-kind="♛" data-label="1-10"></div>
+                </div>
+            </section>
+
+            <aside class="inspector">
+                <section class="selection-head">
+                    <div class="selection-top">
+                        <h2>节点与边</h2>
+                        <span class="pill blue">node</span>
+                    </div>
+                    <div class="object-card">
+                        <div class="object-icon">⚔</div>
+                        <div class="object-meta">
+                            <strong>c1_node_01 | 森林外缘</strong>
+                            <span>level_1_1 · main · 坐标 145 / 468</span>
+                        </div>
+                    </div>
+                    <div class="commit-card">
+                        <div class="commit-row"><b>编辑源</b><strong class="mono">level_map_pack_v1.authoring.json</strong></div>
+                        <div class="commit-row"><b>当前地图</b><span class="mono">chapter_1_authoring_map</span></div>
+                        <div class="commit-row"><b>保存语义</b><span>应用节点更新内存；导出 JSON 或写回 authoring 文件后才落盘。</span></div>
+                    </div>
+                </section>
+
+                <section class="list-panel">
+                    <div class="panel-head">
+                        <div class="mode-tabs">
+                            <button class="tab active">节点列表</button>
+                            <button class="tab">边列表</button>
+                        </div>
+                        <span class="tiny">12 nodes</span>
+                    </div>
+                    <div class="node-list">
+                        <div class="node-row active"><span>⚔</span><strong>c1_node_01 | 1-1 | 森林外缘</strong><span>main</span></div>
+                        <div class="node-row"><span>⚔</span><strong>c1_node_02 | 1-2 | 失联路标</strong><span>main</span></div>
+                        <div class="node-row"><span>✦</span><strong>c1_node_03a | 1-3A | 北侧树冠</strong><span>branch</span></div>
+                        <div class="node-row"><span>☩</span><strong>c1_node_04a | 1-4A | 破损营地</strong><span>supply</span></div>
+                        <div class="node-row"><span>◆</span><strong>c1_node_05 | 1-5 | 密林前哨</strong><span>elite</span></div>
+                        <div class="node-row"><span>⚔</span><strong>c1_node_06 | 1-6 | 雾中岔口</strong><span>main</span></div>
+                        <div class="node-row"><span>♛</span><strong>c1_node_10 | 1-10 | 废墟关隘</strong><span>boss</span></div>
+                    </div>
+                </section>
+
+                <section class="edit-panel">
+                    <div class="panel-head">
+                        <h3>节点编辑</h3>
+                        <span class="tiny">字段分组，资源可见</span>
+                    </div>
+                    <div class="form-scroll">
+                        <div class="form-section">
+                            <h3>基础</h3>
+                            <div class="field-grid">
+                                <div class="field"><label>节点 ID</label><div class="input">c1_node_01</div></div>
+                                <div class="field"><label>绑定 levelId</label><div class="input">level_1_1</div></div>
+                                <div class="field"><label>标签</label><div class="input">1-1</div></div>
+                                <div class="field"><label>标题</label><div class="input">森林外缘</div></div>
+                            </div>
+                        </div>
+                        <div class="form-section resource-section">
+                            <h3>资源</h3>
+                            <div class="resource-card">
+                                <div class="thumb node-art"></div>
+                                <div class="resource-meta">
+                                    <strong>节点素材图</strong>
+                                    <div class="mono tiny">node_icon_elemental</div>
+                                    <div class="input">更换素材图</div>
+                                </div>
+                            </div>
+                            <div class="resource-card">
+                                <div class="thumb portrait"></div>
+                                <div class="resource-meta">
+                                    <strong>立绘图</strong>
+                                    <div class="mono tiny">enemy_goblin_hunter</div>
+                                    <div class="input">更换立绘图</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-section position-section">
+                            <h3>位置</h3>
+                            <div class="field-grid">
+                                <div class="field"><label>X</label><div class="input">145</div></div>
+                                <div class="field"><label>Y</label><div class="input">468</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </main>
+    </div>
+</body>
+</html>

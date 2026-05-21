@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <base href="/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>地图编辑工作区 v2</title>
@@ -361,7 +362,7 @@
         .map-stage {
             position: relative;
             width: min(100%, calc((100vh - 150px) * var(--map-aspect-ratio, 1.7778)));
-            max-height: calc(100% - 166px);
+            max-height: 100%;
             aspect-ratio: 16 / 9;
             overflow: hidden;
             border-radius: 20px;
@@ -390,176 +391,220 @@
             inset: 0;
         }
 
-        .stage-content {
-            width: 100%;
-            min-width: 0;
+        .prototype-stage-stack {
+            width: min(100%, calc((100vh - 340px) * var(--map-aspect-ratio, 1.7778)));
             height: 100%;
+            max-height: 100%;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            gap: 8px;
+            min-width: 0;
         }
 
-        .current-enemy-panel {
-            width: min(100%, calc((100vh - 150px) * var(--map-aspect-ratio, 1.7778)));
-            min-height: 142px;
-            max-height: 156px;
-            overflow: hidden;
+        .prototype-stage-stack .map-stage {
+            width: 100%;
+            max-height: none;
+            flex: 1 1 auto;
+            min-height: 300px;
+        }
+
+        .prototype-enemy-panel {
+            flex: 0 0 auto;
+            min-height: 154px;
             padding: 10px;
             border-radius: 16px;
-            border: 1px solid rgba(76, 68, 54, 0.18);
-            background:
-                linear-gradient(180deg, rgba(255, 252, 246, 0.94), rgba(241, 233, 218, 0.9)),
-                rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(76, 68, 54, 0.16);
+            background: rgba(255, 253, 248, 0.95);
             box-shadow: 0 18px 34px rgba(25, 18, 12, 0.12);
-            backdrop-filter: blur(10px);
+            display: grid;
+            grid-template-columns: minmax(190px, 0.82fr) minmax(300px, 1.25fr) minmax(230px, 0.9fr);
+            gap: 10px;
+            overflow: hidden;
         }
 
-        .current-enemy-panel__head {
+        .prototype-enemy-head {
+            grid-column: 1 / -1;
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            gap: 12px;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        }
-
-        .current-enemy-panel__head h3 {
-            font-size: 15px;
-            line-height: 1.1;
-        }
-
-        .current-enemy-panel__binding {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            align-items: flex-end;
+            gap: 10px;
             min-width: 0;
-            color: var(--ink-soft);
-            font-size: 12px;
-            font-weight: 800;
-            text-align: right;
         }
 
-        .current-enemy-panel__binding span,
-        .current-enemy-panel__binding code {
-            max-width: 280px;
+        .prototype-enemy-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .prototype-enemy-title h3,
+        .prototype-enemy-title span {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .current-enemy-panel__binding code,
-        .enemy-identity code {
-            color: var(--blue);
-            font-family: "Cascadia Mono", "Consolas", monospace;
-            font-size: 11px;
-        }
-
-        .current-enemy-panel__empty {
-            display: grid;
-            gap: 6px;
-            color: var(--ink-soft);
-            font-size: 13px;
-        }
-
-        .current-enemy-card {
-            display: grid;
-            grid-template-columns: minmax(170px, 1.1fr) minmax(230px, 1.2fr) minmax(160px, 0.9fr) minmax(260px, 1.5fr);
-            gap: 8px;
-            align-items: stretch;
-            min-width: 0;
-        }
-
-        .enemy-identity,
-        .enemy-stats div,
-        .enemy-skills,
-        .enemy-part {
-            border: 1px solid rgba(76, 68, 54, 0.13);
-            border-radius: 11px;
-            background: rgba(255, 255, 255, 0.72);
-        }
-
-        .enemy-identity {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            min-width: 0;
-            padding: 9px;
-        }
-
-        .enemy-identity strong {
+        .prototype-enemy-title h3 {
             font-size: 16px;
         }
 
-        .enemy-identity span {
-            color: var(--ink-soft);
-            font-size: 12px;
-            font-weight: 800;
+        .prototype-enemy-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
-        .enemy-identity strong,
-        .enemy-identity span,
-        .enemy-identity code {
+        .prototype-enemy-card,
+        .prototype-enemy-fieldset,
+        .prototype-enemy-body {
+            min-width: 0;
+            min-height: 0;
+            padding: 9px;
+            border-radius: 12px;
+            border: 1px solid rgba(76, 68, 54, 0.14);
+            background: rgba(255, 255, 255, 0.72);
+            overflow: hidden;
+        }
+
+        .prototype-enemy-fieldset {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .prototype-enemy-fieldset .field:first-child {
+            grid-column: 1 / -1;
+        }
+
+        .prototype-enemy-card {
+            display: grid;
+            grid-template-columns: 48px minmax(0, 1fr);
+            gap: 9px;
+            align-content: start;
+        }
+
+        .prototype-enemy-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            color: #fffdf8;
+            font-size: 20px;
+            font-weight: 900;
+            background:
+                radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.26), transparent 28%),
+                linear-gradient(180deg, #244d77, #173452);
+            box-shadow: inset 0 0 0 2px rgba(255, 253, 248, 0.38);
+        }
+
+        .prototype-enemy-name {
+            min-width: 0;
+        }
+
+        .prototype-enemy-name strong,
+        .prototype-enemy-name span {
+            display: block;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .enemy-stats {
+        .prototype-enemy-name span {
+            margin-top: 3px;
+            color: var(--ink-soft);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .prototype-metrics {
+            grid-column: 1 / -1;
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 6px;
         }
 
-        .enemy-stats div,
-        .enemy-part {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 3px;
+        .prototype-metric {
             min-width: 0;
-            padding: 8px;
+            padding: 6px;
+            border-radius: 9px;
+            border: 1px solid rgba(76, 68, 54, 0.12);
+            background: rgba(248, 241, 229, 0.78);
         }
 
-        .enemy-stats strong,
-        .enemy-part strong {
-            font-size: 12px;
-            line-height: 1.15;
-            overflow-wrap: anywhere;
+        .prototype-metric strong,
+        .prototype-metric span {
+            display: block;
         }
 
-        .enemy-stats span,
-        .enemy-part span {
+        .prototype-metric strong {
+            font-size: 15px;
+            line-height: 1;
+        }
+
+        .prototype-metric span {
+            margin-top: 3px;
             color: var(--ink-soft);
             font-size: 11px;
             font-weight: 800;
         }
 
-        .enemy-skills {
+        .prototype-enemy-body {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .prototype-body-part {
+            min-width: 0;
+            padding: 7px 6px;
+            border-radius: 10px;
+            color: #fffdf8;
+            background: #6b5b48;
+        }
+
+        .prototype-body-part.is-weak {
+            background: #9a422e;
+        }
+
+        .prototype-body-part strong,
+        .prototype-body-part span {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .prototype-body-part strong {
+            font-size: 12px;
+        }
+
+        .prototype-body-part span {
+            margin-top: 3px;
+            font-size: 11px;
+            opacity: 0.86;
+        }
+
+        .prototype-skill-list {
+            margin-top: 6px;
             display: flex;
             flex-wrap: wrap;
             gap: 5px;
-            align-content: center;
-            min-width: 0;
-            padding: 8px;
         }
 
-        .enemy-skills span {
+        .prototype-skill-chip {
             max-width: 100%;
             padding: 4px 7px;
             border-radius: 999px;
             color: var(--blue);
-            background: var(--blue-soft);
+            background: rgba(36, 77, 119, 0.1);
             font-size: 11px;
-            font-weight: 900;
-            overflow-wrap: anywhere;
-        }
-
-        .enemy-parts {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 6px;
-            min-width: 0;
+            font-weight: 800;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .drawer {
@@ -1452,15 +1497,52 @@
                             <span class="stage-note">拖拽节点调整位置</span>
                             <span id="previewArchiveNote" class="stage-note stage-note--muted">收起抽屉可放大地图</span>
                         </div>
-                    <div class="stage-content">
+                    <div class="prototype-stage-stack">
                         <div id="mapStage" class="map-stage">
                             <div id="mapCanvas" class="map-canvas"></div>
                         </div>
-                        <section id="currentLevelEnemyPanel" class="current-enemy-panel" aria-live="polite">
-                            <div class="current-enemy-panel__empty">
-                                <strong>本关敌人</strong>
-                                <span>加载地图包后显示当前节点绑定关卡的首个敌人。</span>
+                        <section class="prototype-enemy-panel" aria-label="本关敌人原型面板">
+                            <div class="prototype-enemy-head">
+                                <div class="prototype-enemy-title">
+                                    <h3>本关敌人</h3>
+                                    <span id="prototypeEnemyBinding" class="badge badge--blue">跟随选中节点</span>
+                                    <span id="prototypeEnemyLevel" class="stage-note stage-note--muted">levelId -</span>
+                                </div>
+                                <div class="prototype-enemy-actions">
+                                    <button class="toolbar-btn toolbar-btn--secondary" type="button">更换敌人</button>
+                                    <button class="toolbar-btn toolbar-btn--secondary" type="button">打开敌人详情</button>
+                                    <button class="toolbar-btn toolbar-btn--primary" type="button">保存本关敌人</button>
+                                </div>
                             </div>
+                            <div class="prototype-enemy-fieldset">
+                                <label class="field">
+                                    <span>绑定 levelId</span>
+                                    <input id="prototypeEnemyLevelInput" value="-" readonly>
+                                </label>
+                                <label class="field">
+                                    <span>关卡难度</span>
+                                    <input id="prototypeEnemyDifficultyInput" value="-" readonly>
+                                </label>
+                                <label class="field">
+                                    <span>敌人模板</span>
+                                    <input id="prototypeEnemyTemplateInput" value="-" readonly>
+                                </label>
+                            </div>
+                            <article class="prototype-enemy-card">
+                                <div class="prototype-enemy-icon" id="prototypeEnemyIcon">?</div>
+                                <div class="prototype-enemy-name">
+                                    <strong id="prototypeEnemyName">未选择节点</strong>
+                                    <span id="prototypeEnemyMeta">选择地图节点后显示该关唯一敌人</span>
+                                </div>
+                                <div class="prototype-metrics">
+                                    <div class="prototype-metric"><strong id="prototypeEnemyHp">-</strong><span>HP</span></div>
+                                    <div class="prototype-metric"><strong id="prototypeEnemyAp">-</strong><span>AP</span></div>
+                                    <div class="prototype-metric"><strong id="prototypeEnemySpeed">-</strong><span>速度</span></div>
+                                    <div class="prototype-metric"><strong id="prototypeEnemySkillCount">-</strong><span>技能</span></div>
+                                </div>
+                                <div id="prototypeEnemySkills" class="prototype-skill-list"></div>
+                            </article>
+                            <div id="prototypeEnemyBody" class="prototype-enemy-body"></div>
                         </section>
                     </div>
                 </section>
@@ -1688,19 +1770,159 @@
     </dialog>
 
     <script type="module">
-        import LevelMapWorkspace from '../script/editor/level/LevelMapWorkspace.js';
-        import LevelMapEditorPage from '../script/editor/level/LevelMapEditorPage.js';
+        import LevelMapWorkspace from '/script/editor/level/LevelMapWorkspace.js';
+        import LevelMapEditorPage from '/script/editor/level/LevelMapEditorPage.js';
 
         const page = new LevelMapEditorPage({
             document,
-            mapSourceUrl: '../assets/map_packs/authoring/story_pack_v1/package.json',
-            levelSourceUrl: '../assets/data/levels.json',
-            enemySourceUrl: '../assets/data/enemies.json',
+            mapSourceUrl: '/assets/map_packs/authoring/story_pack_v1/package.json',
+            levelSourceUrl: '/assets/data/levels.json',
             fetchImpl: window.fetch.bind(window),
             workspaceFactory(rawMapPack, levelsDocument) {
                 return new LevelMapWorkspace(rawMapPack, { levelsDocument });
             }
         });
+
+        const prototypeEnemyElements = {
+            binding: document.getElementById('prototypeEnemyBinding'),
+            level: document.getElementById('prototypeEnemyLevel'),
+            levelInput: document.getElementById('prototypeEnemyLevelInput'),
+            difficulty: document.getElementById('prototypeEnemyDifficultyInput'),
+            template: document.getElementById('prototypeEnemyTemplateInput'),
+            icon: document.getElementById('prototypeEnemyIcon'),
+            name: document.getElementById('prototypeEnemyName'),
+            meta: document.getElementById('prototypeEnemyMeta'),
+            hp: document.getElementById('prototypeEnemyHp'),
+            ap: document.getElementById('prototypeEnemyAp'),
+            speed: document.getElementById('prototypeEnemySpeed'),
+            skillCount: document.getElementById('prototypeEnemySkillCount'),
+            skills: document.getElementById('prototypeEnemySkills'),
+            body: document.getElementById('prototypeEnemyBody')
+        };
+
+        let prototypeLevelsDocument = null;
+        let prototypeEnemiesDocument = null;
+
+        function asArray(value) {
+            return Array.isArray(value) ? value : [];
+        }
+
+        function escapePrototypeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        function getPrototypeCurrentNode() {
+            const map = page.getCurrentMap?.();
+            if (!map || !page.selectedNodeId) return null;
+            return asArray(map.nodes).find(node => node.id === page.selectedNodeId) || null;
+        }
+
+        function getPrototypeLevel(levelId) {
+            return prototypeLevelsDocument?.levels?.[levelId] || null;
+        }
+
+        function getPrototypeEnemyForLevel(level) {
+            const wave = asArray(level?.waves)[0] || null;
+            const pool = wave?.enemyPoolId ? prototypeLevelsDocument?.enemyPools?.[wave.enemyPoolId] : null;
+            const member = asArray(pool?.members)[0] || null;
+            const enemy = member?.templateId ? prototypeEnemiesDocument?.[member.templateId] : null;
+            return { wave, pool, member, enemy };
+        }
+
+        function renderPrototypeEnemyPanel() {
+            const node = getPrototypeCurrentNode();
+            const level = node?.levelId ? getPrototypeLevel(node.levelId) : null;
+            const { wave, pool, member, enemy } = getPrototypeEnemyForLevel(level);
+            const levelLabel = node?.levelId || '-';
+            prototypeEnemyElements.level.textContent = `levelId ${levelLabel}`;
+            prototypeEnemyElements.levelInput.value = levelLabel;
+            prototypeEnemyElements.difficulty.value = level?.selectionMeta?.difficultyLabel || '-';
+            prototypeEnemyElements.template.value = member?.templateId || '-';
+
+            if (!node || !level) {
+                prototypeEnemyElements.binding.textContent = '未选中有效节点';
+                prototypeEnemyElements.icon.textContent = '?';
+                prototypeEnemyElements.name.textContent = '未选择关卡节点';
+                prototypeEnemyElements.meta.textContent = '选择地图节点后显示该关唯一敌人';
+                prototypeEnemyElements.hp.textContent = '-';
+                prototypeEnemyElements.ap.textContent = '-';
+                prototypeEnemyElements.speed.textContent = '-';
+                prototypeEnemyElements.skillCount.textContent = '-';
+                prototypeEnemyElements.skills.innerHTML = '';
+                prototypeEnemyElements.body.innerHTML = '';
+                return;
+            }
+
+            prototypeEnemyElements.binding.textContent = `${node.id} / ${level.name || node.title || ''}`;
+            if (!enemy) {
+                prototypeEnemyElements.icon.textContent = '!';
+                prototypeEnemyElements.name.textContent = '未绑定敌人模板';
+                prototypeEnemyElements.meta.textContent = pool?.id ? `${pool.id} 没有有效成员` : '当前关卡没有 enemyPoolId';
+                prototypeEnemyElements.hp.textContent = '-';
+                prototypeEnemyElements.ap.textContent = '-';
+                prototypeEnemyElements.speed.textContent = '-';
+                prototypeEnemyElements.skillCount.textContent = '-';
+                prototypeEnemyElements.skills.innerHTML = '';
+                prototypeEnemyElements.body.innerHTML = '';
+                return;
+            }
+
+            const stats = enemy.stats || {};
+            const skills = asArray(enemy.skills);
+            prototypeEnemyElements.icon.textContent = (enemy.name || enemy.id || '?').slice(0, 1);
+            prototypeEnemyElements.name.textContent = enemy.name || enemy.id || '-';
+            prototypeEnemyElements.meta.textContent = `${enemy.id || '-'} / ${enemy.race || '-'} / ${enemy.class || '-'} / ${wave?.waveId || 'wave_1'}`;
+            prototypeEnemyElements.hp.textContent = String(stats.hp ?? stats.maxHp ?? '-');
+            prototypeEnemyElements.ap.textContent = String(stats.ap ?? '-');
+            prototypeEnemyElements.speed.textContent = String(stats.speed ?? '-');
+            prototypeEnemyElements.skillCount.textContent = String(skills.length);
+            prototypeEnemyElements.skills.innerHTML = skills.slice(0, 4).map(skillId => (
+                `<span class="prototype-skill-chip">${escapePrototypeHtml(skillId)}</span>`
+            )).join('');
+
+            const labels = {
+                head: '头',
+                chest: '胸',
+                abdomen: '腹',
+                arm: '臂',
+                leg: '腿'
+            };
+            prototypeEnemyElements.body.innerHTML = Object.keys(labels).map((partKey) => {
+                const part = enemy.bodyParts?.[partKey] || {};
+                const weakness = Number(part.weakness ?? 1);
+                const weakClass = weakness > 1.05 ? ' is-weak' : '';
+                return `
+                    <div class="prototype-body-part${weakClass}">
+                        <strong>${labels[partKey]}</strong>
+                        <span>${escapePrototypeHtml(part.current ?? 0)} / ${escapePrototypeHtml(part.max ?? 0)}</span>
+                        <span>x${escapePrototypeHtml(weakness || 1)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadPrototypeEnemyData() {
+            const [levelsResponse, enemiesResponse] = await Promise.all([
+                fetch('/assets/data/levels.json', { cache: 'no-store' }),
+                fetch('/assets/data/enemies.json', { cache: 'no-store' })
+            ]);
+            prototypeLevelsDocument = levelsResponse.ok ? await levelsResponse.json() : null;
+            prototypeEnemiesDocument = enemiesResponse.ok ? await enemiesResponse.json() : null;
+            renderPrototypeEnemyPanel();
+        }
+
+        const originalRenderAll = page.renderAll.bind(page);
+        page.renderAll = (...args) => {
+            const result = originalRenderAll(...args);
+            renderPrototypeEnemyPanel();
+            return result;
+        };
 
         const stageShell = document.getElementById('stageShell');
         const bindDrawerToggle = (toggleId, key) => {
@@ -1722,6 +1944,11 @@
         bindDrawerToggle('rightDrawerToggle', 'right');
 
         page.bind();
+        loadPrototypeEnemyData().catch((error) => {
+            if (prototypeEnemyElements.name) {
+                prototypeEnemyElements.name.textContent = `敌人数据加载失败：${error.message}`;
+            }
+        });
         page.loadDefaultDocuments().catch((error) => {
             page.setStatus(`默认地图包加载失败：${error.message}`);
         });
