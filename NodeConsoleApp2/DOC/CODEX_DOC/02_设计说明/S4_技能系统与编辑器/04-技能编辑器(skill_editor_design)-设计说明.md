@@ -3,7 +3,7 @@
 > 本文档为 **v4_5 数据对齐版**：用于确保技能编辑器能够正确加载、编辑、校验并导出 `assets/data/skills_melee_v4_5.json`。
 >
 > 对齐来源：
-> - `DOC/CODEX_DOC/02_设计说明/03-技能系统(skill_design)-设计说明.md`（技能系统规范与字段语义）
+> - `DOC/CODEX_DOC/02_设计说明/S4_技能系统与编辑器/03-技能系统(skill_design)-设计说明.md`（技能系统规范与字段语义）
 > - `assets/data/skills_melee_v4_5.json`（实际样例与 `meta.enums` 枚举源）
 
 ---

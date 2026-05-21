@@ -4,7 +4,7 @@
 
 关联文档：
 
-- `DOC/CODEX_DOC/02_设计说明/09-Buff系统(buff_design)-设计说明.md`：Buff 数据规范（Schema / Data Spec）。
+- `DOC/CODEX_DOC/02_设计说明/S5_Buff系统与编辑器/09-Buff系统(buff_design)-设计说明.md`：Buff 数据规范（Schema / Data Spec）。
 - `assets/data/buffs_v2_7.json`：包含 `$schemaVersion`、`meta.enums`、`meta.fieldNotes`、以及 `buffs` 数据库。
 
 ---

@@ -98,8 +98,8 @@
 
 1. `assets/data/contracts/level_runtime_definition.contract.json`
 2. `assets/data/contracts/level_map_definition.contract.json`
-3. [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md)
-4. [26-关卡地图选择与地图包(level_map_selection)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/26-关卡地图选择与地图包(level_map_selection)-设计说明.md)
+3. [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S3_关卡地图与编辑器/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md)
+4. [26-关卡地图选择与地图包(level_map_selection)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S3_关卡地图与编辑器/26-关卡地图选择与地图包(level_map_selection)-设计说明.md)
 
 消费方：
 
@@ -120,7 +120,7 @@
 
 1. `assets/data/contracts/level_runtime_definition.contract.json`
 2. `assets/data/contracts/level_map_definition.contract.json`
-3. [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md)
+3. [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S3_关卡地图与编辑器/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md)
 
 稳定输出物：
 

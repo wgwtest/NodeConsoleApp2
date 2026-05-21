@@ -56,7 +56,7 @@
 ## 5. 当前可用入口
 
 1. 设计入口：
-   - [Spine样本bundle导入probe与降级壳设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明.md)
+   - [Spine样本bundle导入probe与降级壳设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S7_UI与交互基线/23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明.md)
 2. 实施计划：
    - [2026-04-07-C1-Spine样本bundle导入probe实施计划](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/04_研发文档/2026-04-07-C1-Spine样本bundle导入probe实施计划.md)
 3. 自动测试：

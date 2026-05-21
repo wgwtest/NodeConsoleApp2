@@ -151,7 +151,7 @@ Roadmap 时间：
 5. `script/ui/UI_BattleRow.js`
 6. `script/engine/DataManagerV2.js`
 7. `test/codex_regression_runner.html`
-8. `DOC/CODEX_DOC/02_设计说明/03-技能系统(skill_design)-设计说明.md`
+8. `DOC/CODEX_DOC/02_设计说明/S4_技能系统与编辑器/03-技能系统(skill_design)-设计说明.md`
 9. `DOC/CODEX_DOC/03_研制计划/10-WBS-L2-C1-技能树与构筑.md`
 
 ## 6. 验收口径

@@ -25,9 +25,9 @@
 
 它不替代：
 
-1. [19-关卡选择内容元数据(level_select_content)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/19-关卡选择内容元数据(level_select_content)-设计说明.md)
+1. [19-关卡选择内容元数据(level_select_content)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S1_主游戏流程/19-关卡选择内容元数据(level_select_content)-设计说明.md)
    - 负责当前主流程关卡选择页的玩家可见信息
-2. [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md)
+2. [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S3_关卡地图与编辑器/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md)
    - 负责 `WBS-3.2` 上位对象、关卡编辑器和对象域边界
 
 ## 2. 设计目标

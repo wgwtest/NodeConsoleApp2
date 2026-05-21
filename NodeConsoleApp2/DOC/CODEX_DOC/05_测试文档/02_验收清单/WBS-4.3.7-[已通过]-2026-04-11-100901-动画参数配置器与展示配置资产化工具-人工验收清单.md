@@ -33,7 +33,7 @@
 3. 主流程页：
    - `http://127.0.0.1:3101/mock_ui_v11.html`
 4. 设计 / 研发文档：
-   - `/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/20-对战演出与动画展示层(battle_presentation)-设计说明.md`
+   - `/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S2_战斗运行时/20-对战演出与动画展示层(battle_presentation)-设计说明.md`
    - `/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/04_研发文档/09-WBS-4.3.7-动画参数配置器与展示配置资产化工具.md`
 5. 自测报告：
    - `/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/01_自测报告/2026-04-11-100901-WBS-4.3.7-动画参数配置器与展示配置资产化工具自测报告.md`

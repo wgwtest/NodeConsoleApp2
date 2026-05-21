@@ -124,7 +124,7 @@ Roadmap 时间：
 4. `script/ui/UI_BattleRow.js`
 5. `script/ui/UI_TurnPanel.js`
 6. `script/ui/UI_SkillTreeModal.js`
-7. `DOC/CODEX_DOC/02_设计说明/16-战斗界面(UI_design)-设计说明.md`
+7. `DOC/CODEX_DOC/02_设计说明/S7_UI与交互基线/16-战斗界面(UI_design)-设计说明.md`
 8. `DOC/CODEX_DOC/03_研制计划/12-WBS-L2-D1-UI统一.md`
 
 ## 6. 验收口径

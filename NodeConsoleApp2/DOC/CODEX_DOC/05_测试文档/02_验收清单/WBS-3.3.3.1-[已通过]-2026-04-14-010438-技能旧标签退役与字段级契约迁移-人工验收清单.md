@@ -13,7 +13,7 @@
 1. 计划：
    - [18-WBS-3.3.3.1-技能旧标签退役与字段级契约迁移.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/18-WBS-3.3.3.1-技能旧标签退役与字段级契约迁移.md)
 2. 设计：
-   - [25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md)
+   - [25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S4_技能系统与编辑器/25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md)
 3. 页面：
    - `http://127.0.0.1:3101/test/skill_contract_probe.html`
 

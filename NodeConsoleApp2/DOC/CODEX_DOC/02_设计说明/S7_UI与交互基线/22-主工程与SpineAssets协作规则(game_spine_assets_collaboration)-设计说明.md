@@ -101,8 +101,8 @@
 
 主工程本地文档入口：
 
-1. `DOC/CODEX_DOC/02_设计说明/21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明.md`
-2. `DOC/CODEX_DOC/02_设计说明/22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md`
+1. `DOC/CODEX_DOC/02_设计说明/S7_UI与交互基线/21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明.md`
+2. `DOC/CODEX_DOC/02_设计说明/S7_UI与交互基线/22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md`
 3. `DOC/CODEX_DOC/03_研制计划/09-WBS-L3-D3.2-SpineAssets协作规则与导入契约基线.md`
 
 素材工程对口文档入口：

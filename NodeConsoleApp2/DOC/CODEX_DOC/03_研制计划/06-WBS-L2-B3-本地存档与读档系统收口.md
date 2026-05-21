@@ -123,7 +123,7 @@
 
 本节点完成后应至少新增或更新：
 
-1. `DOC/CODEX_DOC/02_设计说明/18-本地存档(local_save_design)-设计说明.md`
+1. `DOC/CODEX_DOC/02_设计说明/S6_数据存档与内容契约/18-本地存档(local_save_design)-设计说明.md`
 2. `DOC/CODEX_DOC/03_研制计划/01-WBS-L0-NodeConsoleApp2-可交付版本研发总纲.md`
 3. `DOC/CODEX_DOC/03_研制计划/README.md`
 4. `DOC/CODEX_DOC/05_测试文档/01_自测报告/` 下的存档专项报告

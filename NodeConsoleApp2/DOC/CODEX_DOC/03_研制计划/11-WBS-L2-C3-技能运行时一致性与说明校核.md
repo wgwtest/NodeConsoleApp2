@@ -89,8 +89,8 @@
 
 1. `script/engine/DataManagerV2.js`
 2. `test/codex_regression_runner.html`
-3. `DOC/CODEX_DOC/02_设计说明/03-技能系统(skill_design)-设计说明.md`
-4. `DOC/CODEX_DOC/02_设计说明/06-技能平衡(skill_balance_design)-设计说明.md`
+3. `DOC/CODEX_DOC/02_设计说明/S4_技能系统与编辑器/03-技能系统(skill_design)-设计说明.md`
+4. `DOC/CODEX_DOC/02_设计说明/S4_技能系统与编辑器/06-技能平衡(skill_balance_design)-设计说明.md`
 
 ### 5.2 `#85 / WBS-3.3.2 技能运行时批量回归与异常归档`
 
@@ -165,7 +165,7 @@
 当前结论：
 
 1. 已有稳定设计依据：
-   - `DOC/CODEX_DOC/02_设计说明/25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md`
+   - `DOC/CODEX_DOC/02_设计说明/S4_技能系统与编辑器/25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md`
 2. 已明确迁移顺序：
    - 先去正式功能依赖
    - 再去工具 / 测试依赖
@@ -184,8 +184,8 @@
 
 本节点当前应维护：
 
-1. `DOC/CODEX_DOC/02_设计说明/03-技能系统(skill_design)-设计说明.md`
-2. `DOC/CODEX_DOC/02_设计说明/06-技能平衡(skill_balance_design)-设计说明.md`
+1. `DOC/CODEX_DOC/02_设计说明/S4_技能系统与编辑器/03-技能系统(skill_design)-设计说明.md`
+2. `DOC/CODEX_DOC/02_设计说明/S4_技能系统与编辑器/06-技能平衡(skill_balance_design)-设计说明.md`
 3. `DOC/CODEX_DOC/03_研制计划/11-WBS-L2-C3-技能运行时一致性与说明校核.md`
 4. `assets/data/skills_melee_v4_5.json`
 5. `script/engine/CoreEngine.js`
@@ -195,7 +195,7 @@
 9. `test/codex_regression_runner.html`
 10. `test/skill_contract_probe.html`
 11. `DOC/CODEX_DOC/04_研发文档/07-技能运行时一致性首轮异常归档.md`
-12. `DOC/CODEX_DOC/02_设计说明/25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md`
+12. `DOC/CODEX_DOC/02_设计说明/S4_技能系统与编辑器/25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md`
 13. `DOC/CODEX_DOC/03_研制计划/18-WBS-3.3.3.1-技能旧标签退役与字段级契约迁移.md`
 
 ## 7. 验收口径

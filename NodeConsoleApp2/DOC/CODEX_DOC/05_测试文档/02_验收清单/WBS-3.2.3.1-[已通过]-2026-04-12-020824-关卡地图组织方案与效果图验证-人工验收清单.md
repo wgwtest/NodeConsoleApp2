@@ -22,7 +22,7 @@
 2. 共享回归辅助入口：
    - `http://127.0.0.1:3101/test/codex_regression_runner.html?scope=WBS-3.2.3.1`
 3. 设计说明：
-   - `/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/26-关卡地图选择与地图包(level_map_selection)-设计说明.md`
+   - `/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S3_关卡地图与编辑器/26-关卡地图选择与地图包(level_map_selection)-设计说明.md`
 4. 计划文档：
    - `/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/19-WBS-3.2.3.1-关卡地图组织方案与效果图验证.md`
 5. 自测报告：

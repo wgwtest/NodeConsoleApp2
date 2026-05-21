@@ -13,7 +13,7 @@
 
 ## 1. 文档定位
 
-本文件是对 [12-关卡系统(level_design)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/12-关卡系统(level_design)-设计说明.md) 和 [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md) 的运行时补充。
+本文件是对 [12-关卡系统(level_design)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S3_关卡地图与编辑器/12-关卡系统(level_design)-设计说明.md) 和 [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S3_关卡地图与编辑器/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md) 的运行时补充。
 
 它不重写战斗规则，也不重写关卡实例化逻辑，只回答一个问题：
 

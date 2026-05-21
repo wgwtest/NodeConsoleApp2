@@ -89,7 +89,7 @@
 
 1. 已自测，待人工验收
 2. 已补齐：
-   - `DOC/CODEX_DOC/02_设计说明/22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md`
+   - `DOC/CODEX_DOC/02_设计说明/S7_UI与交互基线/22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md`
    - `DOC/CODEX_DOC/03_研制计划/09-WBS-L3-D3.2-SpineAssets协作规则与导入契约基线.md`
    - `DOC/CODEX_DOC/05_测试文档/01_自测报告/2026-04-07-145702-D3.2-SpineAssets协作规则与导入契约基线自测报告.md`
    - `DOC/CODEX_DOC/05_测试文档/02_验收清单/D3.2-[待验收]-2026-04-07-145702-SpineAssets协作规则与导入契约基线-人工验收清单.md`
@@ -99,7 +99,7 @@
 
 本节点当前应维护：
 
-1. `DOC/CODEX_DOC/02_设计说明/20-对战演出与动画展示层(battle_presentation)-设计说明.md`
+1. `DOC/CODEX_DOC/02_设计说明/S2_战斗运行时/20-对战演出与动画展示层(battle_presentation)-设计说明.md`
 2. `DOC/CODEX_DOC/03_研制计划/08-WBS-L2-D3-对战演出与动画展示层.md`
 3. `script/ui/UI_BattleRow.js`
 4. `script/ui/presentation/BattleAnimationDriver.js`

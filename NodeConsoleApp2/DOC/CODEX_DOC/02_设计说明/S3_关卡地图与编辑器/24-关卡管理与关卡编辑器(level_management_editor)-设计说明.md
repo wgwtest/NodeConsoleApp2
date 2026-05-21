@@ -25,9 +25,9 @@
 
 它不替代：
 
-1. [12-关卡系统(level_design)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/12-关卡系统(level_design)-设计说明.md)
+1. [12-关卡系统(level_design)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S3_关卡地图与编辑器/12-关卡系统(level_design)-设计说明.md)
    - 负责更早期的关卡系统概念设计
-2. [19-关卡选择内容元数据(level_select_content)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/19-关卡选择内容元数据(level_select_content)-设计说明.md)
+2. [19-关卡选择内容元数据(level_select_content)-设计说明](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S1_主游戏流程/19-关卡选择内容元数据(level_select_content)-设计说明.md)
    - 负责选择页的玩家可见元数据表达
 
 本文件要解决的是另外一个问题：

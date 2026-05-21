@@ -1,7 +1,7 @@
 # Timeline UI 设计方案（ATB 风格技能节点）
 
 > 本文仅描述 `timeline labeled-block` 的 UI/交互与渲染数据需求。
-> Timeline 的运算/执行内核见：`DOC/CODEX_DOC/02_设计说明/14-时间线机制(timeline_design)-设计说明.md`。
+> Timeline 的运算/执行内核见：`DOC/CODEX_DOC/02_设计说明/S2_战斗运行时/14-时间线机制(timeline_design)-设计说明.md`。
 
 ---
 
