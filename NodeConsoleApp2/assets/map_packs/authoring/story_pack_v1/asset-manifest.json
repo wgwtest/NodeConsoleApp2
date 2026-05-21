@@ -1,0 +1,80 @@
+{
+  "backgrounds": [
+    {
+      "id": "bg_map_glade_01",
+      "label": "地图背景 01",
+      "source": "../source/map/image_w2752_h1536_map-bg-01.jpeg",
+      "packagePath": "assets/backgrounds/image_w2752_h1536_map-bg-01.jpeg"
+    },
+    {
+      "id": "bg_map_winter_02",
+      "label": "地图背景 02 · 冬境",
+      "source": "../source/map/image_w2752_h1536_map-bg-02-winter.jpeg",
+      "packagePath": "assets/backgrounds/image_w2752_h1536_map-bg-02-winter.jpeg"
+    },
+    {
+      "id": "bg_map_glade_03",
+      "label": "地图背景 03",
+      "source": "../source/map/image_w2752_h1536_map-bg-03.jpeg",
+      "packagePath": "assets/backgrounds/image_w2752_h1536_map-bg-03.jpeg"
+    },
+    {
+      "id": "bg_map_glade_04",
+      "label": "地图背景 04",
+      "source": "../source/map/image_w2752_h1536_map-bg-04.jpeg",
+      "packagePath": "assets/backgrounds/image_w2752_h1536_map-bg-04.jpeg"
+    }
+  ],
+  "nodeArts": [
+    {
+      "id": "node_icon_elemental",
+      "label": "元素节点图标",
+      "source": "../source/scene_icon/level-node-04-elemental_1000.png",
+      "packagePath": "assets/nodeArts/level-node-04-elemental_1000.png"
+    },
+    {
+      "id": "node_icon_elf_archer",
+      "label": "精灵弓手节点图标",
+      "source": "../source/scene_icon/level-node-05-elf-archer_1000.png",
+      "packagePath": "assets/nodeArts/level-node-05-elf-archer_1000.png"
+    },
+    {
+      "id": "node_icon_goblin_warrior",
+      "label": "哥布林战士节点图标",
+      "source": "../source/scene_icon/level-node-06-goblin-warrior_1000.png",
+      "packagePath": "assets/nodeArts/level-node-06-goblin-warrior_1000.png"
+    },
+    {
+      "id": "node_icon_owlbear",
+      "label": "枭熊节点图标",
+      "source": "../source/scene_icon/level-node-07-owlbear_1000.png",
+      "packagePath": "assets/nodeArts/level-node-07-owlbear_1000.png"
+    }
+  ],
+  "portraits": [
+    {
+      "id": "enemy_goblin_hunter",
+      "label": "哥布林猎手",
+      "source": "../assets/images/level_map/portraits/enemy_goblin_hunter.svg",
+      "packagePath": "assets/portraits/enemy_goblin_hunter.svg"
+    },
+    {
+      "id": "enemy_goblin_medic",
+      "label": "哥布林医师",
+      "source": "../assets/images/level_map/portraits/enemy_goblin_medic.svg",
+      "packagePath": "assets/portraits/enemy_goblin_medic.svg"
+    },
+    {
+      "id": "enemy_skeleton_guard",
+      "label": "骷髅守卫",
+      "source": "../assets/images/level_map/portraits/enemy_skeleton_guard.svg",
+      "packagePath": "assets/portraits/enemy_skeleton_guard.svg"
+    },
+    {
+      "id": "enemy_ruins_boss",
+      "label": "废墟首领",
+      "source": "../assets/images/level_map/portraits/enemy_ruins_boss.svg",
+      "packagePath": "assets/portraits/enemy_ruins_boss.svg"
+    }
+  ]
+}

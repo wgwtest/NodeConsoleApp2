@@ -252,18 +252,21 @@ export class LevelMapEditorPage {
         this.window = options.window || this.document?.defaultView || globalThis.window;
         this.fetchImpl = options.fetchImpl || globalThis.fetch?.bind(globalThis);
         this.workspaceFactory = options.workspaceFactory;
-        this.mapSourceUrl = options.mapSourceUrl || '../assets/data/level_map_pack_v1.authoring.json';
+        this.mapSourceUrl = options.mapSourceUrl || '../assets/map_packs/authoring/story_pack_v1/package.json';
         this.levelSourceUrl = options.levelSourceUrl || '../assets/data/levels.json';
         this.ResizeObserverImpl = options.ResizeObserverImpl
             || this.window?.ResizeObserver
             || globalThis.ResizeObserver;
 
         this.workspace = null;
+        this.selectedStoryId = null;
+        this.selectedChapterId = null;
         this.selectedMapId = null;
         this.selectedNodeId = null;
         this.selectedEdgeId = null;
         this.inspectorMode = 'node';
         this.pendingBackgroundRef = null;
+        this.packageDirectoryHandle = null;
         this.dragState = null;
         this.elements = {};
         this.canvasResizeObserver = null;
@@ -284,7 +287,18 @@ export class LevelMapEditorPage {
             'removeEdgeBtn',
             'saveEdgeBtn',
             'saveMapBtn',
+            'publishMapBtn',
             'exportMapBtn',
+            'addStoryBtn',
+            'addChapterBtn',
+            'addMapBtn',
+            'duplicateMapBtn',
+            'removeMapBtn',
+            'storyTitleInput',
+            'chapterTitleInput',
+            'mapNameInput',
+            'storyList',
+            'chapterList',
             'mapList',
             'nodeList',
             'edgeList',
@@ -337,6 +351,14 @@ export class LevelMapEditorPage {
             'edgeTypeSelect',
             'edgeBranchLabelInput',
             'exportPreview',
+            'packageIdInput',
+            'packageTitleInput',
+            'authoringPackageDirectoryInput',
+            'runtimePackageDirectoryInput',
+            'packageDirectoryInput',
+            'authoringPackagePathPreview',
+            'runtimePackagePathPreview',
+            'packagePathPreview',
             'mapSettingsDialog',
             'confirmMapSettingsBtn',
             'cancelMapSettingsBtn',
@@ -345,8 +367,9 @@ export class LevelMapEditorPage {
             'confirmBackgroundPickerBtn',
             'cancelBackgroundPickerBtn',
             'exportMapDialog',
-            'downloadMapJsonBtn',
-            'writeBackAuthoringBtn',
+            'selectPackageDirectoryBtn',
+            'downloadPackageFilesBtn',
+            'writePackageDirectoryBtn',
             'cancelExportMapBtn'
         ];
 
@@ -361,23 +384,55 @@ export class LevelMapEditorPage {
         this.bindAction('addEdgeBtn', () => this.addEdge());
         this.bindAction('removeEdgeBtn', () => this.removeSelectedEdge());
         this.bindAction('saveEdgeBtn', () => this.saveCurrentEdge());
-        this.bindAction('saveMapBtn', () => this.openMapSettingsDialog());
+        this.bindAction('addStoryBtn', () => this.addStory());
+        this.bindAction('addChapterBtn', () => this.addChapter());
+        this.bindAction('addMapBtn', () => this.addMap());
+        this.bindAction('duplicateMapBtn', () => this.duplicateSelectedMap());
+        this.bindAction('removeMapBtn', () => this.removeSelectedMap());
+        this.bindAction('saveMapBtn', () => this.saveAuthoringPackage());
+        this.bindAction('publishMapBtn', () => this.publishRuntimePackage());
         this.bindAction('confirmMapSettingsBtn', () => this.applyCurrentMapSettings());
         this.bindAction('cancelMapSettingsBtn', () => this.closeDialog('mapSettingsDialog'));
         this.bindAction('openBackgroundPickerBtn', () => this.openBackgroundPickerDialog());
         this.bindAction('confirmBackgroundPickerBtn', () => this.confirmBackgroundPicker());
         this.bindAction('cancelBackgroundPickerBtn', () => this.closeDialog('backgroundPickerDialog'));
         this.bindAction('exportMapBtn', () => this.openExportMapDialog());
-        this.bindAction('downloadMapJsonBtn', () => this.closeExportDialogWithStatus('已准备导出 JSON 地图包。'));
-        this.bindAction('writeBackAuthoringBtn', () => this.closeExportDialogWithStatus('已确认保存到编辑工作稿目标。'));
+        this.bindAction('selectPackageDirectoryBtn', () => this.selectPackageDirectory());
+        this.bindAction('downloadPackageFilesBtn', () => this.downloadPackageFiles());
+        this.bindAction('writePackageDirectoryBtn', () => this.writePackageDirectory());
         this.bindAction('cancelExportMapBtn', () => this.closeDialog('exportMapDialog'));
         this.bindAction('nodeInspectorBtn', () => this.setInspectorMode('node'));
         this.bindAction('edgeInspectorBtn', () => this.setInspectorMode('edge'));
+        this.bindLiveMapSettings();
 
         this.document.addEventListener('mousemove', this.handleDocumentMouseMove);
         this.document.addEventListener('mouseup', this.handleDocumentMouseUp);
         this.window?.addEventListener?.('resize', this.handleViewportResize);
         this.bindCanvasResizeObserver();
+    }
+
+    bindLiveMapSettings() {
+        [
+            'backgroundSelect',
+            'entryNodeSelect',
+            'backgroundFitSelect',
+            'logicalWidthInput',
+            'logicalHeightInput',
+            'viewportAspectSelect',
+            'nodeScaleInput',
+            'edgeLabelModeSelect',
+            'nodeAnchorSelect',
+            'edgeAnchorSelect'
+        ].forEach((id) => {
+            const element = this.elements[id];
+            if (!element) return;
+            const eventName = element.tagName === 'INPUT' ? 'input' : 'change';
+            element.addEventListener(eventName, () => this.applyCurrentMapSettings({ silent: true }));
+        });
+
+        ['packageIdInput', 'authoringPackageDirectoryInput', 'runtimePackageDirectoryInput', 'packageDirectoryInput'].forEach((id) => {
+            this.elements[id]?.addEventListener('input', () => this.syncPackagePathPreview());
+        });
     }
 
     bindCanvasResizeObserver() {
@@ -438,13 +493,33 @@ export class LevelMapEditorPage {
             throw new Error(`关卡定义加载失败: ${levelResponse?.status || 'unknown'}`);
         }
 
-        const [rawMapPack, rawLevels] = await Promise.all([
+        const [rawMapSource, rawLevels] = await Promise.all([
             mapResponse.json(),
             levelResponse.json()
         ]);
+        let rawMapPack = rawMapSource;
+        if (rawMapSource?.$schemaVersion === 'level_map_package_v1' && rawMapSource?.files?.maps) {
+            const mapsUrl = this.resolveRelativeUrl(rawMapSource.files.maps, this.mapSourceUrl);
+            const mapsResponse = await this.fetchImpl(mapsUrl, { cache: 'no-store' });
+            if (!mapsResponse?.ok) {
+                throw new Error(`地图包数据加载失败: ${mapsResponse?.status || 'unknown'}`);
+            }
+            rawMapPack = await mapsResponse.json();
+        }
 
         this.loadDocuments(rawMapPack, rawLevels);
         this.setStatus('已加载地图包与关卡定义。');
+    }
+
+    resolveRelativeUrl(filePath, baseUrl) {
+        if (!filePath || typeof filePath !== 'string') return filePath;
+        if (/^https?:\/\//iu.test(filePath) || filePath.startsWith('/')) return filePath;
+        if (!baseUrl) return filePath;
+        const baseText = String(baseUrl);
+        const baseDirectory = baseText.includes('/')
+            ? baseText.slice(0, baseText.lastIndexOf('/') + 1)
+            : '';
+        return `${baseDirectory}${filePath}`;
     }
 
     loadDocuments(rawMapPack, rawLevels) {
@@ -453,7 +528,15 @@ export class LevelMapEditorPage {
         }
 
         this.workspace = this.workspaceFactory(rawMapPack, rawLevels);
-        const firstMap = this.workspace.listMaps()[0] || null;
+        const firstStory = this.workspace.listStories?.()[0] || null;
+        const firstChapter = firstStory
+            ? this.workspace.listChapters(firstStory.id)[0] || null
+            : this.workspace.listChapters?.()[0] || null;
+        const firstMap = firstChapter
+            ? this.workspace.listMaps().find(map => firstChapter.mapIds.includes(map.id)) || this.workspace.listMaps()[0] || null
+            : this.workspace.listMaps()[0] || null;
+        this.selectedStoryId = firstStory?.id || firstChapter?.storyId || null;
+        this.selectedChapterId = firstChapter?.id || firstMap?.chapterId || null;
         this.selectedMapId = firstMap?.id || null;
         this.selectedNodeId = firstMap?.nodes?.[0]?.id || null;
         this.selectedEdgeId = firstMap?.edges?.[0]?.id || null;
@@ -464,6 +547,31 @@ export class LevelMapEditorPage {
     getCurrentMap() {
         if (!this.workspace || !this.selectedMapId) return null;
         return this.workspace.getMap(this.selectedMapId);
+    }
+
+    getCurrentStory() {
+        if (!this.workspace || !this.selectedStoryId || typeof this.workspace.listStories !== 'function') return null;
+        return this.workspace.listStories().find(story => story.id === this.selectedStoryId) || null;
+    }
+
+    getCurrentChapter() {
+        if (!this.workspace || !this.selectedChapterId || typeof this.workspace.listChapters !== 'function') return null;
+        return this.workspace.listChapters().find(chapter => chapter.id === this.selectedChapterId) || null;
+    }
+
+    syncSelectionToMap(mapId) {
+        const map = this.workspace?.getMap(mapId);
+        if (!map) return;
+        const chapter = this.workspace.listChapters?.().find(item => item.id === map.chapterId) || null;
+        const story = chapter
+            ? this.workspace.listStories?.().find(item => item.id === chapter.storyId) || null
+            : null;
+        this.selectedStoryId = story?.id || this.selectedStoryId;
+        this.selectedChapterId = chapter?.id || map.chapterId || this.selectedChapterId;
+        this.selectedMapId = map.id;
+        this.selectedNodeId = map.nodes?.[0]?.id || null;
+        this.selectedEdgeId = map.edges?.[0]?.id || null;
+        this.inspectorMode = this.selectedNodeId ? 'node' : 'edge';
     }
 
     getCurrentNode(map = null) {
@@ -511,12 +619,197 @@ export class LevelMapEditorPage {
 
     openExportMapDialog() {
         if (!this.workspace) return;
+        this.syncPackagePathPreview();
         this.showDialog('exportMapDialog');
     }
 
     closeExportDialogWithStatus(text) {
         this.closeDialog('exportMapDialog');
         this.setStatus(text);
+    }
+
+    normalizePackageDirectory(value = '') {
+        const text = String(value || '').trim().replace(/\\/g, '/');
+        const fallback = 'assets/map_packs/current/story_pack_v1/';
+        const normalized = text || fallback;
+        return normalized.endsWith('/') ? normalized : `${normalized}/`;
+    }
+
+    getAuthoringPackageDirectoryFromForm() {
+        const fallback = `assets/map_packs/authoring/${this.getPackageIdFromForm()}/`;
+        return this.normalizePackageDirectory(this.elements.authoringPackageDirectoryInput?.value || fallback);
+    }
+
+    getRuntimePackageDirectoryFromForm() {
+        const fallback = `assets/map_packs/current/${this.getPackageIdFromForm()}/`;
+        return this.normalizePackageDirectory(this.elements.runtimePackageDirectoryInput?.value || fallback);
+    }
+
+    getPackageIdFromForm() {
+        const fallback = this.workspace?.meta?.id || 'story_pack_v1';
+        return this.elements.packageIdInput?.value?.trim() || fallback;
+    }
+
+    getPackageTitleFromForm() {
+        const fallback = this.workspace?.meta?.title || this.getPackageIdFromForm();
+        return this.elements.packageTitleInput?.value?.trim() || fallback;
+    }
+
+    getPackageDirectoryFromForm() {
+        return this.normalizePackageDirectory(this.elements.packageDirectoryInput?.value);
+    }
+
+    syncPackagePathPreview() {
+        const authoringDirectory = this.getAuthoringPackageDirectoryFromForm();
+        const runtimeDirectory = this.getRuntimePackageDirectoryFromForm();
+        const directory = this.getPackageDirectoryFromForm();
+        if (this.elements.authoringPackageDirectoryInput) {
+            this.elements.authoringPackageDirectoryInput.value = authoringDirectory;
+        }
+        if (this.elements.runtimePackageDirectoryInput) {
+            this.elements.runtimePackageDirectoryInput.value = runtimeDirectory;
+        }
+        if (this.elements.packageDirectoryInput) {
+            this.elements.packageDirectoryInput.value = directory;
+        }
+        if (this.elements.authoringPackagePathPreview) {
+            this.elements.authoringPackagePathPreview.textContent = `${authoringDirectory}package.json`;
+        }
+        if (this.elements.runtimePackagePathPreview) {
+            this.elements.runtimePackagePathPreview.textContent = `${runtimeDirectory}package.json`;
+        }
+        if (this.elements.packagePathPreview) {
+            this.elements.packagePathPreview.textContent = `${directory}package.json`;
+        }
+    }
+
+    buildPackageBundleFromForm() {
+        if (!this.workspace || typeof this.workspace.exportPackageBundle !== 'function') {
+            throw new Error('当前工作区不支持目录式地图包导出。');
+        }
+        this.syncPackagePathPreview();
+        return this.workspace.exportPackageBundle({
+            packageId: this.getPackageIdFromForm(),
+            packageTitle: this.getPackageTitleFromForm()
+        });
+    }
+
+    buildPackageExportFiles(bundle = null) {
+        const packageBundle = bundle || this.buildPackageBundleFromForm();
+        return [
+            {
+                fileName: 'package.json',
+                content: JSON.stringify(packageBundle.packageJson, null, 2)
+            },
+            {
+                fileName: 'maps.json',
+                content: JSON.stringify(packageBundle.mapsJson, null, 2)
+            },
+            {
+                fileName: 'asset-manifest.json',
+                content: JSON.stringify(packageBundle.assetManifest, null, 2)
+            }
+        ];
+    }
+
+    downloadTextFile(fileName, content) {
+        if (!this.document || typeof this.document.createElement !== 'function') return;
+        const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = this.document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.style.display = 'none';
+        this.document.body?.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    }
+
+    downloadPackageFiles() {
+        const files = this.buildPackageExportFiles();
+        files.forEach(file => this.downloadTextFile(file.fileName, file.content));
+        this.setStatus(`已生成 ${files.length} 个包文件下载：package.json / maps.json / asset-manifest.json。`);
+    }
+
+    async writePackageViaApi(endpoint, targetDirectory, statusPrefix) {
+        if (typeof this.fetchImpl !== 'function') {
+            throw new Error('缺少 fetch 实现，无法写入地图包目录。');
+        }
+        const files = this.buildPackageExportFiles();
+        const response = await this.fetchImpl(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                targetDirectory: this.normalizePackageDirectory(targetDirectory),
+                files
+            })
+        });
+        if (!response?.ok) {
+            let message = response?.status ? `HTTP ${response.status}` : 'unknown';
+            try {
+                const payload = await response.json();
+                if (payload?.error) {
+                    message = payload.error;
+                }
+            } catch (error) {
+                // Keep the HTTP status when response body is not JSON.
+            }
+            throw new Error(message);
+        }
+        this.setStatus(`${statusPrefix}：${this.normalizePackageDirectory(targetDirectory)}package.json`);
+    }
+
+    async saveAuthoringPackage() {
+        await this.writePackageViaApi(
+            '/api/level-map-packs/save',
+            this.getAuthoringPackageDirectoryFromForm(),
+            '已保存工作稿'
+        );
+    }
+
+    async publishRuntimePackage() {
+        await this.writePackageViaApi(
+            '/api/level-map-packs/publish',
+            this.getRuntimePackageDirectoryFromForm(),
+            '已发布到主流程'
+        );
+    }
+
+    async selectPackageDirectory() {
+        const picker = this.window?.showDirectoryPicker || globalThis.showDirectoryPicker;
+        if (typeof picker !== 'function') {
+            this.setStatus('当前浏览器不支持直接选择目录；请使用“下载包文件”后放入目标目录。');
+            return null;
+        }
+        this.packageDirectoryHandle = await picker.call(this.window);
+        const directoryName = this.packageDirectoryHandle?.name || this.getPackageIdFromForm();
+        if (this.elements.packageIdInput && directoryName) {
+            this.elements.packageIdInput.value = directoryName;
+        }
+        if (this.elements.packageDirectoryInput && directoryName) {
+            this.elements.packageDirectoryInput.value = this.normalizePackageDirectory(`assets/map_packs/current/${directoryName}`);
+        }
+        this.syncPackagePathPreview();
+        this.setStatus(`已选择包目录：${directoryName}`);
+        return this.packageDirectoryHandle;
+    }
+
+    async writePackageDirectory() {
+        if (!this.packageDirectoryHandle) {
+            await this.selectPackageDirectory();
+        }
+        if (!this.packageDirectoryHandle) return;
+        const files = this.buildPackageExportFiles();
+        for (const file of files) {
+            const fileHandle = await this.packageDirectoryHandle.getFileHandle(file.fileName, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(file.content);
+            await writable.close();
+        }
+        this.setStatus(`已写入所选包目录：${files.map(file => file.fileName).join(' / ')}。`);
     }
 
     renderAssetPreviewCard(host, title, asset) {
@@ -548,6 +841,8 @@ export class LevelMapEditorPage {
     }
 
     renderAll() {
+        this.renderStoryList();
+        this.renderChapterList();
         this.renderMapList();
         this.renderMapMeta();
         this.renderAvailableLevelsSummary();
@@ -560,6 +855,7 @@ export class LevelMapEditorPage {
         this.renderBackgroundPickerList();
         this.renderCanvas();
         this.renderExportPreview();
+        this.syncPackagePathPreview();
     }
 
     setInspectorMode(mode, options = {}) {
@@ -588,6 +884,85 @@ export class LevelMapEditorPage {
         }
     }
 
+    renderStoryList() {
+        const host = this.elements.storyList;
+        if (!host) return;
+        host.innerHTML = '';
+
+        if (!this.workspace || typeof this.workspace.listStories !== 'function') {
+            host.textContent = '尚未加载故事。';
+            return;
+        }
+
+        this.workspace.listStories().forEach((story) => {
+            const button = createElement(this.document, 'button', 'story-list-item');
+            button.type = 'button';
+            button.textContent = `${story.title || story.id} | ${story.id}`;
+            if (story.id === this.selectedStoryId) {
+                button.setAttribute('aria-current', 'true');
+            }
+            button.addEventListener('click', () => {
+                this.selectedStoryId = story.id;
+                const chapter = this.workspace.listChapters(story.id)[0] || null;
+                this.selectedChapterId = chapter?.id || null;
+                const map = chapter
+                    ? this.workspace.listMaps().find(item => chapter.mapIds.includes(item.id)) || null
+                    : null;
+                if (map) {
+                    this.syncSelectionToMap(map.id);
+                } else {
+                    this.selectedMapId = null;
+                    this.selectedNodeId = null;
+                    this.selectedEdgeId = null;
+                }
+                this.renderAll();
+            });
+            host.appendChild(button);
+        });
+    }
+
+    renderChapterList() {
+        const host = this.elements.chapterList;
+        if (!host) return;
+        host.innerHTML = '';
+
+        if (!this.workspace || typeof this.workspace.listChapters !== 'function') {
+            host.textContent = '尚未加载章节。';
+            return;
+        }
+
+        const chapters = this.selectedStoryId
+            ? this.workspace.listChapters(this.selectedStoryId)
+            : this.workspace.listChapters();
+        if (!chapters.length) {
+            host.textContent = '当前故事暂无章节。';
+            return;
+        }
+
+        chapters.forEach((chapter) => {
+            const button = createElement(this.document, 'button', 'chapter-list-item');
+            button.type = 'button';
+            button.textContent = `${chapter.title || chapter.id} | ${chapter.mapIds.length} 张地图`;
+            if (chapter.id === this.selectedChapterId) {
+                button.setAttribute('aria-current', 'true');
+            }
+            button.addEventListener('click', () => {
+                this.selectedChapterId = chapter.id;
+                this.selectedStoryId = chapter.storyId || this.selectedStoryId;
+                const map = this.workspace.listMaps().find(item => chapter.mapIds.includes(item.id)) || null;
+                if (map) {
+                    this.syncSelectionToMap(map.id);
+                } else {
+                    this.selectedMapId = null;
+                    this.selectedNodeId = null;
+                    this.selectedEdgeId = null;
+                }
+                this.renderAll();
+            });
+            host.appendChild(button);
+        });
+    }
+
     renderMapList() {
         const host = this.elements.mapList;
         if (!host) return;
@@ -598,7 +973,16 @@ export class LevelMapEditorPage {
             return;
         }
 
-        this.workspace.listMaps().forEach((map) => {
+        const chapter = this.getCurrentChapter();
+        const maps = chapter
+            ? this.workspace.listMaps().filter(map => chapter.mapIds.includes(map.id))
+            : this.workspace.listMaps();
+        if (!maps.length) {
+            host.textContent = '当前章节暂无地图。';
+            return;
+        }
+
+        maps.forEach((map) => {
             const button = createElement(this.document, 'button', 'map-list-item');
             button.type = 'button';
             button.textContent = `${map.id} | ${map.name}`;
@@ -606,9 +990,7 @@ export class LevelMapEditorPage {
                 button.setAttribute('aria-current', 'true');
             }
             button.addEventListener('click', () => {
-                this.selectedMapId = map.id;
-                this.selectedNodeId = map.nodes[0]?.id || null;
-                this.selectedEdgeId = map.edges[0]?.id || null;
+                this.syncSelectionToMap(map.id);
                 this.renderAll();
             });
             host.appendChild(button);
@@ -882,10 +1264,9 @@ export class LevelMapEditorPage {
         if (this.elements.backgroundSelect) {
             this.elements.backgroundSelect.value = this.pendingBackgroundRef;
         }
-        const background = findLevelMapAsset(this.workspace.getBackgroundOptions(), this.pendingBackgroundRef);
-        this.renderAssetPreviewCard(this.elements.backgroundAssetPreview, '背景图资源', background);
         this.pendingBackgroundRef = null;
         this.closeDialog('backgroundPickerDialog');
+        this.applyCurrentMapSettings({ silent: true });
     }
 
     renderSelectedNode() {
@@ -1152,6 +1533,86 @@ export class LevelMapEditorPage {
         this.elements.exportPreview.value = JSON.stringify(this.workspace.exportDocument(), null, 2);
     }
 
+    addStory() {
+        if (!this.workspace || typeof this.workspace.createStory !== 'function') return;
+        const title = this.elements.storyTitleInput?.value?.trim() || `新故事 ${this.workspace.listStories().length + 1}`;
+        const storyId = this.workspace.createStory({ title });
+        this.selectedStoryId = storyId;
+        this.selectedChapterId = null;
+        this.selectedMapId = null;
+        this.selectedNodeId = null;
+        this.selectedEdgeId = null;
+        if (this.elements.storyTitleInput) {
+            this.elements.storyTitleInput.value = '';
+        }
+        this.renderAll();
+    }
+
+    addChapter() {
+        if (!this.workspace || typeof this.workspace.createChapter !== 'function') return;
+        if (!this.selectedStoryId) {
+            this.selectedStoryId = this.workspace.listStories?.()[0]?.id || this.workspace.createStory({ title: '新故事' });
+        }
+        const chapters = this.workspace.listChapters(this.selectedStoryId);
+        const title = this.elements.chapterTitleInput?.value?.trim() || `新章节 ${chapters.length + 1}`;
+        const chapterId = this.workspace.createChapter(this.selectedStoryId, { title });
+        this.selectedChapterId = chapterId;
+        this.selectedMapId = null;
+        this.selectedNodeId = null;
+        this.selectedEdgeId = null;
+        if (this.elements.chapterTitleInput) {
+            this.elements.chapterTitleInput.value = '';
+        }
+        this.renderAll();
+    }
+
+    addMap() {
+        if (!this.workspace || typeof this.workspace.createMap !== 'function') return;
+        if (!this.selectedChapterId) {
+            this.addChapter();
+        }
+        if (!this.selectedChapterId) return;
+        const maps = this.workspace.listMaps();
+        const name = this.elements.mapNameInput?.value?.trim() || `新地图 ${maps.length + 1}`;
+        const mapId = this.workspace.createMap(this.selectedChapterId, { name });
+        if (this.elements.mapNameInput) {
+            this.elements.mapNameInput.value = '';
+        }
+        this.syncSelectionToMap(mapId);
+        this.renderAll();
+    }
+
+    duplicateSelectedMap() {
+        if (!this.workspace || !this.selectedMapId || typeof this.workspace.duplicateMap !== 'function') return;
+        const mapId = this.workspace.duplicateMap(this.selectedMapId, {
+            chapterId: this.selectedChapterId || this.getCurrentMap()?.chapterId
+        });
+        this.syncSelectionToMap(mapId);
+        this.renderAll();
+    }
+
+    removeSelectedMap() {
+        if (!this.workspace || !this.selectedMapId || typeof this.workspace.removeMap !== 'function') return;
+        const chapterId = this.selectedChapterId || this.getCurrentMap()?.chapterId || '';
+        const removedMapId = this.selectedMapId;
+        this.workspace.removeMap(removedMapId);
+        const chapter = chapterId
+            ? this.workspace.listChapters?.().find(item => item.id === chapterId) || null
+            : null;
+        const nextMap = chapter
+            ? this.workspace.listMaps().find(item => chapter.mapIds.includes(item.id)) || null
+            : this.workspace.listMaps()[0] || null;
+        if (nextMap) {
+            this.syncSelectionToMap(nextMap.id);
+        } else {
+            this.selectedMapId = null;
+            this.selectedNodeId = null;
+            this.selectedEdgeId = null;
+            this.selectedChapterId = chapter?.id || this.selectedChapterId;
+        }
+        this.renderAll();
+    }
+
     addNode() {
         if (!this.workspace || !this.selectedMapId) return;
         this.selectedNodeId = this.workspace.createNode(this.selectedMapId, {});
@@ -1285,7 +1746,7 @@ export class LevelMapEditorPage {
         this.renderAll();
     }
 
-    applyCurrentMapSettings() {
+    applyCurrentMapSettings(options = {}) {
         if (!this.workspace || !this.selectedMapId) return;
         this.workspace.updateMap(this.selectedMapId, (map) => ({
             ...map,
@@ -1306,7 +1767,9 @@ export class LevelMapEditorPage {
                 edgeAnchor: this.elements.edgeAnchorSelect?.value || normalizeMapDisplay(map).edgeAnchor
             }
         }));
-        this.closeDialog('mapSettingsDialog');
+        if (!options.silent) {
+            this.closeDialog('mapSettingsDialog');
+        }
         this.renderAll();
     }
 

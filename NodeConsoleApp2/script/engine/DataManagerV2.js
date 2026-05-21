@@ -165,6 +165,11 @@ class DataManager {
         return registry;
     }
 
+    _getContentEntryPath(entry) {
+        if (!entry || typeof entry !== 'object') return null;
+        return entry.path || entry.packagePath || entry.packageJsonPath || null;
+    }
+
     _getContentRegistryEntry(contentKey, options = {}) {
         if (!this.contentRegistry || typeof this.contentRegistry !== 'object') return null;
         const entry = this.contentRegistry[contentKey];
@@ -229,10 +234,13 @@ class DataManager {
         return {
             kind: entry.kind || contentKey,
             path: entry.path || null,
+            packagePath: entry.packagePath || entry.packageJsonPath || null,
+            packageId: entry.packageJson?.packageId || null,
             schemaVersion: rawPack && typeof rawPack === 'object' ? (rawPack.$schemaVersion || entry.schemaVersion || null) : (entry.schemaVersion || null),
             rootKey: entry.rootKey || null,
             selectedTreeId: entry.selectedTreeId || null,
-            meta: (rawPack && typeof rawPack === 'object') ? (rawPack.meta || null) : null
+            meta: (rawPack && typeof rawPack === 'object') ? (rawPack.meta || null) : null,
+            packageMeta: entry.packageJson || null
         };
     }
 
@@ -501,6 +509,28 @@ class DataManager {
         return {
             schemaVersion: typeof source.$schemaVersion === 'string' ? source.$schemaVersion.trim() : '',
             meta: this._clonePlain(this._asObject(source.meta)),
+            stories: this._asArray(source.stories).map((story, storyIndex) => {
+                const nextStory = this._asObject(story);
+                return {
+                    id: typeof nextStory.id === 'string' && nextStory.id.trim() ? nextStory.id.trim() : `story_${storyIndex + 1}`,
+                    title: typeof nextStory.title === 'string' ? nextStory.title.trim() : '',
+                    summary: typeof nextStory.summary === 'string' ? nextStory.summary.trim() : '',
+                    entryChapterId: typeof nextStory.entryChapterId === 'string' ? nextStory.entryChapterId.trim() : '',
+                    chapterIds: this._asArray(nextStory.chapterIds).map(item => String(item || '').trim()).filter(Boolean)
+                };
+            }).filter(story => story.id),
+            chapters: this._asArray(source.chapters).map((chapter, chapterIndex) => {
+                const nextChapter = this._asObject(chapter);
+                return {
+                    id: typeof nextChapter.id === 'string' && nextChapter.id.trim() ? nextChapter.id.trim() : `chapter_${chapterIndex + 1}`,
+                    storyId: typeof nextChapter.storyId === 'string' ? nextChapter.storyId.trim() : '',
+                    title: typeof nextChapter.title === 'string' ? nextChapter.title.trim() : '',
+                    order: this._toFiniteNumber(nextChapter.order, chapterIndex + 1),
+                    description: typeof nextChapter.description === 'string' ? nextChapter.description.trim() : '',
+                    entryMapId: typeof nextChapter.entryMapId === 'string' ? nextChapter.entryMapId.trim() : '',
+                    mapIds: this._asArray(nextChapter.mapIds).map(item => String(item || '').trim()).filter(Boolean)
+                };
+            }).filter(chapter => chapter.id),
             assetLibrary: this._normalizeLevelMapAssetLibrary(source.assetLibrary),
             maps: this._asArray(source.maps).map((map, mapIndex) => {
                 const nextMap = this._asObject(map);
@@ -853,9 +883,38 @@ class DataManager {
             const registry = this._buildContentRegistry(dataSources);
             this.contentRegistry = registry;
 
+            const resolveRegistryUrl = (entryPath) => {
+                const normalizedFile = normalizeUrl(entryPath, null);
+                return basePath
+                    ? (normalizedFile.startsWith('http') || normalizedFile.startsWith('/')
+                        ? normalizedFile
+                        : `${basePath}${normalizedFile}`)
+                    : normalizedFile;
+            };
+
+            const resolveRelativeUrl = (filePath, baseUrl) => {
+                if (!filePath || typeof filePath !== 'string') return filePath;
+                if (/^https?:\/\//i.test(filePath) || filePath.startsWith('/')) return filePath;
+                if (!baseUrl) return filePath;
+                const trimmedBase = String(baseUrl);
+                const baseDirectory = trimmedBase.includes('/')
+                    ? trimmedBase.slice(0, trimmedBase.lastIndexOf('/') + 1)
+                    : '';
+                return `${baseDirectory}${filePath}`;
+            };
+
+            const fetchJson = async (url) => {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status} loading ${url}`);
+                }
+                return response.json();
+            };
+
             const fetchContentPack = async (contentKey, options = {}) => {
                 const entry = this._getContentRegistryEntry(contentKey, options);
-                if (!entry || !entry.path) {
+                const entryPath = this._getContentEntryPath(entry);
+                if (!entry || !entryPath) {
                     if (entry && entry.required === false) {
                         return null;
                     }
@@ -874,22 +933,34 @@ class DataManager {
                         }
                     };
                 }
-                const normalizedFile = normalizeUrl(entry.path, null);
-                const url = basePath
-                    ? (normalizedFile.startsWith('http') || normalizedFile.startsWith('/')
-                        ? normalizedFile
-                        : `${basePath}${normalizedFile}`)
-                    : normalizedFile;
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error ${response.status} loading ${url}`);
+                const isPackageEntry = contentKey === 'levelMapPack' && (entry.packagePath || entry.packageJsonPath);
+                const url = isPackageEntry
+                    ? normalizeUrl(entryPath, null)
+                    : resolveRegistryUrl(entryPath);
+                let rawPack = null;
+                let loadedEntry = entry;
+                if (isPackageEntry) {
+                    const packageJson = await fetchJson(url);
+                    const mapsFile = packageJson?.files?.maps;
+                    if (!mapsFile || typeof mapsFile !== 'string') {
+                        throw new Error('Level map package must provide files.maps.');
+                    }
+                    const mapsUrl = resolveRelativeUrl(mapsFile, url);
+                    rawPack = await fetchJson(mapsUrl);
+                    loadedEntry = {
+                        ...entry,
+                        packagePath: entry.packagePath || entry.packageJsonPath,
+                        packageJson,
+                        packageMapsPath: mapsUrl
+                    };
+                } else {
+                    rawPack = await fetchJson(url);
                 }
-                const rawPack = await response.json();
-                this._validateContentPack(contentKey, entry, rawPack);
+                this._validateContentPack(contentKey, loadedEntry, rawPack);
                 return {
                     raw: rawPack,
-                    entry,
-                    meta: this._buildContentPackMeta(contentKey, entry, rawPack)
+                    entry: loadedEntry,
+                    meta: this._buildContentPackMeta(contentKey, loadedEntry, rawPack)
                 };
             };
 

@@ -34,7 +34,7 @@
     },
     "levelMapPack": {
       "kind": "levelMapPack",
-      "path": "level_map_pack_v1.json",
+      "packagePath": "../assets/map_packs/current/story_pack_v1/package.json",
       "schemaVersion": "level_map_pack_v1",
       "rootKey": "maps"
     },
@@ -58,7 +58,7 @@
     "items": "items.json",
     "enemies": "enemies.json",
     "levels": "levels.json",
-    "levelMapPack": "level_map_pack_v1.json",
+    "levelMapPack": "../assets/map_packs/current/story_pack_v1/package.json",
     "player": "player.json",
     "buffs": "buffs_v2_7.json",
     "slotLayouts": "slot_layouts.json"

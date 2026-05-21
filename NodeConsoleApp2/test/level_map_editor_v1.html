@@ -485,9 +485,30 @@
             min-width: 0;
         }
 
+        .story-list-box,
+        .chapter-list-box,
+        .map-list-box {
+            max-height: 112px;
+        }
+
         .node-list-box,
         .edge-list-box {
             max-height: 360px;
+        }
+
+        .map-action-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .map-action-row--compact {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .map-action-row .toolbar-btn {
+            min-width: 0;
         }
 
         .map-settings-block {
@@ -1088,8 +1109,9 @@
             <div class="toolbar-actions" aria-label="地图编辑操作">
                 <div class="tool-cluster tool-cluster--project">
                     <button id="loadDefaultBtn" class="toolbar-btn toolbar-btn--secondary" type="button">加载工作稿</button>
-                    <button id="saveMapBtn" class="toolbar-btn toolbar-btn--primary" type="button">保存当前地图设置</button>
-                    <button id="exportMapBtn" class="toolbar-btn toolbar-btn--primary" type="button">导出 / 发布</button>
+                    <button id="saveMapBtn" class="toolbar-btn toolbar-btn--primary" type="button">保存工作稿</button>
+                    <button id="publishMapBtn" class="toolbar-btn toolbar-btn--primary" type="button">发布到主流程</button>
+                    <button id="exportMapBtn" class="toolbar-btn toolbar-btn--secondary" type="button">导出包文件</button>
                 </div>
                 <div class="tool-cluster tool-cluster--status">
                     <div id="status" class="status-bar">尚未加载地图包与关卡定义。</div>
@@ -1111,8 +1133,32 @@
                         </div>
 
                         <div class="section-block">
+                            <h3>当前故事</h3>
+                            <div class="map-action-row" aria-label="故事操作">
+                                <input id="storyTitleInput" aria-label="故事标题" placeholder="故事标题">
+                                <button id="addStoryBtn" class="toolbar-btn toolbar-btn--secondary" type="button">新建故事</button>
+                            </div>
+                            <div id="storyList" class="list-box story-list-box"></div>
+                        </div>
+
+                        <div class="section-block">
+                            <h3>章节列表</h3>
+                            <div class="map-action-row" aria-label="章节操作">
+                                <input id="chapterTitleInput" aria-label="章节标题" placeholder="章节标题">
+                                <button id="addChapterBtn" class="toolbar-btn toolbar-btn--secondary" type="button">新建章节</button>
+                            </div>
+                            <div id="chapterList" class="list-box chapter-list-box"></div>
+                        </div>
+
+                        <div class="section-block">
                             <h3>地图列表</h3>
-                            <div id="mapList" class="list-box"></div>
+                            <div class="map-action-row" aria-label="地图操作">
+                                <input id="mapNameInput" aria-label="地图名称" placeholder="地图名称">
+                                <button id="addMapBtn" class="toolbar-btn toolbar-btn--primary" type="button">新建地图</button>
+                                <button id="duplicateMapBtn" class="toolbar-btn toolbar-btn--secondary" type="button">复制地图</button>
+                                <button id="removeMapBtn" class="toolbar-btn toolbar-btn--danger" type="button">删除地图</button>
+                            </div>
+                            <div id="mapList" class="list-box map-list-box"></div>
                         </div>
 
                         <div class="section-block map-settings-block">
@@ -1146,11 +1192,12 @@
                         </div>
 
                         <div class="section-block">
-                            <h3>保存与加载关系</h3>
+                            <h3>保存与发布关系</h3>
                             <div class="fact-grid">
-                                <div><strong>编辑工作稿</strong><span>assets/data/level_map_pack_v1.authoring.json</span></div>
-                                <div><strong>运行源</strong><span>assets/data/level_map_pack_v1.json</span></div>
-                                <div><strong>包结构</strong><span>JSON 地图包保存资源 ID / 路径引用，不把图片二进制塞进 JSON。</span></div>
+                                <div><strong>作者目录</strong><span>assets/map_packs/authoring/story_pack_v1/</span></div>
+                                <div><strong>发布目录</strong><span>assets/map_packs/current/story_pack_v1/</span></div>
+                                <div><strong>包入口</strong><span>package.json / maps.json / asset-manifest.json</span></div>
+                                <div><strong>包结构</strong><span>目录式地图包保存资源 ID / 路径引用，不把图片二进制塞进 JSON。</span></div>
                             </div>
                         </div>
 
@@ -1388,27 +1435,7 @@
         </main>
     </div>
 
-    <dialog id="mapSettingsDialog">
-        <div class="dialog-head">
-            <h2>保存当前地图设置</h2>
-            <span class="badge badge--blue">只更新当前工作区</span>
-        </div>
-        <div class="dialog-body">
-            <div class="dialog-box">
-                <h3>弹出条件</h3>
-                <p class="section-note">当背景、入口节点、视口比例、默认缩放或地图标题被修改后，点击“保存当前地图设置”弹出确认框。确认后只把这些设置应用到浏览器内存里的当前编辑工作区。</p>
-            </div>
-            <div class="dialog-box">
-                <div class="dialog-path"><b>不会写入</b><code>assets/data/level_map_pack_v1.authoring.json</code></div>
-                <div class="dialog-path"><b>不会影响</b><code>assets/data/level_map_pack_v1.json</code></div>
-                <div class="dialog-path"><b>下一步</b><span>确认画面无误后，必须再点“导出 / 发布”才会得到可保存或交付给主游戏的地图包结果。</span></div>
-            </div>
-        </div>
-        <div class="dialog-foot">
-            <button id="cancelMapSettingsBtn" class="toolbar-btn toolbar-btn--secondary" type="button">取消</button>
-            <button id="confirmMapSettingsBtn" class="toolbar-btn toolbar-btn--primary" type="button">应用到当前工作区</button>
-        </div>
-    </dialog>
+    <dialog id="mapSettingsDialog"></dialog>
 
     <dialog id="backgroundPickerDialog" class="background-picker-dialog">
         <div class="dialog-head">
@@ -1430,24 +1457,49 @@
 
     <dialog id="exportMapDialog">
         <div class="dialog-head">
-            <h2>导出 / 发布地图包</h2>
-            <span class="badge badge--blue">确认保存目标</span>
+            <h2>导出地图包文件</h2>
+            <span class="badge badge--blue">下载备份</span>
         </div>
         <div class="dialog-body">
             <div class="dialog-box">
                 <h3>这个地图包是什么？</h3>
-                <p class="section-note">当前实现导出的是地图包 manifest JSON，保存地图、节点、边、显示配置，以及资源 ID / 路径引用。图片文件仍然留在 source/ 或 assets/ 目录里，不会被嵌入 JSON；完整目录式地图包将在顶层工作流设计中定义。</p>
+                <p class="section-note">当前导出的是完整目录式地图包：package.json 是包入口，maps.json 保存故事、章节、地图、节点、边和显示配置，asset-manifest.json 列出背景图、节点素材图和立绘图的资源 ID / 路径引用。图片文件不会被嵌入 JSON。导出只负责下载备份；保存工作稿和发布到主流程使用顶部按钮。</p>
             </div>
             <div class="dialog-box">
-                <div class="dialog-path"><b>编辑工作稿</b><code>assets/data/level_map_pack_v1.authoring.json</code></div>
-                <div class="dialog-path"><b>运行源</b><code>assets/data/level_map_pack_v1.json</code></div>
+                <label class="field">
+                    <span>包 ID</span>
+                    <input id="packageIdInput" value="story_pack_v1">
+                </label>
+                <label class="field">
+                    <span>包标题</span>
+                    <input id="packageTitleInput" value="故事地图包 v1">
+                </label>
+                <label class="field">
+                    <span>作者目录</span>
+                    <input id="authoringPackageDirectoryInput" value="assets/map_packs/authoring/story_pack_v1/">
+                </label>
+                <label class="field">
+                    <span>发布目录</span>
+                    <input id="runtimePackageDirectoryInput" value="assets/map_packs/current/story_pack_v1/">
+                </label>
+                <label class="field">
+                    <span>导出目录</span>
+                    <input id="packageDirectoryInput" value="assets/map_packs/current/story_pack_v1/">
+                </label>
+                <div class="dialog-path"><b>工作稿入口</b><code id="authoringPackagePathPreview">assets/map_packs/authoring/story_pack_v1/package.json</code></div>
+                <div class="dialog-path"><b>主流程入口</b><code id="runtimePackagePathPreview">assets/map_packs/current/story_pack_v1/package.json</code></div>
+                <div class="dialog-path"><b>导出入口</b><code id="packagePathPreview">assets/map_packs/current/story_pack_v1/package.json</code></div>
+                <div class="dialog-path"><b>入口文件</b><code>package.json</code></div>
+                <div class="dialog-path"><b>地图数据</b><code>maps.json</code></div>
+                <div class="dialog-path"><b>资源清单</b><code>asset-manifest.json</code></div>
                 <div class="dialog-path"><b>影响</b><span>更换背景或节点素材时，JSON 只改引用。只要资源库中对应文件还存在，显示不会丢；若资源文件被删或移动，校验会报错。</span></div>
             </div>
         </div>
         <div class="dialog-foot">
             <button id="cancelExportMapBtn" class="toolbar-btn toolbar-btn--secondary" type="button">取消</button>
-            <button id="downloadMapJsonBtn" class="toolbar-btn toolbar-btn--secondary" type="button">导出 manifest JSON</button>
-            <button id="writeBackAuthoringBtn" class="toolbar-btn toolbar-btn--primary" type="button">保存到编辑工作稿</button>
+            <button id="selectPackageDirectoryBtn" class="toolbar-btn toolbar-btn--secondary" type="button">选择包目录</button>
+            <button id="downloadPackageFilesBtn" class="toolbar-btn toolbar-btn--secondary" type="button">下载包文件</button>
+            <button id="writePackageDirectoryBtn" class="toolbar-btn toolbar-btn--primary" type="button">写入所选目录</button>
         </div>
     </dialog>
 
@@ -1457,7 +1509,7 @@
 
         const page = new LevelMapEditorPage({
             document,
-            mapSourceUrl: '../assets/data/level_map_pack_v1.authoring.json',
+            mapSourceUrl: '../assets/map_packs/authoring/story_pack_v1/package.json',
             levelSourceUrl: '../assets/data/levels.json',
             fetchImpl: window.fetch.bind(window),
             workspaceFactory(rawMapPack, levelsDocument) {
