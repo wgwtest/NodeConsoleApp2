@@ -50,9 +50,6 @@
       "skills[].effects[].effectType": "效果类型（What），取值来自 meta.enums.effectTypes。",
       "skills[].effects[].amountType": "数值类型（How），取值来自 meta.enums.amountTypes。",
       "skills[].effects[].amount": "数值（ABS/PCT_* 时使用）。",
-      "skills[].effects[].scaling": "缩放配置（amountType=SCALING 时使用）。",
-      "skills[].effects[].scaling.stat": "缩放来源属性名（示例：atk；具体可用属性由引擎/角色属性表定义）。",
-      "skills[].effects[].scaling.multiplier": "缩放倍率（浮点）。",
       "skills[].effects[].repeat": "重复执行配置（预留：用于多段伤害/多次命中）。",
       "skills[].effects[].repeat.count": "重复次数（1~meta.enums.repeat.maxCount）。",
       "skills[].effects[].partOverride": "部位覆盖（用于强制作用在指定部位，如裂颅一击固定削减 head 护甲）。",
@@ -110,7 +107,7 @@
         "ABS",
         "PCT_MAX",
         "PCT_CURRENT",
-        "SCALING"
+        "BUFF_STACKS"
       ],
       "buffRefTargets": [
         "self",
@@ -279,10 +276,6 @@
           "effect": {
             "effectType": "DMG_HP",
             "amountType": "ABS",
-            "scaling": {
-              "stat": "atk",
-              "multiplier": 1.2
-            },
             "amount": 20
           }
         }
@@ -315,7 +308,7 @@
       },
       "speed": 2,
       "target": {
-        "subject": "SUBJECT_ENEMY",
+        "subject": "SUBJECT_SELF",
         "scope": "SCOPE_PART",
         "selection": {
           "mode": "single",
@@ -355,13 +348,22 @@
           "name": "扣血",
           "target": {
             "binding": {
-              "mode": "follow",
-              "ref": "skillTarget"
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY",
+              "selection": {
+                "mode": "single",
+                "candidateParts": [],
+                "selectedParts": [],
+                "selectCount": 1
+              }
             }
           },
           "effect": {
             "effectType": "DMG_HP",
-            "amount": 30,
+            "amount": 5,
             "amountType": "ABS"
           }
         },
@@ -825,10 +827,6 @@
           "effect": {
             "effectType": "DMG_HP",
             "amountType": "ABS",
-            "scaling": {
-              "stat": "atk",
-              "multiplier": 2
-            },
             "repeat": {
               "count": 6
             },
@@ -1384,10 +1382,6 @@
           "effect": {
             "effectType": "DMG_HP",
             "amountType": "ABS",
-            "scaling": {
-              "stat": "atk",
-              "multiplier": 0.6
-            },
             "repeat": {
               "count": 2
             },
@@ -1423,7 +1417,7 @@
       },
       "speed": 2,
       "target": {
-        "subject": "SUBJECT_ENEMY",
+        "subject": "SUBJECT_SELF",
         "scope": "SCOPE_PART",
         "selection": {
           "mode": "single",
@@ -1788,7 +1782,7 @@
       "buffRefs": {
         "apply": [
           {
-            "buffId": "buff_shield",
+            "buffId": "new_buff_1771481936095",
             "target": "self",
             "chance": 1,
             "duration": 1
@@ -1961,7 +1955,7 @@
         "apply": [
           {
             "buffId": "new_buff_1771481773827",
-            "target": "enemy",
+            "target": "self",
             "chance": 1,
             "duration": 2,
             "params": {
@@ -2053,7 +2047,7 @@
         "apply": [
           {
             "buffId": "new_buff_1771485482007",
-            "target": "enemy",
+            "target": "self",
             "params": {
               "apReduceVal": 1
             }
@@ -2278,7 +2272,7 @@
       "buffRefs": {
         "apply": [
           {
-            "buffId": "buff_slow",
+            "buffId": "buff_tear_wound",
             "target": "enemy",
             "chance": 1,
             "duration": 2
@@ -2373,9 +2367,15 @@
           },
           "effect": {
             "effectType": "DMG_HP",
-            "amount": 3,
-            "amountType": "PCT_CURRENT",
-            "note": "按当前 HP 百分比造成伤害；引擎实现时可映射为 TRUE/PIERCE 以避免护甲干扰。"
+            "amount": 5,
+            "amountType": "BUFF_STACKS",
+            "amountSource": {
+              "owner": "skillTarget",
+              "buffId": "buff_bleed",
+              "multiplier": 5,
+              "missingAs": 0
+            },
+            "note": "按目标流血层数造成伤害；当前不消耗流血层数。"
           }
         }
       ]
@@ -2443,15 +2443,30 @@
           "name": "Effect 1",
           "target": {
             "binding": {
-              "mode": "follow",
-              "ref": "skillTarget"
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY",
+              "selection": {
+                "mode": "single",
+                "candidateParts": [],
+                "selectedParts": [],
+                "selectCount": 1
+              }
             }
           },
           "effect": {
-            "effectType": "DMG_HP",
-            "amount": 3,
-            "amountType": "ABS",
-            "note": "按当前 HP 百分比造成伤害；引擎实现时可映射为 TRUE/PIERCE 以避免护甲干扰。"
+            "effectType": "HEAL",
+            "amount": 2,
+            "amountType": "BUFF_STACKS",
+            "amountSource": {
+              "owner": "skillTarget",
+              "buffId": "buff_bleed",
+              "multiplier": 2,
+              "missingAs": 0
+            },
+            "note": "按目标流血层数回复自身 HP；当前不消耗流血层数。"
           }
         }
       ]
@@ -2547,10 +2562,6 @@
           "effect": {
             "effectType": "DMG_ARMOR",
             "amountType": "PCT_CURRENT",
-            "scaling": {
-              "stat": "atk",
-              "multiplier": 0.6
-            },
             "repeat": {
               "count": 2
             },
@@ -2573,59 +2584,6 @@
           }
         }
       ]
-    },
-    {
-      "id": "skill_1770396871360",
-      "name": "愤怒",
-      "rarity": "Epic",
-      "costs": {
-        "ap": 1,
-        "perTurnLimit": 1
-      },
-      "speed": 0,
-      "target": {
-        "subject": "SUBJECT_ENEMY",
-        "scope": "SCOPE_PART",
-        "selection": {
-          "mode": "single",
-          "candidateParts": [
-            "head",
-            "chest",
-            "abdomen",
-            "arm",
-            "leg"
-          ],
-          "selectedParts": [],
-          "selectCount": 1
-        }
-      },
-      "prerequisites": [
-        "skill_double_thrust_copy_1770395861178"
-      ],
-      "buffRefs": {
-        "apply": [],
-        "remove": []
-      },
-      "editorMeta": {
-        "x": 1314,
-        "y": 914,
-        "editState": "editing",
-        "group": "melee",
-        "locked": false
-      },
-      "description": "获得buff，每当扣除hp，获得攻击加成",
-      "unlock": {
-        "cost": {
-          "kp": 5
-        },
-        "requirements": {},
-        "exclusives": [],
-        "grants": {
-          "type": "permanent"
-        }
-      },
-      "requirements": {},
-      "actions": []
     },
     {
       "id": "skill_1770474698976",
@@ -2653,7 +2611,7 @@
         }
       },
       "prerequisites": [
-        "skill_1770396871360"
+        "skill_double_thrust_copy_1770395861178"
       ],
       "buffRefs": {
         "apply": [],

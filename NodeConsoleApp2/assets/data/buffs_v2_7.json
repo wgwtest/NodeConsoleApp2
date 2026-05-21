@@ -44,6 +44,7 @@
         "DAMAGE_ARMOR",
         "HEAL_HP",
         "HEAL_ARMOR",
+        "APPLY_BUFF",
         "SKIP_TURN",
         "PREVENT_DAMAGE_HP",
         "PREVENT_DAMAGE_ARMOR",
@@ -155,7 +156,7 @@
       "lifecycle": {
         "duration": "${buff_duration}",
         "maxStacks": "${maxVal}",
-        "stackStrategy": "refresh",
+        "stackStrategy": "add",
         "removeOnBattleEnd": true
       },
       "effects": [
@@ -255,7 +256,13 @@
         "stackStrategy": "refresh",
         "removeOnBattleEnd": true
       },
-      "statModifiers": [],
+      "statModifiers": [
+        {
+          "stat": "damageTakenMult",
+          "type": "flat",
+          "value": 0.2
+        }
+      ],
       "effects": []
     },
     "buff_pain_sup": {
@@ -273,7 +280,13 @@
         "stackStrategy": "refresh",
         "removeOnBattleEnd": true
       },
-      "statModifiers": [],
+      "statModifiers": [
+        {
+          "stat": "damageTakenMult",
+          "type": "flat",
+          "value": -0.3
+        }
+      ],
       "effects": []
     },
     "buff_thorns": {
@@ -348,15 +361,15 @@
         "stackStrategy": "refresh",
         "removeOnBattleEnd": true
       },
-      "description": "攻击造成伤害的值",
+      "description": "攻击造成伤害后回复 HP。",
       "effects": [
         {
           "trigger": "onAttackPost",
-          "action": "HEAL_ARMOR",
+          "action": "HEAL_HP",
           "target": "self",
           "payload": {
-            "value": 1,
-            "valueType": "flat"
+            "value": "damageDealt",
+            "valueType": "formula"
           },
           "_payloadJson": ""
         }
@@ -607,6 +620,40 @@
         }
       ]
     },
+    "buff_tear_wound": {
+      "id": "buff_tear_wound",
+      "name": "撕裂伤口",
+      "description": "撕裂状态：持有者行动前给自己增加 1 层流血。",
+      "icon": "",
+      "type": "debuff",
+      "tags": [
+        "physical",
+        "bleed_setup"
+      ],
+      "lifecycle": {
+        "duration": 2,
+        "maxStacks": 1,
+        "stackStrategy": "refresh",
+        "removeOnBattleEnd": true
+      },
+      "statModifiers": [],
+      "effects": [
+        {
+          "trigger": "onActionPre",
+          "action": "APPLY_BUFF",
+          "target": "self",
+          "payload": {
+            "value": "buff_bleed",
+            "params": {
+              "buff_duration": 2,
+              "maxVal": 5
+            },
+            "stacks": 1
+          },
+          "_payloadJson": ""
+        }
+      ]
+    },
     "new_buff_1771487521271": {
       "id": "new_buff_1771487521271",
       "name": "加速",
@@ -636,22 +683,6 @@
           "overrideable": true
         }
       }
-    },
-    "new_buff_1771487561747": {
-      "id": "new_buff_1771487561747",
-      "name": "减速",
-      "description": "基础速度降低",
-      "icon": "",
-      "type": "debuff",
-      "tags": [],
-      "lifecycle": {
-        "duration": 3,
-        "maxStacks": 1,
-        "stackStrategy": "refresh",
-        "removeOnBattleEnd": true
-      },
-      "statModifiers": [],
-      "effects": []
     }
   }
 }

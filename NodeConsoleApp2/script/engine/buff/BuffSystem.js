@@ -123,7 +123,12 @@ export default class BuffSystem {
 	}
 
 	_onActionPre(context) {
-		this._dispatchToParticipants('onActionPre', context);
+		const actor = context?.actor || context?.source;
+		for (const m of this._managers) {
+			if (m.owner && actor && m.owner === actor) {
+				this._processManager(m, 'onActionPre', context);
+			}
+		}
 	}
 
 	_dispatchToAll(triggerName, baseContext) {
@@ -175,12 +180,13 @@ export default class BuffSystem {
 
 	_normalizeEffect(effect) {
 		const payload = (effect && effect.payload && typeof effect.payload === 'object') ? effect.payload : {};
+		const { value, valueType, reason, ...payloadParams } = payload;
 		return {
 			...effect,
-			value: Object.prototype.hasOwnProperty.call(payload, 'value') ? payload.value : effect.value,
-			valueType: payload.valueType ?? effect.valueType,
-			reason: payload.reason ?? effect.reason,
-			params: effect.params ?? payload.params ?? payload
+			value: Object.prototype.hasOwnProperty.call(payload, 'value') ? value : effect.value,
+			valueType: valueType ?? effect.valueType,
+			reason: reason ?? effect.reason,
+			params: effect.params ?? payloadParams
 		};
 	}
 
@@ -189,6 +195,30 @@ export default class BuffSystem {
 		if (effectTarget === 'attacker') return context?.attacker || context?.source;
 		if (effectTarget === 'target') return context?.target;
 		return manager.owner;
+	}
+
+	_getCurrentHp(target) {
+		if (!target) return 0;
+		if (typeof target.hp === 'number') return target.hp;
+		return Number(target?.stats?.hp ?? 0) || 0;
+	}
+
+	_getMaxHp(target) {
+		if (!target) return 0;
+		if (typeof target.maxHp === 'number') return target.maxHp;
+		return Number(target?.stats?.maxHp ?? target?.stats?.hp ?? target?.hp ?? 0) || 0;
+	}
+
+	_setCurrentHp(target, hp) {
+		if (!target) return;
+		const maxHp = this._getMaxHp(target);
+		const clamped = maxHp > 0
+			? Math.max(0, Math.min(maxHp, Number(hp) || 0))
+			: Math.max(0, Number(hp) || 0);
+		if (typeof target.hp === 'number') target.hp = clamped;
+		if (target.stats && typeof target.stats === 'object' && typeof target.stats.hp === 'number') {
+			target.stats.hp = clamped;
+		}
 	}
 
 	_resolveValue(ctx, effect) {
@@ -230,11 +260,7 @@ export default class BuffSystem {
 		if (!Number.isFinite(amount) || amount <= 0) return;
 
 		// 只做最小实现：直接扣 hp（不走护甲/部位），复杂逻辑留给 CombatSystem pipeline。
-		if (target.stats) {
-			target.stats.hp = Math.max(0, target.stats.hp - amount);
-		} else if (typeof target.hp === 'number') {
-			target.hp = Math.max(0, target.hp - amount);
-		}
+		this._setCurrentHp(target, this._getCurrentHp(target) - amount);
 
 		this.eventBus?.emit?.('BATTLE_LOG', { text: `[Buff] ${ctx.buff.id} dealt ${amount} damage to ${target.id || 'target'}` });
 	}
@@ -245,12 +271,7 @@ export default class BuffSystem {
 		const amount = this._resolveValue(ctx, effect);
 		if (!Number.isFinite(amount) || amount <= 0) return;
 
-		if (target.stats) {
-			const maxHp = target.stats.maxHp ?? target.stats.hp;
-			target.stats.hp = Math.min(maxHp, target.stats.hp + amount);
-		} else if (typeof target.hp === 'number') {
-			target.hp = target.hp + amount;
-		}
+		this._setCurrentHp(target, this._getCurrentHp(target) + amount);
 
 		this.eventBus?.emit?.('BATTLE_LOG', { text: `[Buff] ${ctx.buff.id} healed ${amount} HP for ${target.id || 'target'}` });
 	}
@@ -260,7 +281,14 @@ export default class BuffSystem {
 		if (!target?.buffs) return;
 		const buffId = effect.value;
 		if (!buffId) return;
-		target.buffs.add(buffId);
+		const options = effect.params || {};
+		target.buffs.add(buffId, {
+			params: options.params || {},
+			stacks: options.stacks,
+			duration: options.duration,
+			stackStrategy: options.stackStrategy,
+			maxStacks: options.maxStacks
+		});
 	}
 
 	_act_skipTurn(ctx) {
