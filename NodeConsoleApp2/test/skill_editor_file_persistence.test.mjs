@@ -50,6 +50,16 @@ async function withTempServer(t, callback) {
     JSON.stringify({ $schemaVersion: 'test', skills: [{ id: 'skill_a', name: 'A' }] }, null, 2),
     'utf8'
   );
+  await fs.writeFile(
+    path.join(tempRoot, 'assets', 'data', 'buffs_v2_5.json'),
+    JSON.stringify({ $schemaVersion: 'buffs_test', buffs: { buff_old: { id: 'buff_old', name: 'Old' } } }, null, 2),
+    'utf8'
+  );
+  await fs.writeFile(
+    path.join(tempRoot, 'assets', 'data', 'buffs_v2_7.json'),
+    JSON.stringify({ $schemaVersion: 'buffs_test', buffs: { buff_new: { id: 'buff_new', name: 'New' } } }, null, 2),
+    'utf8'
+  );
 
   const port = await getFreePort();
   const child = spawn(process.execPath, [path.join(projectRoot, 'app.js')], {
@@ -96,6 +106,20 @@ test('skill editor file API reads and writes JSON files inside the project data 
 
     const saved = JSON.parse(await fs.readFile(path.join(tempRoot, 'assets', 'data', 'saved_from_editor.json'), 'utf8'));
     assert.equal(saved.skills[0].id, 'skill_saved');
+  });
+});
+
+test('skill editor file API lists JSON files beside a project file', async t => {
+  await withTempServer(t, async ({ baseUrl }) => {
+    const listRes = await fetch(`${baseUrl}/__skill_editor_file?path=assets/data/source.json&list=1`);
+    assert.equal(listRes.status, 200);
+    const listBody = await listRes.json();
+    assert.equal(listBody.ok, true);
+    assert.equal(listBody.path, 'assets/data/source.json');
+    assert.deepEqual(
+      listBody.files.filter(file => file.startsWith('assets/data/buffs_')),
+      ['assets/data/buffs_v2_5.json', 'assets/data/buffs_v2_7.json']
+    );
   });
 });
 
@@ -192,6 +216,82 @@ test('SkillEditor saves the current pack through the project file API instead of
   assert.equal(body.path, 'assets/data/skills_melee_v4_5.json');
   assert.equal(JSON.parse(body.content).skills[0].id, 'skill_a');
   assert.match(editor.lastStatus, /已保存/);
+});
+
+test('SkillEditor loads the newest sibling buffs pack after loading a project skill pack', async () => {
+  const { SkillEditor } = await importSkillEditorModule();
+  const editor = Object.create(SkillEditor.prototype);
+  editor.skills = [];
+  editor.buffDict = {};
+  editor.defaultParts = [];
+  editor.enums = {};
+  editor.currentSkillFilePath = 'assets/data/skills_melee_v4_5.json';
+  editor.setProjectFileStatus = message => {
+    editor.lastStatus = message;
+  };
+  editor.setCurrentProjectFilePath = filePath => {
+    editor.currentSkillFilePath = filePath;
+  };
+  editor.setSkillPackMeta = (meta, schemaVersion) => {
+    editor.skillPackMeta = meta;
+    editor.skillPackSchemaVersion = schemaVersion;
+  };
+  editor.clearSelection = () => {};
+  editor.renderNodes = () => {};
+  editor.renderSkillLibrary = () => {};
+  editor.loadProperties = () => {};
+  editor.renderBuffRefTables = () => {};
+  editor.updateSummary = () => {};
+  editor.ensureBuffNameIndex = SkillEditor.prototype.ensureBuffNameIndex;
+
+  const calls = [];
+  const originalFetch = global.fetch;
+  global.fetch = async url => {
+    calls.push(String(url));
+    if (String(url).includes('list=1')) {
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          path: 'assets/data/skills_melee_v4_5.json',
+          files: [
+            'assets/data/skills_melee_v4_5.json',
+            'assets/data/buffs_v2_5.json',
+            'assets/data/buffs_v2_7.json'
+          ]
+        })
+      };
+    }
+    if (String(url).includes('buffs_v2_7.json')) {
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          path: 'assets/data/buffs_v2_7.json',
+          content: JSON.stringify({ $schemaVersion: 'buffs_v2_7', buffs: { buff_bleed: { id: 'buff_bleed', name: '流血' } } })
+        })
+      };
+    }
+    return {
+      ok: true,
+      json: async () => ({
+        ok: true,
+        path: 'assets/data/skills_melee_v4_5.json',
+        content: JSON.stringify({ $schemaVersion: 'skills_melee_v4_5', skills: [{ id: 'skill_a', name: 'A' }] })
+      })
+    };
+  };
+  try {
+    await editor.loadProjectSkillPack('assets/data/skills_melee_v4_5.json');
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  assert.deepEqual(editor.skills.map(skill => skill.id), ['skill_a']);
+  assert.equal(editor.currentBuffFilePath, 'assets/data/buffs_v2_7.json');
+  assert.equal(editor.buffDict.buff_bleed.name, '流血');
+  assert(calls.some(url => url.includes('list=1')), 'should ask the project file API for sibling JSON files');
+  assert(calls.some(url => url.includes('buffs_v2_7.json')), 'should load the newest sibling buffs pack');
 });
 
 test('skill editor toolbar uses Chinese labels for file and edit actions', async () => {

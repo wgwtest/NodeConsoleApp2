@@ -86,6 +86,25 @@ async function handleSkillEditorFile(req, res, url) {
   try {
     if (req.method === 'GET') {
       const { normalized, absolutePath } = normalizeProjectJsonPath(url.searchParams.get('path'));
+      if (url.searchParams.get('list') === '1') {
+        const dir = path.dirname(absolutePath);
+        const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+        const files = entries
+          .filter(entry => entry.isFile() && entry.name.toLowerCase().endsWith('.json'))
+          .map(entry => {
+            const abs = path.join(dir, entry.name);
+            return path.relative(rootDir, abs).replace(/\\/g, '/');
+          })
+          .filter(filePath => allowedJsonWriteRoots.some(prefix => filePath.startsWith(prefix)))
+          .sort((a, b) => a.localeCompare(b));
+        sendJson(res, 200, {
+          ok: true,
+          path: normalized,
+          directory: path.dirname(normalized).replace(/\\/g, '/'),
+          files
+        });
+        return;
+      }
       const content = await fs.promises.readFile(absolutePath, 'utf8');
       JSON.parse(content);
       sendJson(res, 200, {

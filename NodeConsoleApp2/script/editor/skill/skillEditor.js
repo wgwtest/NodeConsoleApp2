@@ -46,6 +46,61 @@ export function buildTimestampedProjectJsonPath(inputPath, date = new Date()) {
     return dir ? `${dir}/${nextFile}` : nextFile;
 }
 
+function splitProjectPath(inputPath) {
+    const normalized = normalizeProjectJsonPath(inputPath);
+    const slash = normalized.lastIndexOf('/');
+    if (slash < 0) return { dir: '', file: normalized };
+    return {
+        dir: normalized.slice(0, slash),
+        file: normalized.slice(slash + 1)
+    };
+}
+
+function extractVersionNumbers(filePath) {
+    const file = splitProjectPath(filePath).file.toLowerCase();
+    const match = file.match(/v(\d+(?:[_\-.]\d+)*)/u);
+    if (!match) return [];
+    return match[1].split(/[_\-.]/u).map(part => Number(part)).filter(Number.isFinite);
+}
+
+function compareVersionedProjectPaths(a, b) {
+    const av = extractVersionNumbers(a);
+    const bv = extractVersionNumbers(b);
+    const max = Math.max(av.length, bv.length);
+    for (let i = 0; i < max; i += 1) {
+        const delta = (av[i] || 0) - (bv[i] || 0);
+        if (delta !== 0) return delta;
+    }
+    return String(a).localeCompare(String(b));
+}
+
+export function pickSiblingBuffPackPath(skillPath, siblingFiles = [], skillPackMeta = null) {
+    const skillInfo = splitProjectPath(skillPath || '');
+    const explicit = skillPackMeta?.buffsPath || skillPackMeta?.buffPath || skillPackMeta?.buffFile || skillPackMeta?.buffPackPath;
+    if (explicit) {
+        const normalizedExplicit = normalizeProjectJsonPath(explicit);
+        if (normalizedExplicit.includes('/')) return normalizedExplicit;
+        return skillInfo.dir ? `${skillInfo.dir}/${normalizedExplicit}` : normalizedExplicit;
+    }
+
+    const sameDirFiles = (Array.isArray(siblingFiles) ? siblingFiles : [])
+        .map(normalizeProjectJsonPath)
+        .filter(Boolean)
+        .filter(filePath => {
+            const info = splitProjectPath(filePath);
+            return info.dir === skillInfo.dir && /^buffs.*\.json$/iu.test(info.file);
+        });
+
+    if (sameDirFiles.length === 0) return '';
+
+    const versioned = sameDirFiles
+        .filter(filePath => extractVersionNumbers(filePath).length > 0)
+        .sort(compareVersionedProjectPaths);
+    if (versioned.length > 0) return versioned[versioned.length - 1];
+
+    return sameDirFiles.sort((a, b) => String(a).localeCompare(String(b)))[sameDirFiles.length - 1];
+}
+
 const LEGACY_SKILL_FIELD_KEYS = Object.freeze({
     field: ['ta', 'gs'].join(''),
     meta: ['ta', 'gMeta'].join(''),
@@ -68,6 +123,7 @@ export class SkillEditor {
         this.skills = []; // Array of skill objects (editor internal)
         this.buffDict = {}; // buffs.json map
         this.buffDoc = null; // wrapped buffs doc (optional): { $schemaVersion, meta, buffs }
+        this.currentBuffFilePath = '';
         this.skillPackMeta = null; // skills_melee_v4_5.json meta
         this.skillPackSchemaVersion = null;
         this.defaultParts = ['head','chest','abdomen','arm','leg'];
@@ -1144,6 +1200,52 @@ export class SkillEditor {
         return newSkills;
     }
 
+    normalizeBuffDocument(buffsData) {
+        this.buffDoc = (buffsData && typeof buffsData === 'object') ? buffsData : null;
+        const normalized = (buffsData && typeof buffsData === 'object' && buffsData.buffs && typeof buffsData.buffs === 'object')
+            ? buffsData.buffs
+            : buffsData;
+        this.buffDict = (normalized && typeof normalized === 'object') ? normalized : {};
+        this.ensureBuffNameIndex();
+        this.renderBuffRefTables();
+        this.updateSummary();
+        return this.buffDict;
+    }
+
+    async fetchProjectJsonFile(projectPath) {
+        const requestedPath = normalizeProjectJsonPath(projectPath);
+        const response = await fetch(`/__skill_editor_file?path=${encodeURIComponent(requestedPath)}`, { cache: 'no-store' });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+        return {
+            path: payload.path || requestedPath,
+            data: JSON.parse(payload.content)
+        };
+    }
+
+    async listSiblingProjectJsonFiles(projectPath) {
+        const requestedPath = normalizeProjectJsonPath(projectPath);
+        const response = await fetch(`/__skill_editor_file?path=${encodeURIComponent(requestedPath)}&list=1`, { cache: 'no-store' });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+        return Array.isArray(payload.files) ? payload.files : [];
+    }
+
+    async loadProjectBuffPackForSkillPack(skillPath) {
+        const siblingFiles = await this.listSiblingProjectJsonFiles(skillPath);
+        const buffPath = pickSiblingBuffPackPath(skillPath, siblingFiles, this.skillPackMeta);
+        if (!buffPath) return { loaded: false, path: '', count: 0 };
+
+        const { path, data } = await this.fetchProjectJsonFile(buffPath);
+        const dict = this.normalizeBuffDocument(data);
+        this.currentBuffFilePath = path || buffPath;
+        return {
+            loaded: true,
+            path: this.currentBuffFilePath,
+            count: Object.keys(dict || {}).length
+        };
+    }
+
     buildSkillPackPayload(includeEditorMeta = true) {
         const skillsV3 = this.skills.map(s => {
             const clone = JSON.parse(JSON.stringify(s));
@@ -1176,12 +1278,20 @@ export class SkillEditor {
         }
         this.setProjectFileStatus(`正在加载 ${requestedPath}...`);
         try {
-            const response = await fetch(`/__skill_editor_file?path=${encodeURIComponent(requestedPath)}`, { cache: 'no-store' });
-            const payload = await response.json();
-            if (!response.ok || !payload.ok) throw new Error(payload.error || `HTTP ${response.status}`);
-            const data = JSON.parse(payload.content);
-            const newSkills = this.replaceSkillsFromPack(data, payload.path || requestedPath);
-            this.setProjectFileStatus(`已加载 ${payload.path || requestedPath} (${newSkills.length} skills)`, 'ok');
+            const { path, data } = await this.fetchProjectJsonFile(requestedPath);
+            const newSkills = this.replaceSkillsFromPack(data, path || requestedPath);
+            let buffInfo = { loaded: false, path: '', count: 0 };
+            try {
+                buffInfo = await this.loadProjectBuffPackForSkillPack(path || requestedPath);
+            } catch (buffErr) {
+                console.warn('[SkillEditor] Auto-load sibling buffs failed:', buffErr);
+                this.setProjectFileStatus(`已加载 ${path || requestedPath} (${newSkills.length} skills)，但自动加载 Buff 失败：${buffErr.message || String(buffErr)}`, 'error');
+                return;
+            }
+            const buffText = buffInfo.loaded
+                ? `；Buff: ${buffInfo.path} (${buffInfo.count})`
+                : '；未找到同目录 Buff';
+            this.setProjectFileStatus(`已加载 ${path || requestedPath} (${newSkills.length} skills)${buffText}`, 'ok');
         } catch (err) {
             console.error(err);
             this.setProjectFileStatus(`加载失败：${err.message || String(err)}`, 'error');
@@ -1213,16 +1323,7 @@ export class SkillEditor {
 
             // Normalize to a flat { buffId -> buffObject } map.
             // Newer versions follow `09-Buff系统(buff_design)-设计说明.md`: { $schemaVersion, meta, buffs }.
-            this.buffDoc = (buffsData && typeof buffsData === 'object') ? buffsData : null;
-            const normalized = (buffsData && typeof buffsData === 'object' && buffsData.buffs && typeof buffsData.buffs === 'object')
-                ? buffsData.buffs
-                : buffsData;
-            this.buffDict = (normalized && typeof normalized === 'object') ? normalized : {};
-            this.ensureBuffNameIndex();
-
-            // Re-render buff UI if a skill is selected so the dropdown switches from input->select.
-            this.renderBuffRefTables();
-            this.updateSummary();
+            this.normalizeBuffDocument(buffsData);
 
             const src = file?.name ? ` (${file.name})` : '';
             alert(`Loaded buffs${src}: ${Object.keys(this.buffDict).length}`);
