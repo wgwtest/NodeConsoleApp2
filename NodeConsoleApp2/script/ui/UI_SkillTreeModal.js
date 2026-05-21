@@ -3,45 +3,22 @@
  * @description Runtime skill tree view. Owns rendering, path focus, staged learning, and commit actions.
  */
 
-const NODE_W = 112;
-const NODE_H = 82;
-const STRUCTURE_NODE_W = 74;
-const STRUCTURE_NODE_H = 48;
-const CANVAS_W = 1180;
-const CANVAS_H = 760;
+const NODE_W = 72;
+const NODE_H = 72;
+const STRUCTURE_NODE_W = 72;
+const STRUCTURE_NODE_H = 72;
 const FIT_VIEW_W = 1000;
 const FIT_VIEW_H = 680;
 const FIT_PADDING = 76;
-const MIN_READABLE_ZOOM = 0.72;
+const MIN_READABLE_ZOOM = 0.42;
 const LOD_STRUCTURE_MAX_ZOOM = 0.82;
 const LOD_READING_MIN_ZOOM = 0.86;
-const PROJECTED_POSITION_BOUNDS = Object.freeze({
-	left: 90,
-	top: 105,
-	width: 930,
-	height: 520
-});
-
-const ROUTE_DEFS = Object.freeze([
-	{
-		id: 'guard',
-		label: '稳固前线',
-		desc: '护甲、格挡、反击',
-		keywords: ['block', 'guard', 'iron', 'hold', 'fortify', 'aegis', 'regroup', 'armor', 'heal', '修理', '护甲', '铁', '重拳', '堡垒', '防御', '受击', '治疗']
-	},
-	{
-		id: 'break',
-		label: '破甲重击',
-		desc: '高伤、处决、震击',
-		keywords: ['heavy', 'skull', 'execute', 'earthquake', 'ragnarok', 'swing', 'shockwave', '裂颅', '重锤', '斩首', '震击', '黄昏', '光脚', '光头']
-	},
-	{
-		id: 'blood',
-		label: '流血连段',
-		desc: '撕裂、吸血、爆发',
-		keywords: ['slice', 'thrust', 'tear', 'bleed', 'blood', 'burst', 'vamp', '锯齿', '剑砍', '撕裂', '吸血', '迸发', '转进', '鲜血']
-	}
-]);
+const EDITOR_NODE_W = 72;
+const EDITOR_NODE_H = 72;
+const CANVAS_PADDING = 220;
+const GRID_SIZE = 100;
+const CONNECTION_MARGIN = 12;
+const ANCHOR_HYSTERESIS_PX = 14;
 
 const STATUS_LABELS = Object.freeze({
 	LEARNED: '已学习',
@@ -85,11 +62,6 @@ function clamp(n, min, max) {
 	return Math.max(min, Math.min(max, n));
 }
 
-function hasText(value, terms) {
-	const haystack = String(value || '').toLowerCase();
-	return terms.some(term => haystack.includes(String(term).toLowerCase()));
-}
-
 export class UI_SkillTreeModal {
 	constructor() {
 		this.engine = null;
@@ -107,8 +79,10 @@ export class UI_SkillTreeModal {
 		this._zoom = 1;
 		this._isPanning = false;
 		this._lastMouse = null;
-		this._layout = { minX: 0, minY: 0, maxX: CANVAS_W, maxY: CANVAS_H };
+		this._layout = { minX: 0, minY: 0, maxX: FIT_VIEW_W, maxY: FIT_VIEW_H };
+		this._surface = { width: FIT_VIEW_W, height: FIT_VIEW_H };
 		this._nodePositions = new Map();
+		this._edgeAnchorCache = new Map();
 		this._lodMode = 'structure';
 
 		this._dom = {
@@ -125,7 +99,7 @@ export class UI_SkillTreeModal {
 			canvasMeta: null,
 			canvasWrap: null,
 			transformLayer: null,
-			svg: null,
+			canvas: null,
 			nodeLayer: null,
 			detail: null,
 			footer: null
@@ -149,6 +123,7 @@ export class UI_SkillTreeModal {
 		this._initSessionState();
 		this._fitToNodes();
 		this._renderShell(options.title || '技能树 / 构筑');
+		this._fitToNodes();
 		this._renderAll();
 	}
 
@@ -180,7 +155,7 @@ export class UI_SkillTreeModal {
 			canvasMeta: null,
 			canvasWrap: null,
 			transformLayer: null,
-			svg: null,
+			canvas: null,
 			nodeLayer: null,
 			detail: null,
 			footer: null
@@ -200,7 +175,6 @@ export class UI_SkillTreeModal {
 		const rawSkillsList = Array.isArray(catalog?.skillsList) ? catalog.skillsList : Object.values(skillsMap || Object.create(null));
 		this._skillsMap = skillsMap || Object.create(null);
 		this._skillsList = rawSkillsList.filter(skill => this._shouldRenderSkillNode(skill));
-		this._rebuildRuntimeNodePositions();
 
 		const learned = this._getLearned();
 		const firstLearnable = this._skillsList.find(skill => this._getStatus(skill.id).kind === 'LEARNABLE');
@@ -264,8 +238,8 @@ export class UI_SkillTreeModal {
 	}
 
 	_getNodePos(skill) {
-		const projected = this._nodePositions.get(skill?.id);
-		if (projected) return projected;
+		const cached = this._nodePositions.get(skill?.id);
+		if (cached) return cached;
 		return this._getRawNodePos(skill);
 	}
 
@@ -282,39 +256,8 @@ export class UI_SkillTreeModal {
 
 	_rebuildRuntimeNodePositions() {
 		this._nodePositions = new Map();
-		if (!this._skillsList.length) return;
-
-		const rawNodes = this._skillsList.map(skill => ({
-			skill,
-			pos: this._getRawNodePos(skill)
-		}));
-		const minX = Math.min(...rawNodes.map(item => item.pos.x));
-		const minY = Math.min(...rawNodes.map(item => item.pos.y));
-		const maxX = Math.max(...rawNodes.map(item => item.pos.x + NODE_W));
-		const maxY = Math.max(...rawNodes.map(item => item.pos.y + NODE_H));
-		const rawW = Math.max(1, maxX - minX);
-		const rawH = Math.max(1, maxY - minY);
-		const viewW = FIT_VIEW_W - FIT_PADDING * 2;
-		const viewH = FIT_VIEW_H - FIT_PADDING * 2;
-		const needsProjection = rawW > viewW / MIN_READABLE_ZOOM || rawH > viewH / MIN_READABLE_ZOOM;
-		if (!needsProjection) return;
-
-		const rawPosMinX = Math.min(...rawNodes.map(item => item.pos.x));
-		const rawPosMinY = Math.min(...rawNodes.map(item => item.pos.y));
-		const rawPosMaxX = Math.max(...rawNodes.map(item => item.pos.x));
-		const rawPosMaxY = Math.max(...rawNodes.map(item => item.pos.y));
-		const rawRangeX = Math.max(1, rawPosMaxX - rawPosMinX);
-		const rawRangeY = Math.max(1, rawPosMaxY - rawPosMinY);
-
-		for (const item of rawNodes) {
-			const x = PROJECTED_POSITION_BOUNDS.left
-				+ ((item.pos.x - rawPosMinX) / rawRangeX) * PROJECTED_POSITION_BOUNDS.width;
-			const y = PROJECTED_POSITION_BOUNDS.top
-				+ ((item.pos.y - rawPosMinY) / rawRangeY) * PROJECTED_POSITION_BOUNDS.height;
-			this._nodePositions.set(item.skill.id, {
-				x: Math.round(x),
-				y: Math.round(y)
-			});
+		for (const skill of this._skillsList) {
+			this._nodePositions.set(skill.id, this._getRawNodePos(skill));
 		}
 	}
 
@@ -382,23 +325,6 @@ export class UI_SkillTreeModal {
 
 	// ----------------- Tree semantics -----------------
 
-	_getRouteForSkill(skill) {
-		const text = `${skill?.id || ''} ${skill?.name || ''} ${skill?.description || ''}`;
-		const route = ROUTE_DEFS.find(def => hasText(text, def.keywords));
-		return route?.id || 'break';
-	}
-
-	_getRouteSummary() {
-		const summary = new Map(ROUTE_DEFS.map(route => [route.id, { ...route, count: 0, learnable: 0 }]));
-		for (const skill of this._skillsList) {
-			const routeId = this._getRouteForSkill(skill);
-			const item = summary.get(routeId) || summary.get('break');
-			item.count += 1;
-			if (this._getStatus(skill.id).kind === 'LEARNABLE') item.learnable += 1;
-		}
-		return Array.from(summary.values());
-	}
-
 	_getRelatedSkillIds(skillId) {
 		if (!skillId) return new Set();
 		const related = new Set([skillId]);
@@ -448,6 +374,23 @@ export class UI_SkillTreeModal {
 		return STATUS_LABELS[kind] || kind || '未知';
 	}
 
+	_getStatusSummary() {
+		const summary = {
+			learned: { id: 'learned', label: '已学', desc: '已进入战斗技能池', count: 0 },
+			learnable: { id: 'learnable', label: '可学', desc: '可消耗 KP 直接学习', count: 0 },
+			pending: { id: 'pending', label: '待提交', desc: '本次暂存，提交后保存', count: 0 },
+			locked: { id: 'locked', label: '待解锁', desc: '缺少前置或KP不足', count: 0 }
+		};
+		for (const skill of this._skillsList) {
+			const status = this._getStatus(skill.id);
+			if (status.kind === 'LEARNED') summary.learned.count += 1;
+			else if (status.kind === 'LEARNABLE') summary.learnable.count += 1;
+			else if (status.kind === 'PENDING') summary.pending.count += 1;
+			else summary.locked.count += 1;
+		}
+		return [summary.learned, summary.learnable, summary.pending, summary.locked];
+	}
+
 	_getStatusHint(skill, status) {
 		if (status.kind === 'LOCKED') {
 			return `缺少前置：${status.missingPrereqs.map(id => this._getSkillById(id)?.name || id).join('、')}`;
@@ -464,11 +407,13 @@ export class UI_SkillTreeModal {
 
 	_fitToNodes() {
 		if (!this._skillsList.length) {
-			this._layout = { minX: 0, minY: 0, maxX: CANVAS_W, maxY: CANVAS_H };
+			this._layout = { minX: 0, minY: 0, maxX: FIT_VIEW_W, maxY: FIT_VIEW_H };
+			this._surface = { width: FIT_VIEW_W, height: FIT_VIEW_H };
 			this._pan = { x: 0, y: 0 };
 			this._zoom = 1;
 			return;
 		}
+		this._rebuildRuntimeNodePositions();
 
 		const boxes = this._skillsList.map(skill => {
 			const pos = this._getNodePos(skill);
@@ -484,17 +429,32 @@ export class UI_SkillTreeModal {
 		const maxX = Math.max(...boxes.map(box => box.right));
 		const maxY = Math.max(...boxes.map(box => box.bottom));
 		this._layout = { minX, minY, maxX, maxY };
+		this._surface = {
+			width: Math.ceil(maxX + CANVAS_PADDING),
+			height: Math.ceil(maxY + CANVAS_PADDING)
+		};
 
 		const treeW = Math.max(1, maxX - minX);
 		const treeH = Math.max(1, maxY - minY);
-		const viewW = FIT_VIEW_W - FIT_PADDING * 2;
-		const viewH = FIT_VIEW_H - FIT_PADDING * 2;
+		const viewport = this._getFitViewportSize();
+		const viewW = viewport.width - FIT_PADDING * 2;
+		const viewH = viewport.height - FIT_PADDING * 2;
 		const fit = Math.min(viewW / treeW, viewH / treeH);
-		this._zoom = clamp(fit, MIN_READABLE_ZOOM, 1.05);
+		this._zoom = clamp(fit, MIN_READABLE_ZOOM, LOD_STRUCTURE_MAX_ZOOM);
 		this._pan = {
-			x: Math.round((FIT_VIEW_W - treeW * this._zoom) / 2 - minX * this._zoom),
-			y: Math.round((FIT_VIEW_H - treeH * this._zoom) / 2 - minY * this._zoom)
+			x: Math.round((viewport.width - treeW * this._zoom) / 2 - minX * this._zoom),
+			y: Math.round((viewport.height - treeH * this._zoom) / 2 - minY * this._zoom)
 		};
+	}
+
+	_getFitViewportSize() {
+		const rect = this._dom.canvasWrap?.getBoundingClientRect?.();
+		const width = Number(rect?.width);
+		const height = Number(rect?.height);
+		if (Number.isFinite(width) && width > FIT_PADDING * 2 && Number.isFinite(height) && height > FIT_PADDING * 2) {
+			return { width, height };
+		}
+		return { width: FIT_VIEW_W, height: FIT_VIEW_H };
 	}
 
 	// ----------------- Rendering -----------------
@@ -546,14 +506,14 @@ export class UI_SkillTreeModal {
 		canvasWrap.setAttribute('aria-label', '技能树画布');
 		const canvasMeta = el('div', 'ui-skilltree__canvasMeta', '拖拽平移 · 滚轮缩放 · 双击回到全图');
 		const transformLayer = el('div', 'ui-skilltree__transform');
-		transformLayer.style.width = `${CANVAS_W}px`;
-		transformLayer.style.height = `${CANVAS_H}px`;
-		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		svg.classList.add('ui-skilltree__connections');
-		svg.setAttribute('viewBox', `0 0 ${CANVAS_W} ${CANVAS_H}`);
-		svg.setAttribute('aria-hidden', 'true');
+		transformLayer.style.width = `${this._surface.width}px`;
+		transformLayer.style.height = `${this._surface.height}px`;
+		const canvas = el('canvas', 'ui-skilltree__connections');
+		canvas.width = this._surface.width;
+		canvas.height = this._surface.height;
+		canvas.setAttribute('aria-hidden', 'true');
 		const nodeLayer = el('div', 'ui-skilltree__nodes');
-		transformLayer.appendChild(svg);
+		transformLayer.appendChild(canvas);
 		transformLayer.appendChild(nodeLayer);
 		canvasWrap.appendChild(canvasMeta);
 		canvasWrap.appendChild(transformLayer);
@@ -586,7 +546,7 @@ export class UI_SkillTreeModal {
 			canvasMeta,
 			canvasWrap,
 			transformLayer,
-			svg,
+			canvas,
 			nodeLayer,
 			detail,
 			footer
@@ -630,30 +590,21 @@ export class UI_SkillTreeModal {
 	_renderRoutes() {
 		if (!this._dom.routeRail) return;
 		this._dom.routeRail.innerHTML = '';
-		this._dom.routeRail.appendChild(el('h2', 'ui-skilltree__railTitle', '构筑路线'));
-		const list = el('div', 'ui-skilltree__routeList');
-		const selected = this._getSkillById(this._selectedSkillId);
-		const selectedRoute = this._getRouteForSkill(selected);
-		for (const route of this._getRouteSummary()) {
-			const card = el('button', `ui-skilltree__routeCard ui-skilltree__routeCard--${route.id}`);
-			card.type = 'button';
-			if (route.id === selectedRoute) card.classList.add('is-active');
-			card.innerHTML = `<i></i><span><b>${route.label}</b><small>${route.desc} · ${route.count} 个节点 · ${route.learnable} 个可学</small></span>`;
-			const firstSkill = this._skillsList.find(skill => this._getRouteForSkill(skill) === route.id);
-			card.addEventListener('click', () => {
-				if (!firstSkill) return;
-				this._selectSkill(firstSkill.id);
-			});
+		this._dom.routeRail.appendChild(el('h2', 'ui-skilltree__railTitle', '学习状态'));
+		const list = el('div', 'ui-skilltree__statusList');
+		for (const item of this._getStatusSummary()) {
+			const card = el('div', `ui-skilltree__statusCard ui-skilltree__statusCard--${item.id}`);
+			card.innerHTML = `<i></i><span><b>${item.label}</b><small>${item.desc}</small></span><strong>${item.count}</strong>`;
 			list.appendChild(card);
 		}
 		this._dom.routeRail.appendChild(list);
 
 		const legend = el('div', 'ui-skilltree__legend');
 		for (const [className, text] of [
-			['learned', '已学习：能力已进入战斗技能池'],
-			['learnable', '可学习：满足前置与 KP'],
-			['locked', '锁定：缺少前置或资源'],
-			['blood', '分支：选择后影响路线']
+			['learned', '已学链路：节点和连接线高亮'],
+			['learnable', '可学：点击 + 暂存学习'],
+			['pending', '待提交：提交并关闭后保存'],
+			['locked', '待解锁：缺少前置或KP不足']
 		]) {
 			const row = el('div', 'ui-skilltree__legendRow');
 			row.innerHTML = `<i class="${className}"></i><span>${text}</span>`;
@@ -668,34 +619,56 @@ export class UI_SkillTreeModal {
 		const focused = this._getRelatedSkillIds(this._selectedSkillId);
 		const hasFocus = !!this._selectedSkillId;
 		const isReadingMode = this._lodMode === 'reading';
+		if (this._dom.transformLayer) {
+			this._dom.transformLayer.style.width = `${this._surface.width}px`;
+			this._dom.transformLayer.style.height = `${this._surface.height}px`;
+		}
+		if (this._dom.nodeLayer) {
+			this._dom.nodeLayer.style.width = `${this._surface.width}px`;
+			this._dom.nodeLayer.style.height = `${this._surface.height}px`;
+		}
 
 		for (const skill of this._skillsList) {
 			const pos = this._getNodePos(skill);
 			const status = this._getStatus(skill.id);
 			const kindClass = String(status.kind || '').toLowerCase();
-			const route = this._getRouteForSkill(skill);
-			const node = el('button', `ui-skilltree__node ui-skilltree__node--${kindClass} ui-skilltree__node--route-${route}`);
-			node.type = 'button';
+			const node = el('div', `ui-skilltree__node ui-skilltree__node--${kindClass}`);
+			node.setAttribute('role', 'button');
+			node.tabIndex = 0;
 			node.style.left = `${pos.x}px`;
 			node.style.top = `${pos.y}px`;
 			node.dataset.skillId = skill.id;
-			node.dataset.route = route;
 			node.dataset.status = status.kind;
+			node.dataset.stateLabel = this._getStatusMeta(status);
 			node.classList.toggle('ui-skilltree__node--compact', !isReadingMode);
 			if (skill.id === this._selectedSkillId) node.classList.add('is-selected');
 			if (focused.has(skill.id)) node.classList.add('is-path-focus');
 			else if (hasFocus) node.classList.add('is-dimmed');
 
-			const icon = el('div', 'ui-skilltree__nodeIcon', this._getRouteIcon(route));
-			const name = el('div', 'ui-skilltree__nodeName', skill.name || skill.id);
-			node.appendChild(icon);
-			node.appendChild(name);
-			if (isReadingMode) {
-				const meta = el('div', 'ui-skilltree__nodeMeta', this._getStatusMeta(status));
-				node.appendChild(meta);
+			const title = el('div', 'ui-skilltree__nodeTitle', skill.name || skill.id);
+			const cost = el('div', 'ui-skilltree__nodeCost', `${status.kpCost}KP`);
+			node.appendChild(title);
+			node.appendChild(cost);
+			const meta = el('div', 'ui-skilltree__nodeStatus', this._getStatusMeta(status));
+			node.appendChild(meta);
+			if (status.kind === 'LEARNABLE') {
+				const action = el('button', 'ui-skilltree__nodeAction', '+');
+				action.type = 'button';
+				action.setAttribute('aria-label', `暂存学习：${skill.name || skill.id}`);
+				action.addEventListener('click', (e) => {
+					e.stopPropagation();
+					this._selectSkill(skill.id);
+					this._handleStageLearn(skill.id);
+				});
+				node.appendChild(action);
 			}
 			node.addEventListener('click', (e) => {
 				e.stopPropagation();
+				this._selectSkill(skill.id);
+			});
+			node.addEventListener('keydown', (e) => {
+				if (e.key !== 'Enter' && e.key !== ' ') return;
+				e.preventDefault();
 				this._selectSkill(skill.id);
 			});
 			this._dom.nodeLayer.appendChild(node);
@@ -703,52 +676,151 @@ export class UI_SkillTreeModal {
 	}
 
 	_renderConnections() {
-		if (!this._dom.svg) return;
-		this._dom.svg.innerHTML = '';
+		const canvas = this._dom.canvas;
+		if (!canvas) return;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		if (canvas.width !== this._surface.width) canvas.width = this._surface.width;
+		if (canvas.height !== this._surface.height) canvas.height = this._surface.height;
+		canvas.style.width = `${this._surface.width}px`;
+		canvas.style.height = `${this._surface.height}px`;
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		this._drawGrid(ctx, canvas.width, canvas.height);
+
 		const focused = this._getRelatedSkillIds(this._selectedSkillId);
+		const learned = new Set(this._getSessionLearned());
 		const hasFocus = !!this._selectedSkillId;
+		let edgeCount = 0;
+		let focusedEdgeCount = 0;
+		let learnedEdgeCount = 0;
 
 		for (const skill of this._skillsList) {
 			for (const parentId of toArray(skill.prerequisites)) {
 				const parent = this._getSkillById(parentId);
 				if (!parent || !this._skillsList.some(item => item.id === parent.id)) continue;
-				this._drawConnection(parent, skill, {
-					focused: focused.has(parent.id) && focused.has(skill.id),
-					dimmed: hasFocus && !(focused.has(parent.id) && focused.has(skill.id))
+				const edgeFocused = focused.has(parent.id) && focused.has(skill.id);
+				const edgeLearned = learned.has(parent.id) && learned.has(skill.id);
+				this._drawConnection(ctx, parent, skill, {
+					focused: edgeFocused,
+					learned: edgeLearned,
+					dimmed: hasFocus && !edgeFocused && !edgeLearned
 				});
+				edgeCount += 1;
+				if (edgeFocused) focusedEdgeCount += 1;
+				if (edgeLearned) learnedEdgeCount += 1;
 			}
 		}
+		canvas.dataset.edgeCount = String(edgeCount);
+		canvas.dataset.focusedEdgeCount = String(focusedEdgeCount);
+		canvas.dataset.learnedEdgeCount = String(learnedEdgeCount);
 	}
 
-	_drawConnection(sourceSkill, targetSkill, options = {}) {
+	_drawGrid(ctx, width, height) {
+		ctx.save();
+		ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+		ctx.lineWidth = 1;
+		for (let x = 0; x <= width; x += GRID_SIZE) {
+			ctx.beginPath();
+			ctx.moveTo(x, 0);
+			ctx.lineTo(x, height);
+			ctx.stroke();
+		}
+		for (let y = 0; y <= height; y += GRID_SIZE) {
+			ctx.beginPath();
+			ctx.moveTo(0, y);
+			ctx.lineTo(width, y);
+			ctx.stroke();
+		}
+		ctx.restore();
+	}
+
+	_snapToGridLine(value) {
+		return Math.round(value / GRID_SIZE) * GRID_SIZE;
+	}
+
+	_getAdaptiveAnchors(sourceSkill, targetSkill) {
 		const s = this._getNodePos(sourceSkill);
 		const t = this._getNodePos(targetSkill);
 		const nodeSize = this._getRenderedNodeSize();
-		const start = { x: s.x + nodeSize.width / 2, y: s.y + nodeSize.height };
-		const end = { x: t.x + nodeSize.width / 2, y: t.y };
-		const midY = (start.y + end.y) / 2;
+		const sCenterY = s.y + nodeSize.height / 2;
+		const tCenterY = t.y + nodeSize.height / 2;
+		const key = `${sourceSkill.id}->${targetSkill.id}`;
+		const prev = this._edgeAnchorCache?.get(key);
+		const dy = sCenterY - tCenterY;
+		let verticalDir;
+		if (prev && Math.abs(dy) < ANCHOR_HYSTERESIS_PX) {
+			verticalDir = prev;
+		} else {
+			verticalDir = sCenterY <= tCenterY ? 'down' : 'up';
+		}
+		if (!this._edgeAnchorCache) this._edgeAnchorCache = new Map();
+		this._edgeAnchorCache.set(key, verticalDir);
+		if (verticalDir === 'down') {
+			return [
+				{ x: s.x + nodeSize.width / 2, y: s.y + nodeSize.height, dir: 'bottom' },
+				{ x: t.x + nodeSize.width / 2, y: t.y, dir: 'top' }
+			];
+		}
+		return [
+			{ x: s.x + nodeSize.width / 2, y: s.y, dir: 'top' },
+			{ x: t.x + nodeSize.width / 2, y: t.y + nodeSize.height, dir: 'bottom' }
+		];
+	}
+
+	_drawConnection(ctx, sourceSkill, targetSkill, options = {}) {
+		const [start, end] = this._getAdaptiveAnchors(sourceSkill, targetSkill);
+		const leaveY = start.dir === 'bottom' ? start.y + CONNECTION_MARGIN : start.y - CONNECTION_MARGIN;
+		const enterY = end.dir === 'top' ? end.y - CONNECTION_MARGIN : end.y + CONNECTION_MARGIN;
+		const midY = this._snapToGridLine((leaveY + enterY) / 2);
 		const points = [
 			[start.x, start.y],
-			[start.x, midY],
+			[start.x, leaveY],
 			[end.x, midY],
+			[end.x, enterY],
 			[end.x, end.y]
 		];
+		const alpha = options.dimmed ? 0.22 : 1;
+		const highlighted = options.focused || options.learned;
+		const stroke = options.focused
+			? `rgba(232, 198, 111, ${0.92 * alpha})`
+			: options.learned
+				? `rgba(123, 224, 185, ${0.88 * alpha})`
+				: `rgba(130, 146, 143, ${0.62 * alpha})`;
+		ctx.save();
+		ctx.strokeStyle = stroke;
+		ctx.lineWidth = highlighted ? 4 : 2.5;
+		ctx.lineCap = 'round';
+		ctx.lineJoin = 'round';
+		if (options.dimmed) ctx.setLineDash([8, 10]);
+		ctx.beginPath();
+		ctx.moveTo(points[0][0], points[0][1]);
+		for (const point of points.slice(1)) {
+			ctx.lineTo(point[0], point[1]);
+		}
+		ctx.stroke();
+		ctx.setLineDash([]);
+		this._drawArrowHead(ctx, points.at(-2), points.at(-1), stroke, highlighted ? 10 : 8);
+		ctx.restore();
+	}
 
-		const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-		polyline.setAttribute('points', points.map(p => `${p[0]},${p[1]}`).join(' '));
-		polyline.setAttribute('class', [
-			'ui-skilltree__line',
-			options.focused ? 'is-path-focus' : '',
-			options.dimmed ? 'is-dimmed' : ''
-		].filter(Boolean).join(' '));
-		this._dom.svg.appendChild(polyline);
+	_drawArrowHead(ctx, from, to, color, size) {
+		const angle = Math.atan2(to[1] - from[1], to[0] - from[0]);
+		ctx.save();
+		ctx.fillStyle = color;
+		ctx.translate(to[0], to[1]);
+		ctx.rotate(angle);
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.lineTo(-size, -size * 0.45);
+		ctx.lineTo(-size, size * 0.45);
+		ctx.closePath();
+		ctx.fill();
+		ctx.restore();
 	}
 
 	_getRenderedNodeSize() {
-		if (this._lodMode === 'structure') {
-			return { width: STRUCTURE_NODE_W, height: STRUCTURE_NODE_H };
-		}
-		return { width: NODE_W, height: NODE_H };
+		return { width: STRUCTURE_NODE_W, height: STRUCTURE_NODE_H };
 	}
 
 	_renderDetail() {
@@ -823,19 +895,13 @@ export class UI_SkillTreeModal {
 		this._dom.detail.appendChild(actionArea);
 	}
 
-	_getRouteIcon(route) {
-		if (route === 'guard') return '+';
-		if (route === 'blood') return '血';
-		return '×';
-	}
-
 	_getStatusMeta(status) {
 		if (status.kind === 'LEARNED') return '已学';
 		if (status.kind === 'PENDING') return '待提交';
 		if (status.kind === 'LOCKED') return '前置';
-		if (status.kind === 'INSUFFICIENT_KP') return `需 ${status.kpCost}`;
+		if (status.kind === 'INSUFFICIENT_KP') return 'KP不足';
 		if (status.kind === 'EXCLUSIVE_LOCK') return '互斥';
-		return `KP ${status.kpCost}`;
+		return '可学';
 	}
 
 	// ----------------- Actions -----------------

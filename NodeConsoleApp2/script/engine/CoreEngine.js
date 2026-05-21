@@ -1374,29 +1374,33 @@ class CoreEngine {
         else if (subject === 'SUBJECT_ENEMY') target = defaultTarget;
 
         const scope = spec.scope || skillConfig?.target?.scope;
+        const selectedParts = Array.isArray(spec?.selection?.selectedParts) ? spec.selection.selectedParts : [];
         let bodyPart = null;
         if (scope === 'SCOPE_PART' || scope === 'SCOPE_MULTI_PARTS') {
-            const selectedParts = Array.isArray(spec?.selection?.selectedParts) ? spec.selection.selectedParts : [];
             bodyPart = selectedParts[0] || defaultBodyPart || this._getDefaultBodyPart(target, null);
+        } else if (selectedParts.length > 0) {
+            bodyPart = selectedParts[0];
         }
 
         return { target, bodyPart };
     }
 
-    _computeEffectAmount(effect, { actor, target, bodyPart }) {
+    _computeEffectAmount(effect, { actor, target, bodyPart, skillTarget = null }) {
         const amount = Number(effect?.amount ?? 0) || 0;
         const amountType = effect?.amountType || 'ABS';
         const targetParts = this._getEntityBodyParts(target);
         const part = bodyPart && targetParts ? targetParts[bodyPart] : null;
-        const actorStats = actor?.stats || {};
 
         if (amountType === 'ABS') return amount;
-        if (amountType === 'SCALING') {
-            const statKey = effect?.scaling?.stat;
-            const multiplier = Number(effect?.scaling?.multiplier ?? 0) || 0;
-            return (Number(actorStats?.[statKey] ?? actor?.[statKey] ?? 0) || 0) * multiplier;
+        if (amountType === 'BUFF_STACKS') {
+            const source = effect?.amountSource || {};
+            const owner = source.owner === 'actor' || source.owner === 'self'
+                ? actor
+                : (source.owner === 'skillTarget' ? skillTarget : target);
+            const stacks = owner?.buffs?.getStacks && source.buffId ? owner.buffs.getStacks(source.buffId) : Number(source.missingAs ?? 0);
+            const multiplier = Number(source.multiplier ?? amount ?? 1) || 0;
+            return (Number(stacks) || 0) * multiplier;
         }
-
         let base = 0;
         if (effect?.effectType === 'DMG_ARMOR' || effect?.effectType === 'ARMOR_ADD') {
             base = Number(part?.current ?? part?.max ?? 0) || 0;
@@ -1476,6 +1480,10 @@ class CoreEngine {
 
         context.damageTaken = actualDamage;
         this.eventBus.emit('BATTLE_TAKE_DAMAGE_PRE', context);
+
+        if (context.damageDealtMult) {
+            actualDamage = Math.floor(actualDamage * (1 + Number(context.damageDealtMult || 0)));
+        }
 
         if (part && Number(part.current ?? 0) > 0) {
             const armorMitMult = this._collectArmorMitigationMultiplier(context.tempModifiers);
@@ -1737,7 +1745,7 @@ class CoreEngine {
             for (let i = 0; i < repeat; i++) {
                 switch (effect.effectType) {
                 case 'DMG_HP': {
-                    const rawDamage = this._computeEffectAmount(effect, { actor, target, bodyPart });
+                    const rawDamage = this._computeEffectAmount(effect, { actor, target, bodyPart, skillTarget: defaultTarget });
                     const bypassArmor = target === actor && !bodyPart;
                     const outcome = bypassArmor
                         ? {
@@ -1752,7 +1760,7 @@ class CoreEngine {
                     break;
                 }
                 case 'DMG_ARMOR': {
-                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart });
+                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart, skillTarget: defaultTarget });
                     const outcome = this._applyArmorOnlyDamage({
                         attacker: actor,
                         target,
@@ -1771,21 +1779,21 @@ class CoreEngine {
                     break;
                 }
                 case 'HEAL': {
-                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart });
+                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart, skillTarget: defaultTarget });
                     const currentHp = this._applyHpDelta(target, amount);
                     results.push({ isHit: true, heal: amount, targetHpRemaining: currentHp });
                     logs.push(`${skillConfig.name} healed ${target.name || target.id} for ${Math.round(amount)} HP.`);
                     break;
                 }
                 case 'ARMOR_ADD': {
-                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart });
+                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart, skillTarget: defaultTarget });
                     const outcome = this._applyArmorDelta(target, bodyPart, amount);
                     results.push({ isHit: true, armorGain: outcome.armorDelta, targetPart: outcome.bodyPart });
                     logs.push(`${skillConfig.name} restored ${Math.round(outcome.armorDelta || 0)} armor on ${target.name || target.id}${outcome.bodyPart ? `:${outcome.bodyPart}` : ''}.`);
                     break;
                 }
                 case 'AP_GAIN': {
-                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart });
+                    const amount = this._computeEffectAmount(effect, { actor, target, bodyPart, skillTarget: defaultTarget });
                     const currentAp = this._getEntityCurrentAp(target);
                     this._setEntityCurrentAp(target, currentAp + amount);
                     results.push({ isHit: true, apGain: amount, targetAp: this._getEntityCurrentAp(target) });

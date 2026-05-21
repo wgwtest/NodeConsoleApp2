@@ -1,0 +1,214 @@
+{
+  "currentMetrics": {
+    "label": "current",
+    "count": 32,
+    "overlaps": [
+      {
+        "a": "skill_savage_charge",
+        "b": "skill_artery_slice_copy_1769789197982",
+        "area": 386
+      },
+      {
+        "a": "skill_shockwave",
+        "b": "skill_hold_the_line_copy_1769790933469",
+        "area": 386
+      },
+      {
+        "a": "skill_execute",
+        "b": "skill_earthquake",
+        "area": 386
+      },
+      {
+        "a": "skill_regroup",
+        "b": "skill_hold_the_line_copy_1769956923405",
+        "area": 386
+      },
+      {
+        "a": "skill_hold_the_line",
+        "b": "skill_hold_the_line_copy_1769790933469",
+        "area": 386
+      },
+      {
+        "a": "skill_fortify",
+        "b": "skill_fortify_copy_1769873501141",
+        "area": 386
+      },
+      {
+        "a": "skill_fortify_copy_1769873501141",
+        "b": "skill_hold_the_line_copy_1769956923405",
+        "area": 386
+      },
+      {
+        "a": "skill_shockwave_copy_1770041956468",
+        "b": "skill_shockwave_copy_1770042951717",
+        "area": 386
+      },
+      {
+        "a": "skill_execute_copy_1769961767095",
+        "b": "skill_execute_copy_1770043820577",
+        "area": 386
+      },
+      {
+        "a": "skill_execute_copy_1770043820577",
+        "b": "skill_execute_copy_1770044052832",
+        "area": 386
+      },
+      {
+        "a": "skill_execute_copy_1770044052832",
+        "b": "skill_1770396871360",
+        "area": 386
+      }
+    ],
+    "overlapCount": 11,
+    "target": {
+      "id": "skill_block",
+      "text": "修理护甲1KP",
+      "left": 492.8769226074219,
+      "top": 229.98931884765625,
+      "right": 558.6309814453125,
+      "bottom": 272.502685546875,
+      "width": 65.75405883789062,
+      "height": 42.51336669921875
+    },
+    "sample": [
+      {
+        "id": "skill_heal",
+        "text": "治疗1KP",
+        "left": 832.98388671875,
+        "top": 229.98931884765625,
+        "right": 898.7379150390625,
+        "bottom": 272.502685546875,
+        "width": 65.7540283203125,
+        "height": 42.51336669921875
+      },
+      {
+        "id": "skill_heavy_swing",
+        "text": "重锤1KP",
+        "left": 1173.0908203125,
+        "top": 229.98931884765625,
+        "right": 1238.8448486328125,
+        "bottom": 272.502685546875,
+        "width": 65.7540283203125,
+        "height": 42.51336669921875
+      },
+      {
+        "id": "skill_savage_charge",
+        "text": "临期食品2KP",
+        "left": 662.930419921875,
+        "top": 343.3583068847656,
+        "right": 728.6844482421875,
+        "bottom": 385.8716735839844,
+        "width": 65.7540283203125,
+        "height": 42.51336669921875
+      },
+      {
+        "id": "skill_skull_cracker",
+        "text": "裂颅一击2KP",
+        "left": 1173.0908203125,
+        "top": 343.3583068847656,
+        "right": 1238.8448486328125,
+        "bottom": 385.8716735839844,
+        "width": 65.7540283203125,
+        "height": 42.51336669921875
+      },
+      {
+        "id": "skill_shockwave",
+        "text": "光脚3KP",
+        "left": 606.2459106445312,
+        "top": 456.727294921875,
+        "right": 671.9999389648438,
+        "bottom": 499.24066162109375,
+        "width": 65.7540283203125,
+        "height": 42.51336669921875
+      },
+      {
+        "id": "skill_execute",
+        "text": "斩首5KP",
+        "left": 1173.0908203125,
+        "top": 570.0962524414062,
+        "right": 1238.8448486328125,
+        "bottom": 612.609619140625,
+        "width": 65.7540283203125,
+        "height": 42.51336669921875
+      }
+    ]
+  },
+  "protoMetrics": {
+    "label": "prototype-square-74",
+    "count": 32,
+    "overlaps": [],
+    "overlapCount": 0,
+    "target": {
+      "id": "skill_block",
+      "text": "修理护甲1KP",
+      "left": 492.8769226074219,
+      "top": 229.98931884765625,
+      "right": 534.823486328125,
+      "bottom": 271.93585205078125,
+      "width": 41.946563720703125,
+      "height": 41.946533203125
+    },
+    "sample": [
+      {
+        "id": "skill_heal",
+        "text": "治疗1KP",
+        "left": 832.98388671875,
+        "top": 229.98931884765625,
+        "right": 874.930419921875,
+        "bottom": 271.93585205078125,
+        "width": 41.946533203125,
+        "height": 41.946533203125
+      },
+      {
+        "id": "skill_heavy_swing",
+        "text": "重锤1KP",
+        "left": 1173.0908203125,
+        "top": 229.98931884765625,
+        "right": 1215.037353515625,
+        "bottom": 271.93585205078125,
+        "width": 41.946533203125,
+        "height": 41.946533203125
+      },
+      {
+        "id": "skill_savage_charge",
+        "text": "临期食品2KP",
+        "left": 662.930419921875,
+        "top": 343.3583068847656,
+        "right": 704.876953125,
+        "bottom": 385.3048095703125,
+        "width": 41.946533203125,
+        "height": 41.946502685546875
+      },
+      {
+        "id": "skill_skull_cracker",
+        "text": "裂颅一击2KP",
+        "left": 1173.0908203125,
+        "top": 343.3583068847656,
+        "right": 1215.037353515625,
+        "bottom": 385.3048095703125,
+        "width": 41.946533203125,
+        "height": 41.946502685546875
+      },
+      {
+        "id": "skill_shockwave",
+        "text": "光脚3KP",
+        "left": 606.2459106445312,
+        "top": 456.727294921875,
+        "right": 648.1924438476562,
+        "bottom": 498.673828125,
+        "width": 41.946533203125,
+        "height": 41.946533203125
+      },
+      {
+        "id": "skill_execute",
+        "text": "斩首5KP",
+        "left": 1173.0908203125,
+        "top": 570.0962524414062,
+        "right": 1215.037353515625,
+        "bottom": 612.0427856445312,
+        "width": 41.946533203125,
+        "height": 41.946533203125
+      }
+    ]
+  }
+}

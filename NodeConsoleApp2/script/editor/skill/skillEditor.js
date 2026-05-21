@@ -17,6 +17,90 @@ export function buildDuplicatedSkillId(skillId, seed = Date.now()) {
     return `${baseId}_copy_${suffix}`;
 }
 
+export function normalizeProjectJsonPath(inputPath) {
+    return String(inputPath || '')
+        .trim()
+        .replace(/\\/g, '/')
+        .replace(/^\/+/, '');
+}
+
+function pad2(n) {
+    return String(n).padStart(2, '0');
+}
+
+export function buildTimestampedProjectJsonPath(inputPath, date = new Date()) {
+    const normalized = normalizeProjectJsonPath(inputPath) || 'assets/data/skills_melee_v4_5.json';
+    const dir = normalized.includes('/') ? normalized.slice(0, normalized.lastIndexOf('/')) : '';
+    const file = normalized.includes('/') ? normalized.slice(normalized.lastIndexOf('/') + 1) : normalized;
+    const base = file.toLowerCase().endsWith('.json') ? file.slice(0, -5) : file;
+    const stamp = [
+        date.getFullYear(),
+        pad2(date.getMonth() + 1),
+        pad2(date.getDate())
+    ].join('') + '_' + [
+        pad2(date.getHours()),
+        pad2(date.getMinutes()),
+        pad2(date.getSeconds())
+    ].join('');
+    const nextFile = `${base}_${stamp}.json`;
+    return dir ? `${dir}/${nextFile}` : nextFile;
+}
+
+function splitProjectPath(inputPath) {
+    const normalized = normalizeProjectJsonPath(inputPath);
+    const slash = normalized.lastIndexOf('/');
+    if (slash < 0) return { dir: '', file: normalized };
+    return {
+        dir: normalized.slice(0, slash),
+        file: normalized.slice(slash + 1)
+    };
+}
+
+function extractVersionNumbers(filePath) {
+    const file = splitProjectPath(filePath).file.toLowerCase();
+    const match = file.match(/v(\d+(?:[_\-.]\d+)*)/u);
+    if (!match) return [];
+    return match[1].split(/[_\-.]/u).map(part => Number(part)).filter(Number.isFinite);
+}
+
+function compareVersionedProjectPaths(a, b) {
+    const av = extractVersionNumbers(a);
+    const bv = extractVersionNumbers(b);
+    const max = Math.max(av.length, bv.length);
+    for (let i = 0; i < max; i += 1) {
+        const delta = (av[i] || 0) - (bv[i] || 0);
+        if (delta !== 0) return delta;
+    }
+    return String(a).localeCompare(String(b));
+}
+
+export function pickSiblingBuffPackPath(skillPath, siblingFiles = [], skillPackMeta = null) {
+    const skillInfo = splitProjectPath(skillPath || '');
+    const explicit = skillPackMeta?.buffsPath || skillPackMeta?.buffPath || skillPackMeta?.buffFile || skillPackMeta?.buffPackPath;
+    if (explicit) {
+        const normalizedExplicit = normalizeProjectJsonPath(explicit);
+        if (normalizedExplicit.includes('/')) return normalizedExplicit;
+        return skillInfo.dir ? `${skillInfo.dir}/${normalizedExplicit}` : normalizedExplicit;
+    }
+
+    const sameDirFiles = (Array.isArray(siblingFiles) ? siblingFiles : [])
+        .map(normalizeProjectJsonPath)
+        .filter(Boolean)
+        .filter(filePath => {
+            const info = splitProjectPath(filePath);
+            return info.dir === skillInfo.dir && /^buffs.*\.json$/iu.test(info.file);
+        });
+
+    if (sameDirFiles.length === 0) return '';
+
+    const versioned = sameDirFiles
+        .filter(filePath => extractVersionNumbers(filePath).length > 0)
+        .sort(compareVersionedProjectPaths);
+    if (versioned.length > 0) return versioned[versioned.length - 1];
+
+    return sameDirFiles.sort((a, b) => String(a).localeCompare(String(b)))[sameDirFiles.length - 1];
+}
+
 const LEGACY_SKILL_FIELD_KEYS = Object.freeze({
     field: ['ta', 'gs'].join(''),
     meta: ['ta', 'gMeta'].join(''),
@@ -39,6 +123,7 @@ export class SkillEditor {
         this.skills = []; // Array of skill objects (editor internal)
         this.buffDict = {}; // buffs.json map
         this.buffDoc = null; // wrapped buffs doc (optional): { $schemaVersion, meta, buffs }
+        this.currentBuffFilePath = '';
         this.skillPackMeta = null; // skills_melee_v4_5.json meta
         this.skillPackSchemaVersion = null;
         this.defaultParts = ['head','chest','abdomen','arm','leg'];
@@ -84,6 +169,10 @@ export class SkillEditor {
         this.elPropId = document.getElementById('prop-id');
         this.elPropName = document.getElementById('prop-name');
         this.elPropRarity = document.getElementById('prop-rarity');
+        this.elProjectFilePath = document.getElementById('project-file-path');
+        this.elProjectFileStatus = document.getElementById('project-file-status');
+        this.currentSkillFilePath = normalizeProjectJsonPath(this.elProjectFilePath?.value || 'assets/data/skills_melee_v4_5.json');
+        this.setCurrentProjectFilePath(this.currentSkillFilePath);
         // legacy cost field removed (v3 only)
         this.elPropCost = null;
         this.elPropSpeed = document.getElementById('prop-speed');
@@ -1061,6 +1150,154 @@ export class SkillEditor {
         return this.loadBuffsOnly();
     }
 
+    setCurrentProjectFilePath(filePath) {
+        const normalized = normalizeProjectJsonPath(filePath);
+        this.currentSkillFilePath = normalized;
+        if (this.elProjectFilePath && this.elProjectFilePath.value !== normalized) {
+            this.elProjectFilePath.value = normalized;
+        }
+    }
+
+    setProjectFileStatus(message, kind = 'info') {
+        if (!this.elProjectFileStatus) return;
+        this.elProjectFileStatus.textContent = message || '';
+        this.elProjectFileStatus.classList.toggle('is-ok', kind === 'ok');
+        this.elProjectFileStatus.classList.toggle('is-error', kind === 'error');
+    }
+
+    parseSkillPackDocument(data) {
+        const newSkills = [];
+        if (Array.isArray(data)) {
+            data.forEach(s => newSkills.push(s));
+        } else if (data && typeof data === 'object' && Array.isArray(data.skills)) {
+            this.setSkillPackMeta(data.meta || null, data.$schemaVersion || null);
+            data.skills.forEach((sk) => {
+                if (!sk || typeof sk !== 'object') return;
+                if (!sk.id) return;
+                newSkills.push(JSON.parse(JSON.stringify(sk)));
+            });
+        } else if (typeof data === 'object' && data !== null) {
+            Object.keys(data).forEach(k => {
+                const s = data[k];
+                if (!s.id) s.id = k;
+                newSkills.push(s);
+            });
+        } else {
+            throw new Error('未知 JSON 格式');
+        }
+        this.normalizeImportedSkills(newSkills);
+        return newSkills;
+    }
+
+    replaceSkillsFromPack(data, sourcePath = '') {
+        const newSkills = this.parseSkillPackDocument(data);
+        this.skills = newSkills;
+        this.clearSelection();
+        this.renderNodes();
+        this.renderSkillLibrary();
+        this.loadProperties(null);
+        if (sourcePath) this.setCurrentProjectFilePath(sourcePath);
+        return newSkills;
+    }
+
+    normalizeBuffDocument(buffsData) {
+        this.buffDoc = (buffsData && typeof buffsData === 'object') ? buffsData : null;
+        const normalized = (buffsData && typeof buffsData === 'object' && buffsData.buffs && typeof buffsData.buffs === 'object')
+            ? buffsData.buffs
+            : buffsData;
+        this.buffDict = (normalized && typeof normalized === 'object') ? normalized : {};
+        this.ensureBuffNameIndex();
+        this.renderBuffRefTables();
+        this.updateSummary();
+        return this.buffDict;
+    }
+
+    async fetchProjectJsonFile(projectPath) {
+        const requestedPath = normalizeProjectJsonPath(projectPath);
+        const response = await fetch(`/__skill_editor_file?path=${encodeURIComponent(requestedPath)}`, { cache: 'no-store' });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+        return {
+            path: payload.path || requestedPath,
+            data: JSON.parse(payload.content)
+        };
+    }
+
+    async listSiblingProjectJsonFiles(projectPath) {
+        const requestedPath = normalizeProjectJsonPath(projectPath);
+        const response = await fetch(`/__skill_editor_file?path=${encodeURIComponent(requestedPath)}&list=1`, { cache: 'no-store' });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+        return Array.isArray(payload.files) ? payload.files : [];
+    }
+
+    async loadProjectBuffPackForSkillPack(skillPath) {
+        const siblingFiles = await this.listSiblingProjectJsonFiles(skillPath);
+        const buffPath = pickSiblingBuffPackPath(skillPath, siblingFiles, this.skillPackMeta);
+        if (!buffPath) return { loaded: false, path: '', count: 0 };
+
+        const { path, data } = await this.fetchProjectJsonFile(buffPath);
+        const dict = this.normalizeBuffDocument(data);
+        this.currentBuffFilePath = path || buffPath;
+        return {
+            loaded: true,
+            path: this.currentBuffFilePath,
+            count: Object.keys(dict || {}).length
+        };
+    }
+
+    buildSkillPackPayload(includeEditorMeta = true) {
+        const skillsV3 = this.skills.map(s => {
+            const clone = JSON.parse(JSON.stringify(s));
+            this.stripRetiredSkillFields(clone);
+            if (!includeEditorMeta) delete clone.editorMeta;
+            return clone;
+        });
+        const meta = this.skillPackMeta
+            ? JSON.parse(JSON.stringify(this.skillPackMeta))
+            : {
+                title: 'Skills Export',
+                source: 'skill_editor_test_v3',
+                notes: ['exported by skill_editor_test_v3.html'],
+                defaultParts: (this.defaultParts || []).slice(),
+                enums: JSON.parse(JSON.stringify(this.enums))
+            };
+        this.sanitizeSkillPackMeta(meta);
+        return {
+            $schemaVersion: this.skillPackSchemaVersion || 'skills_melee_v3',
+            meta,
+            skills: skillsV3
+        };
+    }
+
+    async loadProjectSkillPack(filePath = '') {
+        const requestedPath = normalizeProjectJsonPath(filePath || this.elProjectFilePath?.value || this.currentSkillFilePath);
+        if (!requestedPath) {
+            this.setProjectFileStatus('请填写项目内 JSON 路径', 'error');
+            return;
+        }
+        this.setProjectFileStatus(`正在加载 ${requestedPath}...`);
+        try {
+            const { path, data } = await this.fetchProjectJsonFile(requestedPath);
+            const newSkills = this.replaceSkillsFromPack(data, path || requestedPath);
+            let buffInfo = { loaded: false, path: '', count: 0 };
+            try {
+                buffInfo = await this.loadProjectBuffPackForSkillPack(path || requestedPath);
+            } catch (buffErr) {
+                console.warn('[SkillEditor] Auto-load sibling buffs failed:', buffErr);
+                this.setProjectFileStatus(`已加载 ${path || requestedPath} (${newSkills.length} skills)，但自动加载 Buff 失败：${buffErr.message || String(buffErr)}`, 'error');
+                return;
+            }
+            const buffText = buffInfo.loaded
+                ? `；Buff: ${buffInfo.path} (${buffInfo.count})`
+                : '；未找到同目录 Buff';
+            this.setProjectFileStatus(`已加载 ${path || requestedPath} (${newSkills.length} skills)${buffText}`, 'ok');
+        } catch (err) {
+            console.error(err);
+            this.setProjectFileStatus(`加载失败：${err.message || String(err)}`, 'error');
+        }
+    }
+
     importBuffsFile(input) {
         const file = input?.files?.[0];
         if (!file) return;
@@ -1086,16 +1323,7 @@ export class SkillEditor {
 
             // Normalize to a flat { buffId -> buffObject } map.
             // Newer versions follow `09-Buff系统(buff_design)-设计说明.md`: { $schemaVersion, meta, buffs }.
-            this.buffDoc = (buffsData && typeof buffsData === 'object') ? buffsData : null;
-            const normalized = (buffsData && typeof buffsData === 'object' && buffsData.buffs && typeof buffsData.buffs === 'object')
-                ? buffsData.buffs
-                : buffsData;
-            this.buffDict = (normalized && typeof normalized === 'object') ? normalized : {};
-            this.ensureBuffNameIndex();
-
-            // Re-render buff UI if a skill is selected so the dropdown switches from input->select.
-            this.renderBuffRefTables();
-            this.updateSummary();
+            this.normalizeBuffDocument(buffsData);
 
             const src = file?.name ? ` (${file.name})` : '';
             alert(`Loaded buffs${src}: ${Object.keys(this.buffDict).length}`);
@@ -1112,32 +1340,10 @@ export class SkillEditor {
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
-                const newSkills = [];
-                if (Array.isArray(data)) {
-                    data.forEach(s => newSkills.push(s));
-                } else if (data && typeof data === 'object' && Array.isArray(data.skills)) {
-                    this.setSkillPackMeta(data.meta || null, data.$schemaVersion || null);
-                    data.skills.forEach((sk) => {
-                        if (!sk || typeof sk !== 'object') return;
-                        if (!sk.id) return;
-                        newSkills.push(JSON.parse(JSON.stringify(sk)));
-                    });
-                } else if (typeof data === 'object' && data !== null) {
-                    Object.keys(data).forEach(k => {
-                        const s = data[k];
-                        if (!s.id) s.id = k;
-                        newSkills.push(s);
-                    });
-                } else {
-                    throw new Error('未知 JSON 格式');
-                }
-                this.normalizeImportedSkills(newSkills);
+                const newSkills = this.parseSkillPackDocument(data);
                 if (confirm(`解析成功：${newSkills.length} skills。覆盖当前画布？`)) {
-                    this.skills = newSkills;
-                    this.clearSelection();
-                    this.renderNodes();
-                    this.renderSkillLibrary();
-                    this.loadProperties(null);
+                    this.replaceSkillsFromPack(data);
+                    this.setProjectFileStatus(`已导入本地文件 ${file.name}，保存前请确认项目路径`);
                 }
             } catch (err) {
                 console.error(err);
@@ -1149,27 +1355,7 @@ export class SkillEditor {
     }
 
     exportJson(includeEditorMeta = true) {
-        const skillsV3 = this.skills.map(s => {
-            const clone = JSON.parse(JSON.stringify(s));
-            this.stripRetiredSkillFields(clone);
-            if (!includeEditorMeta) delete clone.editorMeta;
-            return clone;
-        });
-        const meta = this.skillPackMeta
-            ? JSON.parse(JSON.stringify(this.skillPackMeta))
-            : {
-                title: 'Skills Export',
-                source: 'skill_editor_test_v3',
-                notes: ['exported by skill_editor_test_v3.html'],
-                defaultParts: (this.defaultParts || []).slice(),
-                enums: JSON.parse(JSON.stringify(this.enums))
-            };
-        this.sanitizeSkillPackMeta(meta);
-        const pack = {
-            $schemaVersion: this.skillPackSchemaVersion || 'skills_melee_v3',
-            meta,
-            skills: skillsV3
-        };
+        const pack = this.buildSkillPackPayload(includeEditorMeta);
         const jsonStr = JSON.stringify(pack, null, 2);
         const blob = new Blob([jsonStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1180,6 +1366,44 @@ export class SkillEditor {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    }
+
+    async saveProjectSkillPack(filePath = '', includeEditorMeta = true) {
+        const targetPath = normalizeProjectJsonPath(filePath || this.elProjectFilePath?.value || this.currentSkillFilePath);
+        if (!targetPath) {
+            this.setProjectFileStatus('请填写保存路径', 'error');
+            return;
+        }
+        const pack = this.buildSkillPackPayload(includeEditorMeta);
+        const content = JSON.stringify(pack, null, 2);
+        this.setProjectFileStatus(`正在保存 ${targetPath}...`);
+        try {
+            const response = await fetch('/__skill_editor_file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    path: targetPath,
+                    content
+                })
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+            this.setCurrentProjectFilePath(payload.path || targetPath);
+            this.setProjectFileStatus(`已保存 ${payload.path || targetPath}`, 'ok');
+            return payload;
+        } catch (err) {
+            console.error(err);
+            this.setProjectFileStatus(`保存失败：${err.message || String(err)}`, 'error');
+            throw err;
+        }
+    }
+
+    async saveProjectSkillPackAs() {
+        const currentPath = normalizeProjectJsonPath(this.elProjectFilePath?.value || this.currentSkillFilePath);
+        const suggested = buildTimestampedProjectJsonPath(currentPath || 'assets/data/skills_melee_v4_5.json');
+        const nextPath = prompt('另存为项目内 JSON 路径', suggested);
+        if (!nextPath) return;
+        await this.saveProjectSkillPack(nextPath, true);
     }
 
     setError(el, msg) {

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, initial-scale=1">
+  <title>技能树新增技能草图 v2</title>
+  <style>
+    :root {
+      --ink: #17222b;
+      --muted: #54636d;
+      --paper: #fbf7ed;
+      --existing: #f8faf8;
+      --new: #e9fff3;
+      --new-border: #1f9d62;
+      --bridge: #eef5ff;
+      --bridge-border: #2f73b7;
+      --buff: #fff5d8;
+      --buff-border: #c58522;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+      background: #ece7dd;
+      color: var(--ink);
+    }
+    .stage {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      background:
+        radial-gradient(circle at 80% 14%, rgba(69, 150, 140, .14), transparent 360px),
+        radial-gradient(circle at 16% 88%, rgba(188, 115, 42, .12), transparent 360px),
+        linear-gradient(135deg, #fbf7ed 0%, #f1f6ee 54%, #edf2f7 100%);
+    }
+    .title {
+      position: absolute;
+      left: 70px;
+      top: 44px;
+      font-size: 50px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      position: absolute;
+      left: 74px;
+      top: 104px;
+      font-size: 22px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .legend {
+      position: absolute;
+      right: 72px;
+      top: 46px;
+      width: 520px;
+      height: 86px;
+      border: 2px solid rgba(35, 50, 61, .14);
+      background: rgba(255, 255, 255, .74);
+      border-radius: 22px;
+      padding: 18px 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      box-shadow: 0 16px 32px rgba(34, 45, 54, .08);
+    }
+    .legend div { font-size: 18px; font-weight: 800; color: #26343d; }
+    .legend i {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      margin-right: 8px;
+      vertical-align: -3px;
+      border: 2px solid;
+    }
+    .lane {
+      position: absolute;
+      left: 54px;
+      width: 1812px;
+      height: 146px;
+      border-radius: 28px;
+      border: 2px solid rgba(36, 48, 56, .11);
+      background: rgba(255, 255, 255, .42);
+    }
+    .lane b {
+      position: absolute;
+      left: 24px;
+      top: 18px;
+      width: 124px;
+      font-size: 24px;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+    .lane span {
+      position: absolute;
+      left: 24px;
+      top: 78px;
+      width: 124px;
+      color: #62707a;
+      font-size: 15px;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+    #wires {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .node {
+      position: absolute;
+      z-index: 3;
+      width: 148px;
+      min-height: 66px;
+      border-radius: 16px;
+      border: 2px solid #cfd7d6;
+      background: var(--existing);
+      box-shadow: 0 12px 20px rgba(31, 42, 49, .12);
+      padding: 10px 10px 8px;
+    }
+    .node.new {
+      background: var(--new);
+      border-color: var(--new-border);
+      box-shadow: 0 14px 26px rgba(31, 157, 98, .20);
+    }
+    .node.bridge {
+      background: var(--bridge);
+      border-color: var(--bridge-border);
+      box-shadow: 0 14px 26px rgba(47, 115, 183, .18);
+    }
+    .node.buff {
+      background: var(--buff);
+      border-color: var(--buff-border);
+      box-shadow: 0 14px 26px rgba(197, 133, 34, .18);
+    }
+    .node .name {
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .node .meta {
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.1;
+      color: #55636d;
+      font-weight: 800;
+    }
+    .node .tag {
+      position: absolute;
+      right: 8px;
+      top: -12px;
+      min-width: 44px;
+      height: 22px;
+      border-radius: 999px;
+      background: #1f9d62;
+      color: white;
+      font-size: 12px;
+      line-height: 22px;
+      text-align: center;
+      font-weight: 900;
+      padding: 0 7px;
+      box-shadow: 0 6px 12px rgba(31, 157, 98, .24);
+    }
+    .node.bridge .tag { background: #2f73b7; box-shadow: 0 6px 12px rgba(47, 115, 183, .24); }
+    .node.buff .tag { background: #c58522; box-shadow: 0 6px 12px rgba(197, 133, 34, .24); }
+    .side-note {
+      position: absolute;
+      right: 74px;
+      bottom: 42px;
+      width: 480px;
+      height: 118px;
+      border-radius: 24px;
+      background: #1d2a33;
+      color: #f8f0e5;
+      box-shadow: 0 18px 34px rgba(25, 37, 45, .18);
+      padding: 22px 26px;
+      font-size: 18px;
+      line-height: 1.5;
+      font-weight: 650;
+    }
+    .count {
+      position: absolute;
+      left: 74px;
+      bottom: 52px;
+      width: 500px;
+      font-size: 27px;
+      line-height: 1.35;
+      font-weight: 900;
+    }
+    .count small {
+      display: block;
+      margin-top: 8px;
+      font-size: 18px;
+      color: var(--muted);
+      font-weight: 650;
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <div class="title">新增技能部署草图 v2：这次只看“新长出来的技能”</div>
+    <div class="subtitle">灰色是你现有技能树锚点；绿色/蓝色/黄色是新增技能建议，全部挂在现有节点上，不推翻原来的树。</div>
+    <div class="legend">
+      <div><i style="background:#f8faf8;border-color:#cfd7d6"></i>现有锚点</div>
+      <div><i style="background:#e9fff3;border-color:#1f9d62"></i>新增技能</div>
+      <div><i style="background:#eef5ff;border-color:#2f73b7"></i>横跳桥</div>
+    </div>
+
+    <section class="lane" style="top:150px;background:rgba(232,252,242,.54)"><b>护甲经济</b><span>已有骨架好，新增内容应补“护甲作为资源”的玩法。</span></section>
+    <section class="lane" style="top:318px;background:rgba(255,247,226,.56)"><b>重击破甲</b><span>慢、贵、爆发高；新增内容要制造破甲窗口。</span></section>
+    <section class="lane" style="top:486px;background:rgba(255,237,234,.58)"><b>流血收益</b><span>当前想法最多，但缺“层数怎么转收益”。</span></section>
+    <section class="lane" style="top:654px;background:rgba(236,246,255,.58)"><b>机动风险</b><span>用加速、降速、清甲、撤退做横跳中转。</span></section>
+    <section class="lane" style="top:822px;height:156px;background:rgba(246,240,252,.60)"><b>横跳桥接</b><span>这些是重点：允许玩家自由混搭，而不是被路线锁死。</span></section>
+
+    <svg id="wires" viewBox="0 0 1920 1080"></svg>
+    <div id="nodes"></div>
+
+    <div class="count">本版新增 18 个技能节点
+      <small>其中 11 个是分支内补强，7 个是跨分支桥接或风险转换。</small>
+    </div>
+    <div class="side-note">设计口径：口语化/搞笑命名保留，但每个新增节点必须能追到动作、Buff 或需要新增的引擎条件。</div>
+  </main>
+
+  <script>
+    const nodes = [
+      ["修理护甲", 178, 188, "existing", "现有 / KP1"],
+      ["铁头铁手铁腿", 350, 188, "existing", "现有 / 部位甲"],
+      ["临期食品", 522, 188, "existing", "现有 / 风险甲"],
+      ["受击备甲", 694, 188, "existing", "现有 / 受击获甲"],
+      ["顺手捡漏/重拳", 866, 188, "existing", "现有 / 甲转攻"],
+      ["泥巴装甲", 1038, 188, "existing", "现有 / 全身薄甲"],
+      ["堡垒姿态", 1210, 188, "existing", "现有 / 续甲"],
+      ["绝对防御", 1382, 188, "existing", "现有 / 免伤"],
+      ["补丁摞补丁", 350, 258, "new", "新 / KP2 / 护甲+额外值"],
+      ["硬吃一口", 522, 258, "new", "新 / KP3 / HP换免伤"],
+      ["缝缝补补", 866, 258, "new", "新 / KP4 / 自动补弱甲"],
+
+      ["重锤", 178, 356, "existing", "现有 / KP1"],
+      ["裂颅一击", 350, 356, "existing", "现有 / 破头甲"],
+      ["大地震击", 522, 356, "existing", "现有 / 眩晕"],
+      ["斩首", 694, 356, "existing", "现有 / 处决"],
+      ["诸神黄昏", 866, 356, "existing", "现有 / 终局"],
+      ["脑瓜嗡嗡", 350, 426, "new", "新 / KP3 / 增伤或虚弱"],
+      ["趁他没甲", 522, 426, "new", "新 / KP4 / 破甲后真伤"],
+      ["装完就跑", 694, 426, "new", "新 / KP5 / 重击后提速"],
+
+      ["锯齿斩", 178, 524, "existing", "现有 / 流血入口"],
+      ["撕裂伤口", 350, 524, "existing", "现有 / 待补Buff"],
+      ["迸发", 522, 524, "existing", "现有 / 待修正"],
+      ["吸血", 694, 524, "existing", "现有 / 待修正"],
+      ["愤怒", 866, 524, "existing", "现有 / 待补Buff"],
+      ["鲜血打击", 1038, 524, "existing", "现有 / 自伤输出"],
+      ["上点盐", 350, 594, "new", "新 / KP2 / 流血增伤"],
+      ["别抠会留疤", 522, 594, "new", "新 / KP3 / 行动加流血"],
+      ["血条贷款", 694, 594, "new", "新 / KP4 / 流血换回复"],
+      ["越流越上头", 866, 594, "new", "新 / KP5 / 流血加攻"],
+
+      ["剑砍", 178, 692, "existing", "现有 / 低费入口"],
+      ["转进如风", 350, 692, "existing", "现有 / 加速"],
+      ["光脚/后撤步", 522, 692, "existing", "现有 / 弃甲机动"],
+      ["提桶跑路", 694, 692, "existing", "现有 / 清甲回血"],
+      ["松绑/重新开始", 866, 692, "existing", "现有 / 清甲降费"],
+      ["谢寒", 522, 762, "new", "新 / KP2 / 减伤但减速"],
+      ["滑铲", 694, 762, "new", "新 / KP3 / 腿击+减速"],
+      ["刹车失灵", 866, 762, "new", "新 / KP4 / 速度换重击"],
+      ["回头就跑", 1038, 762, "new", "新 / KP3 / 逃命续航"],
+      ["省着点花", 1210, 762, "new", "新 / KP3 / 临时降费"],
+
+      ["血甲互换", 314, 888, "bridge", "新桥 / KP4 / 流血获甲"],
+      ["借甲打人", 536, 888, "bridge", "新桥 / KP4 / 护甲转伤"],
+      ["破绽记账", 758, 888, "bridge", "新桥 / KP3 / 破甲挂流血"],
+    ];
+
+    const links = [
+      ["修理护甲", "铁头铁手铁腿"], ["铁头铁手铁腿", "补丁摞补丁"],
+      ["铁头铁手铁腿", "临期食品"], ["临期食品", "硬吃一口"],
+      ["临期食品", "受击备甲"], ["受击备甲", "缝缝补补"],
+      ["泥巴装甲", "缝缝补补"], ["受击备甲", "堡垒姿态"], ["堡垒姿态", "绝对防御"],
+      ["重锤", "裂颅一击"], ["裂颅一击", "脑瓜嗡嗡"], ["裂颅一击", "大地震击"],
+      ["裂颅一击", "趁他没甲"], ["大地震击", "装完就跑"], ["大地震击", "诸神黄昏"],
+      ["锯齿斩", "撕裂伤口"], ["锯齿斩", "上点盐"], ["撕裂伤口", "别抠会留疤"],
+      ["撕裂伤口", "迸发"], ["撕裂伤口", "吸血"], ["吸血", "血条贷款"],
+      ["愤怒", "越流越上头"], ["愤怒", "鲜血打击"],
+      ["剑砍", "转进如风"], ["转进如风", "光脚/后撤步"], ["光脚/后撤步", "谢寒"],
+      ["转进如风", "滑铲"], ["转进如风", "刹车失灵"], ["提桶跑路", "回头就跑"],
+      ["松绑/重新开始", "省着点花"],
+      ["受击备甲", "血甲互换"], ["锯齿斩", "血甲互换"],
+      ["补丁摞补丁", "借甲打人"], ["顺手捡漏/重拳", "借甲打人"],
+      ["裂颅一击", "破绽记账"], ["撕裂伤口", "破绽记账"],
+      ["光脚/后撤步", "装完就跑"], ["重锤", "刹车失灵"]
+    ];
+
+    const extraAnchors = {};
+
+    const nodeLayer = document.getElementById("nodes");
+    const rects = new Map();
+    for (const [name, x, y, type, meta] of nodes) {
+      const el = document.createElement("div");
+      el.className = `node ${type === "existing" ? "" : type}`;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      el.innerHTML = `<div class="name">${name}</div><div class="meta">${meta}</div>${type !== "existing" ? `<span class="tag">${type === "bridge" ? "横跳" : "新增"}</span>` : ""}`;
+      nodeLayer.appendChild(el);
+      rects.set(name, { x, y, w: 148, h: 66, type });
+    }
+
+    const svg = document.getElementById("wires");
+    svg.innerHTML = `
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+          <path d="M1,1 L9,5 L1,9 Z" fill="#67747c"></path>
+        </marker>
+        <marker id="arrowBridge" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+          <path d="M1,1 L9,5 L1,9 Z" fill="#2f73b7"></path>
+        </marker>
+      </defs>`;
+
+    function center(name) {
+      const r = rects.get(name);
+      if (r) return [r.x + r.w / 2, r.y + r.h / 2, r.type];
+      const p = extraAnchors[name];
+      return p ? [p[0], p[1], "ghost"] : [0, 0, "ghost"];
+    }
+    for (const [a, b] of links) {
+      const [x1, y1, t1] = center(a);
+      const [x2, y2, t2] = center(b);
+      const bridge = t2 === "bridge" || t1 === "bridge";
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const dx = Math.max(50, Math.abs(x2 - x1) * .52);
+      path.setAttribute("d", `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", bridge ? "#2f73b7" : "#67747c");
+      path.setAttribute("stroke-width", bridge ? "4" : "3");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("opacity", bridge ? ".72" : ".58");
+      if (bridge) path.setAttribute("stroke-dasharray", "9 9");
+      path.setAttribute("marker-end", bridge ? "url(#arrowBridge)" : "url(#arrow)");
+      svg.appendChild(path);
+    }
+  </script>
+</body>
+</html>

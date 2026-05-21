@@ -34,7 +34,7 @@ class DataManager {
             skill_smash: 'skill_hold_the_line',
             skill_warcry: 'skill_fortify',
             skill_heavy_smash: 'skill_execute',
-            skill_rage: 'skill_1770396871360',
+            skill_rage: 'skill_1770474698976',
             skill_cleave: 'skill_earthquake',
             skill_ankle_bite: 'skill_artery_slice_copy_1769789197982',
             skill_escape: 'skill_shockwave_copy_1770041956468',

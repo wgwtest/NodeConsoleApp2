@@ -49,11 +49,13 @@
 
 /* A. Toolbar */
 .skill-editor-v3 #toolbar {
-	height: 50px;
+	min-height: 50px;
 	background: var(--panel-bg);
 	border-bottom: 1px solid var(--border-color);
 	display: flex;
 	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
 	padding: 0 20px;
 	box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 	z-index: 100;
@@ -66,7 +68,6 @@
 	cursor: pointer;
 	font-size: 14px;
 	transition: opacity 0.2s;
-	margin-right: 8px;
 }
 
 .skill-editor-v3 .btn:hover { opacity: 0.9; }
@@ -75,6 +76,50 @@
 .skill-editor-v3 .btn-danger { background: var(--danger-color); color: #fff; }
 .skill-editor-v3 .btn-dark { background: #34495e; color: #fff; }
 .skill-editor-v3 .btn-sm { padding: 4px 8px; font-size: 12px; }
+
+.skill-editor-v3 .project-file-control {
+	min-width: 300px;
+	max-width: 460px;
+	flex: 1 1 320px;
+	height: 34px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 10px;
+	border: 1px solid var(--border-color);
+	border-radius: 6px;
+	background: #fff;
+	color: #64707d;
+	font-size: 12px;
+	font-weight: 800;
+}
+
+.skill-editor-v3 .project-file-control input {
+	min-width: 0;
+	flex: 1;
+	border: 0;
+	outline: 0;
+	font-family: var(--monospace);
+	font-size: 12px;
+	color: #2c3e50;
+}
+
+.skill-editor-v3 .project-file-status {
+	max-width: 340px;
+	color: #66727f;
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.skill-editor-v3 .project-file-status.is-error {
+	color: var(--danger-color);
+}
+
+.skill-editor-v3 .project-file-status.is-ok {
+	color: var(--success-color);
+}
 
 .skill-editor-v3 #main-container {
 	display: flex;
