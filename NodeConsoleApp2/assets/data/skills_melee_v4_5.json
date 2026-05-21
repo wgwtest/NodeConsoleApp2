@@ -1921,7 +1921,7 @@
         }
       },
       "editorMeta": {
-        "x": 1014,
+        "x": 1214,
         "y": 714,
         "editState": "done",
         "group": "melee",
@@ -2009,7 +2009,7 @@
         }
       },
       "editorMeta": {
-        "x": 1014,
+        "x": 1214,
         "y": 1114,
         "editState": "done",
         "group": "melee",
@@ -2153,7 +2153,7 @@
         }
       },
       "editorMeta": {
-        "x": 1014,
+        "x": 1214,
         "y": 914,
         "editState": "done",
         "group": "melee",
@@ -2216,7 +2216,6 @@
       "rarity": "Rare",
       "description": "使对方获得buff，撕裂伤口，在撕裂伤口情况下，每次行动，流血+1\n【问题：需要补充流血buff】",
       "prerequisites": [
-        "skill_skull_cracker_copy_1770042860426",
         "skill_1771769351059"
       ],
       "unlock": {
@@ -2324,7 +2323,7 @@
         }
       },
       "editorMeta": {
-        "x": 1114,
+        "x": 1014,
         "y": 914,
         "editState": "editing",
         "group": "melee",
@@ -2400,7 +2399,7 @@
         }
       },
       "editorMeta": {
-        "x": 1214,
+        "x": 1114,
         "y": 914,
         "editState": "editing",
         "group": "melee",

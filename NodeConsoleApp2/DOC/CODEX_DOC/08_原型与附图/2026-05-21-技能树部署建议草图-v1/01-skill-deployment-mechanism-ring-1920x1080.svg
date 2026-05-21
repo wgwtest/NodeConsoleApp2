@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6f2e8"/>
+      <stop offset="0.58" stop-color="#eef3ec"/>
+      <stop offset="1" stop-color="#edf0f4"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#24313a" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow-teal" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#1b7f7a"/>
+    </marker>
+    <marker id="arrow-amber" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#a16419"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#a53b2f"/>
+    </marker>
+    <style>
+      .title { font: 800 56px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #18212a; letter-spacing: 0; }
+      .sub { font: 500 24px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #51606b; }
+      .label { font: 800 30px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #1d2933; }
+      .small { font: 500 20px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #52616b; }
+      .tiny { font: 500 18px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #5d6870; }
+      .chipText { font: 800 19px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #1f2c35; }
+      .centerText { font: 900 34px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #18212a; }
+      .centerSub { font: 600 21px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #46525c; }
+      .nodeTitle { font: 800 24px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #17232b; }
+      .nodeBody { font: 500 18px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #485660; }
+      .warning { font: 800 18px "Noto Sans SC", "Microsoft YaHei", sans-serif; fill: #a53b2f; }
+    </style>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <path d="M0 926 C250 870 386 982 640 912 C924 834 1054 922 1288 870 C1545 813 1674 858 1920 792 L1920 1080 L0 1080 Z" fill="#dfe7dc" opacity="0.55"/>
+  <text x="88" y="88" class="title">技能树部署建议：机制环，而不是职业锁死</text>
+  <text x="92" y="128" class="sub">目标：玩家可以自由横跳；口语化命名保留；正式节点尽量落到可执行动作或 Buff；按每关约 3 KP 控制节奏。</text>
+
+  <g transform="translate(960 550)">
+    <circle r="250" fill="#ffffff" stroke="#d8ded8" stroke-width="4" filter="url(#softShadow)"/>
+    <circle r="176" fill="#f8f7f0" stroke="#ccd8d3" stroke-width="2"/>
+    <text x="0" y="-38" text-anchor="middle" class="centerText">共享基础层</text>
+    <text x="0" y="4" text-anchor="middle" class="centerSub">修理护甲 / 剑砍 / 重锤 / 治疗 / 锯齿斩</text>
+    <text x="0" y="42" text-anchor="middle" class="centerSub">先给玩家 5 个可横跳入口</text>
+    <text x="0" y="84" text-anchor="middle" class="centerSub">再用桥接节点鼓励组合，不用路线锁死</text>
+  </g>
+
+  <g>
+    <path d="M960 304 C1090 190 1270 166 1410 246" fill="none" stroke="#1b7f7a" stroke-width="7" stroke-linecap="round" marker-end="url(#arrow-teal)"/>
+    <path d="M1200 520 C1418 470 1572 562 1624 730" fill="none" stroke="#a16419" stroke-width="7" stroke-linecap="round" marker-end="url(#arrow-amber)"/>
+    <path d="M1040 788 C1118 932 1034 1012 908 962" fill="none" stroke="#a53b2f" stroke-width="7" stroke-linecap="round" marker-end="url(#arrow-red)"/>
+    <path d="M710 638 C506 690 362 614 312 466" fill="none" stroke="#4d6b89" stroke-width="7" stroke-linecap="round" marker-end="url(#arrow-teal)"/>
+    <path d="M724 400 C620 246 704 168 840 168" fill="none" stroke="#7a5b96" stroke-width="7" stroke-linecap="round" marker-end="url(#arrow-amber)"/>
+  </g>
+
+  <g transform="translate(1228 164)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="454" height="198" rx="26" fill="#f7fbfa" stroke="#83b7ad" stroke-width="3"/>
+    <text x="30" y="48" class="label">护甲经济</text>
+    <text x="30" y="86" class="small">把护甲当资源：加甲、护甲免伤、受击获甲、攻击获甲。</text>
+    <text x="30" y="122" class="tiny">核心节点：铁头 / 铁手 / 铁腿 / 受击备甲 / 堡垒姿态</text>
+    <text x="30" y="154" class="tiny">桥接：顺手捡漏、重拳、西海岸、光脚、泥巴装甲</text>
+  </g>
+
+  <g transform="translate(1344 670)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="448" height="206" rx="26" fill="#fff8eb" stroke="#d6a75d" stroke-width="3"/>
+    <text x="30" y="48" class="label">重击破甲</text>
+    <text x="30" y="86" class="small">慢、贵、爆发高：先破甲或控制，再斩杀。</text>
+    <text x="30" y="122" class="tiny">核心节点：重锤 / 裂颅一击 / 大地震击 / 斩首</text>
+    <text x="30" y="154" class="tiny">顶点：诸神黄昏；需要避免 AP 低到无脑连发。</text>
+  </g>
+
+  <g transform="translate(704 848)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="512" height="178" rx="26" fill="#fff1ed" stroke="#cc8174" stroke-width="3"/>
+    <text x="30" y="48" class="label">流血收益</text>
+    <text x="30" y="86" class="small">先叠流血，再把层数转成伤害、回复或攻击加成。</text>
+    <text x="30" y="122" class="tiny">核心节点：锯齿斩 / 撕裂伤口 / 迸发 / 吸血 / 愤怒 / 鲜血打击</text>
+    <text x="30" y="154" class="warning">待补：撕裂、迸发、吸血、愤怒的可执行 Buff 语义。</text>
+  </g>
+
+  <g transform="translate(128 350)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="472" height="206" rx="26" fill="#eef5fb" stroke="#87a9ca" stroke-width="3"/>
+    <text x="30" y="48" class="label">机动与节奏</text>
+    <text x="30" y="86" class="small">速度、AP、撤退、负面解除，是横跳的中转站。</text>
+    <text x="30" y="122" class="tiny">核心节点：转进如风 / 后撤步 / 提桶跑路 / 光头 / 重新开始</text>
+    <text x="30" y="154" class="tiny">这些节点不该只是单一路线奖励，要能连接到其他机制。</text>
+  </g>
+
+  <g transform="translate(224 128)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="462" height="184" rx="26" fill="#f7f1fb" stroke="#ad8fcb" stroke-width="3"/>
+    <text x="30" y="48" class="label">风险代价</text>
+    <text x="30" y="86" class="small">保留梗名，但让笑点变成机制：高收益必须带明确副作用。</text>
+    <text x="30" y="122" class="tiny">临期食品：吃了抗饿，但可能中毒/拉肚子。</text>
+    <text x="30" y="154" class="tiny">提桶跑路：保命回血，但清空护甲或降速。</text>
+  </g>
+
+  <g transform="translate(88 900)">
+    <rect x="0" y="0" width="554" height="104" rx="20" fill="#ffffff" stroke="#ccd4d8" stroke-width="2"/>
+    <text x="28" y="38" class="chipText">读法</text>
+    <text x="88" y="38" class="tiny">玩家不是选“职业”，而是在五个机制之间拿工具。</text>
+    <text x="88" y="72" class="tiny">前置关系控制学习节奏；桥接节点让护甲、流血、机动、爆发互相接上。</text>
+  </g>
+
+  <g transform="translate(1288 922)">
+    <rect x="0" y="0" width="544" height="78" rx="18" fill="#1f2d34" opacity="0.92"/>
+    <text x="28" y="33" class="tiny" fill="#f4f0e8">建议原则：根节点 1-2 KP，桥接 2-3 KP，核心变招 3-5 KP，终局 8 KP。</text>
+    <text x="28" y="58" class="tiny" fill="#f4f0e8">每关 3 KP，玩家约 1 关拿入口，2-3 关形成第一套可用组合。</text>
+  </g>
+</svg>

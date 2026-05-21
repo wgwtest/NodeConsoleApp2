@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, initial-scale=1">
+  <title>新增技能明细卡 v2</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+      background: linear-gradient(135deg, #fbf7ed 0%, #eef6f0 58%, #edf2f6 100%);
+      color: #17222b;
+    }
+    .title { position:absolute; left:72px; top:42px; font-size:50px; line-height:1; font-weight:900; }
+    .sub { position:absolute; left:76px; top:104px; font-size:22px; color:#596873; font-weight:650; }
+    .grid {
+      position: absolute;
+      left: 64px;
+      top: 150px;
+      width: 1792px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px 22px;
+    }
+    .card {
+      min-height: 134px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.82);
+      border: 2px solid rgba(31, 157, 98, .35);
+      box-shadow: 0 14px 28px rgba(33, 45, 54, .11);
+      padding: 18px 20px 16px 22px;
+      position: relative;
+    }
+    .card.bridge { border-color: rgba(47, 115, 183, .42); }
+    .card.need { border-color: rgba(197, 133, 34, .52); }
+    .num {
+      position:absolute;
+      right:18px;
+      top:16px;
+      font-size:18px;
+      color:#8b979f;
+      font-weight:900;
+    }
+    .name {
+      font-size: 26px;
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: 0;
+      margin-bottom: 10px;
+    }
+    .meta {
+      font-size: 15px;
+      color: #40505b;
+      font-weight: 850;
+      margin-bottom: 8px;
+      white-space: nowrap;
+    }
+    .body {
+      font-size: 16px;
+      line-height: 1.35;
+      color: #4f5f69;
+      font-weight: 600;
+      padding-right: 14px;
+    }
+    .impl {
+      margin-top: 8px;
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 900;
+      background: #e9fff3;
+      color: #147448;
+    }
+    .bridge .impl { background: #eef5ff; color: #205d97; }
+    .need .impl { background: #fff5d8; color: #8c5b10; }
+    .foot {
+      position: absolute;
+      left: 74px;
+      bottom: 32px;
+      right: 74px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color:#51616c;
+      font-size:18px;
+      font-weight:700;
+    }
+    .foot b { color:#17222b; font-weight:950; }
+  </style>
+</head>
+<body>
+  <div class="title">新增技能明细：18 个新节点怎么挂、做什么、怎么落地</div>
+  <div class="sub">这里才是新增内容本体；名字可以口语化，但我把每个节点都压到“可执行机制”上。</div>
+  <section class="grid" id="grid"></section>
+  <div class="foot">
+    <div><b>注意：</b>这是设计草图，不修改当前 JSON。绿色偏现有 Buff 可做；黄色表示需要新增 Buff/条件/动作。</div>
+    <div>节奏：入口 2KP，桥接 3-4KP，核心变招 4-5KP。</div>
+  </div>
+  <script>
+    const items = [
+      ["补丁摞补丁", "KP2｜前置：铁头/铁手/铁腿", "本回合你给任意部位加护甲时，同部位额外 +3。让护甲线从“只防御”变成可堆资源。", "需新Buff：护甲添加后追加", "need"],
+      ["硬吃一口", "KP3｜前置：临期食品", "主动吃亏换生存：自损少量 HP，获得 1 回合 HP免伤或减伤。临期食品的梗被机制化。", "可用现有 HP免伤/减伤 Buff", ""],
+      ["缝缝补补", "KP4｜前置：受击备甲 + 泥巴装甲", "回合开始时自动修补当前最低护甲部位。把全身薄甲和受击备甲连成持续防御。", "需新Buff：自动补最低甲", "need"],
+      ["脑瓜嗡嗡", "KP3｜前置：裂颅一击", "头部破甲后给目标挂虚弱或增伤。不是单纯大数字，而是制造后续窗口。", "可用 debuff_weak / buff_vulnerable", ""],
+      ["趁他没甲", "KP4｜前置：裂颅一击 或 松绑", "如果目标部位护甲为 0，追加 HP 伤害。把破甲和斩杀明确接起来。", "需条件：目标部位护甲为0", "need"],
+      ["装完就跑", "KP5｜前置：大地震击 + 后撤步", "重击之后获得加速，但下一回合技能开销 +1。高爆发后留逃跑窗口，也留代价。", "需新Buff：加速+下回合开销增多", "need"],
+      ["上点盐", "KP2｜前置：锯齿斩", "目标已有流血时，追加增伤 1-2 回合。低成本流血补强，让早期流血有存在感。", "可用 buff_vulnerable", ""],
+      ["别抠会留疤", "KP3｜前置：撕裂伤口", "目标每次行动时额外获得 1 层流血或刷新流血。补上撕裂伤口真正的核心语义。", "需新Buff：行动时叠流血", "need"],
+      ["血条贷款", "KP4｜前置：吸血", "按敌人流血层数回复 HP 或护甲，并消耗部分层数。让吸血不再只是描述。", "需动作：按Buff层数结算/消耗", "need"],
+      ["越流越上头", "KP5｜前置：愤怒 + 撕裂伤口", "敌人流血跳伤或自己扣血时，临时提高攻击。承接愤怒和鲜血打击。", "需新Buff：受伤/流血触发加攻", "need"],
+      ["谢寒", "KP2｜前置：光脚 或 转进如风", "获得减伤，但自身减速。对应“裤子低跑不快”的梗，正负面都明确。", "可组合 buff_pain_sup + buff_slow", ""],
+      ["滑铲", "KP3｜前置：转进如风 + 锯齿斩", "高速腿部攻击，造成小伤害并施加减速/流血。把机动线接到流血线。", "可用 buff_slow + buff_bleed", "bridge"],
+      ["刹车失灵", "KP4｜前置：转进如风 + 重锤", "消耗或利用加速状态，提高下一次重击伤害；之后给自己减速。", "需条件：自身有加速 Buff", "need"],
+      ["回头就跑", "KP3｜前置：提桶跑路 + 后撤步", "清甲回血后获得短加速并移除 1 个负面，下一回合开销增加。逃生技能形成套路。", "可用加速/移除Debuff/开销增多", "bridge"],
+      ["省着点花", "KP3｜前置：光头 + 转进如风", "本回合下一次技能 AP -1，但速度下降或下回合 AP +1。作为重新开始的早期小版本。", "可用开销降低/开销增多 Buff", "bridge"],
+      ["血甲互换", "KP4｜前置：受击备甲 + 锯齿斩", "你给敌人施加流血时，自己获得少量护甲。把流血线接到护甲经济。", "需触发：施加流血后获甲", "bridge"],
+      ["借甲打人", "KP4｜前置：重拳 + 顺手捡漏", "消耗手部护甲，把消耗值的一部分转成伤害。让护甲不只是防守库存。", "需动作：按消耗护甲转伤害", "bridge"],
+      ["破绽记账", "KP3｜前置：裂颅一击 + 撕裂伤口", "破甲或打空甲时记录破绽，下一次流血/重击获得额外收益。连接破甲与流血。", "需新Buff：破绽层数", "bridge"],
+    ];
+    const grid = document.getElementById("grid");
+    items.forEach((it, idx) => {
+      const el = document.createElement("article");
+      el.className = `card ${it[4] || ""}`;
+      el.innerHTML = `<div class="num">${String(idx + 1).padStart(2, "0")}</div>
+        <div class="name">${it[0]}</div>
+        <div class="meta">${it[1]}</div>
+        <div class="body">${it[2]}</div>
+        <span class="impl">${it[3]}</span>`;
+      grid.appendChild(el);
+    });
+  </script>
+</body>
+</html>
