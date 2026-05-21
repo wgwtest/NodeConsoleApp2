@@ -245,6 +245,99 @@ function buildAssetManifest(assetLibrary) {
 }
 
 export class LevelMapWorkspace {
+    static createNewPackageDocument(options = {}) {
+        const packageId = typeof options.packageId === 'string' && options.packageId.trim()
+            ? options.packageId.trim()
+            : 'story_pack_v1';
+        const packageTitle = typeof options.packageTitle === 'string' && options.packageTitle.trim()
+            ? options.packageTitle.trim()
+            : packageId;
+        const baseDocument = asObject(options.baseDocument);
+        const levelsDocument = asObject(options.levelsDocument);
+        const assetLibrary = normalizeLevelMapAssetLibrary(baseDocument.assetLibrary);
+        const firstLevelId = Object.keys(asObject(levelsDocument.levels))[0] || '';
+        const firstBackgroundRef = assetLibrary.backgrounds[0]?.id || '';
+        const firstNodeSkinRef = assetLibrary.nodeSkins[0]?.id || '';
+        const firstNodeArtRef = assetLibrary.nodeArts[0]?.id || '';
+
+        return {
+            $schemaVersion: 'level_map_pack_v1',
+            meta: {
+                id: packageId,
+                title: packageTitle,
+                status: 'draft'
+            },
+            stories: [
+                {
+                    id: 'story_default',
+                    title: packageTitle,
+                    summary: '',
+                    entryChapterId: 'chapter_1',
+                    chapterIds: ['chapter_1']
+                }
+            ],
+            chapters: [
+                {
+                    id: 'chapter_1',
+                    storyId: 'story_default',
+                    title: '第一章',
+                    order: 1,
+                    description: '',
+                    entryMapId: 'map_chapter_1',
+                    mapIds: ['map_chapter_1']
+                }
+            ],
+            assetLibrary,
+            maps: [
+                {
+                    id: 'map_chapter_1',
+                    name: '第一章地图',
+                    chapterId: 'chapter_1',
+                    chapterLabel: '第一章',
+                    chapterTitle: '第一章',
+                    space: {
+                        logicalWidth: 1600,
+                        logicalHeight: 900
+                    },
+                    display: {
+                        viewportAspect: '16:9',
+                        backgroundFit: 'cover',
+                        nodeScale: 0.6,
+                        nodeAnchor: 'center',
+                        edgeAnchor: 'center',
+                        edgeLabelMode: 'midpoint'
+                    },
+                    backgroundRef: firstBackgroundRef,
+                    entryNodeId: 'node_1',
+                    nodes: [
+                        {
+                            id: 'node_1',
+                            levelId: firstLevelId,
+                            label: '1-1',
+                            title: '入口节点',
+                            kind: 'main',
+                            nodeSkinRef: firstNodeSkinRef,
+                            iconLabel: '入口',
+                            position: {
+                                x: 280,
+                                y: 450
+                            },
+                            objectiveText: '',
+                            difficultyLabel: '标准',
+                            rewardPreview: [],
+                            artRefs: {
+                                nodeArt: firstNodeArtRef,
+                                portrait: ''
+                            }
+                        }
+                    ],
+                    edges: [],
+                    previewModes: []
+                }
+            ]
+        };
+    }
+
     constructor(rawDocument, options = {}) {
         const source = asObject(rawDocument);
         const levelsDocument = asObject(options.levelsDocument);
@@ -323,6 +416,11 @@ export class LevelMapWorkspace {
     reconcileStoryStructure() {
         const mapIds = new Set(this.maps.map(map => map.id));
         const chapterIds = new Set(this.chapters.map(chapter => chapter.id));
+        const primaryStory = this.stories[0] || normalizeStory(0, {
+            id: 'story_default',
+            title: this.meta.title || '默认故事'
+        });
+        const primaryStoryId = primaryStory.id;
         this.maps.forEach((map) => {
             if (!map.chapterId || !chapterIds.has(map.chapterId)) {
                 const fallbackChapter = this.chapters[0] || normalizeChapter(0, { id: 'chapter_default', title: '默认章节' });
@@ -334,7 +432,10 @@ export class LevelMapWorkspace {
             }
         });
         this.chapters = this.chapters.map((chapter, index) => {
-            const next = normalizeChapter(index, chapter, chapter.storyId);
+            const next = normalizeChapter(index, {
+                ...chapter,
+                storyId: primaryStoryId
+            }, primaryStoryId);
             const explicitMapIds = next.mapIds.filter(mapId => mapIds.has(mapId));
             const ownedMapIds = this.maps.filter(map => map.chapterId === next.id).map(map => map.id);
             next.mapIds = uniqueStringList([...explicitMapIds, ...ownedMapIds]);
@@ -343,22 +444,15 @@ export class LevelMapWorkspace {
         });
 
         const knownChapterIds = new Set(this.chapters.map(chapter => chapter.id));
-        this.stories = this.stories.map((story, index) => {
-            const next = normalizeStory(index, story);
-            const explicitChapterIds = next.chapterIds.filter(chapterId => knownChapterIds.has(chapterId));
-            const ownedChapterIds = this.chapters.filter(chapter => chapter.storyId === next.id).map(chapter => chapter.id);
-            next.chapterIds = uniqueStringList([...explicitChapterIds, ...ownedChapterIds]);
-            next.entryChapterId = next.chapterIds.includes(next.entryChapterId) ? next.entryChapterId : (next.chapterIds[0] || '');
-            return next;
-        });
-        if (this.stories.length === 0) {
-            const chapterIdsForStory = this.chapters.map(chapter => chapter.id);
-            this.stories.push(normalizeStory(0, {
-                id: 'story_default',
-                title: this.meta.title || '默认故事',
-                chapterIds: chapterIdsForStory
-            }, chapterIdsForStory));
-        }
+        const chapterIdsForStory = this.chapters.map(chapter => chapter.id).filter(chapterId => knownChapterIds.has(chapterId));
+        const nextStory = normalizeStory(0, {
+            ...primaryStory,
+            chapterIds: uniqueStringList([...primaryStory.chapterIds, ...chapterIdsForStory])
+        }, chapterIdsForStory);
+        nextStory.entryChapterId = nextStory.chapterIds.includes(nextStory.entryChapterId)
+            ? nextStory.entryChapterId
+            : (nextStory.chapterIds[0] || '');
+        this.stories = [nextStory];
     }
 
     listStories() {
@@ -386,6 +480,9 @@ export class LevelMapWorkspace {
     }
 
     createStory(options = {}) {
+        if (this.stories.length >= 1) {
+            throw new Error('一个地图包只能承载一个故事；请新建地图包来创建另一条故事线。');
+        }
         const existingIds = new Set(this.stories.map(story => story.id));
         const storyId = typeof options.id === 'string' && options.id.trim() && !existingIds.has(options.id.trim())
             ? options.id.trim()

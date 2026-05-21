@@ -11,6 +11,54 @@
       "当前 levels.json 只有有限 story/acceptance levelId，因此 authoring 节点会复用已有 levelId；后续可在扩充 levels.json 后逐个改绑。"
     ]
   },
+  "stories": [
+    {
+      "id": "story_default",
+      "title": "故事关卡地图 Authoring 工作包",
+      "summary": "",
+      "entryChapterId": "story_chapter_1",
+      "chapterIds": [
+        "story_chapter_1",
+        "story_chapter_2",
+        "story_chapter_3"
+      ]
+    }
+  ],
+  "chapters": [
+    {
+      "id": "story_chapter_1",
+      "storyId": "story_default",
+      "title": "幽暗森林",
+      "order": 1,
+      "description": "",
+      "entryMapId": "chapter_1_authoring_map",
+      "mapIds": [
+        "chapter_1_authoring_map"
+      ]
+    },
+    {
+      "id": "story_chapter_2",
+      "storyId": "story_default",
+      "title": "霜雾峡谷",
+      "order": 2,
+      "description": "",
+      "entryMapId": "chapter_2_authoring_map",
+      "mapIds": [
+        "chapter_2_authoring_map"
+      ]
+    },
+    {
+      "id": "story_chapter_3",
+      "storyId": "story_default",
+      "title": "暮色古道",
+      "order": 3,
+      "description": "",
+      "entryMapId": "chapter_3_authoring_map",
+      "mapIds": [
+        "chapter_3_authoring_map"
+      ]
+    }
+  ],
   "assetLibrary": {
     "backgrounds": [
       {
@@ -18,64 +66,89 @@
         "label": "地图背景 01",
         "src": "../source/map/image_w2752_h1536_map-bg-01.jpeg",
         "thumbnailSrc": "../source/map/image_w2752_h1536_map-bg-01.jpeg",
-        "previewGradient": "linear-gradient(135deg, #15384d 0%, #265d63 38%, #f0c987 100%)"
+        "previewGradient": "linear-gradient(135deg, #15384d 0%, #265d63 38%, #f0c987 100%)",
+        "shape": ""
       },
       {
         "id": "bg_map_winter_02",
         "label": "地图背景 02 · 冬境",
         "src": "../source/map/image_w2752_h1536_map-bg-02-winter.jpeg",
         "thumbnailSrc": "../source/map/image_w2752_h1536_map-bg-02-winter.jpeg",
-        "previewGradient": "linear-gradient(135deg, #13324e 0%, #375c7d 40%, #d8e6f4 100%)"
+        "previewGradient": "linear-gradient(135deg, #13324e 0%, #375c7d 40%, #d8e6f4 100%)",
+        "shape": ""
       },
       {
         "id": "bg_map_glade_03",
         "label": "地图背景 03",
         "src": "../source/map/image_w2752_h1536_map-bg-03.jpeg",
         "thumbnailSrc": "../source/map/image_w2752_h1536_map-bg-03.jpeg",
-        "previewGradient": "linear-gradient(135deg, #2f2330 0%, #46513d 52%, #d59b63 100%)"
+        "previewGradient": "linear-gradient(135deg, #2f2330 0%, #46513d 52%, #d59b63 100%)",
+        "shape": ""
       },
       {
         "id": "bg_map_glade_04",
         "label": "地图背景 04",
         "src": "../source/map/image_w2752_h1536_map-bg-04.jpeg",
         "thumbnailSrc": "../source/map/image_w2752_h1536_map-bg-04.jpeg",
-        "previewGradient": "linear-gradient(135deg, #3d2328 0%, #704437 54%, #c49357 100%)"
+        "previewGradient": "linear-gradient(135deg, #3d2328 0%, #704437 54%, #c49357 100%)",
+        "shape": ""
       }
     ],
     "nodeSkins": [
       {
         "id": "skin_story_main",
         "label": "主线节点",
+        "src": "",
+        "thumbnailSrc": "",
+        "previewGradient": "",
         "shape": "circle"
       },
       {
         "id": "skin_story_branch",
         "label": "分支节点",
+        "src": "",
+        "thumbnailSrc": "",
+        "previewGradient": "",
         "shape": "circle"
       },
       {
         "id": "skin_story_supply",
         "label": "补给节点",
+        "src": "",
+        "thumbnailSrc": "",
+        "previewGradient": "",
         "shape": "circle"
       },
       {
         "id": "skin_story_elite",
         "label": "精英节点",
+        "src": "",
+        "thumbnailSrc": "",
+        "previewGradient": "",
         "shape": "diamond"
       },
       {
         "id": "skin_story_boss",
         "label": "Boss 节点",
+        "src": "",
+        "thumbnailSrc": "",
+        "previewGradient": "",
         "shape": "gate"
       },
       {
         "id": "skin_story_battle",
         "label": "战斗节点（兼容）",
+        "src": "",
+        "thumbnailSrc": "",
+        "previewGradient": "",
         "shape": "circle"
       },
       {
         "id": "skin_story_event",
         "label": "事件节点（兼容）",
+        "src": "",
+        "thumbnailSrc": "",
+        "previewGradient": "",
         "shape": "circle"
       }
     ],
@@ -83,44 +156,68 @@
       {
         "id": "node_icon_elemental",
         "label": "元素节点图标",
-        "src": "../source/scene_icon/level-node-04-elemental_1000.png"
+        "src": "../source/scene_icon/level-node-04-elemental_1000.png",
+        "thumbnailSrc": "",
+        "previewGradient": "",
+        "shape": ""
       },
       {
         "id": "node_icon_elf_archer",
         "label": "精灵弓手节点图标",
-        "src": "../source/scene_icon/level-node-05-elf-archer_1000.png"
+        "src": "../source/scene_icon/level-node-05-elf-archer_1000.png",
+        "thumbnailSrc": "",
+        "previewGradient": "",
+        "shape": ""
       },
       {
         "id": "node_icon_goblin_warrior",
         "label": "哥布林战士节点图标",
-        "src": "../source/scene_icon/level-node-06-goblin-warrior_1000.png"
+        "src": "../source/scene_icon/level-node-06-goblin-warrior_1000.png",
+        "thumbnailSrc": "",
+        "previewGradient": "",
+        "shape": ""
       },
       {
         "id": "node_icon_owlbear",
         "label": "枭熊节点图标",
-        "src": "../source/scene_icon/level-node-07-owlbear_1000.png"
+        "src": "../source/scene_icon/level-node-07-owlbear_1000.png",
+        "thumbnailSrc": "",
+        "previewGradient": "",
+        "shape": ""
       }
     ],
     "portraits": [
       {
         "id": "enemy_goblin_hunter",
         "label": "哥布林猎手",
-        "src": "../assets/images/level_map/portraits/enemy_goblin_hunter.svg"
+        "src": "../assets/images/level_map/portraits/enemy_goblin_hunter.svg",
+        "thumbnailSrc": "",
+        "previewGradient": "",
+        "shape": ""
       },
       {
         "id": "enemy_goblin_medic",
         "label": "哥布林医师",
-        "src": "../assets/images/level_map/portraits/enemy_goblin_medic.svg"
+        "src": "../assets/images/level_map/portraits/enemy_goblin_medic.svg",
+        "thumbnailSrc": "",
+        "previewGradient": "",
+        "shape": ""
       },
       {
         "id": "enemy_skeleton_guard",
         "label": "骷髅守卫",
-        "src": "../assets/images/level_map/portraits/enemy_skeleton_guard.svg"
+        "src": "../assets/images/level_map/portraits/enemy_skeleton_guard.svg",
+        "thumbnailSrc": "",
+        "previewGradient": "",
+        "shape": ""
       },
       {
         "id": "enemy_ruins_boss",
         "label": "废墟首领",
-        "src": "../assets/images/level_map/portraits/enemy_ruins_boss.svg"
+        "src": "../assets/images/level_map/portraits/enemy_ruins_boss.svg",
+        "thumbnailSrc": "",
+        "previewGradient": "",
+        "shape": ""
       }
     ]
   },
@@ -155,8 +252,8 @@
           "nodeSkinRef": "skin_story_main",
           "iconLabel": "主线",
           "position": {
-            "x": 145,
-            "y": 468
+            "x": 491,
+            "y": 806
           },
           "objectiveText": "边境失联，玩家从森林外缘进入幽暗森林。",
           "difficultyLabel": "标准",
@@ -178,8 +275,8 @@
           "nodeSkinRef": "skin_story_main",
           "iconLabel": "主线",
           "position": {
-            "x": 285,
-            "y": 402
+            "x": 493,
+            "y": 495
           },
           "objectiveText": "找到被破坏的路标，确认补给队曾经过这里。",
           "difficultyLabel": "标准",
@@ -245,8 +342,8 @@
           "nodeSkinRef": "skin_story_supply",
           "iconLabel": "补给",
           "position": {
-            "x": 450,
-            "y": 600
+            "x": 635,
+            "y": 660
           },
           "objectiveText": "绕到南侧补给线，获得稳定资源但路线更长。",
           "difficultyLabel": "补给",
@@ -267,8 +364,8 @@
           "nodeSkinRef": "skin_story_supply",
           "iconLabel": "补给",
           "position": {
-            "x": 625,
-            "y": 642
+            "x": 929,
+            "y": 638
           },
           "objectiveText": "清理被袭营地，获得 Boss 前补给。",
           "difficultyLabel": "事件",
@@ -515,7 +612,8 @@
           "type": "main",
           "branchLabel": "绕开精英"
         }
-      ]
+      ],
+      "previewModes": []
     },
     {
       "id": "chapter_2_authoring_map",
@@ -906,7 +1004,8 @@
           "type": "main",
           "branchLabel": "Boss"
         }
-      ]
+      ],
+      "previewModes": []
     },
     {
       "id": "chapter_3_authoring_map",
@@ -1295,55 +1394,8 @@
           "type": "main",
           "branchLabel": "Boss"
         }
-      ]
-    }
-  ],
-  "stories": [
-    {
-      "id": "story_default",
-      "title": "故事关卡地图 Authoring 工作包",
-      "summary": "",
-      "entryChapterId": "story_chapter_1",
-      "chapterIds": [
-        "story_chapter_1",
-        "story_chapter_2",
-        "story_chapter_3"
-      ]
-    }
-  ],
-  "chapters": [
-    {
-      "id": "story_chapter_1",
-      "storyId": "story_default",
-      "title": "幽暗森林",
-      "order": 1,
-      "description": "",
-      "entryMapId": "chapter_1_authoring_map",
-      "mapIds": [
-        "chapter_1_authoring_map"
-      ]
-    },
-    {
-      "id": "story_chapter_2",
-      "storyId": "story_default",
-      "title": "霜雾峡谷",
-      "order": 2,
-      "description": "",
-      "entryMapId": "chapter_2_authoring_map",
-      "mapIds": [
-        "chapter_2_authoring_map"
-      ]
-    },
-    {
-      "id": "story_chapter_3",
-      "storyId": "story_default",
-      "title": "暮色古道",
-      "order": 3,
-      "description": "",
-      "entryMapId": "chapter_3_authoring_map",
-      "mapIds": [
-        "chapter_3_authoring_map"
-      ]
+      ],
+      "previewModes": []
     }
   ]
 }

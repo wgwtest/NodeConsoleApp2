@@ -488,7 +488,8 @@
         .story-list-box,
         .chapter-list-box,
         .map-list-box {
-            max-height: 112px;
+            max-height: clamp(96px, 14vh, 180px);
+            overflow-y: auto;
         }
 
         .node-list-box,
@@ -1108,6 +1109,7 @@
             </div>
             <div class="toolbar-actions" aria-label="地图编辑操作">
                 <div class="tool-cluster tool-cluster--project">
+                    <button id="newPackageBtn" class="toolbar-btn toolbar-btn--secondary" type="button">新建故事包</button>
                     <button id="loadDefaultBtn" class="toolbar-btn toolbar-btn--secondary" type="button">加载工作稿</button>
                     <button id="saveMapBtn" class="toolbar-btn toolbar-btn--primary" type="button">保存工作稿</button>
                     <button id="publishMapBtn" class="toolbar-btn toolbar-btn--primary" type="button">发布到主流程</button>
@@ -1133,10 +1135,20 @@
                         </div>
 
                         <div class="section-block">
-                            <h3>当前故事</h3>
-                            <div class="map-action-row" aria-label="故事操作">
-                                <input id="storyTitleInput" aria-label="故事标题" placeholder="故事标题">
-                                <button id="addStoryBtn" class="toolbar-btn toolbar-btn--secondary" type="button">新建故事</button>
+                            <div class="map-settings-head">
+                                <h3>当前故事包</h3>
+                                <button id="newPackageInlineBtn" class="toolbar-btn toolbar-btn--secondary" type="button">新建故事包</button>
+                            </div>
+                            <p class="section-note">一个地图包对应一个故事；章节和地图都在当前故事包内编辑。</p>
+                            <div class="field-grid single" style="margin: 8px 0;">
+                                <label class="field">
+                                    <span>包 ID</span>
+                                    <input id="packageIdInput" value="story_pack_v1">
+                                </label>
+                                <label class="field">
+                                    <span>包标题</span>
+                                    <input id="packageTitleInput" value="故事地图包 v1">
+                                </label>
                             </div>
                             <div id="storyList" class="list-box story-list-box"></div>
                         </div>
@@ -1466,14 +1478,6 @@
                 <p class="section-note">当前导出的是完整目录式地图包：package.json 是包入口，maps.json 保存故事、章节、地图、节点、边和显示配置，asset-manifest.json 列出背景图、节点素材图和立绘图的资源 ID / 路径引用。图片文件不会被嵌入 JSON。导出只负责下载备份；保存工作稿和发布到主流程使用顶部按钮。</p>
             </div>
             <div class="dialog-box">
-                <label class="field">
-                    <span>包 ID</span>
-                    <input id="packageIdInput" value="story_pack_v1">
-                </label>
-                <label class="field">
-                    <span>包标题</span>
-                    <input id="packageTitleInput" value="故事地图包 v1">
-                </label>
                 <label class="field">
                     <span>作者目录</span>
                     <input id="authoringPackageDirectoryInput" value="assets/map_packs/authoring/story_pack_v1/">

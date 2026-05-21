@@ -279,6 +279,8 @@ export class LevelMapEditorPage {
     bind() {
         const ids = [
             'status',
+            'newPackageBtn',
+            'newPackageInlineBtn',
             'loadDefaultBtn',
             'addNodeBtn',
             'removeNodeBtn',
@@ -294,7 +296,6 @@ export class LevelMapEditorPage {
             'addMapBtn',
             'duplicateMapBtn',
             'removeMapBtn',
-            'storyTitleInput',
             'chapterTitleInput',
             'mapNameInput',
             'storyList',
@@ -378,6 +379,8 @@ export class LevelMapEditorPage {
         });
 
         this.bindAction('loadDefaultBtn', () => this.loadDefaultDocuments());
+        this.bindAction('newPackageBtn', () => this.createNewPackage());
+        this.bindAction('newPackageInlineBtn', () => this.createNewPackage());
         this.bindAction('addNodeBtn', () => this.addNode());
         this.bindAction('removeNodeBtn', () => this.removeSelectedNode());
         this.bindAction('saveNodeBtn', () => this.saveCurrentNode());
@@ -527,6 +530,7 @@ export class LevelMapEditorPage {
             throw new Error('缺少 workspaceFactory，无法创建地图编辑工作区。');
         }
 
+        this.levelsDocument = rawLevels;
         this.workspace = this.workspaceFactory(rawMapPack, rawLevels);
         const firstStory = this.workspace.listStories?.()[0] || null;
         const firstChapter = firstStory
@@ -542,6 +546,26 @@ export class LevelMapEditorPage {
         this.selectedEdgeId = firstMap?.edges?.[0]?.id || null;
         this.inspectorMode = this.selectedNodeId ? 'node' : 'edge';
         this.renderAll();
+    }
+
+    buildNewPackageDocument() {
+        return this.workspace?.constructor?.createNewPackageDocument?.({
+            packageId: this.getPackageIdFromForm(),
+            packageTitle: this.getPackageTitleFromForm(),
+            baseDocument: this.workspace?.exportDocument?.() || {},
+            levelsDocument: this.levelsDocument || {}
+        }) || null;
+    }
+
+    createNewPackage() {
+        if (typeof this.workspaceFactory !== 'function') {
+            throw new Error('缺少 workspaceFactory，无法创建地图编辑工作区。');
+        }
+
+        const rawMapPack = this.buildNewPackageDocument();
+        this.loadDocuments(rawMapPack, this.levelsDocument || {});
+        this.setPackageDirectoryDefaults(rawMapPack.meta.id);
+        this.setStatus(`已新建故事包：${rawMapPack.meta.id}`);
     }
 
     getCurrentMap() {
@@ -659,6 +683,20 @@ export class LevelMapEditorPage {
         return this.normalizePackageDirectory(this.elements.packageDirectoryInput?.value);
     }
 
+    setPackageDirectoryDefaults(packageId) {
+        const safePackageId = String(packageId || 'story_pack_v1').trim() || 'story_pack_v1';
+        if (this.elements.authoringPackageDirectoryInput) {
+            this.elements.authoringPackageDirectoryInput.value = `assets/map_packs/authoring/${safePackageId}/`;
+        }
+        if (this.elements.runtimePackageDirectoryInput) {
+            this.elements.runtimePackageDirectoryInput.value = `assets/map_packs/current/${safePackageId}/`;
+        }
+        if (this.elements.packageDirectoryInput) {
+            this.elements.packageDirectoryInput.value = `assets/map_packs/current/${safePackageId}/`;
+        }
+        this.syncPackagePathPreview();
+    }
+
     syncPackagePathPreview() {
         const authoringDirectory = this.getAuthoringPackageDirectoryFromForm();
         const runtimeDirectory = this.getRuntimePackageDirectoryFromForm();
@@ -737,16 +775,21 @@ export class LevelMapEditorPage {
             throw new Error('缺少 fetch 实现，无法写入地图包目录。');
         }
         const files = this.buildPackageExportFiles();
-        const response = await this.fetchImpl(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                targetDirectory: this.normalizePackageDirectory(targetDirectory),
-                files
-            })
-        });
+        let response = null;
+        try {
+            response = await this.fetchImpl(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    targetDirectory: this.normalizePackageDirectory(targetDirectory),
+                    files
+                })
+            });
+        } catch (error) {
+            throw new Error(`保存接口不可用：请确认后端服务已启动，并从 http://127.0.0.1:3121/test/level_map_editor_v1.html 打开地图编辑器。启动命令：PORT=3121 node app.js。原始错误：${error.message}`);
+        }
         if (!response?.ok) {
             let message = response?.status ? `HTTP ${response.status}` : 'unknown';
             try {
@@ -890,35 +933,60 @@ export class LevelMapEditorPage {
         host.innerHTML = '';
 
         if (!this.workspace || typeof this.workspace.listStories !== 'function') {
-            host.textContent = '尚未加载故事。';
+            host.textContent = '尚未加载故事包。';
             return;
         }
 
-        this.workspace.listStories().forEach((story) => {
-            const button = createElement(this.document, 'button', 'story-list-item');
-            button.type = 'button';
-            button.textContent = `${story.title || story.id} | ${story.id}`;
-            if (story.id === this.selectedStoryId) {
-                button.setAttribute('aria-current', 'true');
-            }
-            button.addEventListener('click', () => {
-                this.selectedStoryId = story.id;
-                const chapter = this.workspace.listChapters(story.id)[0] || null;
-                this.selectedChapterId = chapter?.id || null;
-                const map = chapter
-                    ? this.workspace.listMaps().find(item => chapter.mapIds.includes(item.id)) || null
-                    : null;
-                if (map) {
-                    this.syncSelectionToMap(map.id);
-                } else {
-                    this.selectedMapId = null;
-                    this.selectedNodeId = null;
-                    this.selectedEdgeId = null;
-                }
-                this.renderAll();
-            });
-            host.appendChild(button);
+        const story = this.workspace.listStories()[0] || null;
+        const packageId = this.getPackageIdFromForm();
+        if (!story) {
+            host.textContent = '当前地图包尚未建立故事信息。';
+            return;
+        }
+
+        const item = createElement(this.document, 'div', 'story-list-item');
+        item.setAttribute('aria-current', 'true');
+        item.innerHTML = `
+            <strong>${escapeHtml(story.title || story.id)}</strong>
+            <span>一个地图包对应一个故事</span>
+            <code>${escapeHtml(packageId)} / ${escapeHtml(story.id)}</code>
+        `;
+        host.appendChild(item);
+        this.applyAdaptiveListHeight(host, 1, {
+            minHeight: 112,
+            rowHeight: 46,
+            padding: 16,
+            maxViewportRatio: 0.18,
+            hardMax: 140
         });
+    }
+
+    applyAdaptiveListHeight(host, itemCount, options = {}) {
+        if (!host) return;
+        const minHeight = Math.max(0, Number(options.minHeight) || 112);
+        const rowHeight = Math.max(24, Number(options.rowHeight) || 44);
+        const padding = Math.max(0, Number(options.padding) || 16);
+        const hardMax = Math.max(minHeight, Number(options.hardMax) || 280);
+        const maxViewportRatio = Math.max(0.05, Math.min(1, Number(options.maxViewportRatio) || 0.26));
+        const viewportHeight = Math.max(
+            0,
+            Number(this.window?.innerHeight)
+            || Number(this.document?.documentElement?.clientHeight)
+            || 0
+        );
+        const viewportCap = viewportHeight ? Math.round(viewportHeight * maxViewportRatio) : hardMax;
+        const contentHeight = padding + Math.max(1, itemCount) * rowHeight;
+        const nextHeight = Math.max(minHeight, Math.min(hardMax, viewportCap, contentHeight));
+        host.style.maxHeight = `${nextHeight}px`;
+        host.style.overflowY = 'auto';
+    }
+
+    scrollSelectedListItemIntoView(host) {
+        const selected = host?.querySelector?.('[aria-current="true"]');
+        if (!selected || typeof selected.scrollIntoView !== 'function') {
+            return;
+        }
+        selected.scrollIntoView({ block: 'nearest' });
     }
 
     renderChapterList() {
@@ -961,6 +1029,14 @@ export class LevelMapEditorPage {
             });
             host.appendChild(button);
         });
+        this.applyAdaptiveListHeight(host, chapters.length, {
+            minHeight: 128,
+            rowHeight: 46,
+            padding: 18,
+            maxViewportRatio: 0.25,
+            hardMax: 300
+        });
+        this.scrollSelectedListItemIntoView(host);
     }
 
     renderMapList() {
@@ -995,6 +1071,14 @@ export class LevelMapEditorPage {
             });
             host.appendChild(button);
         });
+        this.applyAdaptiveListHeight(host, maps.length, {
+            minHeight: 128,
+            rowHeight: 46,
+            padding: 18,
+            maxViewportRatio: 0.25,
+            hardMax: 300
+        });
+        this.scrollSelectedListItemIntoView(host);
     }
 
     renderMapMeta() {
@@ -1167,6 +1251,7 @@ export class LevelMapEditorPage {
             });
             host.appendChild(button);
         });
+        this.scrollSelectedListItemIntoView(host);
     }
 
     renderEdgeList() {
@@ -1193,6 +1278,7 @@ export class LevelMapEditorPage {
             });
             host.appendChild(button);
         });
+        this.scrollSelectedListItemIntoView(host);
     }
 
     renderValidationPanel() {
@@ -1534,28 +1620,26 @@ export class LevelMapEditorPage {
     }
 
     addStory() {
-        if (!this.workspace || typeof this.workspace.createStory !== 'function') return;
-        const title = this.elements.storyTitleInput?.value?.trim() || `新故事 ${this.workspace.listStories().length + 1}`;
-        const storyId = this.workspace.createStory({ title });
-        this.selectedStoryId = storyId;
-        this.selectedChapterId = null;
-        this.selectedMapId = null;
-        this.selectedNodeId = null;
-        this.selectedEdgeId = null;
-        if (this.elements.storyTitleInput) {
-            this.elements.storyTitleInput.value = '';
-        }
+        this.setStatus('一个地图包对应一个故事；请新建地图包来创建另一条故事线。');
         this.renderAll();
+    }
+
+    ensureSelectedStoryId() {
+        const story = this.workspace?.listStories?.()[0] || null;
+        if (!story) {
+            return '';
+        }
+        this.selectedStoryId = story.id;
+        return story.id;
     }
 
     addChapter() {
         if (!this.workspace || typeof this.workspace.createChapter !== 'function') return;
-        if (!this.selectedStoryId) {
-            this.selectedStoryId = this.workspace.listStories?.()[0]?.id || this.workspace.createStory({ title: '新故事' });
-        }
-        const chapters = this.workspace.listChapters(this.selectedStoryId);
+        const storyId = this.ensureSelectedStoryId();
+        if (!storyId) return;
+        const chapters = this.workspace.listChapters(storyId);
         const title = this.elements.chapterTitleInput?.value?.trim() || `新章节 ${chapters.length + 1}`;
-        const chapterId = this.workspace.createChapter(this.selectedStoryId, { title });
+        const chapterId = this.workspace.createChapter(storyId, { title });
         this.selectedChapterId = chapterId;
         this.selectedMapId = null;
         this.selectedNodeId = null;
