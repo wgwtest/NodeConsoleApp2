@@ -17,10 +17,69 @@ const levelsJsonPath = path.join(projectRoot, 'assets', 'data', 'levels.json');
 function buildFixtureLevelsDoc() {
     return {
         $schemaVersion: 'levels_v1_wrapped',
+        enemyPools: {
+            pool_story_goblin_edge: {
+                id: 'pool_story_goblin_edge',
+                name: '幽暗森林边缘敌人池',
+                members: [{ templateId: 'goblin_story_headhunter', position: 1 }]
+            },
+            pool_story_goblin_outpost: {
+                id: 'pool_story_goblin_outpost',
+                name: '密林前哨敌人池',
+                members: [{ templateId: 'goblin_story_medic', position: 1 }]
+            }
+        },
         levels: {
-            level_1_1: { id: 'level_1_1', name: '第一关', flow: { kind: 'story', order: 1 } },
-            level_1_2: { id: 'level_1_2', name: '第二关', flow: { kind: 'story', order: 2 } },
+            level_1_1: {
+                id: 'level_1_1',
+                name: '幽暗森林边缘',
+                flow: { kind: 'story', order: 1 },
+                selectionMeta: { difficultyLabel: '标准' },
+                waves: [{ waveId: 'wave_1', waveType: 'fixed', enemyPoolId: 'pool_story_goblin_edge' }]
+            },
+            level_1_2: {
+                id: 'level_1_2',
+                name: '密林前哨',
+                flow: { kind: 'story', order: 2 },
+                selectionMeta: { difficultyLabel: '进阶' },
+                waves: [{ waveId: 'wave_1', waveType: 'fixed', enemyPoolId: 'pool_story_goblin_outpost' }]
+            },
             level_1_3: { id: 'level_1_3', name: '第三关', flow: { kind: 'story', order: 3 } }
+        }
+    };
+}
+
+function buildFixtureEnemiesDoc() {
+    return {
+        goblin_story_headhunter: {
+            id: 'goblin_story_headhunter',
+            name: '哥布林追猎手',
+            race: 'goblin',
+            class: 'hunter',
+            stats: { hp: 65, maxHp: 65, ap: 4, speed: 11 },
+            skills: ['skill_bite', 'skill_throw_stone'],
+            bodyParts: {
+                head: { current: 4, max: 4, weakness: 1.2 },
+                chest: { current: 8, max: 8, weakness: 1 },
+                abdomen: { current: 4, max: 4, weakness: 1.1 },
+                arm: { current: 0, max: 0, weakness: 1 },
+                leg: { current: 0, max: 0, weakness: 0.9 }
+            }
+        },
+        goblin_story_medic: {
+            id: 'goblin_story_medic',
+            name: '哥布林医护斥候',
+            race: 'goblin',
+            class: 'support',
+            stats: { hp: 18, maxHp: 70, ap: 3, speed: 12 },
+            skills: ['skill_bite', 'skill_heal'],
+            bodyParts: {
+                head: { current: 3, max: 3, weakness: 1.2 },
+                chest: { current: 6, max: 6, weakness: 1 },
+                abdomen: { current: 3, max: 3, weakness: 1.1 },
+                arm: { current: 0, max: 0, weakness: 1 },
+                leg: { current: 0, max: 0, weakness: 0.9 }
+            }
         }
     };
 }
@@ -242,6 +301,7 @@ function createPageFixture() {
             <div id="availableLevelsSummary"></div>
             <div id="mapStage"></div>
             <div id="mapCanvas"></div>
+            <section id="currentLevelEnemyPanel"></section>
             <div id="previewArchiveNote"></div>
             <button id="nodeInspectorBtn" type="button">node inspector</button>
             <button id="edgeInspectorBtn" type="button">edge inspector</button>
@@ -355,12 +415,17 @@ async function createPageContext() {
         document,
         mapSourceUrl: '../assets/data/level_map_pack_v1.example.json',
         levelSourceUrl: '../assets/data/levels.json',
+        enemySourceUrl: '../assets/data/enemies.json',
         fetchImpl: async (url) => ({
             ok: true,
             async json() {
-                return url.includes('level_map_pack')
-                    ? JSON.parse(JSON.stringify(buildFixtureMapPack()))
-                    : JSON.parse(JSON.stringify(buildFixtureLevelsDoc()));
+                if (url.includes('level_map_pack')) {
+                    return JSON.parse(JSON.stringify(buildFixtureMapPack()));
+                }
+                if (url.includes('enemies')) {
+                    return JSON.parse(JSON.stringify(buildFixtureEnemiesDoc()));
+                }
+                return JSON.parse(JSON.stringify(buildFixtureLevelsDoc()));
             }
         }),
         workspaceFactory(rawMapPack, levelsDocument) {
@@ -448,6 +513,35 @@ test('LevelMapEditorPage 能加载默认地图包并渲染地图、节点、边�
         assert.match(document.getElementById('validationList').textContent || '', /未发现结构问题/u);
         assert.equal(document.getElementById('mapHeading').textContent || '', '', '中央舞台不应再显示章节标题');
         assert.equal(document.getElementById('routeLegend').textContent || '', '', '中央舞台不应再保留路线总览');
+    } finally {
+        dom.window.close();
+        cleanupDomGlobals();
+    }
+});
+
+test('LevelMapEditorPage 在中央面板展示当前节点绑定关卡的首个敌人模板', async () => {
+    const dom = createPageFixture();
+    try {
+        const { page } = await createPageContext();
+        await page.loadDefaultDocuments();
+
+        const enemyPanel = document.getElementById('currentLevelEnemyPanel');
+        assert.match(enemyPanel.textContent || '', /本关敌人/u);
+        assert.match(enemyPanel.textContent || '', /node_1/u);
+        assert.match(enemyPanel.textContent || '', /level_1_1/u);
+        assert.match(enemyPanel.textContent || '', /哥布林追猎手/u);
+        assert.match(enemyPanel.textContent || '', /goblin_story_headhunter/u);
+        assert.match(enemyPanel.textContent || '', /HP\s*65\s*\/\s*65/u);
+        assert.match(enemyPanel.textContent || '', /skill_bite/u);
+        assert.match(enemyPanel.textContent || '', /头部\s*4\/4/u);
+
+        document.querySelector('#nodeList button:nth-child(2)').click();
+
+        assert.match(enemyPanel.textContent || '', /node_2/u);
+        assert.match(enemyPanel.textContent || '', /level_1_2/u);
+        assert.match(enemyPanel.textContent || '', /哥布林医护斥候/u);
+        assert.match(enemyPanel.textContent || '', /goblin_story_medic/u);
+        assert.match(enemyPanel.textContent || '', /HP\s*18\s*\/\s*70/u);
     } finally {
         dom.window.close();
         cleanupDomGlobals();
