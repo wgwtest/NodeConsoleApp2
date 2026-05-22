@@ -527,6 +527,7 @@ test('LevelMapEditorPage 在中央面板展示当前节点绑定关卡的首个�
 
         const enemyPanel = document.getElementById('currentLevelEnemyPanel');
         assert.match(enemyPanel.textContent || '', /本关敌人/u);
+        assert.equal(document.getElementById('currentEnemyTemplateSelect')?.value, 'goblin_story_headhunter');
         assert.match(enemyPanel.textContent || '', /node_1/u);
         assert.match(enemyPanel.textContent || '', /level_1_1/u);
         assert.match(enemyPanel.textContent || '', /哥布林追猎手/u);
@@ -537,11 +538,38 @@ test('LevelMapEditorPage 在中央面板展示当前节点绑定关卡的首个�
 
         document.querySelector('#nodeList button:nth-child(2)').click();
 
+        assert.equal(document.getElementById('currentEnemyTemplateSelect')?.value, 'goblin_story_medic');
         assert.match(enemyPanel.textContent || '', /node_2/u);
         assert.match(enemyPanel.textContent || '', /level_1_2/u);
         assert.match(enemyPanel.textContent || '', /哥布林医护斥候/u);
         assert.match(enemyPanel.textContent || '', /goblin_story_medic/u);
         assert.match(enemyPanel.textContent || '', /HP\s*18\s*\/\s*70/u);
+    } finally {
+        dom.window.close();
+        cleanupDomGlobals();
+    }
+});
+
+test('LevelMapEditorPage 可以在本关敌人面板切换当前关卡首个敌人模板', async () => {
+    const dom = createPageFixture();
+    try {
+        const { page } = await createPageContext();
+        await page.loadDefaultDocuments();
+
+        const select = document.getElementById('currentEnemyTemplateSelect');
+        assert.ok(select, '缺少本关敌人选择器');
+        assert.equal(select.options.length, 2, '选择器应来自 enemies.json');
+        assert.equal(select.value, 'goblin_story_headhunter');
+
+        select.value = 'goblin_story_medic';
+        dispatchEditorInput(select);
+
+        const binding = page.getPrimaryEnemyForCurrentNode();
+        assert.equal(binding.templateId, 'goblin_story_medic');
+        assert.equal(page.levelsDocument.enemyPools.pool_story_goblin_edge.members[0].templateId, 'goblin_story_medic');
+        assert.match(document.getElementById('currentLevelEnemyPanel').textContent || '', /哥布林医护斥候/u);
+        assert.match(document.getElementById('currentLevelEnemyPanel').textContent || '', /HP\s*18\s*\/\s*70/u);
+        assert.match(document.getElementById('status').textContent || '', /已切换本关敌人/u);
     } finally {
         dom.window.close();
         cleanupDomGlobals();
@@ -912,7 +940,7 @@ test('LevelMapEditorPage 支持选择目录后写入 package.json、maps.json �
     }
 });
 
-test('LevelMapEditorPage 保存工作稿会写入 authoring 目录，发布会写入 current 目录', async () => {
+test('LevelMapEditorPage 保存工作稿和发布会写入地图包目录并同步关卡定义', async () => {
     const dom = createPageFixture();
     try {
         const { page } = await createPageContext();
@@ -940,14 +968,23 @@ test('LevelMapEditorPage 保存工作稿会写入 authoring 目录，发布会�
         await page.saveAuthoringPackage();
         await page.publishRuntimePackage();
 
-        assert.deepEqual(writes.map(write => write.url), ['/api/level-map-packs/save', '/api/level-map-packs/publish']);
-        assert.deepEqual(writes.map(write => write.method), ['POST', 'POST']);
+        assert.deepEqual(writes.map(write => write.url), [
+            '/api/level-map-packs/save',
+            '/__skill_editor_file',
+            '/api/level-map-packs/publish',
+            '/__skill_editor_file'
+        ]);
+        assert.deepEqual(writes.map(write => write.method), ['POST', 'POST', 'POST', 'POST']);
         assert.equal(writes[0].body.targetDirectory, 'assets/map_packs/authoring/story_pack_v1/');
-        assert.equal(writes[1].body.targetDirectory, 'assets/map_packs/current/story_pack_v1/');
+        assert.equal(writes[2].body.targetDirectory, 'assets/map_packs/current/story_pack_v1/');
         assert.deepEqual(writes[0].body.files.map(file => file.fileName), ['package.json', 'maps.json', 'asset-manifest.json']);
-        assert.deepEqual(writes[1].body.files.map(file => file.fileName), ['package.json', 'maps.json', 'asset-manifest.json']);
+        assert.deepEqual(writes[2].body.files.map(file => file.fileName), ['package.json', 'maps.json', 'asset-manifest.json']);
         assert.equal(JSON.parse(writes[0].body.files[0].content).packageId, 'story_pack_v1');
-        assert.equal(JSON.parse(writes[1].body.files[1].content).$schemaVersion, 'level_map_pack_v1');
+        assert.equal(JSON.parse(writes[2].body.files[1].content).$schemaVersion, 'level_map_pack_v1');
+        assert.equal(writes[1].body.path, 'assets/data/levels.json');
+        assert.equal(writes[3].body.path, 'assets/data/levels.json');
+        assert.equal(JSON.parse(writes[1].body.content).$schemaVersion, 'levels_v1_wrapped');
+        assert.equal(JSON.parse(writes[3].body.content).enemyPools.pool_story_goblin_edge.members[0].templateId, 'goblin_story_headhunter');
     } finally {
         dom.window.close();
         cleanupDomGlobals();

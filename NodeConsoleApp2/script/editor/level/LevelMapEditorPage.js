@@ -639,6 +639,13 @@ export class LevelMapEditorPage {
         return enemies[templateId] || null;
     }
 
+    getEnemyTemplateOptions() {
+        const enemies = asObject(this.enemiesDocument?.enemies || this.enemiesDocument);
+        return Object.values(enemies)
+            .filter(enemy => enemy && typeof enemy.id === 'string' && enemy.id.trim())
+            .sort((a, b) => String(a.name || a.id).localeCompare(String(b.name || b.id), 'zh-CN'));
+    }
+
     getEnemyPoolForLevel(level) {
         const firstWave = asArray(level?.waves)[0] || null;
         const poolId = firstWave?.enemyPoolId || '';
@@ -665,6 +672,68 @@ export class LevelMapEditorPage {
             templateId,
             enemy
         };
+    }
+
+    ensurePrimaryEnemyPoolForLevel(level) {
+        if (!level || !this.levelsDocument) return null;
+        if (!Array.isArray(level.waves)) {
+            level.waves = [];
+        }
+        if (!level.waves[0]) {
+            level.waves[0] = {
+                waveId: 'wave_1',
+                waveType: 'fixed',
+                enemyPoolId: ''
+            };
+        }
+        const wave = level.waves[0];
+        if (!wave.enemyPoolId) {
+            wave.enemyPoolId = `pool_${level.id || 'level'}_primary`;
+        }
+        if (!this.levelsDocument.enemyPools || typeof this.levelsDocument.enemyPools !== 'object' || Array.isArray(this.levelsDocument.enemyPools)) {
+            this.levelsDocument.enemyPools = {};
+        }
+        if (!this.levelsDocument.enemyPools[wave.enemyPoolId]) {
+            this.levelsDocument.enemyPools[wave.enemyPoolId] = {
+                id: wave.enemyPoolId,
+                name: `${level.name || level.id || '当前关卡'}敌人池`,
+                members: []
+            };
+        }
+        const pool = this.levelsDocument.enemyPools[wave.enemyPoolId];
+        if (!Array.isArray(pool.members)) {
+            pool.members = [];
+        }
+        if (!pool.members[0]) {
+            pool.members[0] = { templateId: '', position: 1 };
+        }
+        return pool;
+    }
+
+    updateCurrentLevelPrimaryEnemyTemplate(templateId) {
+        const enemy = this.getEnemyTemplate(templateId);
+        const map = this.getCurrentMap();
+        const node = this.getCurrentNode(map);
+        const level = this.getLevelDefinition(node?.levelId);
+        if (!node || !level || !enemy) {
+            this.setStatus('无法切换本关敌人：当前节点、关卡或敌人模板不存在。');
+            return false;
+        }
+
+        const pool = this.ensurePrimaryEnemyPoolForLevel(level);
+        if (!pool) {
+            this.setStatus('无法切换本关敌人：当前关卡缺少敌人池。');
+            return false;
+        }
+
+        pool.members[0] = {
+            ...pool.members[0],
+            templateId,
+            position: pool.members[0].position ?? 1
+        };
+        this.setStatus(`已切换本关敌人：${node.id} / ${level.id} -> ${enemy.name || enemy.id}。`);
+        this.renderAll();
+        return true;
     }
 
     setStatus(text) {
@@ -862,12 +931,48 @@ export class LevelMapEditorPage {
         this.setStatus(`${statusPrefix}：${this.normalizePackageDirectory(targetDirectory)}package.json`);
     }
 
+    async writeLevelsDocumentViaApi() {
+        if (!this.levelsDocument) return;
+        if (typeof this.fetchImpl !== 'function') {
+            throw new Error('缺少 fetch 实现，无法写入关卡定义。');
+        }
+        let response = null;
+        try {
+            response = await this.fetchImpl('/__skill_editor_file', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    path: 'assets/data/levels.json',
+                    content: JSON.stringify(this.levelsDocument, null, 2)
+                })
+            });
+        } catch (error) {
+            throw new Error(`关卡定义保存接口不可用：请确认后端服务已启动。原始错误：${error.message}`);
+        }
+        if (!response?.ok) {
+            let message = response?.status ? `HTTP ${response.status}` : 'unknown';
+            try {
+                const payload = await response.json();
+                if (payload?.error) {
+                    message = payload.error;
+                }
+            } catch (error) {
+                // Keep the HTTP status when response body is not JSON.
+            }
+            throw new Error(message);
+        }
+    }
+
     async saveAuthoringPackage() {
         await this.writePackageViaApi(
             '/api/level-map-packs/save',
             this.getAuthoringPackageDirectoryFromForm(),
             '已保存工作稿'
         );
+        await this.writeLevelsDocumentViaApi();
+        this.setStatus(`已保存工作稿，并写回关卡定义：${this.getAuthoringPackageDirectoryFromForm()}package.json / assets/data/levels.json`);
     }
 
     async publishRuntimePackage() {
@@ -876,6 +981,8 @@ export class LevelMapEditorPage {
             this.getRuntimePackageDirectoryFromForm(),
             '已发布到主流程'
         );
+        await this.writeLevelsDocumentViaApi();
+        this.setStatus(`已发布到主流程，并写回关卡定义：${this.getRuntimePackageDirectoryFromForm()}package.json / assets/data/levels.json`);
     }
 
     async selectPackageDirectory() {
@@ -1559,6 +1666,12 @@ export class LevelMapEditorPage {
         const skills = asArray(enemy.skills);
         const parts = asObject(enemy.bodyParts);
         const difficulty = level.selectionMeta?.difficultyLabel || node.difficultyLabel || '-';
+        const enemyOptions = this.getEnemyTemplateOptions();
+        const enemyOptionsHtml = enemyOptions
+            .map((option) => `
+                <option value="${escapeHtml(option.id)}"${option.id === templateId ? ' selected' : ''}>${escapeHtml(option.name || option.id)} / ${escapeHtml(option.id)}</option>
+            `)
+            .join('');
         const bodyPartRows = ['head', 'chest', 'abdomen', 'arm', 'leg']
             .map((partId) => {
                 const part = asObject(parts[partId]);
@@ -1580,9 +1693,17 @@ export class LevelMapEditorPage {
                     <span class="section-kicker">当前节点关卡</span>
                     <h3>本关敌人</h3>
                 </div>
-                <div class="current-enemy-panel__binding">
-                    <span>${escapeHtml(node.id)} / ${escapeHtml(level.name || node.title || node.label || '-')}</span>
-                    <code>${escapeHtml(node.levelId || '-')}</code>
+                <div class="current-enemy-panel__controls">
+                    <label class="current-enemy-picker">
+                        <span>敌人模板</span>
+                        <select id="currentEnemyTemplateSelect" aria-label="本关敌人模板">
+                            ${enemyOptionsHtml}
+                        </select>
+                    </label>
+                    <div class="current-enemy-panel__binding">
+                        <span>${escapeHtml(node.id)} / ${escapeHtml(level.name || node.title || node.label || '-')}</span>
+                        <code>${escapeHtml(node.levelId || '-')}</code>
+                    </div>
                 </div>
             </div>
             <div class="current-enemy-card">
@@ -1601,6 +1722,11 @@ export class LevelMapEditorPage {
                 <div class="enemy-parts">${bodyPartRows}</div>
             </div>
         `;
+
+        const enemyTemplateSelect = host.querySelector('#currentEnemyTemplateSelect');
+        enemyTemplateSelect?.addEventListener('change', () => {
+            this.updateCurrentLevelPrimaryEnemyTemplate(enemyTemplateSelect.value);
+        });
     }
 
     renderCanvas() {
