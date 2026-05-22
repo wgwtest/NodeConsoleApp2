@@ -46,6 +46,24 @@ export function buildTimestampedProjectJsonPath(inputPath, date = new Date()) {
     return dir ? `${dir}/${nextFile}` : nextFile;
 }
 
+export function buildTimestampedSkillAuthoringPath(inputPath, date = new Date()) {
+    const normalized = normalizeProjectJsonPath(inputPath) || 'assets/data/skills_melee_v4_5.json';
+    const slash = normalized.lastIndexOf('/');
+    const file = slash >= 0 ? normalized.slice(slash + 1) : normalized;
+    const rawBase = file.toLowerCase().endsWith('.json') ? file.slice(0, -5) : file;
+    const base = rawBase.replace(/(?:_\d{8}_\d{6})+$/u, '') || rawBase;
+    const stamp = [
+        date.getFullYear(),
+        pad2(date.getMonth() + 1),
+        pad2(date.getDate())
+    ].join('') + '_' + [
+        pad2(date.getHours()),
+        pad2(date.getMinutes()),
+        pad2(date.getSeconds())
+    ].join('');
+    return `assets/skill_packs/authoring/${base}_${stamp}.json`;
+}
+
 function splitProjectPath(inputPath) {
     const normalized = normalizeProjectJsonPath(inputPath);
     const slash = normalized.lastIndexOf('/');
@@ -171,6 +189,7 @@ export class SkillEditor {
         this.elPropRarity = document.getElementById('prop-rarity');
         this.elProjectFilePath = document.getElementById('project-file-path');
         this.elProjectFileStatus = document.getElementById('project-file-status');
+        this.elRecentSkillFileSelect = document.getElementById('recent-skill-file-select');
         this.currentSkillFilePath = normalizeProjectJsonPath(this.elProjectFilePath?.value || 'assets/data/skills_melee_v4_5.json');
         this.setCurrentProjectFilePath(this.currentSkillFilePath);
         // legacy cost field removed (v3 only)
@@ -252,6 +271,7 @@ export class SkillEditor {
         this.attachEvents();
 
         this.initSkillDrawer();
+        this.refreshRecentSkillFiles?.();
         
         // Seed minimal nodes
         this.addSkillNode({
@@ -1231,6 +1251,37 @@ export class SkillEditor {
         return Array.isArray(payload.files) ? payload.files : [];
     }
 
+    async refreshRecentSkillFiles(limit = 20) {
+        const response = await fetch(`/api/skill-packs/recent?limit=${encodeURIComponent(String(limit))}`, { cache: 'no-store' });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+        const files = Array.isArray(payload.files) ? payload.files : [];
+        const select = this.elRecentSkillFileSelect;
+        if (select) {
+            select.innerHTML = '';
+            const doc = this.document || document;
+            files.forEach((file) => {
+                const option = doc.createElement('option');
+                option.value = file.path;
+                option.textContent = file.path;
+                select.appendChild(option);
+            });
+            if (!select.value && files[0]?.path) {
+                select.value = files[0].path;
+            }
+        }
+        return files;
+    }
+
+    async loadSelectedRecentSkillFile() {
+        const filePath = this.elRecentSkillFileSelect?.value || '';
+        if (!filePath) {
+            this.setProjectFileStatus('没有可加载的最近版本', 'error');
+            return;
+        }
+        await this.loadProjectSkillPack(filePath);
+    }
+
     async loadProjectBuffPackForSkillPack(skillPath) {
         const siblingFiles = await this.listSiblingProjectJsonFiles(skillPath);
         const buffPath = pickSiblingBuffPackPath(skillPath, siblingFiles, this.skillPackMeta);
@@ -1343,7 +1394,7 @@ export class SkillEditor {
                 const newSkills = this.parseSkillPackDocument(data);
                 if (confirm(`解析成功：${newSkills.length} skills。覆盖当前画布？`)) {
                     this.replaceSkillsFromPack(data);
-                    this.setProjectFileStatus(`已导入本地文件 ${file.name}，保存前请确认项目路径`);
+                    this.setProjectFileStatus(`已从本地导入 ${file.name}，保存前请确认项目路径`);
                 }
             } catch (err) {
                 console.error(err);
@@ -1404,6 +1455,46 @@ export class SkillEditor {
         const nextPath = prompt('另存为项目内 JSON 路径', suggested);
         if (!nextPath) return;
         await this.saveProjectSkillPack(nextPath, true);
+    }
+
+    async saveSkillPackViaApi(endpoint, targetPath, statusPrefix, includeEditorMeta = true) {
+        const pack = this.buildSkillPackPayload(includeEditorMeta);
+        const content = JSON.stringify(pack, null, 2);
+        this.setProjectFileStatus(`${statusPrefix}中 ${targetPath}...`);
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    targetPath,
+                    content
+                })
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+            const savedPath = payload.targetPath || targetPath;
+            this.setCurrentProjectFilePath(savedPath);
+            this.setProjectFileStatus(`${statusPrefix}：${savedPath}`, 'ok');
+            if (typeof this.refreshRecentSkillFiles === 'function') {
+                await this.refreshRecentSkillFiles().catch((error) => {
+                    console.warn('[SkillEditor] refresh recent skill files failed:', error);
+                });
+            }
+            return payload;
+        } catch (err) {
+            console.error(err);
+            this.setProjectFileStatus(`${statusPrefix}失败：${err.message || String(err)}`, 'error');
+            throw err;
+        }
+    }
+
+    async saveAuthoringSkillPack(date = new Date()) {
+        const targetPath = buildTimestampedSkillAuthoringPath(this.currentSkillFilePath || this.elProjectFilePath?.value, date);
+        return this.saveSkillPackViaApi('/api/skill-packs/save', targetPath, '已保存工作稿', true);
+    }
+
+    async publishRuntimeSkillPack() {
+        return this.saveSkillPackViaApi('/api/skill-packs/publish', 'assets/data/skills_melee_v4_5.json', '已发布到主流程', true);
     }
 
     setError(el, msg) {

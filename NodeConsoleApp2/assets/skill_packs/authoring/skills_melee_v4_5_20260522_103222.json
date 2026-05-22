@@ -216,7 +216,7 @@
         }
       },
       "editorMeta": {
-        "x": 1714,
+        "x": 1614,
         "y": 314,
         "group": "melee",
         "locked": false,
@@ -403,7 +403,7 @@
         }
       },
       "editorMeta": {
-        "x": 1714,
+        "x": 1614,
         "y": 514,
         "group": "melee",
         "locked": false,
@@ -600,7 +600,7 @@
         }
       },
       "editorMeta": {
-        "x": 1714,
+        "x": 1614,
         "y": 914,
         "group": "melee",
         "locked": false,
@@ -676,7 +676,7 @@
         }
       },
       "editorMeta": {
-        "x": 1614,
+        "x": 1514,
         "y": 914,
         "group": "melee",
         "locked": false,
@@ -764,7 +764,7 @@
         }
       },
       "editorMeta": {
-        "x": 1614,
+        "x": 1514,
         "y": 1114,
         "group": "melee",
         "locked": false,
@@ -2761,6 +2761,242 @@
       "requirements": {}
     },
     {
+      "id": "skill_1771952067028",
+      "name": "单攻测试",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Action 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 10
+          }
+        }
+      ],
+      "editorMeta": {
+        "x": 814,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "description": "攻击单个部位",
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {}
+    },
+    {
+      "id": "skill_1771952147024",
+      "name": "多攻测试",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "multiple",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 4
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Action 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 3
+          }
+        }
+      ],
+      "editorMeta": {
+        "x": 914,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "description": "",
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {}
+    },
+    {
+      "id": "skill_1771952209174",
+      "name": "全攻测试",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [],
+      "editorMeta": {
+        "x": 714,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "description": "",
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {}
+    },
+    {
+      "id": "skill_demo_hp_guard",
+      "name": "HP免伤演示",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 8,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771481936095",
+            "target": "self",
+            "chance": 1,
+            "duration": 1,
+            "params": {}
+          }
+        ],
+        "remove": []
+      },
+      "actions": [],
+      "editorMeta": {
+        "x": 1114,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "description": "为自身附加 1 回合 HP 免伤，用于人工验收。",
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {}
+    },
+    {
       "id": "skill_demo_armor_guard",
       "name": "护甲免伤演示",
       "rarity": "Common",
@@ -3059,564 +3295,6 @@
       },
       "buffRefs": {
         "apply": [],
-        "remove": []
-      },
-      "actions": []
-    },
-    {
-      "id": "skill_leftover_lunchbox",
-      "name": "隔夜盒饭",
-      "rarity": "Rare",
-      "description": "把不太新鲜的盒饭当战术补给丢出去，造成少量伤害并让目标中毒。",
-      "prerequisites": [
-        "skill_savage_charge"
-      ],
-      "unlock": {
-        "cost": {
-          "kp": 3
-        },
-        "requirements": {},
-        "exclusives": [],
-        "grants": {
-          "type": "permanent"
-        }
-      },
-      "editorMeta": {
-        "x": 814,
-        "y": 714,
-        "group": "melee",
-        "locked": false,
-        "editState": "editing"
-      },
-      "speed": 0,
-      "target": {
-        "subject": "SUBJECT_ENEMY",
-        "scope": "SCOPE_PART",
-        "selection": {
-          "mode": "single",
-          "candidateParts": [
-            "head",
-            "chest",
-            "abdomen",
-            "arm",
-            "leg"
-          ],
-          "selectedParts": [],
-          "selectCount": 1
-        }
-      },
-      "requirements": {},
-      "costs": {
-        "ap": 1,
-        "perTurnLimit": 1
-      },
-      "buffRefs": {
-        "apply": [
-          {
-            "buffId": "buff_poison",
-            "target": "enemy",
-            "chance": 1,
-            "duration": 3,
-            "params": {
-              "damageVal": 5
-            }
-          }
-        ],
-        "remove": []
-      },
-      "actions": [
-        {
-          "id": "action_1",
-          "name": "砸盒饭",
-          "target": {
-            "binding": {
-              "mode": "follow",
-              "ref": "skillTarget"
-            }
-          },
-          "effect": {
-            "effectType": "DMG_HP",
-            "amountType": "ABS",
-            "amount": 4
-          }
-        }
-      ]
-    },
-    {
-      "id": "skill_loose_shoelaces",
-      "name": "鞋带松了",
-      "rarity": "Rare",
-      "description": "趁对方脚下不稳补一刀，造成少量伤害并降低目标速度。",
-      "prerequisites": [
-        "skill_skull_cracker_copy_1770042860426"
-      ],
-      "unlock": {
-        "cost": {
-          "kp": 3
-        },
-        "requirements": {},
-        "exclusives": [],
-        "grants": {
-          "type": "permanent"
-        }
-      },
-      "editorMeta": {
-        "x": 1414,
-        "y": 714,
-        "group": "melee",
-        "locked": false,
-        "editState": "editing"
-      },
-      "speed": 1,
-      "target": {
-        "subject": "SUBJECT_ENEMY",
-        "scope": "SCOPE_PART",
-        "selection": {
-          "mode": "single",
-          "candidateParts": [
-            "head",
-            "chest",
-            "abdomen",
-            "arm",
-            "leg"
-          ],
-          "selectedParts": [],
-          "selectCount": 1
-        }
-      },
-      "requirements": {},
-      "costs": {
-        "ap": 1,
-        "perTurnLimit": 1
-      },
-      "buffRefs": {
-        "apply": [
-          {
-            "buffId": "buff_slow",
-            "target": "enemy",
-            "chance": 1,
-            "duration": 2,
-            "params": {
-              "buff_speedVal": -4
-            }
-          }
-        ],
-        "remove": []
-      },
-      "actions": [
-        {
-          "id": "action_1",
-          "name": "绊一脚",
-          "target": {
-            "binding": {
-              "mode": "follow",
-              "ref": "skillTarget"
-            }
-          },
-          "effect": {
-            "effectType": "DMG_HP",
-            "amountType": "ABS",
-            "amount": 5
-          }
-        }
-      ]
-    },
-    {
-      "id": "skill_all_talk_weak_legs",
-      "name": "嘴硬腿软",
-      "rarity": "Epic",
-      "description": "嘴上很硬，腿已经软了。让目标进入虚弱状态，降低攻击力。",
-      "prerequisites": [
-        "skill_loose_shoelaces"
-      ],
-      "unlock": {
-        "cost": {
-          "kp": 5
-        },
-        "requirements": {},
-        "exclusives": [],
-        "grants": {
-          "type": "permanent"
-        }
-      },
-      "editorMeta": {
-        "x": 1414,
-        "y": 914,
-        "group": "melee",
-        "locked": false,
-        "editState": "editing"
-      },
-      "speed": 0,
-      "target": {
-        "subject": "SUBJECT_ENEMY",
-        "scope": "SCOPE_ENTITY",
-        "selection": {
-          "mode": "single",
-          "candidateParts": [],
-          "selectedParts": [],
-          "selectCount": 1
-        }
-      },
-      "requirements": {},
-      "costs": {
-        "ap": 2,
-        "perTurnLimit": 1
-      },
-      "buffRefs": {
-        "apply": [
-          {
-            "buffId": "debuff_weak",
-            "target": "enemy",
-            "chance": 1,
-            "duration": 2
-          }
-        ],
-        "remove": []
-      },
-      "actions": []
-    },
-    {
-      "id": "skill_break_defense_comment",
-      "name": "破防发言",
-      "rarity": "Rare",
-      "description": "一边撕开伤口一边补一句狠话，造成少量伤害并让目标更容易受伤。",
-      "prerequisites": [
-        "skill_1771769351059"
-      ],
-      "unlock": {
-        "cost": {
-          "kp": 3
-        },
-        "requirements": {},
-        "exclusives": [],
-        "grants": {
-          "type": "permanent"
-        }
-      },
-      "editorMeta": {
-        "x": 1014,
-        "y": 714,
-        "group": "melee",
-        "locked": false,
-        "editState": "editing"
-      },
-      "speed": 0,
-      "target": {
-        "subject": "SUBJECT_ENEMY",
-        "scope": "SCOPE_PART",
-        "selection": {
-          "mode": "single",
-          "candidateParts": [
-            "head",
-            "chest",
-            "abdomen",
-            "arm",
-            "leg"
-          ],
-          "selectedParts": [],
-          "selectCount": 1
-        }
-      },
-      "requirements": {},
-      "costs": {
-        "ap": 1,
-        "perTurnLimit": 1
-      },
-      "buffRefs": {
-        "apply": [
-          {
-            "buffId": "buff_vulnerable",
-            "target": "enemy",
-            "chance": 1,
-            "duration": 2
-          }
-        ],
-        "remove": []
-      },
-      "actions": [
-        {
-          "id": "action_1",
-          "name": "扎心",
-          "target": {
-            "binding": {
-              "mode": "follow",
-              "ref": "skillTarget"
-            }
-          },
-          "effect": {
-            "effectType": "DMG_HP",
-            "amountType": "ABS",
-            "amount": 5
-          }
-        }
-      ]
-    },
-    {
-      "id": "skill_play_dead_three_seconds",
-      "name": "装死三秒",
-      "rarity": "Epic",
-      "description": "先趴下装死，短时间内降低自身受到的伤害。",
-      "prerequisites": [
-        "skill_regroup"
-      ],
-      "unlock": {
-        "cost": {
-          "kp": 5
-        },
-        "requirements": {},
-        "exclusives": [],
-        "grants": {
-          "type": "permanent"
-        }
-      },
-      "editorMeta": {
-        "x": 814,
-        "y": 914,
-        "group": "melee",
-        "locked": false,
-        "editState": "editing"
-      },
-      "speed": 5,
-      "target": {
-        "subject": "SUBJECT_SELF",
-        "scope": "SCOPE_ENTITY",
-        "selection": {
-          "mode": "single",
-          "candidateParts": [],
-          "selectedParts": [],
-          "selectCount": 1
-        }
-      },
-      "requirements": {},
-      "costs": {
-        "ap": 1,
-        "perTurnLimit": 1
-      },
-      "buffRefs": {
-        "apply": [
-          {
-            "buffId": "buff_pain_sup",
-            "target": "self",
-            "chance": 1,
-            "duration": 2
-          }
-        ],
-        "remove": []
-      },
-      "actions": []
-    },
-    {
-      "id": "skill_cactus_vest",
-      "name": "仙人掌背心",
-      "rarity": "Legendary",
-      "description": "穿上谁碰谁扎的背心，防守后把部分伤害反弹给攻击者。",
-      "prerequisites": [
-        "skill_play_dead_three_seconds"
-      ],
-      "unlock": {
-        "cost": {
-          "kp": 8
-        },
-        "requirements": {},
-        "exclusives": [],
-        "grants": {
-          "type": "permanent"
-        }
-      },
-      "editorMeta": {
-        "x": 814,
-        "y": 1114,
-        "group": "melee",
-        "locked": false,
-        "editState": "editing"
-      },
-      "speed": 3,
-      "target": {
-        "subject": "SUBJECT_SELF",
-        "scope": "SCOPE_ENTITY",
-        "selection": {
-          "mode": "single",
-          "candidateParts": [],
-          "selectedParts": [],
-          "selectCount": 1
-        }
-      },
-      "requirements": {},
-      "costs": {
-        "ap": 2,
-        "perTurnLimit": 1
-      },
-      "buffRefs": {
-        "apply": [
-          {
-            "buffId": "buff_thorns",
-            "target": "self",
-            "chance": 1,
-            "duration": 3
-          }
-        ],
-        "remove": []
-      },
-      "actions": []
-    },
-    {
-      "id": "skill_hit_me_if_you_dare",
-      "name": "你打我试试",
-      "rarity": "Epic",
-      "description": "摆出欠揍但灵活的反击架势，被打后尝试反击攻击者。",
-      "prerequisites": [
-        "skill_shockwave_copy_1770041956468"
-      ],
-      "unlock": {
-        "cost": {
-          "kp": 5
-        },
-        "requirements": {},
-        "exclusives": [],
-        "grants": {
-          "type": "permanent"
-        }
-      },
-      "editorMeta": {
-        "x": 1314,
-        "y": 914,
-        "group": "melee",
-        "locked": false,
-        "editState": "editing"
-      },
-      "speed": 4,
-      "target": {
-        "subject": "SUBJECT_SELF",
-        "scope": "SCOPE_ENTITY",
-        "selection": {
-          "mode": "single",
-          "candidateParts": [],
-          "selectedParts": [],
-          "selectCount": 1
-        }
-      },
-      "requirements": {},
-      "costs": {
-        "ap": 2,
-        "perTurnLimit": 1
-      },
-      "buffRefs": {
-        "apply": [
-          {
-            "buffId": "buff_counter",
-            "target": "self",
-            "chance": 1,
-            "duration": 1
-          }
-        ],
-        "remove": []
-      },
-      "actions": []
-    },
-    {
-      "id": "skill_blood_debt_due",
-      "name": "欠血还钱",
-      "rarity": "Legendary",
-      "description": "把流血构筑转成持续压榨，接下来攻击造成伤害后回复自身 HP。",
-      "prerequisites": [
-        "skill_execute_copy_1770044052832"
-      ],
-      "unlock": {
-        "cost": {
-          "kp": 8
-        },
-        "requirements": {},
-        "exclusives": [],
-        "grants": {
-          "type": "permanent"
-        }
-      },
-      "editorMeta": {
-        "x": 1014,
-        "y": 1114,
-        "group": "melee",
-        "locked": false,
-        "editState": "editing"
-      },
-      "speed": 1,
-      "target": {
-        "subject": "SUBJECT_SELF",
-        "scope": "SCOPE_ENTITY",
-        "selection": {
-          "mode": "single",
-          "candidateParts": [],
-          "selectedParts": [],
-          "selectCount": 1
-        }
-      },
-      "requirements": {},
-      "costs": {
-        "ap": 2,
-        "perTurnLimit": 1
-      },
-      "buffRefs": {
-        "apply": [
-          {
-            "buffId": "buff_lifesteal",
-            "target": "self",
-            "chance": 1,
-            "duration": 3
-          }
-        ],
-        "remove": []
-      },
-      "actions": []
-    },
-    {
-      "id": "skill_forced_overtime",
-      "name": "临时加班",
-      "rarity": "Legendary",
-      "description": "把对手拖进临时加班状态，后续技能 AP 开销上升。",
-      "prerequisites": [
-        "skill_execute_copy_1769961767095"
-      ],
-      "unlock": {
-        "cost": {
-          "kp": 8
-        },
-        "requirements": {},
-        "exclusives": [],
-        "grants": {
-          "type": "permanent"
-        }
-      },
-      "editorMeta": {
-        "x": 1114,
-        "y": 1114,
-        "group": "melee",
-        "locked": false,
-        "editState": "editing"
-      },
-      "speed": 0,
-      "target": {
-        "subject": "SUBJECT_ENEMY",
-        "scope": "SCOPE_ENTITY",
-        "selection": {
-          "mode": "single",
-          "candidateParts": [],
-          "selectedParts": [],
-          "selectCount": 1
-        }
-      },
-      "requirements": {},
-      "costs": {
-        "ap": 2,
-        "perTurnLimit": 1
-      },
-      "buffRefs": {
-        "apply": [
-          {
-            "buffId": "new_buff_1771487055554",
-            "target": "enemy",
-            "chance": 1,
-            "duration": 3
-          }
-        ],
         "remove": []
       },
       "actions": []

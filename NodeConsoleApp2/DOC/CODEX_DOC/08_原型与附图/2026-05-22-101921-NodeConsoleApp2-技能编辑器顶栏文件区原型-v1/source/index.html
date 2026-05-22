@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>技能编辑器顶栏文件区原型 v1</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="board" aria-label="技能编辑器顶栏文件区原型">
+    <section class="editor-shell">
+      <header class="topbar">
+        <div class="identity">
+          <div class="product">技能编辑器</div>
+          <div class="current-file">
+            <span class="status-dot"></span>
+            <span>当前文件</span>
+            <code>assets/data/skills_melee_v4_5.json</code>
+          </div>
+        </div>
+
+        <div class="toolbar-grid">
+          <section class="tool-group open-group" aria-label="打开技能包">
+            <div class="group-title">打开技能包</div>
+            <div class="open-row">
+              <label class="field field-version">
+                <span>最近版本</span>
+                <select>
+                  <option>assets/skill_packs/authoring/skills_melee_v4_5_20260522_101921.json</option>
+                  <option>assets/data/skills_melee_v4_5.json</option>
+                  <option>assets/data/skills_melee_v4_4.json</option>
+                </select>
+              </label>
+              <button class="btn btn-primary">打开版本</button>
+              <button class="btn btn-ghost">刷新</button>
+            </div>
+            <div class="open-row">
+              <label class="field field-path">
+                <span>指定路径</span>
+                <input value="assets/data/skills_melee_v4_5.json">
+              </label>
+              <button class="btn btn-primary">打开路径</button>
+              <button class="btn btn-local">从本地导入</button>
+            </div>
+          </section>
+
+          <section class="tool-group buff-group" aria-label="Buff 文件">
+            <div class="group-title">Buff</div>
+            <div class="buff-card">
+              <span class="buff-state">同目录自动加载</span>
+              <button class="btn btn-ghost">手动加载 Buff</button>
+            </div>
+          </section>
+
+          <section class="tool-group edit-group" aria-label="编辑操作">
+            <div class="group-title">编辑</div>
+            <div class="button-row">
+              <button class="btn btn-ghost">技能库</button>
+              <button class="btn btn-ghost">新建技能</button>
+              <button class="btn btn-ghost">自动布局</button>
+              <button class="btn btn-danger">清空</button>
+            </div>
+          </section>
+
+          <section class="tool-group save-group" aria-label="保存与发布">
+            <div class="group-title">保存与发布</div>
+            <div class="button-row save-row">
+              <button class="btn btn-save">保存工作稿</button>
+              <button class="btn btn-publish">发布到主流程</button>
+            </div>
+            <div class="button-row backup-row">
+              <button class="btn btn-quiet">另存到指定路径</button>
+              <button class="btn btn-quiet">下载备份</button>
+            </div>
+          </section>
+        </div>
+      </header>
+
+      <div class="workspace-hint">
+        <div class="left-panel"></div>
+        <div class="canvas-panel">
+          <div class="canvas-grid"></div>
+          <div class="canvas-node node-a"></div>
+          <div class="canvas-node node-b"></div>
+          <div class="canvas-node node-c"></div>
+        </div>
+        <div class="right-panel"></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

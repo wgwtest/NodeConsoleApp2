@@ -51,3 +51,4 @@ node --test test/skill_tree_visual_redesign.test.mjs test/skill_legacy_field_ret
 - Keep map-specific changes in the map worktree and skill-specific changes in the skill worktree until they are intentionally merged.
 - Keep `.worktree/` project-local and ignored by Git.
 - `npm ci` currently fails because `package.json` and `package-lock.json` are not synchronized for the Spine dependency set. Use the startup install commands above until the lockfile is intentionally repaired.
+- Before adding or adjusting formal skills, read `NodeConsoleApp2/DOC/CODEX_DOC/04_研发文档/18-技能新增Codex护栏与排布检查规程.md` and run `node tools/validate_skill_authoring_guard.mjs <skill-json> assets/data/buffs_v2_7.json`.

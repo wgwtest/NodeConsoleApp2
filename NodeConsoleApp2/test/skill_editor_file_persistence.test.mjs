@@ -60,6 +60,17 @@ async function withTempServer(t, callback) {
     JSON.stringify({ $schemaVersion: 'buffs_test', buffs: { buff_new: { id: 'buff_new', name: 'New' } } }, null, 2),
     'utf8'
   );
+  await fs.mkdir(path.join(tempRoot, 'assets', 'skill_packs', 'authoring'), { recursive: true });
+  await fs.writeFile(
+    path.join(tempRoot, 'assets', 'skill_packs', 'authoring', 'skills_melee_v4_5_20260522_010203.json'),
+    JSON.stringify({ $schemaVersion: 'skills_melee_v3', skills: [{ id: 'skill_recent', name: 'Recent' }] }, null, 2),
+    'utf8'
+  );
+  await fs.utimes(
+    path.join(tempRoot, 'assets', 'skill_packs', 'authoring', 'skills_melee_v4_5_20260522_010203.json'),
+    new Date('2026-05-22T01:02:03Z'),
+    new Date('2026-05-22T01:02:03Z')
+  );
 
   const port = await getFreePort();
   const child = spawn(process.execPath, [path.join(projectRoot, 'app.js')], {
@@ -148,6 +159,78 @@ test('skill editor file API rejects traversal, non-json targets, and invalid JSO
   });
 });
 
+test('skill pack API saves authoring versions, publishes runtime pack, and lists recent skill JSON files', async t => {
+  await withTempServer(t, async ({ baseUrl, tempRoot }) => {
+    const authoringPath = 'assets/skill_packs/authoring/skills_melee_v4_5_20260522_020304.json';
+    const content = JSON.stringify({ $schemaVersion: 'skills_melee_v3', skills: [{ id: 'skill_saved_authoring' }] }, null, 2);
+
+    const saveRes = await fetch(`${baseUrl}/api/skill-packs/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetPath: authoringPath, content })
+    });
+    assert.equal(saveRes.status, 200);
+    const saveBody = await saveRes.json();
+    assert.equal(saveBody.ok, true);
+    assert.equal(saveBody.targetPath, authoringPath);
+
+    const savedAuthoring = JSON.parse(await fs.readFile(path.join(tempRoot, authoringPath), 'utf8'));
+    assert.equal(savedAuthoring.skills[0].id, 'skill_saved_authoring');
+
+    const publishRes = await fetch(`${baseUrl}/api/skill-packs/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    });
+    assert.equal(publishRes.status, 200);
+    const publishBody = await publishRes.json();
+    assert.equal(publishBody.ok, true);
+    assert.equal(publishBody.targetPath, 'assets/data/skills_melee_v4_5.json');
+
+    const runtimePack = JSON.parse(await fs.readFile(path.join(tempRoot, 'assets', 'data', 'skills_melee_v4_5.json'), 'utf8'));
+    assert.equal(runtimePack.skills[0].id, 'skill_saved_authoring');
+
+    const recentRes = await fetch(`${baseUrl}/api/skill-packs/recent?limit=5`);
+    assert.equal(recentRes.status, 200);
+    const recentBody = await recentRes.json();
+    assert.equal(recentBody.ok, true);
+    assert(
+      recentBody.files.some(file => file.path === authoringPath),
+      'recent list should include saved authoring skill versions'
+    );
+    assert(
+      recentBody.files.some(file => file.path === 'assets/data/skills_melee_v4_5.json'),
+      'recent list should include runtime skill JSON'
+    );
+  });
+});
+
+test('skill pack API rejects authoring saves outside authoring root and runtime publishes outside runtime skill file', async t => {
+  await withTempServer(t, async ({ baseUrl, tempRoot }) => {
+    const content = JSON.stringify({ $schemaVersion: 'skills_melee_v3', skills: [{ id: 'skill_bad' }] }, null, 2);
+    const badSave = await fetch(`${baseUrl}/api/skill-packs/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetPath: 'assets/data/skills_bad.json', content })
+    });
+    assert.equal(badSave.status, 400);
+    assert.equal((await badSave.json()).ok, false);
+
+    const badPublish = await fetch(`${baseUrl}/api/skill-packs/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetPath: 'assets/skill_packs/authoring/skills_bad.json', content })
+    });
+    assert.equal(badPublish.status, 400);
+    assert.equal((await badPublish.json()).ok, false);
+
+    await assert.rejects(
+      fs.stat(path.join(tempRoot, 'assets', 'data', 'skills_bad.json')),
+      /ENOENT/
+    );
+  });
+});
+
 test('SkillEditor builds project-save payload and timestamped save-as names', async () => {
   const { SkillEditor, buildTimestampedProjectJsonPath } = await importSkillEditorModule();
   const editor = Object.create(SkillEditor.prototype);
@@ -216,6 +299,116 @@ test('SkillEditor saves the current pack through the project file API instead of
   assert.equal(body.path, 'assets/data/skills_melee_v4_5.json');
   assert.equal(JSON.parse(body.content).skills[0].id, 'skill_a');
   assert.match(editor.lastStatus, /已保存/);
+});
+
+test('SkillEditor saves authoring skill versions and publishes the runtime skill pack through dedicated APIs', async () => {
+  const { SkillEditor } = await importSkillEditorModule();
+  const editor = Object.create(SkillEditor.prototype);
+  editor.skills = [{ id: 'skill_a', name: 'A' }];
+  editor.skillPackMeta = { title: 'Pack', enums: {} };
+  editor.skillPackSchemaVersion = 'skills_melee_v3';
+  editor.defaultParts = [];
+  editor.enums = {};
+  editor.currentSkillFilePath = 'assets/data/skills_melee_v4_5.json';
+  editor.setProjectFileStatus = message => {
+    editor.lastStatus = message;
+  };
+  editor.setCurrentProjectFilePath = filePath => {
+    editor.currentSkillFilePath = filePath;
+  };
+  editor.refreshRecentSkillFiles = async () => {};
+
+  const calls = [];
+  const originalFetch = global.fetch;
+  global.fetch = async (url, options) => {
+    calls.push({ url, options });
+    return {
+      ok: true,
+      json: async () => ({
+        ok: true,
+        targetPath: url === '/api/skill-packs/publish'
+          ? 'assets/data/skills_melee_v4_5.json'
+          : 'assets/skill_packs/authoring/skills_melee_v4_5_20260522_010203.json',
+        bytes: 123
+      })
+    };
+  };
+  try {
+    await editor.saveAuthoringSkillPack(new Date(2026, 4, 22, 1, 2, 3));
+    await editor.publishRuntimeSkillPack();
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  assert.deepEqual(calls.map(call => call.url), ['/api/skill-packs/save', '/api/skill-packs/publish']);
+  const saveBody = JSON.parse(calls[0].options.body);
+  const publishBody = JSON.parse(calls[1].options.body);
+  assert.equal(saveBody.targetPath, 'assets/skill_packs/authoring/skills_melee_v4_5_20260522_010203.json');
+  assert.equal(JSON.parse(saveBody.content).skills[0].id, 'skill_a');
+  assert.equal(publishBody.targetPath, 'assets/data/skills_melee_v4_5.json');
+  assert.equal(JSON.parse(publishBody.content).skills[0].id, 'skill_a');
+  assert.match(editor.lastStatus, /已发布到主流程/);
+});
+
+test('SkillEditor authoring version names do not accumulate old timestamp suffixes', async () => {
+  const { buildTimestampedSkillAuthoringPath } = await importSkillEditorModule();
+  const nextPath = buildTimestampedSkillAuthoringPath(
+    'assets/skill_packs/authoring/skills_melee_v4_5_20260522_010203.json',
+    new Date(2026, 4, 22, 2, 3, 4)
+  );
+  assert.equal(nextPath, 'assets/skill_packs/authoring/skills_melee_v4_5_20260522_020304.json');
+});
+
+test('SkillEditor refreshes and loads recent skill JSON versions from the toolbar dropdown', async () => {
+  const { SkillEditor } = await importSkillEditorModule();
+  const appended = [];
+  const editor = Object.create(SkillEditor.prototype);
+  editor.elRecentSkillFileSelect = {
+    innerHTML: '',
+    value: '',
+    appendChild(option) {
+      appended.push(option);
+      if (!this.value) this.value = option.value;
+    }
+  };
+  editor.document = {
+    createElement(tagName) {
+      assert.equal(tagName, 'option');
+      return { value: '', textContent: '' };
+    }
+  };
+  editor.setProjectFileStatus = message => {
+    editor.lastStatus = message;
+  };
+  editor.loadProjectSkillPack = async filePath => {
+    editor.loadedPath = filePath;
+  };
+
+  const originalFetch = global.fetch;
+  global.fetch = async url => {
+    assert.equal(String(url), '/api/skill-packs/recent?limit=20');
+    return {
+      ok: true,
+      json: async () => ({
+        ok: true,
+        files: [
+          { path: 'assets/skill_packs/authoring/skills_melee_v4_5_20260522_010203.json', mtimeMs: 1770000000000 },
+          { path: 'assets/data/skills_melee_v4_5.json', mtimeMs: 1760000000000 }
+        ]
+      })
+    };
+  };
+  try {
+    const files = await editor.refreshRecentSkillFiles();
+    await editor.loadSelectedRecentSkillFile();
+    assert.equal(files.length, 2);
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  assert.equal(appended.length, 2);
+  assert.equal(appended[0].value, 'assets/skill_packs/authoring/skills_melee_v4_5_20260522_010203.json');
+  assert.equal(editor.loadedPath, 'assets/skill_packs/authoring/skills_melee_v4_5_20260522_010203.json');
 });
 
 test('SkillEditor loads the newest sibling buffs pack after loading a project skill pack', async () => {
@@ -296,9 +489,17 @@ test('SkillEditor loads the newest sibling buffs pack after loading a project sk
 
 test('skill editor toolbar uses Chinese labels for file and edit actions', async () => {
   const html = await fs.readFile(path.join(projectRoot, 'test', 'skill_editor_test_v3.html'), 'utf8');
-  for (const label of ['加载 Buff', '技能库', '加载项目', '导入本地', '新建技能', '保存', '另存为', '下载', '清空', '自动布局']) {
+  for (const label of ['打开技能包', '最近版本', '打开版本', '刷新', '指定路径', '打开路径', '从本地导入', 'Buff', '同目录自动加载', '手动加载 Buff', '编辑', '技能库', '新建技能', '自动布局', '清空', '保存与发布', '保存工作稿', '发布到主流程', '另存到指定路径', '下载备份']) {
     assert.match(html, new RegExp(label), `toolbar should include ${label}`);
   }
+  for (const retiredLabel of ['>加载项目<', '>加载版本<', '>导入本地<', '>加载 Buff<', '>另存为<', '>下载\\s*<']) {
+    assert.doesNotMatch(html, new RegExp(retiredLabel), `toolbar should not include ambiguous retired label ${retiredLabel}`);
+  }
+  assert.match(
+    html,
+    /打开技能包[\s\S]*最近版本[\s\S]*打开版本[\s\S]*刷新[\s\S]*指定路径[\s\S]*打开路径[\s\S]*从本地导入[\s\S]*Buff[\s\S]*手动加载 Buff[\s\S]*编辑[\s\S]*技能库[\s\S]*新建技能[\s\S]*自动布局[\s\S]*清空[\s\S]*保存与发布[\s\S]*保存工作稿[\s\S]*发布到主流程[\s\S]*另存到指定路径[\s\S]*下载备份/u,
+    'toolbar should follow the approved topbar grouping order'
+  );
   assert.doesNotMatch(
     html,
     />\s*(Load Buffs|Skills|Load Project|Import Local|New Skill|Save As|Download|Clear|Auto Layout)\b/,

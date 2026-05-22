@@ -216,7 +216,7 @@
         }
       },
       "editorMeta": {
-        "x": 1714,
+        "x": 1614,
         "y": 314,
         "group": "melee",
         "locked": false,
@@ -403,7 +403,7 @@
         }
       },
       "editorMeta": {
-        "x": 1714,
+        "x": 1614,
         "y": 514,
         "group": "melee",
         "locked": false,
@@ -600,7 +600,7 @@
         }
       },
       "editorMeta": {
-        "x": 1714,
+        "x": 1614,
         "y": 914,
         "group": "melee",
         "locked": false,
@@ -676,7 +676,7 @@
         }
       },
       "editorMeta": {
-        "x": 1614,
+        "x": 1514,
         "y": 914,
         "group": "melee",
         "locked": false,
@@ -764,7 +764,7 @@
         }
       },
       "editorMeta": {
-        "x": 1614,
+        "x": 1514,
         "y": 1114,
         "group": "melee",
         "locked": false,
@@ -2761,6 +2761,242 @@
       "requirements": {}
     },
     {
+      "id": "skill_1771952067028",
+      "name": "单攻测试",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Action 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 10
+          }
+        }
+      ],
+      "editorMeta": {
+        "x": 814,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "description": "攻击单个部位",
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {}
+    },
+    {
+      "id": "skill_1771952147024",
+      "name": "多攻测试",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "multiple",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 4
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Action 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 3
+          }
+        }
+      ],
+      "editorMeta": {
+        "x": 914,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "description": "",
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {}
+    },
+    {
+      "id": "skill_1771952209174",
+      "name": "全攻测试",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [],
+      "editorMeta": {
+        "x": 714,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "description": "",
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {}
+    },
+    {
+      "id": "skill_demo_hp_guard",
+      "name": "HP免伤演示",
+      "rarity": "Common",
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "speed": 8,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [],
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771481936095",
+            "target": "self",
+            "chance": 1,
+            "duration": 1,
+            "params": {}
+          }
+        ],
+        "remove": []
+      },
+      "actions": [],
+      "editorMeta": {
+        "x": 1114,
+        "y": 314,
+        "group": "melee",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "description": "为自身附加 1 回合 HP 免伤，用于人工验收。",
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {}
+    },
+    {
       "id": "skill_demo_armor_guard",
       "name": "护甲免伤演示",
       "rarity": "Common",
@@ -3161,7 +3397,7 @@
         }
       },
       "editorMeta": {
-        "x": 1414,
+        "x": 1514,
         "y": 714,
         "group": "melee",
         "locked": false,
