@@ -16,25 +16,62 @@
     <div id="toolbar">
         <input type="file" id="file-input" accept=".json" style="display: none;" onchange="editor.importJsonFile(this)">
         <input type="file" id="buff-file-input" accept=".json" style="display: none;" onchange="editor.importBuffsFile(this)">
-        <button class="btn btn-dark" onclick="document.getElementById('buff-file-input').click()">加载 Buff</button>
-        <button class="btn btn-dark" onclick="editor.toggleSkillDrawer()">技能库</button>
-        <label class="project-file-control" title="项目内 JSON 路径">
-            <span>文件</span>
-            <input id="project-file-path" type="text" value="assets/data/skills_melee_v4_5.json" spellcheck="false">
-        </label>
-        <button class="btn btn-primary" onclick="editor.loadProjectSkillPack()">加载项目</button>
-        <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">导入本地</button>
-        <button class="btn btn-primary" onclick="editor.createNewSkill()">新建技能</button>
-        <button class="btn btn-success" onclick="editor.saveProjectSkillPack()">保存</button>
-        <button class="btn btn-success" onclick="editor.saveProjectSkillPackAs()">另存为</button>
-        <button class="btn btn-dark" onclick="editor.exportJson(true)">下载
-        </button>
+        <div class="toolbar-header">
+            <div class="toolbar-title">技能编辑器</div>
+            <div class="current-file-display">
+                <span class="current-file-dot"></span>
+                <span>当前文件</span>
+                <code id="project-file-status" class="project-file-status">未打开文件</code>
+            </div>
+        </div>
+        <div class="toolbar-groups" aria-label="技能编辑器操作">
+            <section class="toolbar-group toolbar-group-open" aria-label="打开技能包">
+                <div class="toolbar-group-title">打开技能包</div>
+                <div class="toolbar-line">
+                    <label class="project-file-control project-file-control-wide" title="最近保存或发布的技能 JSON 版本">
+                        <span>最近版本</span>
+                        <select id="recent-skill-file-select" spellcheck="false"></select>
+                    </label>
+                    <button class="btn btn-primary" onclick="editor.loadSelectedRecentSkillFile()">打开版本</button>
+                    <button class="btn btn-dark" onclick="editor.refreshRecentSkillFiles()">刷新</button>
+                </div>
+                <div class="toolbar-line">
+                    <label class="project-file-control project-file-control-wide" title="项目内 JSON 路径">
+                        <span>指定路径</span>
+                        <input id="project-file-path" type="text" value="assets/data/skills_melee_v4_5.json" spellcheck="false">
+                    </label>
+                    <button class="btn btn-primary" onclick="editor.loadProjectSkillPack()">打开路径</button>
+                    <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">从本地导入</button>
+                </div>
+            </section>
+            <section class="toolbar-group toolbar-group-buff" aria-label="Buff">
+                <div class="toolbar-group-title">Buff</div>
+                <div class="toolbar-buff-state">同目录自动加载</div>
+                <button class="btn btn-dark" onclick="document.getElementById('buff-file-input').click()">手动加载 Buff</button>
+            </section>
+            <section class="toolbar-group toolbar-group-edit" aria-label="编辑">
+                <div class="toolbar-group-title">编辑</div>
+                <div class="toolbar-button-grid">
+                    <button class="btn btn-dark" onclick="editor.toggleSkillDrawer()">技能库</button>
+                    <button class="btn btn-primary" onclick="editor.createNewSkill()">新建技能</button>
+                    <button class="btn btn-dark" onclick="editor.autoLayout()">自动布局</button>
+                    <button class="btn btn-danger" onclick="editor.clearCanvas()">清空</button>
+                </div>
+            </section>
+            <section class="toolbar-group toolbar-group-save" aria-label="保存与发布">
+                <div class="toolbar-group-title">保存与发布</div>
+                <div class="toolbar-line">
+                    <button class="btn btn-success toolbar-main-action" onclick="editor.saveAuthoringSkillPack()">保存工作稿</button>
+                    <button class="btn btn-publish toolbar-main-action" onclick="editor.publishRuntimeSkillPack()">发布到主流程</button>
+                </div>
+                <div class="toolbar-line">
+                    <button class="btn btn-dark toolbar-sub-action" onclick="editor.saveProjectSkillPackAs()">另存到指定路径</button>
+                    <button class="btn btn-dark toolbar-sub-action" onclick="editor.exportJson(true)">下载备份</button>
+                </div>
+            </section>
+        </div>
         <button class="btn btn-success" onclick="editor.exportJson(false)" style="display:none">导出运行时
         </button>
-        <button class="btn btn-danger" onclick="editor.clearCanvas()">清空</button>
-        <span style="flex:1"></span>
-        <span id="project-file-status" class="project-file-status">未加载项目文件</span>
-        <button class="btn btn-dark" onclick="editor.autoLayout()">自动布局</button>
     </div>
 
     <div id="main-container">

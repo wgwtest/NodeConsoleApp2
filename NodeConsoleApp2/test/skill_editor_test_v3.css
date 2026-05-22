@@ -49,14 +49,13 @@
 
 /* A. Toolbar */
 .skill-editor-v3 #toolbar {
-	min-height: 50px;
+	min-height: 166px;
 	background: var(--panel-bg);
 	border-bottom: 1px solid var(--border-color);
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	flex-wrap: wrap;
-	padding: 0 20px;
+	display: grid;
+	grid-template-rows: auto auto;
+	gap: 10px;
+	padding: 14px 18px;
 	box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 	z-index: 100;
 }
@@ -75,12 +74,78 @@
 .skill-editor-v3 .btn-success { background: var(--success-color); color: #fff; }
 .skill-editor-v3 .btn-danger { background: var(--danger-color); color: #fff; }
 .skill-editor-v3 .btn-dark { background: #34495e; color: #fff; }
+.skill-editor-v3 .btn-publish { background: #b45c1d; color: #fff; }
 .skill-editor-v3 .btn-sm { padding: 4px 8px; font-size: 12px; }
 
+.skill-editor-v3 .toolbar-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	min-width: 0;
+}
+
+.skill-editor-v3 .toolbar-title {
+	color: #1d2b3a;
+	font-size: 22px;
+	font-weight: 900;
+	white-space: nowrap;
+}
+
+.skill-editor-v3 .current-file-display {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	min-width: 0;
+	color: #64707d;
+	font-size: 12px;
+	font-weight: 800;
+}
+
+.skill-editor-v3 .current-file-dot {
+	width: 8px;
+	height: 8px;
+	flex: 0 0 auto;
+	border-radius: 999px;
+	background: var(--success-color);
+	box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.16);
+}
+
+.skill-editor-v3 .toolbar-groups {
+	display: grid;
+	grid-template-columns: minmax(600px, 1.35fr) minmax(180px, 0.42fr) minmax(290px, 0.62fr) minmax(350px, 0.72fr);
+	gap: 10px;
+	align-items: stretch;
+	min-width: 0;
+}
+
+.skill-editor-v3 .toolbar-group {
+	min-width: 0;
+	border: 1px solid #d5dce3;
+	border-radius: 8px;
+	background: #fbfcfd;
+	padding: 10px 12px;
+}
+
+.skill-editor-v3 .toolbar-group-title {
+	margin-bottom: 8px;
+	color: #34495e;
+	font-size: 12px;
+	font-weight: 900;
+}
+
+.skill-editor-v3 .toolbar-line {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	margin-top: 7px;
+}
+
 .skill-editor-v3 .project-file-control {
-	min-width: 300px;
-	max-width: 460px;
-	flex: 1 1 320px;
+	min-width: 0;
+	flex: 1 1 auto;
 	height: 34px;
 	display: flex;
 	align-items: center;
@@ -94,7 +159,12 @@
 	font-weight: 800;
 }
 
-.skill-editor-v3 .project-file-control input {
+.skill-editor-v3 .project-file-control-wide {
+	flex-basis: 420px;
+}
+
+.skill-editor-v3 .project-file-control input,
+.skill-editor-v3 .project-file-control select {
 	min-width: 0;
 	flex: 1;
 	border: 0;
@@ -102,11 +172,18 @@
 	font-family: var(--monospace);
 	font-size: 12px;
 	color: #2c3e50;
+	background: transparent;
 }
 
 .skill-editor-v3 .project-file-status {
-	max-width: 340px;
-	color: #66727f;
+	max-width: min(620px, 46vw);
+	display: inline-block;
+	padding: 6px 9px;
+	border: 1px solid #d5dce3;
+	border-radius: 6px;
+	background: #f5f8fb;
+	color: #2c3e50;
+	font-family: var(--monospace);
 	font-size: 12px;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -119,6 +196,68 @@
 
 .skill-editor-v3 .project-file-status.is-ok {
 	color: var(--success-color);
+}
+
+.skill-editor-v3 .toolbar-buff-state {
+	display: flex;
+	align-items: center;
+	height: 34px;
+	margin-bottom: 7px;
+	padding: 0 10px;
+	border: 1px solid #cde8d6;
+	border-radius: 6px;
+	background: #effaf2;
+	color: #247a4f;
+	font-size: 12px;
+	font-weight: 900;
+}
+
+.skill-editor-v3 .toolbar-button-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.skill-editor-v3 .toolbar-main-action,
+.skill-editor-v3 .toolbar-sub-action {
+	flex: 1 1 0;
+}
+
+.skill-editor-v3 .toolbar-sub-action {
+	background: #eef2f5;
+	color: #34495e;
+	border: 1px solid #d3dce5;
+}
+
+@media (max-width: 1500px) {
+	.skill-editor-v3 .toolbar-groups {
+		grid-template-columns: minmax(560px, 1fr) minmax(180px, 220px);
+	}
+}
+
+@media (max-width: 900px) {
+	.skill-editor-v3 #toolbar {
+		min-height: 0;
+	}
+
+	.skill-editor-v3 .toolbar-header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.skill-editor-v3 .current-file-display {
+		width: 100%;
+		justify-content: flex-start;
+	}
+
+	.skill-editor-v3 .toolbar-groups {
+		grid-template-columns: 1fr;
+	}
+
+	.skill-editor-v3 .toolbar-line {
+		align-items: stretch;
+		flex-direction: column;
+	}
 }
 
 .skill-editor-v3 #main-container {

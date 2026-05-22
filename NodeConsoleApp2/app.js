@@ -10,8 +10,11 @@ const allowedPackageFiles = new Set(['package.json', 'maps.json', 'asset-manifes
 const skillEditorFileRoute = '/__skill_editor_file';
 const allowedJsonWriteRoots = [
   'assets/data/',
+  'assets/skill_packs/authoring/',
   'DOC/CODEX_DOC/'
 ];
+const skillAuthoringRoot = 'assets/skill_packs/authoring/';
+const runtimeSkillPackPath = 'assets/data/skills_melee_v4_5.json';
 
 const mimeTypes = new Map([
   ['.html', 'text/html; charset=utf-8'],
@@ -200,6 +203,10 @@ function normalizeRelativeDirectory(value) {
   return String(value || '').trim().replace(/\\/g, '/').replace(/^\/+/u, '');
 }
 
+function normalizeRelativePath(value) {
+  return String(value || '').trim().replace(/\\/g, '/').replace(/^\/+/u, '');
+}
+
 function isAllowedMapPackDirectory(targetDirectory) {
   const normalized = normalizeRelativeDirectory(targetDirectory);
   return normalized.startsWith('assets/map_packs/authoring/')
@@ -244,6 +251,111 @@ async function writeLevelMapPackage(payload) {
   };
 }
 
+function normalizeSkillPackPath(inputPath, { mode = 'authoring' } = {}) {
+  const raw = normalizeRelativePath(inputPath);
+  if (!raw) throw new Error('缺少技能包路径。');
+  if (path.isAbsolute(raw) || /^[a-zA-Z]:\//.test(raw)) {
+    throw new Error('只允许项目内相对路径。');
+  }
+  if (!raw.endsWith('.json')) {
+    throw new Error('技能包必须是 .json 文件。');
+  }
+  const normalized = path.posix.normalize(raw).replace(/^\/+/u, '');
+  if (normalized === '..' || normalized.startsWith('../') || normalized.includes('/../')) {
+    throw new Error('路径不能跳出项目目录。');
+  }
+  if (mode === 'runtime') {
+    if (normalized !== runtimeSkillPackPath) {
+      throw new Error(`发布目标只能是 ${runtimeSkillPackPath}。`);
+    }
+  } else if (!normalized.startsWith(skillAuthoringRoot)) {
+    throw new Error(`保存工作稿只能写入 ${skillAuthoringRoot}。`);
+  }
+  return normalized;
+}
+
+function parseSkillPackContent(content) {
+  const text = String(content ?? '');
+  const parsed = JSON.parse(text);
+  if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.skills)) {
+    throw new Error('技能包必须包含 skills 数组。');
+  }
+  return { parsed, text };
+}
+
+async function writeSkillPackFile(payload, { mode = 'authoring' } = {}) {
+  const targetPath = normalizeSkillPackPath(
+    mode === 'runtime' ? (payload?.targetPath || runtimeSkillPackPath) : payload?.targetPath,
+    { mode }
+  );
+  const { text } = parseSkillPackContent(payload?.content);
+  const absolutePath = path.resolve(rootDir, targetPath);
+  const relativeToRoot = path.relative(rootDir, absolutePath);
+  if (relativeToRoot.startsWith('..') || path.isAbsolute(relativeToRoot)) {
+    throw new Error('路径不能跳出项目目录。');
+  }
+  await fs.promises.mkdir(path.dirname(absolutePath), { recursive: true });
+  await fs.promises.writeFile(absolutePath, text.endsWith('\n') ? text : `${text}\n`, 'utf8');
+  const stat = await fs.promises.stat(absolutePath);
+  return {
+    targetPath,
+    bytes: stat.size
+  };
+}
+
+async function collectSkillJsonFiles(directory) {
+  const root = path.resolve(rootDir, directory);
+  const files = [];
+  async function visit(currentDir) {
+    let entries = [];
+    try {
+      entries = await fs.promises.readdir(currentDir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const absolutePath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        await visit(absolutePath);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      if (!/^skills.*\.json$/iu.test(entry.name)) continue;
+      try {
+        const stat = await fs.promises.stat(absolutePath);
+        files.push({
+          path: path.relative(rootDir, absolutePath).replace(/\\/g, '/'),
+          bytes: stat.size,
+          mtimeMs: stat.mtimeMs
+        });
+      } catch {
+        // Ignore files that disappear while listing.
+      }
+    }
+  }
+  await visit(root);
+  return files;
+}
+
+async function listRecentSkillJsonFiles(limit = 20) {
+  const allFiles = [
+    ...(await collectSkillJsonFiles(skillAuthoringRoot)),
+    ...(await collectSkillJsonFiles('assets/data/'))
+  ];
+  const seen = new Set();
+  return allFiles
+    .filter(file => {
+      if (seen.has(file.path)) return false;
+      seen.add(file.path);
+      return true;
+    })
+    .sort((a, b) => {
+      const delta = Number(b.mtimeMs || 0) - Number(a.mtimeMs || 0);
+      return delta || String(b.path).localeCompare(String(a.path));
+    })
+    .slice(0, Math.max(1, Math.min(100, Number.parseInt(limit, 10) || 20)));
+}
+
 function createServer() {
   return http.createServer(async (req, res) => {
     const parsedUrl = new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`);
@@ -253,6 +365,29 @@ function createServer() {
     }
 
     const urlPath = decodeURIComponent(parsedUrl.pathname);
+
+    if (urlPath === '/api/skill-packs/recent' && req.method === 'GET') {
+      try {
+        const files = await listRecentSkillJsonFiles(parsedUrl.searchParams.get('limit') || 20);
+        sendJson(res, 200, { ok: true, files });
+      } catch (error) {
+        sendJson(res, 400, { ok: false, error: error.message });
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && (urlPath === '/api/skill-packs/save' || urlPath === '/api/skill-packs/publish')) {
+      try {
+        const payload = await readJsonBody(req);
+        const result = await writeSkillPackFile(payload, {
+          mode: urlPath.endsWith('/publish') ? 'runtime' : 'authoring'
+        });
+        sendJson(res, 200, { ok: true, ...result });
+      } catch (error) {
+        sendJson(res, 400, { ok: false, error: error.message });
+      }
+      return;
+    }
 
     if (req.method === 'POST' && (urlPath === '/api/level-map-packs/save' || urlPath === '/api/level-map-packs/publish')) {
       try {
@@ -295,5 +430,8 @@ if (require.main === module) {
 module.exports = {
   createServer,
   isAllowedMapPackDirectory,
-  writeLevelMapPackage
+  writeLevelMapPackage,
+  normalizeSkillPackPath,
+  writeSkillPackFile,
+  listRecentSkillJsonFiles
 };

@@ -253,9 +253,9 @@ test('技能分析工具与共享回归页不再依赖旧技能附加字段', as
 test('活动技能包与正式设计文档不再把旧技能附加字段作为活动 schema', async () => {
   const packPath = path.join(projectRoot, 'assets', 'data', 'skills_melee_v4_5.json');
   const designPaths = [
-    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', '03-技能系统(skill_design)-设计说明.md'),
-    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', '04-技能编辑器(skill_editor_design)-设计说明.md'),
-    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', '06-技能平衡(skill_balance_design)-设计说明.md')
+    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', 'S4_技能系统与编辑器', '03-技能系统(skill_design)-设计说明.md'),
+    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', 'S4_技能系统与编辑器', '04-技能编辑器(skill_editor_design)-设计说明.md'),
+    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', 'S4_技能系统与编辑器', '06-技能平衡(skill_balance_design)-设计说明.md')
   ];
 
   const rawPack = JSON.parse(await fs.readFile(packPath, 'utf8'));
@@ -279,10 +279,10 @@ test('高风险路径不再保留旧技能附加字段残留', async () => {
     path.join(projectRoot, 'assets', 'data', 'skills_melee_v4.json'),
     path.join(projectRoot, 'assets', 'data', 'skills_melee_v4_4.json'),
     path.join(projectRoot, 'assets', 'data', 'skills_melee_v4_5.json'),
-    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', '01-核心引擎(core_engine)-设计说明.md'),
-    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', '03-技能系统(skill_design)-设计说明.md'),
-    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', '04-技能编辑器(skill_editor_design)-设计说明.md'),
-    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', '06-技能平衡(skill_balance_design)-设计说明.md'),
+    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', 'S2_战斗运行时', '01-核心引擎(core_engine)-设计说明.md'),
+    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', 'S4_技能系统与编辑器', '03-技能系统(skill_design)-设计说明.md'),
+    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', 'S4_技能系统与编辑器', '04-技能编辑器(skill_editor_design)-设计说明.md'),
+    path.join(projectRoot, 'DOC', 'CODEX_DOC', '02_设计说明', 'S4_技能系统与编辑器', '06-技能平衡(skill_balance_design)-设计说明.md'),
     path.join(projectRoot, 'script', 'editor', 'skill', 'skillEditor.js'),
     path.join(projectRoot, 'script', 'engine', 'DataManagerV2.js'),
     path.join(projectRoot, 'script', 'ui', 'UI_SkillPanel.js'),
