@@ -233,4 +233,3 @@ export function validateSkillAuthoringGuard(skillPack, buffPack, config = {}) {
 
   return { ok: issues.length === 0, issues };
 }
-
