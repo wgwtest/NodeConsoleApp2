@@ -134,6 +134,40 @@ test('skill editor file API lists JSON files beside a project file', async t => 
   });
 });
 
+test('project JSON file API allows enemy authoring draft files', async t => {
+  await withTempServer(t, async ({ baseUrl, tempRoot }) => {
+    const content = JSON.stringify({
+      goblin_story_headhunter: {
+        id: 'goblin_story_headhunter',
+        name: '哥布林追猎手',
+        stats: { hp: 65, maxHp: 65, ap: 4, speed: 11 },
+        bodyParts: {},
+        skills: ['skill_throw_stone'],
+        presentation: { portraitRef: 'enemy_goblin_hunter' }
+      }
+    }, null, 2);
+
+    const saveRes = await fetch(`${baseUrl}/__skill_editor_file`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: 'assets/enemy_packs/authoring/enemies_20260524_010203.json',
+        content
+      })
+    });
+    assert.equal(saveRes.status, 200);
+    const saveBody = await saveRes.json();
+    assert.equal(saveBody.ok, true);
+    assert.equal(saveBody.path, 'assets/enemy_packs/authoring/enemies_20260524_010203.json');
+
+    const saved = JSON.parse(await fs.readFile(
+      path.join(tempRoot, 'assets', 'enemy_packs', 'authoring', 'enemies_20260524_010203.json'),
+      'utf8'
+    ));
+    assert.equal(saved.goblin_story_headhunter.presentation.portraitRef, 'enemy_goblin_hunter');
+  });
+});
+
 test('skill editor file API rejects traversal, non-json targets, and invalid JSON content', async t => {
   await withTempServer(t, async ({ baseUrl, tempRoot }) => {
     for (const body of [

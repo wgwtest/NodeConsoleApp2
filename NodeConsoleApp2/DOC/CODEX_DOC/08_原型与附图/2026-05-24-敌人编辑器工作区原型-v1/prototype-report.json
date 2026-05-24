@@ -1,0 +1,25 @@
+{
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "html": "source/enemy-editor-workspace-prototype-v1.html",
+  "screenshots": [
+    {
+      "fileName": "01-1920x1080-敌人编辑器工作区总览.png",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      },
+      "title": "敌人编辑器工作区原型 v1"
+    }
+  ]
+}

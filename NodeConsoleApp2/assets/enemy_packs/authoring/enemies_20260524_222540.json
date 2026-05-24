@@ -44,12 +44,7 @@
     "class": "",
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "../source/character/敌人-003-状态001-正常状态.png",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "orc_warrior": {
     "id": "orc_warrior",
@@ -95,12 +90,7 @@
     "class": "",
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "../source/character/敌人-004-状态001-正常状态.png",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "goblin_01": {
     "id": "goblin_01",
@@ -196,12 +186,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "../source/character/敌人-002-状态001-正常状态.png",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "goblin_story_medic": {
     "id": "goblin_story_medic",
@@ -247,12 +232,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "../source/character/敌人-005-状态001-正常状态.png",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "orc_berserker_lvl5": {
     "id": "orc_berserker_lvl5",
@@ -299,12 +279,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "../source/character/敌人-004-状态001-正常状态.png",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "goblin_scout_lvl3": {
     "id": "goblin_scout_lvl3",
@@ -351,12 +326,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "../source/character/敌人-005-状态001-正常状态.png",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "skeleton_guard_lvl4": {
     "id": "skeleton_guard_lvl4",
@@ -402,12 +372,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "../source/character/敌人-005-状态001-正常状态.png",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "skeleton_story_repair_guard": {
     "id": "skeleton_story_repair_guard",
@@ -453,12 +418,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "../source/character/敌人-002-状态001-正常状态.png",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "enemy_acceptance_guard": {
     "id": "enemy_acceptance_guard",
@@ -503,12 +463,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "../source/character/敌人-005-状态001-正常状态.png",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "enemy_acceptance_repair": {
     "id": "enemy_acceptance_repair",
@@ -554,12 +509,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "enemy_acceptance_heal": {
     "id": "enemy_acceptance_heal",
@@ -605,12 +555,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "enemy_acceptance_pursuit": {
     "id": "enemy_acceptance_pursuit",
@@ -656,12 +601,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "enemy_acceptance_head_tapper": {
     "id": "enemy_acceptance_head_tapper",

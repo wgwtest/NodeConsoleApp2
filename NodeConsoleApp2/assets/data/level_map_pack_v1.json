@@ -76,6 +76,16 @@
     ],
     "portraits": [
       {
+        "id": "enemy_goblin_warrior",
+        "label": "哥布林战士",
+        "src": "../assets/images/level_map/portraits/enemy_goblin_warrior.svg"
+      },
+      {
+        "id": "enemy_goblin_scout",
+        "label": "哥布林斥候",
+        "src": "../assets/images/level_map/portraits/enemy_goblin_scout.svg"
+      },
+      {
         "id": "enemy_goblin_hunter",
         "label": "哥布林猎手",
         "src": "../assets/images/level_map/portraits/enemy_goblin_hunter.svg"
@@ -89,6 +99,21 @@
         "id": "enemy_skeleton_guard",
         "label": "骷髅守卫",
         "src": "../assets/images/level_map/portraits/enemy_skeleton_guard.svg"
+      },
+      {
+        "id": "enemy_orc_warrior",
+        "label": "兽人战士",
+        "src": "../assets/images/level_map/portraits/enemy_orc_warrior.svg"
+      },
+      {
+        "id": "enemy_orc_berserker",
+        "label": "嗜血兽人",
+        "src": "../assets/images/level_map/portraits/enemy_orc_berserker.svg"
+      },
+      {
+        "id": "enemy_construct_guard",
+        "label": "构装守卫",
+        "src": "../assets/images/level_map/portraits/enemy_construct_guard.svg"
       },
       {
         "id": "enemy_ruins_boss",

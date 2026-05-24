@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="构装守卫头像">
+  <defs>
+    <linearGradient id="bg" x1="18" x2="142" y1="12" y2="148" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#263440"/>
+      <stop offset=".56" stop-color="#22292d"/>
+      <stop offset="1" stop-color="#453b31"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="42" x2="118" y1="32" y2="126" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c0b8a5"/>
+      <stop offset=".52" stop-color="#827e72"/>
+      <stop offset="1" stop-color="#54524c"/>
+    </linearGradient>
+  </defs>
+  <rect x="7" y="7" width="146" height="146" rx="42" fill="url(#bg)"/>
+  <path d="M44 54l20-24h32l20 24-8 55-28 18-28-18z" fill="url(#metal)" stroke="#211b18" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M58 48h44l8 19H50z" fill="#615f5a" stroke="#211b18" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M64 26h32l-8 23H72z" fill="#aaa18f" stroke="#211b18" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="65" cy="76" r="7" fill="#7fd0ff" stroke="#211b18" stroke-width="3"/>
+  <circle cx="95" cy="76" r="7" fill="#7fd0ff" stroke="#211b18" stroke-width="3"/>
+  <path d="M59 97h42" stroke="#211b18" stroke-width="6" stroke-linecap="round"/>
+  <path d="M78 47v78M52 112h56" stroke="#3a3935" stroke-width="4" stroke-linecap="round"/>
+  <path d="M38 139c9-27 25-41 42-41s33 14 42 41z" fill="#5c5045" stroke="#211b18" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="52" cy="124" r="5" fill="#bfb5a4" stroke="#211b18" stroke-width="3"/>
+  <circle cx="108" cy="124" r="5" fill="#bfb5a4" stroke="#211b18" stroke-width="3"/>
+</svg>

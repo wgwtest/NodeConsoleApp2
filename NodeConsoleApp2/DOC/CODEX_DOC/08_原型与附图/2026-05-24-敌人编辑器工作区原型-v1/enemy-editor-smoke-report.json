@@ -1,0 +1,22 @@
+{
+  "url": "http://127.0.0.1:3124/test/enemy_editor_v1.html",
+  "screenshot": "02-1920x1080-敌人编辑器实现页面-smoke.png",
+  "title": "敌人编辑器 v1",
+  "status": "已加载 assets/data/enemies.json",
+  "enemyListText": "哥布林战士 | goblin_01哥布林斥候 | goblin_scout兽人战士 | orc_warrior验收守卫 | enemy_acceptance_guard验收修理守卫 | enemy_acceptance_repair验收追击猎手 | enemy_acceptance_pursuit验收医护守卫 | enemy_acceptance_heal验收轻击守卫 | enemy_acceptance_head_tapper哥布林追猎手 | goblin_story_headhunter哥布林斥候 (Lv.3) | goblin_scout_lvl3哥布林医护斥候 | goblin_story_medic嗜血兽人 (Lv.5) | orc_berserker_lvl5骷髅卫士 (Lv.4) | skeleton_guard_lvl4残甲骷髅卫士 | skeleton_story_repair_guard",
+  "previewName": "哥布林战士",
+  "previewPortrait": "../assets/images/level_map/portraits/enemy_goblin_warrior.svg",
+  "issueText": "warning: skill_ap_too_high goblin_scout skills[1]\nwarning: skill_ap_too_high orc_berserker_lvl5 skills[2]\nwarning: skill_ap_too_high goblin_scout_lvl3 skills[1]\nwarning: skill_ap_too_high skeleton_guard_lvl4 skills[0]",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "body": {
+    "width": 1920,
+    "height": 1080
+  },
+  "document": {
+    "width": 1920,
+    "height": 1080
+  }
+}

@@ -9,7 +9,7 @@
 >
 > 本文以“高内聚、低耦合”为原则：Timeline 负责**排序、驱动、播放控制、事件分发**；具体结算逻辑由执行器/模拟器模块承担。
 
-UI 视觉与交互设计见：`DOC/CODEX_DOC/02_设计说明/S7_UI与交互基线/15-时间线界面(timeline_UI_design)-设计说明.md`。
+UI 视觉与交互设计见：`DOC/CODEX_DOC/02_设计说明/S8_UI与交互基线/15-时间线界面(timeline_UI_design)-设计说明.md`。
 
 ---
 

@@ -12,6 +12,7 @@ const skillEditorFileRoute = '/__skill_editor_file';
 const allowedJsonWriteRoots = [
   'assets/data/',
   'assets/skill_packs/authoring/',
+  'assets/enemy_packs/authoring/',
   'DOC/CODEX_DOC/'
 ];
 const skillAuthoringRoot = 'assets/skill_packs/authoring/';

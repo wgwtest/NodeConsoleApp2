@@ -25,6 +25,7 @@ export class FighterPresenter {
         this.presentationProfile = presentationProfile || null;
 
         this.spriteContainer = fighterRoot?.querySelector('.character-sprite-container') || fighterRoot || null;
+        this.bodyLayer = this.spriteContainer?.querySelector?.('.sprite-layer.body') || null;
         this.shadow = fighterRoot?.querySelector('.character-shadow') || null;
         this.effectAnchor = fighterRoot?.querySelector('.effect-anchor') || fighterRoot || null;
         this.hpBar = hudRoot?.querySelector('.bar.hp span') || null;
@@ -45,6 +46,7 @@ export class FighterPresenter {
         if (!snapshot) return;
         this._syncHp(snapshot);
         this._syncArmor(snapshot.bodyParts);
+        this._syncBattleSprite(snapshot.presentation);
         if (this.fighterRoot) {
             this.fighterRoot.classList.add('is-idle');
         }
@@ -147,6 +149,28 @@ export class FighterPresenter {
                 bar.dataset.max = String(max);
             }
         }
+    }
+
+    _syncBattleSprite(presentation) {
+        const spriteRef = typeof presentation?.battleSpriteRef === 'string'
+            ? presentation.battleSpriteRef.trim()
+            : '';
+        if (!this.bodyLayer) return;
+
+        if (!spriteRef) {
+            delete this.bodyLayer.dataset.battleSpriteRef;
+            this.bodyLayer.style.backgroundImage = '';
+            this.bodyLayer.style.backgroundSize = '';
+            this.bodyLayer.style.backgroundPosition = '';
+            this.bodyLayer.style.backgroundRepeat = '';
+            return;
+        }
+
+        this.bodyLayer.dataset.battleSpriteRef = spriteRef;
+        this.bodyLayer.style.backgroundImage = `url("${spriteRef}")`;
+        this.bodyLayer.style.backgroundSize = 'contain';
+        this.bodyLayer.style.backgroundPosition = 'bottom center';
+        this.bodyLayer.style.backgroundRepeat = 'no-repeat';
     }
 
     _playGuardTemplate(context = {}) {

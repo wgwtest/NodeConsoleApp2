@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="哥布林斥候头像">
+  <defs>
+    <linearGradient id="bg" x1="18" x2="142" y1="12" y2="148" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#263747"/>
+      <stop offset=".55" stop-color="#253629"/>
+      <stop offset="1" stop-color="#60472f"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="48" x2="112" y1="42" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#b6d982"/>
+      <stop offset=".62" stop-color="#78ad55"/>
+      <stop offset="1" stop-color="#4f7b42"/>
+    </linearGradient>
+  </defs>
+  <rect x="7" y="7" width="146" height="146" rx="42" fill="url(#bg)"/>
+  <path d="M28 91c-4-13-3-25 3-37 8 3 17 7 25 16z" fill="#8ab363" stroke="#211b17" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M132 91c4-13 3-25-3-37-8 3-17 7-25 16z" fill="#8ab363" stroke="#211b17" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M43 70c2-27 20-43 37-43s35 16 37 43c2 27-12 51-37 51S41 97 43 70z" fill="url(#skin)" stroke="#211b17" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M49 43c10-14 22-21 36-19 13 2 23 10 29 24-20-6-43-7-65-5z" fill="#4f3d2c" stroke="#211b17" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M52 55c19-6 38-6 57 0" stroke="#c4a66f" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="65" cy="78" r="6" fill="#ffe082" stroke="#211b17" stroke-width="3"/>
+  <circle cx="94" cy="78" r="6" fill="#ffe082" stroke="#211b17" stroke-width="3"/>
+  <path d="M56 70c9-5 17-5 25 1M104 70c-9-5-17-5-25 1" fill="none" stroke="#211b17" stroke-width="5" stroke-linecap="round"/>
+  <path d="M69 98q11 7 23 0" fill="none" stroke="#211b17" stroke-width="5" stroke-linecap="round"/>
+  <path d="M42 137c8-23 22-33 38-33s30 10 38 33z" fill="#40523a" stroke="#211b17" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M107 32l20-18 3 29" fill="#d6b879" stroke="#211b17" stroke-width="4" stroke-linejoin="round"/>
+</svg>

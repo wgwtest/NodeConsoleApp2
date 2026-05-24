@@ -66,6 +66,17 @@ function normalizeBodyParts(entity) {
     return output;
 }
 
+function normalizePresentation(entity) {
+    const source = entity?.presentation && typeof entity.presentation === 'object'
+        ? entity.presentation
+        : {};
+    const battleSpriteRef = source.battleSpriteRef === undefined || source.battleSpriteRef === null
+        ? ''
+        : String(source.battleSpriteRef).trim();
+
+    return battleSpriteRef ? { battleSpriteRef } : {};
+}
+
 function normalizeCombatant(entity, fallbackId) {
     if (!entity || typeof entity !== 'object') return null;
     const { buffs, debuffs } = partitionStatuses(entity.buffs, entity.debuffs);
@@ -75,7 +86,8 @@ function normalizeCombatant(entity, fallbackId) {
         maxHp: readNumericStat(entity, 'maxHp'),
         buffsCount: buffs.length,
         debuffsCount: debuffs.length,
-        bodyParts: normalizeBodyParts(entity)
+        bodyParts: normalizeBodyParts(entity),
+        presentation: normalizePresentation(entity)
     };
 }
 

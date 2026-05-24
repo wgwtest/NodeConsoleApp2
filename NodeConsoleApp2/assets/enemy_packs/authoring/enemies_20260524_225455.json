@@ -605,12 +605,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "enemy_acceptance_pursuit": {
     "id": "enemy_acceptance_pursuit",
@@ -656,12 +651,7 @@
     ],
     "tags": [],
     "description": "",
-    "presentation": {
-      "portraitRef": "",
-      "mapPortraitRef": "",
-      "battleSpriteRef": "",
-      "iconRef": ""
-    }
+    "presentation": {}
   },
   "enemy_acceptance_head_tapper": {
     "id": "enemy_acceptance_head_tapper",

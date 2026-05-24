@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="哥布林战士头像">
+  <defs>
+    <linearGradient id="bg" x1="24" x2="136" y1="16" y2="144" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#29333a"/>
+      <stop offset=".54" stop-color="#1f2825"/>
+      <stop offset="1" stop-color="#4b3329"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="46" x2="112" y1="42" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a6c871"/>
+      <stop offset=".58" stop-color="#6f9e55"/>
+      <stop offset="1" stop-color="#3f6f3c"/>
+    </linearGradient>
+  </defs>
+  <rect x="7" y="7" width="146" height="146" rx="42" fill="url(#bg)"/>
+  <path d="M31 100c-5-12-6-25-3-40 7 3 18 8 27 16z" fill="#7da85e" stroke="#241d19" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M129 100c5-12 6-25 3-40-7 3-18 8-27 16z" fill="#7da85e" stroke="#241d19" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M49 39h62l8 31c4 21-10 48-39 48S37 91 41 70z" fill="url(#skin)" stroke="#241d19" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M50 41c7-14 21-20 30-20s23 6 30 20l-6 23H56z" fill="#77736b" stroke="#241d19" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M62 22h36l-8 33H70z" fill="#a8a197" stroke="#241d19" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M59 61h42" stroke="#eee0c8" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="66" cy="78" r="6" fill="#ff8d31" stroke="#211918" stroke-width="3"/>
+  <circle cx="94" cy="78" r="6" fill="#ff8d31" stroke="#211918" stroke-width="3"/>
+  <path d="M56 70c8-7 17-7 25-1M104 70c-8-7-17-7-25-1" fill="none" stroke="#261c18" stroke-width="5" stroke-linecap="round"/>
+  <path d="M65 98c9 8 21 8 30 0" fill="none" stroke="#261c18" stroke-width="5" stroke-linecap="round"/>
+  <path d="M60 94l7 17 8-13M100 94l-7 17-8-13" fill="#f3dfb4" stroke="#261c18" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M42 136c8-25 23-34 38-34s30 9 38 34z" fill="#76533d" stroke="#241d19" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M52 126h56" stroke="#b7b0a0" stroke-width="6" stroke-linecap="round"/>
+</svg>

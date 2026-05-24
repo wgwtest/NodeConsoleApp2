@@ -366,8 +366,9 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   left: 0;
   right: 0;
   bottom: 0;
-  background-size: cover;
-  background-position: center;
+  background-size: contain;
+  background-position: bottom center;
+  background-repeat: no-repeat;
   transition: transform 0.3s ease;
 }
 
