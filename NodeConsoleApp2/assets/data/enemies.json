@@ -60,8 +60,8 @@
     "id": "orc_warrior",
     "name": "兽人战士",
     "stats": {
-      "hp": 120,
-      "maxHp": 120,
+      "hp": 84,
+      "maxHp": 84,
       "ap": 4,
       "speed": 8
     },
@@ -331,6 +331,62 @@
       "pressure_lifesteal"
     ],
     "description": "靠吸血和重击持续压制的精英兽人，错误构筑会被它拖入消耗战。",
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/敌人-009-状态001-正常状态.png",
+      "iconRef": ""
+    }
+  },
+  "orc_berserker_lvl4": {
+    "id": "orc_berserker_lvl4",
+    "name": "霜血兽人 (Lv.4)",
+    "race": "orc",
+    "class": "berserker",
+    "stats": {
+      "hp": 176,
+      "maxHp": 176,
+      "ap": 4,
+      "speed": 8
+    },
+    "bodyParts": {
+      "head": {
+        "current": 0,
+        "max": 0,
+        "weakness": 1.5
+      },
+      "chest": {
+        "current": 42,
+        "max": 42,
+        "weakness": 0.85
+      },
+      "abdomen": {
+        "current": 18,
+        "max": 18,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 18,
+        "max": 18,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 18,
+        "max": 18,
+        "weakness": 1
+      }
+    },
+    "skills": [
+      "enemy_skill_orc_club",
+      "enemy_skill_blood_heat",
+      "skill_cleave"
+    ],
+    "tags": [
+      "chapter_2",
+      "role_elite",
+      "pressure_lifesteal"
+    ],
+    "description": "第二章精英兽人，保留吸血与重击压力，但耐久低于第三章高阶样本，避免推荐构筑被残血拖死。",
     "presentation": {
       "portraitRef": "",
       "mapPortraitRef": "",
@@ -985,8 +1041,8 @@
     ],
     "description": "第三章快攻敌人，速度更高且会叠加流血，用来压迫偏科输出构筑。",
     "stats": {
-      "hp": 110,
-      "maxHp": 110,
+      "hp": 60,
+      "maxHp": 60,
       "ap": 4,
       "speed": 16
     },

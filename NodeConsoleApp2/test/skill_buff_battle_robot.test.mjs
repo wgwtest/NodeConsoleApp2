@@ -457,3 +457,59 @@ test('敌人规划和执行优先使用 enemy skill catalog，不从玩家技能
   assert.equal(result.actions[0].damage, 7);
   assert.equal(player.stats.hp, 93);
 });
+
+test('敌人规划不会连续刷新已存在的自我增益而放弃攻击', async () => {
+  const { EnemyActionPlanner } = await importTurnRuntime();
+  const runtime = await importBuffRuntime();
+  const rawBuffs = await loadJson('buffs_v2_7.json');
+  const eventBus = new TestEventBus();
+  const registry = new runtime.BuffRegistry(rawBuffs.buffs);
+  const system = new runtime.BuffSystem(eventBus, registry);
+  system.start();
+  const buffRuntime = { BuffManager: runtime.BuffManager, eventBus, registry, system };
+
+  const player = attachBuffs(createActor('player_1', {
+    hp: 100,
+    maxHp: 100,
+    bodyParts: createBodyParts({ chest: { current: 0, max: 0, weakness: 1 } })
+  }), buffRuntime);
+  const enemy = attachBuffs(createActor('enemy_1', {
+    hp: 120,
+    maxHp: 120,
+    ap: 4,
+    maxAp: 4,
+    skills: ['enemy_skill_blood_heat', 'enemy_skill_orc_club']
+  }), buffRuntime);
+
+  enemy.buffs.add('buff_lifesteal', { duration: 2 });
+
+  const skills = {
+    enemy_skill_blood_heat: {
+      id: 'enemy_skill_blood_heat',
+      name: '血热',
+      speed: 0,
+      costs: { ap: 1 },
+      target: { subject: 'SUBJECT_SELF', scope: 'SCOPE_SELF' },
+      actions: [],
+      buffRefs: { apply: [{ target: 'self', buffId: 'buff_lifesteal', duration: 2 }], remove: [] }
+    },
+    enemy_skill_orc_club: {
+      id: 'enemy_skill_orc_club',
+      name: '重棒',
+      speed: 0,
+      costs: { ap: 2 },
+      target: {
+        subject: 'SUBJECT_ENEMY',
+        scope: 'SCOPE_PART',
+        selection: { mode: 'single', candidateParts: ['chest'], selectedParts: ['chest'], selectCount: 1 }
+      },
+      actions: [{ effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 18 } }],
+      buffRefs: { apply: [], remove: [] }
+    }
+  };
+
+  const planner = new EnemyActionPlanner({ getSkillConfig: skillId => skills[skillId] || null });
+  const action = planner.planTurn({ enemy, player, playerBodyParts: player.bodyParts });
+
+  assert.equal(action?.skillId, 'enemy_skill_orc_club');
+});

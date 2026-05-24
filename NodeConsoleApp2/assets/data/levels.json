@@ -171,7 +171,7 @@
       "name": "霜雾峡谷 4 敌人池",
       "members": [
         {
-          "templateId": "orc_berserker_lvl5",
+          "templateId": "orc_berserker_lvl4",
           "position": 1
         }
       ]
@@ -221,7 +221,7 @@
       "name": "霜雾峡谷 9 敌人池",
       "members": [
         {
-          "templateId": "orc_berserker_lvl5",
+          "templateId": "orc_berserker_lvl4",
           "position": 1
         }
       ]

@@ -77,10 +77,11 @@ export default class EnemyActionPlanner {
         if (skill?.target?.subject === 'SUBJECT_SELF') {
             score += summary.healHp * (1.8 - hpRatio);
             score += summary.addArmor * (1.4 - hpRatio);
-            score += summary.buffRefsSelf * 18;
+            score += summary.buffRefsSelf * 12;
             score += this._scoreSelfProtection(skill, enemy);
-            if (hpRatio <= 0.45) score += 35;
-            if (hpRatio <= 0.3) score += 18;
+            if (hpRatio <= 0.35) score += 25;
+            if (hpRatio <= 0.2) score += 15;
+            score -= this._scoreRepeatedSelfBuffPenalty(skill, enemy);
         } else {
             score += summary.damageHp * 2.0;
             score += summary.damageArmor * 1.2;
@@ -112,6 +113,24 @@ export default class EnemyActionPlanner {
         if (cost > ap) score -= 1000;
 
         return score;
+    }
+
+    _scoreRepeatedSelfBuffPenalty(skill, enemy) {
+        const rows = Array.isArray(skill?.buffRefs?.apply) ? skill.buffRefs.apply : [];
+        let penalty = 0;
+        for (const row of rows) {
+            if (row?.target !== 'self' || !row?.buffId) continue;
+            const hasBuff = typeof enemy?.buffs?.has === 'function'
+                ? enemy.buffs.has(row.buffId)
+                : false;
+            const stacks = typeof enemy?.buffs?.getStacks === 'function'
+                ? enemy.buffs.getStacks(row.buffId)
+                : 0;
+            if (hasBuff || stacks > 0) {
+                penalty += 110;
+            }
+        }
+        return penalty;
     }
 
     _scoreFocusedPartPressure(skill, summary, { chosenPart, part, candidateParts }) {

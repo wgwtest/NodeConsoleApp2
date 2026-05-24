@@ -176,6 +176,22 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function createSeededRandom(seedInput) {
+  let seed = 2166136261;
+  const text = String(seedInput ?? 'campaign-balance-default-seed');
+  for (let index = 0; index < text.length; index += 1) {
+    seed ^= text.charCodeAt(index);
+    seed = Math.imul(seed, 16777619);
+  }
+  return () => {
+    seed += 0x6D2B79F5;
+    let next = seed;
+    next = Math.imul(next ^ (next >>> 15), next | 1);
+    next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
+    return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -281,6 +297,15 @@ function pickMostDamagedSelfPart(player) {
   return rows[0]?.part || 'chest';
 }
 
+function summarizeMissingArmor(entity) {
+  const rows = Object.values(entity?.bodyParts || {})
+    .map(data => Math.max(0, (Number(data.max ?? 0) || 0) - (Number(data.current ?? 0) || 0)));
+  return {
+    total: rows.reduce((sum, value) => sum + value, 0),
+    maxPart: rows.reduce((max, value) => Math.max(max, value), 0)
+  };
+}
+
 function summarizeSkill(skill) {
   const out = { damageHp: 0, damageArmor: 0, heal: 0, armorAdd: 0, dot: 0, control: 0 };
   for (const action of asArray(skill?.actions)) {
@@ -312,25 +337,50 @@ function findPrimaryEnemy(enemies) {
 function scoreSkillForBuild({ skill, player, target, buildId, chapter }) {
   const summary = summarizeSkill(skill);
   const hpRatio = player.stats.maxHp > 0 ? player.stats.hp / player.stats.maxHp : 1;
+  const missingHp = Math.max(0, (Number(player.stats.maxHp ?? 0) || 0) - (Number(player.stats.hp ?? 0) || 0));
+  const missingArmor = summarizeMissingArmor(player);
+  const targetHp = getEntityHp(target);
+  const targetMaxHp = getEntityMaxHp(target) || targetHp || 1;
+  const targetHpRatio = targetMaxHp > 0 ? targetHp / targetMaxHp : 1;
   let score = 0;
   if (skill.target?.subject === 'SUBJECT_SELF') {
-    score += summary.heal * (hpRatio < 0.7 ? 2.8 : 0.2);
-    score += summary.armorAdd * 1.7;
-    if (buildId === 'basic') score += summary.heal + summary.armorAdd;
-    if (buildId === 'recommended' && chapter >= 2) score += summary.armorAdd * 0.8;
+    const shouldFinishFight = buildId === 'recommended' && hpRatio >= 0.75 && targetHpRatio <= 0.35;
+    if (shouldFinishFight) return 0;
+    if (summary.heal > 0 && missingHp > 0) {
+      score += summary.heal * (hpRatio < 0.7 ? 2.8 : 0.8);
+      score += Math.min(missingHp, summary.heal) * 1.5;
+    }
+    if (summary.armorAdd > 0 && missingArmor.total > 0) {
+      score += summary.armorAdd * 0.8;
+      score += Math.min(missingArmor.maxPart, summary.armorAdd) * 1.8;
+      if (buildId === 'basic') score += Math.min(missingArmor.total, summary.armorAdd);
+      if (buildId === 'recommended' && chapter >= 2) score += Math.min(missingArmor.total, summary.armorAdd) * 0.6;
+    }
     return score;
   }
 
-  score += summary.damageHp * 2.2;
-  score += summary.damageArmor * (chapter >= 2 ? 2.0 : 1.2);
+  const selectedPart = pickWeakestPart(target, skill);
+  const selectedArmor = Math.max(0, Number(target?.bodyParts?.[selectedPart]?.current ?? 0) || 0);
+  const armorFromArmorSkill = Math.min(selectedArmor, summary.damageArmor);
+  const armorFromHpSkill = Math.min(selectedArmor, summary.damageHp);
+  const hpThroughArmor = Math.max(0, summary.damageHp - selectedArmor);
+
+  score += hpThroughArmor * 2.2;
+  score += armorFromHpSkill * (chapter >= 2 ? 0.8 : 0.5);
+  score += armorFromArmorSkill * (chapter >= 2 ? 2.0 : 1.2);
   score += summary.dot * (chapter >= 3 ? 1.5 : 1.0);
   score += summary.control;
+  if (buildId === 'recommended' && targetHpRatio <= 0.35) {
+    score += hpThroughArmor * 2.8;
+    score += summary.damageHp >= targetHp ? 30 : 0;
+    score -= summary.dot * 0.8;
+  }
 
   const targetArmor = Object.values(target?.bodyParts || {})
     .reduce((sum, part) => sum + (Number(part.current ?? 0) || 0), 0);
-  if (targetArmor > 35) score += summary.damageArmor * 1.2;
-  if (buildId === 'specialist') score += summary.damageHp * 1.5;
-  if (buildId === 'recommended') score += summary.damageArmor + summary.dot;
+  if (targetArmor > 35) score += armorFromArmorSkill * 1.2;
+  if (buildId === 'specialist') score += hpThroughArmor * 1.5;
+  if (buildId === 'recommended') score += armorFromArmorSkill + summary.dot;
 
   return score;
 }
@@ -394,6 +444,17 @@ function makeEventBusWithSkillUsage(counter) {
     }
   });
   return bus;
+}
+
+function countSkillUsage(events, source) {
+  const out = Object.create(null);
+  for (const event of events) {
+    const action = event?.payload?.entry?.sourceAction;
+    if (action?.source === source && action.skillId) {
+      out[action.skillId] = (out[action.skillId] || 0) + 1;
+    }
+  }
+  return { ...out };
 }
 
 function buildDriver({ CoreEngine, modules, runtime, player, enemies, skillMaps, slotLayouts, level }) {
@@ -501,6 +562,16 @@ async function withQuietConsole(fn) {
   }
 }
 
+async function withSeededRandom(seed, fn) {
+  const originalRandom = Math.random;
+  Math.random = createSeededRandom(seed);
+  try {
+    return await fn();
+  } finally {
+    Math.random = originalRandom;
+  }
+}
+
 function classifyLevel(level) {
   const order = Number(level.flow?.localOrder ?? String(level.id).split('_').at(-1) ?? 1) || 1;
   const primaryTags = asArray(level.selectionMeta?.enemyStyleTags);
@@ -564,7 +635,14 @@ function summarizeReport(results) {
   if (recommended && recommended.winRate > 0.9) {
     recommendations.push('推荐构筑胜率偏高：后续调参应提高精英和 Boss 的组合压力。');
   }
-  if (specialist && recommended && specialist.winRate >= recommended.winRate) {
+  const specialistStillStrong = specialist && recommended && (
+    specialist.winRate > recommended.winRate
+    || (
+      specialist.winRate === recommended.winRate
+      && specialist.averagePlayerRemainingHp > recommended.averagePlayerRemainingHp - 20
+    )
+  );
+  if (specialistStillStrong) {
     recommendations.push('偏科构筑没有明显吃亏：需要增强章节压力的针对性或削弱纯输出泛用性。');
   }
   if (recommendations.length === 0) {
@@ -682,6 +760,7 @@ async function simulateLevelBuild({ CoreEngine, modules, data, levelId, build, m
     turns,
     playerRemainingHp,
     enemyRemainingHp,
+    playerSkillUsage: countSkillUsage(driver.eventBus.eventsByName('TIMELINE_ENTRY_END'), 'PLAYER'),
     enemySkillUsage: { ...runtime.enemySkillUsage },
     failureReason,
     diagnosis: 'pending',
@@ -694,45 +773,50 @@ async function simulateLevelBuild({ CoreEngine, modules, data, levelId, build, m
 export async function runCampaignBalanceSimulation(options = {}) {
   const projectRoot = path.resolve(options.projectRoot || defaultProjectRoot);
   const maxTurns = Number(options.maxTurns ?? 12) || 12;
-  const { CoreEngine } = await importCoreEngineClass(projectRoot);
-  const modules = await importRuntimeModules(projectRoot);
-  const levels = await readJson(projectRoot, 'assets/map_packs/current/story_pack_v1/levels.json');
-  const data = {
-    levels,
-    enemies: await readJson(projectRoot, 'assets/data/enemies.json'),
-    player: await readJson(projectRoot, 'assets/data/player.json'),
-    buffs: await readJson(projectRoot, 'assets/data/buffs_v2_7.json'),
-    slotLayouts: await readJson(projectRoot, 'assets/data/slot_layouts.json')
-  };
-  data.skillMaps = buildRuntimeSkillMaps(
-    await readJson(projectRoot, 'assets/data/skills_melee_v4_5.json'),
-    await readJson(projectRoot, 'assets/data/skills_enemy_v1.json')
-  );
+  const randomSeed = String(options.randomSeed || 'campaign-balance-v1');
 
-  const results = [];
-  for (const levelId of storyLevelIds) {
-    for (const build of playerBuilds) {
-      results.push(await simulateLevelBuild({ CoreEngine, modules, data, levelId, build, maxTurns }));
+  return withSeededRandom(randomSeed, async () => {
+    const { CoreEngine } = await importCoreEngineClass(projectRoot);
+    const modules = await importRuntimeModules(projectRoot);
+    const levels = await readJson(projectRoot, 'assets/map_packs/current/story_pack_v1/levels.json');
+    const data = {
+      levels,
+      enemies: await readJson(projectRoot, 'assets/data/enemies.json'),
+      player: await readJson(projectRoot, 'assets/data/player.json'),
+      buffs: await readJson(projectRoot, 'assets/data/buffs_v2_7.json'),
+      slotLayouts: await readJson(projectRoot, 'assets/data/slot_layouts.json')
+    };
+    data.skillMaps = buildRuntimeSkillMaps(
+      await readJson(projectRoot, 'assets/data/skills_melee_v4_5.json'),
+      await readJson(projectRoot, 'assets/data/skills_enemy_v1.json')
+    );
+
+    const results = [];
+    for (const levelId of storyLevelIds) {
+      for (const build of playerBuilds) {
+        results.push(await simulateLevelBuild({ CoreEngine, modules, data, levelId, build, maxTurns }));
+      }
     }
-  }
 
-  return {
-    meta: {
-      generatedAt: new Date().toISOString(),
-      levelCount: storyLevelIds.length,
-      buildIds: playerBuilds.map(build => build.id),
-      maxTurns,
-      source: 'tools/campaign_balance_simulator.mjs'
-    },
-    builds: playerBuilds.map(build => ({
-      id: build.id,
-      label: build.label,
-      learned: build.learned,
-      maxAp: build.maxAp
-    })),
-    results,
-    summary: summarizeReport(results)
-  };
+    return {
+      meta: {
+        generatedAt: new Date().toISOString(),
+        levelCount: storyLevelIds.length,
+        buildIds: playerBuilds.map(build => build.id),
+        maxTurns,
+        randomSeed,
+        source: 'tools/campaign_balance_simulator.mjs'
+      },
+      builds: playerBuilds.map(build => ({
+        id: build.id,
+        label: build.label,
+        learned: build.learned,
+        maxAp: build.maxAp
+      })),
+      results,
+      summary: summarizeReport(results)
+    };
+  });
 }
 
 export async function writeCampaignBalanceReport(report, { reportPath } = {}) {
@@ -754,6 +838,9 @@ function parseCliArgs(argv) {
     } else if (arg === '--max-turns') {
       out.maxTurns = Number(argv[index + 1]);
       index += 1;
+    } else if (arg === '--seed') {
+      out.randomSeed = argv[index + 1];
+      index += 1;
     }
   }
   return out;
@@ -761,7 +848,11 @@ function parseCliArgs(argv) {
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const args = parseCliArgs(process.argv.slice(2));
-  const report = await runCampaignBalanceSimulation({ projectRoot: defaultProjectRoot, maxTurns: args.maxTurns });
+  const report = await runCampaignBalanceSimulation({
+    projectRoot: defaultProjectRoot,
+    maxTurns: args.maxTurns,
+    randomSeed: args.randomSeed
+  });
   const written = await writeCampaignBalanceReport(report, { reportPath: args.reportPath });
   console.log(`Wrote ${written.reportPath}`);
   console.log(`Wrote ${written.summaryPath}`);
