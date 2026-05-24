@@ -1,0 +1,1915 @@
+{
+  "$schemaVersion": "skills_melee_v3",
+  "meta": {
+    "title": "Enemy Skills v1",
+    "source": "enemy skill pack editor mode",
+    "skillDomain": "enemy",
+    "selectedTreeId": "enemy_v1",
+    "notes": [
+      "敌人技能独立于玩家技能树加载，用于 EnemyActionPlanner 与 CoreEngine 敌方行动解析。",
+      "enemy_skill_* 为新敌人技能命名；skill_* 兼容项服务当前 enemies.json 中已有敌人引用，后续可逐步迁移。"
+    ],
+    "defaultParts": [
+      "head",
+      "chest",
+      "abdomen",
+      "arm",
+      "leg"
+    ],
+    "enums": {
+      "rarities": [
+        "Common",
+        "Uncommon",
+        "Rare",
+        "Epic",
+        "Legendary"
+      ],
+      "targetSubjects": [
+        "SUBJECT_SELF",
+        "SUBJECT_ENEMY",
+        "SUBJECT_BOTH"
+      ],
+      "targetScopes": [
+        "SCOPE_ENTITY",
+        "SCOPE_PART",
+        "SCOPE_MULTI_PARTS"
+      ],
+      "selectionModes": [
+        "single",
+        "multiple",
+        "random_single",
+        "random_multiple"
+      ],
+      "effectTypes": [
+        "DMG_HP",
+        "DMG_ARMOR",
+        "PIERCE",
+        "HEAL",
+        "ARMOR_ADD",
+        "AP_GAIN",
+        "SPEED",
+        "BUFF_APPLY",
+        "BUFF_REMOVE"
+      ],
+      "amountTypes": [
+        "ABS",
+        "PCT_MAX",
+        "PCT_CURRENT",
+        "BUFF_STACKS"
+      ],
+      "editStates": [
+        "done",
+        "editing",
+        "deprecated"
+      ],
+      "requirementSelfPartModes": [
+        "ANY",
+        "ALL"
+      ],
+      "partOverrideModes": [
+        "fixed",
+        "listed"
+      ],
+      "hitModes": [
+        "normal",
+        "cannot_dodge",
+        "always_crit"
+      ],
+      "actionTargetBindingModes": [
+        "follow",
+        "explicit"
+      ],
+      "actionTargetBindingRefs": [
+        "skillTarget",
+        "source"
+      ]
+    }
+  },
+  "skills": [
+    {
+      "id": "enemy_skill_rusty_shiv",
+      "name": "锈刀划拉",
+      "rarity": "Common",
+      "description": "低成本攻击，对选中部位造成生命伤害，并尝试附加流血。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 214,
+        "y": 214,
+        "group": "enemy_goblin",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_bleed",
+            "target": "enemy",
+            "chance": 0.45,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_damage",
+          "name": "划伤",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 6
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_ankle_pebble",
+      "name": "脚边小石子",
+      "rarity": "Common",
+      "description": "固定骚扰腿部，造成少量伤害并尝试减速。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 414,
+        "y": 214,
+        "group": "enemy_goblin",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 4,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "leg"
+          ],
+          "selectedParts": [
+            "leg"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_slow",
+            "target": "enemy",
+            "chance": 0.55,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_leg_hit",
+          "name": "绊腿",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 4,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "leg"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_bad_lunchbox",
+      "name": "坏掉的盒饭",
+      "rarity": "Uncommon",
+      "description": "造成轻伤并附加中毒，用于支援型哥布林。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 614,
+        "y": 214,
+        "group": "enemy_goblin",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_poison",
+            "target": "enemy",
+            "chance": 0.65,
+            "duration": 3
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_food_hit",
+          "name": "砸盒饭",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_dirty_bandage",
+      "name": "脏绷带",
+      "rarity": "Common",
+      "description": "敌人自我治疗。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 814,
+        "y": 214,
+        "group": "enemy_support",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -2,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_heal",
+          "name": "粗糙包扎",
+          "target": {
+            "binding": {
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY",
+              "selection": {
+                "mode": "single",
+                "candidateParts": [],
+                "selectedParts": [],
+                "selectCount": 1
+              }
+            }
+          },
+          "effect": {
+            "effectType": "HEAL",
+            "amountType": "ABS",
+            "amount": 14
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_orc_club",
+      "name": "大棒糊脸",
+      "rarity": "Uncommon",
+      "description": "兽人基础重击，对选中部位造成较高生命伤害。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 214,
+        "y": 414,
+        "group": "enemy_orc",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_club",
+          "name": "抡击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 18
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_orc_headbutt",
+      "name": "脑门硬凿",
+      "rarity": "Uncommon",
+      "description": "固定攻击头部护甲，并有概率造成晕眩。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 414,
+        "y": 414,
+        "group": "enemy_orc",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -2,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_stun",
+            "target": "enemy",
+            "chance": 0.25,
+            "duration": 1
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_head_armor",
+          "name": "撞头",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 16,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_blood_heat",
+      "name": "越打越上头",
+      "rarity": "Rare",
+      "description": "兽人给自己附加吸血，随后更适合持续压制。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 614,
+        "y": 414,
+        "group": "enemy_orc",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_lifesteal",
+            "target": "self",
+            "chance": 1,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "enemy_skill_wrecking_swing",
+      "name": "拆迁抡",
+      "rarity": "Rare",
+      "description": "慢速高伤害攻击。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 814,
+        "y": 414,
+        "group": "enemy_orc",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -4,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 3,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_wreck",
+          "name": "重抡",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 24
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_shield_tap",
+      "name": "盾牌敲头",
+      "rarity": "Uncommon",
+      "description": "骷髅固定打头部护甲，并尝试晕眩。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 214,
+        "y": 614,
+        "group": "enemy_undead",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_stun",
+            "target": "enemy",
+            "chance": 0.3,
+            "duration": 1
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_shield",
+          "name": "盾击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 12,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_bone_patch",
+      "name": "捡骨头补甲",
+      "rarity": "Common",
+      "description": "骷髅给受损部位修补护甲。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 414,
+        "y": 614,
+        "group": "enemy_undead",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 3,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_patch",
+          "name": "补骨",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amountType": "ABS",
+            "amount": 12
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_dead_air",
+      "name": "阴风刮腿",
+      "rarity": "Common",
+      "description": "骷髅固定骚扰腿部并减速。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 614,
+        "y": 614,
+        "group": "enemy_undead",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "leg"
+          ],
+          "selectedParts": [
+            "leg"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_slow",
+            "target": "enemy",
+            "chance": 0.75,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_dead_air",
+          "name": "刮腿",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 5,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "leg"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_bite",
+      "name": "乱咬",
+      "rarity": "Common",
+      "description": "兼容当前敌人配置的基础近战攻击。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 214,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_bite",
+          "name": "啃咬",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_throw_stone",
+      "name": "投石",
+      "rarity": "Common",
+      "description": "兼容当前敌人配置的弱点追击技能。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 414,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 3,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_stone",
+          "name": "砸弱点",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_smash",
+      "name": "兽人重击",
+      "rarity": "Uncommon",
+      "description": "兼容当前兽人配置的重击。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 614,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_smash",
+          "name": "砸击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 18
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_warcry",
+      "name": "战吼",
+      "rarity": "Uncommon",
+      "description": "兼容当前兽人配置的自我强化。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 814,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_lifesteal",
+            "target": "self",
+            "chance": 1,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_heal",
+      "name": "敌方治疗",
+      "rarity": "Common",
+      "description": "兼容当前治疗型敌人的回血技能。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 1014,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -2,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_enemy_heal",
+          "name": "治疗",
+          "target": {
+            "binding": {
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY",
+              "selection": {
+                "mode": "single",
+                "candidateParts": [],
+                "selectedParts": [],
+                "selectCount": 1
+              }
+            }
+          },
+          "effect": {
+            "effectType": "HEAL",
+            "amountType": "ABS",
+            "amount": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_heavy_smash",
+      "name": "兽人猛砸",
+      "rarity": "Rare",
+      "description": "兼容当前高级兽人配置的高伤害攻击。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 1214,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -3,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 3,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_heavy_smash",
+          "name": "猛砸",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 24
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_rage",
+      "name": "狂怒",
+      "rarity": "Rare",
+      "description": "兼容当前高级兽人配置的吸血强化。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 1414,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_lifesteal",
+            "target": "self",
+            "chance": 1,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_cleave",
+      "name": "横扫",
+      "rarity": "Rare",
+      "description": "兼容当前高级兽人配置的中高伤害攻击。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 1614,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -2,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_cleave",
+          "name": "横扫",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 16
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_ankle_bite",
+      "name": "咬脚踝",
+      "rarity": "Common",
+      "description": "兼容当前斥候配置的腿部减速攻击。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 1814,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 4,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "leg"
+          ],
+          "selectedParts": [
+            "leg"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_slow",
+            "target": "enemy",
+            "chance": 0.6,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_ankle",
+          "name": "咬腿",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 5,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "leg"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_escape",
+      "name": "后撤",
+      "rarity": "Common",
+      "description": "兼容当前斥候配置的自保技能。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 2014,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 5,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_escape_armor",
+          "name": "护住自己",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amountType": "ABS",
+            "amount": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_shield_bash",
+      "name": "盾击",
+      "rarity": "Uncommon",
+      "description": "兼容当前骷髅配置的头部护甲打击。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 2214,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_stun",
+            "target": "enemy",
+            "chance": 0.25,
+            "duration": 1
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_shield_bash",
+          "name": "敲头",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 12,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_bone_repair",
+      "name": "骨片修补",
+      "rarity": "Common",
+      "description": "兼容当前骷髅配置的护甲修补技能。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 2414,
+        "y": 814,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 3,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_bone_repair",
+          "name": "补甲",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amountType": "ABS",
+            "amount": 14
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_block",
+      "name": "修理护甲",
+      "rarity": "Common",
+      "description": "兼容验收修理守卫的自我护甲修补技能。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 2614,
+        "y": 914,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 5,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_block_repair",
+          "name": "补护甲",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amountType": "ABS",
+            "amount": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_demo_enemy_head_tap",
+      "name": "验收轻击",
+      "rarity": "Common",
+      "description": "兼容护甲验收敌人的固定头部护甲轻击。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 2814,
+        "y": 914,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_head_tap",
+          "name": "轻敲头部",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 4,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_demo_enemy_head_break",
+      "name": "验收重击",
+      "rarity": "Common",
+      "description": "兼容 HP 免伤和护甲免伤验收敌人的固定头部重击。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy_compat"
+        }
+      },
+      "editorMeta": {
+        "x": 3014,
+        "y": 914,
+        "group": "enemy_compat",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_head_break",
+          "name": "重击头部",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 20,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

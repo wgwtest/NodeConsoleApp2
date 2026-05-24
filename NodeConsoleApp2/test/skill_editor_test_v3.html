@@ -17,7 +17,18 @@
         <input type="file" id="file-input" accept=".json" style="display: none;" onchange="editor.importJsonFile(this)">
         <input type="file" id="buff-file-input" accept=".json" style="display: none;" onchange="editor.importBuffsFile(this)">
         <div class="toolbar-header">
-            <div class="toolbar-title">技能编辑器</div>
+            <div class="toolbar-title-row">
+                <div class="toolbar-title">技能编辑器</div>
+                <button
+                    id="skill-domain-toggle"
+                    class="skill-domain-toggle"
+                    type="button"
+                    data-domain="player"
+                    data-alt-label="敌方技能"
+                    title="切换我方/敌方技能包"
+                    onclick="editor.toggleSkillDomain()"
+                >我方技能</button>
+            </div>
             <div class="current-file-display">
                 <span class="current-file-dot"></span>
                 <span>当前文件</span>

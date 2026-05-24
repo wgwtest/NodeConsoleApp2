@@ -66,10 +66,20 @@ async function withTempServer(t, callback) {
     JSON.stringify({ $schemaVersion: 'skills_melee_v3', skills: [{ id: 'skill_recent', name: 'Recent' }] }, null, 2),
     'utf8'
   );
+  await fs.writeFile(
+    path.join(tempRoot, 'assets', 'skill_packs', 'authoring', 'skills_enemy_v1_20260522_010203.json'),
+    JSON.stringify({ $schemaVersion: 'skills_melee_v3', meta: { skillDomain: 'enemy' }, skills: [{ id: 'enemy_skill_recent', name: 'Recent Enemy' }] }, null, 2),
+    'utf8'
+  );
   await fs.utimes(
     path.join(tempRoot, 'assets', 'skill_packs', 'authoring', 'skills_melee_v4_5_20260522_010203.json'),
     new Date('2026-05-22T01:02:03Z'),
     new Date('2026-05-22T01:02:03Z')
+  );
+  await fs.utimes(
+    path.join(tempRoot, 'assets', 'skill_packs', 'authoring', 'skills_enemy_v1_20260522_010203.json'),
+    new Date('2026-05-22T01:02:04Z'),
+    new Date('2026-05-22T01:02:04Z')
   );
 
   const port = await getFreePort();
@@ -239,6 +249,55 @@ test('skill pack API saves authoring versions, publishes runtime pack, and lists
   });
 });
 
+test('skill pack API supports enemy skill authoring, runtime publish, and kind-filtered recents', async t => {
+  await withTempServer(t, async ({ baseUrl, tempRoot }) => {
+    const authoringPath = 'assets/skill_packs/authoring/skills_enemy_v1_20260522_020304.json';
+    const content = JSON.stringify({
+      $schemaVersion: 'skills_melee_v3',
+      meta: { skillDomain: 'enemy' },
+      skills: [{ id: 'enemy_skill_saved', name: '敌人技能' }]
+    }, null, 2);
+
+    const saveRes = await fetch(`${baseUrl}/api/skill-packs/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'enemy', targetPath: authoringPath, content })
+    });
+    assert.equal(saveRes.status, 200);
+    const saveBody = await saveRes.json();
+    assert.equal(saveBody.ok, true);
+    assert.equal(saveBody.targetPath, authoringPath);
+
+    const publishRes = await fetch(`${baseUrl}/api/skill-packs/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'enemy', content })
+    });
+    assert.equal(publishRes.status, 200);
+    const publishBody = await publishRes.json();
+    assert.equal(publishBody.ok, true);
+    assert.equal(publishBody.targetPath, 'assets/data/skills_enemy_v1.json');
+
+    const runtimePack = JSON.parse(await fs.readFile(path.join(tempRoot, 'assets', 'data', 'skills_enemy_v1.json'), 'utf8'));
+    assert.equal(runtimePack.skills[0].id, 'enemy_skill_saved');
+
+    const enemyRecentRes = await fetch(`${baseUrl}/api/skill-packs/recent?kind=enemy&limit=10`);
+    assert.equal(enemyRecentRes.status, 200);
+    const enemyRecentBody = await enemyRecentRes.json();
+    assert.equal(enemyRecentBody.ok, true);
+    assert(enemyRecentBody.files.some(file => file.path === authoringPath));
+    assert(enemyRecentBody.files.some(file => file.path === 'assets/data/skills_enemy_v1.json'));
+    assert(!enemyRecentBody.files.some(file => file.path.includes('skills_melee_v4_5')));
+
+    const playerRecentRes = await fetch(`${baseUrl}/api/skill-packs/recent?kind=player&limit=10`);
+    assert.equal(playerRecentRes.status, 200);
+    const playerRecentBody = await playerRecentRes.json();
+    assert.equal(playerRecentBody.ok, true);
+    assert(playerRecentBody.files.some(file => file.path.includes('skills_melee_v4_5')));
+    assert(!playerRecentBody.files.some(file => file.path.includes('skills_enemy_v1')));
+  });
+});
+
 test('skill pack API rejects authoring saves outside authoring root and runtime publishes outside runtime skill file', async t => {
   await withTempServer(t, async ({ baseUrl, tempRoot }) => {
     const content = JSON.stringify({ $schemaVersion: 'skills_melee_v3', skills: [{ id: 'skill_bad' }] }, null, 2);
@@ -384,6 +443,121 @@ test('SkillEditor saves authoring skill versions and publishes the runtime skill
   assert.match(editor.lastStatus, /已发布到主流程/);
 });
 
+test('SkillEditor switches to enemy skill mode with separate paths, API kind, and recent list', async () => {
+  const { SkillEditor } = await importSkillEditorModule();
+  const editor = Object.create(SkillEditor.prototype);
+  editor.skills = [{ id: 'enemy_skill_a', name: 'Enemy A' }];
+  editor.skillPackMeta = { title: 'Enemy Pack', enums: {} };
+  editor.skillPackSchemaVersion = 'skills_melee_v3';
+  editor.defaultParts = [];
+  editor.enums = {};
+  editor.currentSkillFilePath = 'assets/data/skills_melee_v4_5.json';
+  editor.elProjectFilePath = { value: '' };
+  editor.setProjectFileStatus = message => {
+    editor.lastStatus = message;
+  };
+  editor.setCurrentProjectFilePath = SkillEditor.prototype.setCurrentProjectFilePath;
+  editor.refreshRecentSkillFiles = SkillEditor.prototype.refreshRecentSkillFiles;
+
+  const calls = [];
+  const originalFetch = global.fetch;
+  global.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), options });
+    return {
+      ok: true,
+      json: async () => ({
+        ok: true,
+        targetPath: String(url).includes('/publish')
+          ? 'assets/data/skills_enemy_v1.json'
+          : 'assets/skill_packs/authoring/skills_enemy_v1_20260522_010203.json',
+        files: [
+          { path: 'assets/skill_packs/authoring/skills_enemy_v1_20260522_010203.json', mtimeMs: 1770000000000 }
+        ]
+      })
+    };
+  };
+  try {
+    editor.setSkillDomain('enemy');
+    assert.equal(editor.currentSkillFilePath, 'assets/data/skills_enemy_v1.json');
+    assert.equal(editor.elProjectFilePath.value, 'assets/data/skills_enemy_v1.json');
+
+    await editor.saveAuthoringSkillPack(new Date(2026, 4, 22, 1, 2, 3));
+    await editor.publishRuntimeSkillPack();
+    await editor.refreshRecentSkillFiles();
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  const saveBody = JSON.parse(calls.find(call => call.url === '/api/skill-packs/save').options.body);
+  const publishBody = JSON.parse(calls.find(call => call.url === '/api/skill-packs/publish').options.body);
+  assert.equal(saveBody.kind, 'enemy');
+  assert.equal(saveBody.targetPath, 'assets/skill_packs/authoring/skills_enemy_v1_20260522_010203.json');
+  assert.equal(publishBody.kind, 'enemy');
+  assert.equal(publishBody.targetPath, 'assets/data/skills_enemy_v1.json');
+  assert(calls.some(call => call.url === '/api/skill-packs/recent?kind=enemy&limit=20'));
+});
+
+test('SkillEditor toolbar domain switch refreshes recents and loads the selected default skill pack', async () => {
+  const { SkillEditor } = await importSkillEditorModule();
+  const editor = Object.create(SkillEditor.prototype);
+  editor.skillDomain = 'player';
+  editor.currentSkillFilePath = 'assets/data/skills_melee_v4_5.json';
+  editor.elProjectFilePath = { value: 'assets/data/skills_melee_v4_5.json' };
+  editor.elSkillDomainSelect = { value: 'player' };
+  editor.setProjectFileStatus = message => {
+    editor.lastStatus = message;
+  };
+  editor.setCurrentProjectFilePath = SkillEditor.prototype.setCurrentProjectFilePath;
+
+  const calls = [];
+  editor.refreshRecentSkillFiles = async () => {
+    calls.push(['recent', editor.getRecentSkillPackKind()]);
+  };
+  editor.loadProjectSkillPack = async filePath => {
+    calls.push(['load', filePath]);
+    editor.loadedPath = filePath;
+  };
+
+  await editor.switchSkillDomain('enemy');
+
+  assert.equal(editor.skillDomain, 'enemy');
+  assert.equal(editor.currentSkillFilePath, 'assets/data/skills_enemy_v1.json');
+  assert.equal(editor.elProjectFilePath.value, 'assets/data/skills_enemy_v1.json');
+  assert.equal(editor.loadedPath, 'assets/data/skills_enemy_v1.json');
+  assert.deepEqual(calls, [
+    ['recent', 'enemy'],
+    ['load', 'assets/data/skills_enemy_v1.json']
+  ]);
+});
+
+test('SkillEditor compact domain toggle switches between player and enemy modes', async () => {
+  const { SkillEditor } = await importSkillEditorModule();
+  const editor = Object.create(SkillEditor.prototype);
+  editor.skillDomain = 'player';
+  editor.elSkillDomainToggle = { dataset: {}, textContent: '', title: '' };
+  editor.elProjectFilePath = { value: 'assets/data/skills_melee_v4_5.json' };
+  editor.setProjectFileStatus = message => {
+    editor.lastStatus = message;
+  };
+  editor.setCurrentProjectFilePath = SkillEditor.prototype.setCurrentProjectFilePath;
+
+  const loaded = [];
+  editor.refreshRecentSkillFiles = async () => {};
+  editor.loadProjectSkillPack = async filePath => {
+    loaded.push(filePath);
+  };
+
+  editor.updateSkillDomainToggle();
+  assert.equal(editor.elSkillDomainToggle.textContent, '我方技能');
+  assert.equal(editor.elSkillDomainToggle.dataset.domain, 'player');
+
+  await editor.toggleSkillDomain();
+  assert.equal(editor.skillDomain, 'enemy');
+  assert.equal(editor.elSkillDomainToggle.textContent, '敌方技能');
+  assert.equal(editor.elSkillDomainToggle.dataset.domain, 'enemy');
+  assert.deepEqual(loaded, ['assets/data/skills_enemy_v1.json']);
+});
+
 test('SkillEditor authoring version names do not accumulate old timestamp suffixes', async () => {
   const { buildTimestampedSkillAuthoringPath } = await importSkillEditorModule();
   const nextPath = buildTimestampedSkillAuthoringPath(
@@ -523,7 +697,7 @@ test('SkillEditor loads the newest sibling buffs pack after loading a project sk
 
 test('skill editor toolbar uses Chinese labels for file and edit actions', async () => {
   const html = await fs.readFile(path.join(projectRoot, 'test', 'skill_editor_test_v3.html'), 'utf8');
-  for (const label of ['打开技能包', '最近版本', '打开版本', '刷新', '指定路径', '打开路径', '从本地导入', 'Buff', '同目录自动加载', '手动加载 Buff', '编辑', '技能库', '新建技能', '自动布局', '清空', '保存与发布', '保存工作稿', '发布到主流程', '另存到指定路径', '下载备份']) {
+  for (const label of ['我方技能', '敌方技能', '打开技能包', '最近版本', '打开版本', '刷新', '指定路径', '打开路径', '从本地导入', 'Buff', '同目录自动加载', '手动加载 Buff', '编辑', '技能库', '新建技能', '自动布局', '清空', '保存与发布', '保存工作稿', '发布到主流程', '另存到指定路径', '下载备份']) {
     assert.match(html, new RegExp(label), `toolbar should include ${label}`);
   }
   for (const retiredLabel of ['>加载项目<', '>加载版本<', '>导入本地<', '>加载 Buff<', '>另存为<', '>下载\\s*<']) {
@@ -538,5 +712,11 @@ test('skill editor toolbar uses Chinese labels for file and edit actions', async
     html,
     />\s*(Load Buffs|Skills|Load Project|Import Local|New Skill|Save As|Download|Clear|Auto Layout)\b/,
     'toolbar should not expose English action labels'
+  );
+  assert.match(html, /<div class="toolbar-title-row">[\s\S]*id="skill-domain-toggle"[\s\S]*>我方技能<\/button>/u);
+  assert.doesNotMatch(
+    html,
+    /<section class="toolbar-group toolbar-group-open"[\s\S]*id="skill-domain-(?:select|toggle)"/u,
+    'domain switch should stay in the title row instead of increasing the open-pack group height'
   );
 });

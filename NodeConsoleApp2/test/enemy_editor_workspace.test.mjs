@@ -100,6 +100,19 @@ test('EnemyWorkspace validates skill, asset, body part, and level references', a
     assert.equal(summary.diagnosticsSummary.hasError, true);
 });
 
+test('EnemyWorkspace resolves all current runtime enemy skill references from the enemy skill pack', async () => {
+    const { EnemyWorkspace } = await importSourceModule(workspaceModulePath);
+    const enemies = JSON.parse(await fsp.readFile(path.join(projectRoot, 'assets', 'data', 'enemies.json'), 'utf8'));
+    const enemySkillPack = JSON.parse(await fsp.readFile(path.join(projectRoot, 'assets', 'data', 'skills_enemy_v1.json'), 'utf8'));
+    const workspace = new EnemyWorkspace(enemies, { skillCatalog: enemySkillPack });
+
+    const missing = workspace.validateDocument()
+        .filter(issue => issue.code === 'missing_skill_reference')
+        .map(issue => `${issue.enemyId}:${issue.refId}`);
+
+    assert.deepEqual(missing, []);
+});
+
 test('EnemyWorkspace resolves default portrait assets for enemies without explicit presentation refs', async () => {
     const { EnemyWorkspace } = await importSourceModule(workspaceModulePath);
     const workspace = new EnemyWorkspace({

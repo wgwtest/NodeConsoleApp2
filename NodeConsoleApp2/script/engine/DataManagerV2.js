@@ -25,6 +25,7 @@ class DataManager {
         this.contentRegistry = null;
         this.contentPacks = null;
         this.skillCatalog = null;
+        this.enemySkillCatalog = null;
         this.buffCatalog = null;
         this.levelCatalog = null;
         this.levelMapPack = null;
@@ -143,6 +144,13 @@ class DataManager {
             levelMapPack: normalizePathEntry(inputRegistry.levelMapPack, fallbackSources.levelMapPack, 'levelMapPack', { rootKey: 'maps' }),
             slotLayouts: normalizePathEntry(inputRegistry.slotLayouts, fallbackSources.slotLayouts, 'slotLayouts', { required: false })
         };
+        const enemySkillsEntry = normalizePathEntry(inputRegistry.enemySkills, fallbackSources.enemySkills, 'enemySkills', { rootKey: 'skills', required: false }) || {
+            kind: 'enemySkills',
+            path: fallbackSources.enemySkills || 'skills_enemy_v1.json',
+            rootKey: 'skills',
+            required: false
+        };
+        registry.enemySkills = enemySkillsEntry;
 
         const skillsEntry = normalizePathEntry(inputRegistry.skills, fallbackSources.skills, 'skills', { rootKey: 'skills' }) || {
             kind: 'skills',
@@ -200,6 +208,7 @@ class DataManager {
 
         switch (contentKey) {
             case 'skills':
+            case 'enemySkills':
                 if (!Array.isArray(rawPack.skills)) {
                     throw new Error('Skills data must provide a skills array.');
                 }
@@ -1038,11 +1047,22 @@ class DataManager {
             const skillTreeId = playerSkills.skillTreeId;
             const skillsPack = await fetchContentPack('skills', { skillTreeId });
             const skills = skillsPack.raw;
+            const enemySkillsPack = await fetchContentPack('enemySkills').catch((e) => {
+                console.warn('?? [DataManager] Failed to load enemySkills. Reason:', e.message);
+                return null;
+            });
+            const enemySkills = enemySkillsPack ? enemySkillsPack.raw : { skills: [] };
 
             const skillsMap = Object.create(null);
             skills.skills.forEach(skill => {
                 if (skill && skill.id) {
                     skillsMap[skill.id] = skill;
+                }
+            });
+            const enemySkillsMap = Object.create(null);
+            enemySkills.skills.forEach(skill => {
+                if (skill && skill.id) {
+                    enemySkillsMap[skill.id] = skill;
                 }
             });
             
@@ -1056,6 +1076,11 @@ class DataManager {
                 skillCatalog: this._buildSkillCatalog(skillsMap, {
                     packMeta: skillsPack.meta,
                     selectedTreeId: skillTreeId
+                }),
+                enemySkills: enemySkillsMap,
+                enemySkillCatalog: this._buildSkillCatalog(enemySkillsMap, {
+                    packMeta: enemySkillsPack ? enemySkillsPack.meta : null,
+                    selectedTreeId: 'enemy_v1'
                 }),
                 items,
                 enemies,
@@ -1078,6 +1103,7 @@ class DataManager {
                     enemies: enemiesPack.meta,
                     levels: effectiveLevelsPack.meta,
                     skills: skillsPack.meta,
+                    enemySkills: enemySkillsPack ? enemySkillsPack.meta : null,
                     buffs: buffsPack.meta,
                     levelMapPack: levelMapPack ? levelMapPack.meta : null,
                     slotLayouts: slotLayoutsPack ? slotLayoutsPack.meta : null
@@ -1085,6 +1111,7 @@ class DataManager {
             };
             this.contentPacks = this.gameConfig.contentPacks;
             this.skillCatalog = this.gameConfig.skillCatalog;
+            this.enemySkillCatalog = this.gameConfig.enemySkillCatalog;
             this.buffCatalog = this.gameConfig.buffCatalog;
             this.levelCatalog = this.gameConfig.levelCatalog;
             this.levelMapPack = this.gameConfig.levelMapPack;
@@ -1098,6 +1125,7 @@ class DataManager {
             this.contentRegistry = null;
             this.contentPacks = null;
             this.skillCatalog = null;
+            this.enemySkillCatalog = null;
             this.buffCatalog = null;
             this.levelCatalog = null;
             this.levelMapPack = null;
@@ -1111,6 +1139,10 @@ class DataManager {
 
     getSkillPackMeta() {
         return (this.contentPacks && this.contentPacks.skills) ? this.contentPacks.skills : null;
+    }
+
+    getEnemySkillPackMeta() {
+        return (this.contentPacks && this.contentPacks.enemySkills) ? this.contentPacks.enemySkills : null;
     }
 
     getCurrentSkillTreeId() {
@@ -1136,6 +1168,27 @@ class DataManager {
             this.gameConfig.skillCatalog = this.skillCatalog;
         }
         return this.skillCatalog;
+    }
+
+    getEnemySkillCatalog() {
+        if (this.enemySkillCatalog && typeof this.enemySkillCatalog === 'object') {
+            return this.enemySkillCatalog;
+        }
+
+        if (this.gameConfig && this.gameConfig.enemySkillCatalog && typeof this.gameConfig.enemySkillCatalog === 'object') {
+            this.enemySkillCatalog = this.gameConfig.enemySkillCatalog;
+            return this.enemySkillCatalog;
+        }
+
+        const skillsMap = (this.gameConfig && this.gameConfig.enemySkills && typeof this.gameConfig.enemySkills === 'object')
+            ? this.gameConfig.enemySkills
+            : Object.create(null);
+
+        this.enemySkillCatalog = this._buildSkillCatalog(skillsMap, { selectedTreeId: 'enemy_v1' });
+        if (this.gameConfig && typeof this.gameConfig === 'object') {
+            this.gameConfig.enemySkillCatalog = this.enemySkillCatalog;
+        }
+        return this.enemySkillCatalog;
     }
 
     getBuffPackMeta() {
@@ -1631,6 +1684,14 @@ class DataManager {
             id: skillId,
             runtimeAliasOf: aliasId
         };
+    }
+
+    getEnemySkillConfig(skillId) {
+        const enemySkillsMap = this.getEnemySkillCatalog()?.skillsMap;
+        const directEnemy = enemySkillsMap ? enemySkillsMap[skillId] : null;
+        if (directEnemy) return directEnemy;
+
+        return this.getSkillConfig(skillId);
     }
 
     _normalizeSkillSelection(selection) {

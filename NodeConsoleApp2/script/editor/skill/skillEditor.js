@@ -64,6 +64,26 @@ export function buildTimestampedSkillAuthoringPath(inputPath, date = new Date())
     return `assets/skill_packs/authoring/${base}_${stamp}.json`;
 }
 
+const SKILL_DOMAIN_CONFIGS = Object.freeze({
+    player: Object.freeze({
+        kind: 'player',
+        label: '我方技能',
+        defaultPath: 'assets/data/skills_melee_v4_5.json',
+        publishPath: 'assets/data/skills_melee_v4_5.json'
+    }),
+    enemy: Object.freeze({
+        kind: 'enemy',
+        label: '敌方技能',
+        defaultPath: 'assets/data/skills_enemy_v1.json',
+        publishPath: 'assets/data/skills_enemy_v1.json'
+    })
+});
+
+function normalizeSkillDomain(domain) {
+    const normalized = String(domain || 'player').trim().toLowerCase();
+    return SKILL_DOMAIN_CONFIGS[normalized] ? normalized : 'player';
+}
+
 function splitProjectPath(inputPath) {
     const normalized = normalizeProjectJsonPath(inputPath);
     const slash = normalized.lastIndexOf('/');
@@ -190,8 +210,16 @@ export class SkillEditor {
         this.elProjectFilePath = document.getElementById('project-file-path');
         this.elProjectFileStatus = document.getElementById('project-file-status');
         this.elRecentSkillFileSelect = document.getElementById('recent-skill-file-select');
-        this.currentSkillFilePath = normalizeProjectJsonPath(this.elProjectFilePath?.value || 'assets/data/skills_melee_v4_5.json');
+        this.elSkillDomainSelect = document.getElementById('skill-domain-select');
+        this.elSkillDomainToggle = document.getElementById('skill-domain-toggle');
+        this.skillDomain = normalizeSkillDomain(this.elSkillDomainSelect?.value || 'player');
+        const domainConfig = this.getSkillDomainConfig();
+        this.currentSkillFilePath = normalizeProjectJsonPath(this.elProjectFilePath?.value || domainConfig.defaultPath);
         this.setCurrentProjectFilePath(this.currentSkillFilePath);
+        if (this.elSkillDomainSelect && this.elSkillDomainSelect.value !== this.skillDomain) {
+            this.elSkillDomainSelect.value = this.skillDomain;
+        }
+        this.updateSkillDomainToggle();
         // legacy cost field removed (v3 only)
         this.elPropCost = null;
         this.elPropSpeed = document.getElementById('prop-speed');
@@ -1170,6 +1198,65 @@ export class SkillEditor {
         return this.loadBuffsOnly();
     }
 
+    getSkillDomainConfig(domain = this.skillDomain || 'player') {
+        return SKILL_DOMAIN_CONFIGS[normalizeSkillDomain(domain)] || SKILL_DOMAIN_CONFIGS.player;
+    }
+
+    getSkillDomain() {
+        return normalizeSkillDomain(this.skillDomain || 'player');
+    }
+
+    setSkillDomain(domain) {
+        const nextDomain = normalizeSkillDomain(domain);
+        this.skillDomain = nextDomain;
+        if (this.elSkillDomainSelect && this.elSkillDomainSelect.value !== nextDomain) {
+            this.elSkillDomainSelect.value = nextDomain;
+        }
+        this.updateSkillDomainToggle();
+        const config = this.getSkillDomainConfig(nextDomain);
+        this.setCurrentProjectFilePath(config.defaultPath);
+        this.setProjectFileStatus(`已切换到${config.label}：${config.defaultPath}`);
+        return config;
+    }
+
+    updateSkillDomainToggle() {
+        if (!this.elSkillDomainToggle) return;
+        const domain = this.getSkillDomain();
+        const config = this.getSkillDomainConfig(domain);
+        const nextDomain = domain === 'enemy' ? 'player' : 'enemy';
+        const nextConfig = this.getSkillDomainConfig(nextDomain);
+        this.elSkillDomainToggle.dataset.domain = domain;
+        this.elSkillDomainToggle.dataset.altLabel = nextConfig.label;
+        this.elSkillDomainToggle.textContent = config.label;
+        this.elSkillDomainToggle.title = `当前：${config.label}。点击切换到${nextConfig.label}`;
+    }
+
+    async toggleSkillDomain() {
+        const nextDomain = this.getSkillDomain() === 'enemy' ? 'player' : 'enemy';
+        return this.switchSkillDomain(nextDomain);
+    }
+
+    async switchSkillDomain(domain) {
+        const config = this.setSkillDomain(domain);
+        if (typeof this.refreshRecentSkillFiles === 'function') {
+            await this.refreshRecentSkillFiles().catch((error) => {
+                console.warn('[SkillEditor] refresh recent skill files after domain switch failed:', error);
+            });
+        }
+        if (typeof this.loadProjectSkillPack === 'function') {
+            await this.loadProjectSkillPack(config.defaultPath);
+        }
+        return config;
+    }
+
+    getRuntimeSkillPackPath() {
+        return this.getSkillDomainConfig().publishPath;
+    }
+
+    getRecentSkillPackKind() {
+        return this.getSkillDomainConfig().kind;
+    }
+
     setCurrentProjectFilePath(filePath) {
         const normalized = normalizeProjectJsonPath(filePath);
         this.currentSkillFilePath = normalized;
@@ -1252,7 +1339,11 @@ export class SkillEditor {
     }
 
     async refreshRecentSkillFiles(limit = 20) {
-        const response = await fetch(`/api/skill-packs/recent?limit=${encodeURIComponent(String(limit))}`, { cache: 'no-store' });
+        const kind = this.getRecentSkillPackKind();
+        const query = kind === 'player'
+            ? `limit=${encodeURIComponent(String(limit))}`
+            : `kind=${encodeURIComponent(kind)}&limit=${encodeURIComponent(String(limit))}`;
+        const response = await fetch(`/api/skill-packs/recent?${query}`, { cache: 'no-store' });
         const payload = await response.json();
         if (!response.ok || !payload.ok) throw new Error(payload.error || `HTTP ${response.status}`);
         const files = Array.isArray(payload.files) ? payload.files : [];
@@ -1460,12 +1551,14 @@ export class SkillEditor {
     async saveSkillPackViaApi(endpoint, targetPath, statusPrefix, includeEditorMeta = true) {
         const pack = this.buildSkillPackPayload(includeEditorMeta);
         const content = JSON.stringify(pack, null, 2);
+        const kind = this.getSkillDomainConfig().kind;
         this.setProjectFileStatus(`${statusPrefix}中 ${targetPath}...`);
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    kind,
                     targetPath,
                     content
                 })
@@ -1489,12 +1582,13 @@ export class SkillEditor {
     }
 
     async saveAuthoringSkillPack(date = new Date()) {
-        const targetPath = buildTimestampedSkillAuthoringPath(this.currentSkillFilePath || this.elProjectFilePath?.value, date);
+        const basePath = this.currentSkillFilePath || this.elProjectFilePath?.value || this.getSkillDomainConfig().defaultPath;
+        const targetPath = buildTimestampedSkillAuthoringPath(basePath, date);
         return this.saveSkillPackViaApi('/api/skill-packs/save', targetPath, '已保存工作稿', true);
     }
 
     async publishRuntimeSkillPack() {
-        return this.saveSkillPackViaApi('/api/skill-packs/publish', 'assets/data/skills_melee_v4_5.json', '已发布到主流程', true);
+        return this.saveSkillPackViaApi('/api/skill-packs/publish', this.getRuntimeSkillPackPath(), '已发布到主流程', true);
     }
 
     setError(el, msg) {

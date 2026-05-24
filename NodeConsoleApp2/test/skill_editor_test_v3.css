@@ -92,6 +92,40 @@
 	white-space: nowrap;
 }
 
+.skill-editor-v3 .toolbar-title-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.skill-editor-v3 .skill-domain-toggle {
+	height: 30px;
+	padding: 0 12px;
+	border: 1px solid #b8c8d8;
+	border-radius: 4px;
+	background: #f5f8fb;
+	color: #26394c;
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 900;
+	white-space: nowrap;
+}
+
+.skill-editor-v3 .skill-domain-toggle[data-domain="enemy"] {
+	border-color: #9f5b22;
+	background: #fff4e8;
+	color: #8a3f08;
+}
+
+.skill-editor-v3 .skill-domain-toggle:hover {
+	background: #eaf1f8;
+}
+
+.skill-editor-v3 .skill-domain-toggle[data-domain="enemy"]:hover {
+	background: #ffe8cf;
+}
+
 .skill-editor-v3 .current-file-display {
 	display: flex;
 	align-items: center;

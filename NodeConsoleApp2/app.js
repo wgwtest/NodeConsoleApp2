@@ -16,7 +16,19 @@ const allowedJsonWriteRoots = [
   'DOC/CODEX_DOC/'
 ];
 const skillAuthoringRoot = 'assets/skill_packs/authoring/';
-const runtimeSkillPackPath = 'assets/data/skills_melee_v4_5.json';
+const skillPackKindConfigs = Object.freeze({
+  player: {
+    kind: 'player',
+    runtimePath: 'assets/data/skills_melee_v4_5.json',
+    authoringPrefixes: ['skills_melee']
+  },
+  enemy: {
+    kind: 'enemy',
+    runtimePath: 'assets/data/skills_enemy_v1.json',
+    authoringPrefixes: ['skills_enemy']
+  }
+});
+const runtimeSkillPackPath = skillPackKindConfigs.player.runtimePath;
 
 const mimeTypes = new Map([
   ['.html', 'text/html; charset=utf-8'],
@@ -260,7 +272,27 @@ async function writeLevelMapPackage(payload) {
   };
 }
 
-function normalizeSkillPackPath(inputPath, { mode = 'authoring' } = {}) {
+function normalizeSkillPackKind(kind) {
+  const normalized = String(kind || 'player').trim().toLowerCase();
+  if (!Object.prototype.hasOwnProperty.call(skillPackKindConfigs, normalized)) {
+    throw new Error(`未知技能包类型：${kind}`);
+  }
+  return normalized;
+}
+
+function getSkillPackKindConfig(kind) {
+  return skillPackKindConfigs[normalizeSkillPackKind(kind)];
+}
+
+function isSkillPackPathForKind(filePath, kindConfig) {
+  const fileName = path.posix.basename(filePath);
+  if (filePath === kindConfig.runtimePath) return true;
+  if (!filePath.startsWith(skillAuthoringRoot)) return false;
+  return kindConfig.authoringPrefixes.some(prefix => fileName.startsWith(prefix));
+}
+
+function normalizeSkillPackPath(inputPath, { mode = 'authoring', kind = 'player' } = {}) {
+  const kindConfig = getSkillPackKindConfig(kind);
   const raw = normalizeRelativePath(inputPath);
   if (!raw) throw new Error('缺少技能包路径。');
   if (path.isAbsolute(raw) || /^[a-zA-Z]:\//.test(raw)) {
@@ -274,11 +306,13 @@ function normalizeSkillPackPath(inputPath, { mode = 'authoring' } = {}) {
     throw new Error('路径不能跳出项目目录。');
   }
   if (mode === 'runtime') {
-    if (normalized !== runtimeSkillPackPath) {
-      throw new Error(`发布目标只能是 ${runtimeSkillPackPath}。`);
+    if (normalized !== kindConfig.runtimePath) {
+      throw new Error(`发布目标只能是 ${kindConfig.runtimePath}。`);
     }
   } else if (!normalized.startsWith(skillAuthoringRoot)) {
     throw new Error(`保存工作稿只能写入 ${skillAuthoringRoot}。`);
+  } else if (!isSkillPackPathForKind(normalized, kindConfig)) {
+    throw new Error(`技能包类型 ${kindConfig.kind} 只能保存到匹配的工作稿文件。`);
   }
   return normalized;
 }
@@ -293,9 +327,11 @@ function parseSkillPackContent(content) {
 }
 
 async function writeSkillPackFile(payload, { mode = 'authoring' } = {}) {
+  const kind = normalizeSkillPackKind(payload?.kind || 'player');
+  const kindConfig = getSkillPackKindConfig(kind);
   const targetPath = normalizeSkillPackPath(
-    mode === 'runtime' ? (payload?.targetPath || runtimeSkillPackPath) : payload?.targetPath,
-    { mode }
+    mode === 'runtime' ? (payload?.targetPath || kindConfig.runtimePath) : payload?.targetPath,
+    { mode, kind }
   );
   const { text } = parseSkillPackContent(payload?.content);
   const absolutePath = path.resolve(rootDir, targetPath);
@@ -346,7 +382,8 @@ async function collectSkillJsonFiles(directory) {
   return files;
 }
 
-async function listRecentSkillJsonFiles(limit = 20) {
+async function listRecentSkillJsonFiles(limit = 20, kind = 'player') {
+  const kindConfig = getSkillPackKindConfig(kind);
   const allFiles = [
     ...(await collectSkillJsonFiles(skillAuthoringRoot)),
     ...(await collectSkillJsonFiles('assets/data/'))
@@ -356,7 +393,7 @@ async function listRecentSkillJsonFiles(limit = 20) {
     .filter(file => {
       if (seen.has(file.path)) return false;
       seen.add(file.path);
-      return true;
+      return isSkillPackPathForKind(file.path, kindConfig);
     })
     .sort((a, b) => {
       const delta = Number(b.mtimeMs || 0) - Number(a.mtimeMs || 0);
@@ -377,7 +414,10 @@ function createServer() {
 
     if (urlPath === '/api/skill-packs/recent' && req.method === 'GET') {
       try {
-        const files = await listRecentSkillJsonFiles(parsedUrl.searchParams.get('limit') || 20);
+        const files = await listRecentSkillJsonFiles(
+          parsedUrl.searchParams.get('limit') || 20,
+          parsedUrl.searchParams.get('kind') || 'player'
+        );
         sendJson(res, 200, { ok: true, files });
       } catch (error) {
         sendJson(res, 400, { ok: false, error: error.message });
@@ -440,6 +480,7 @@ module.exports = {
   createServer,
   isAllowedMapPackDirectory,
   writeLevelMapPackage,
+  getSkillPackKindConfig,
   normalizeSkillPackPath,
   writeSkillPackFile,
   listRecentSkillJsonFiles

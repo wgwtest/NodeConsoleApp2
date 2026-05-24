@@ -379,3 +379,81 @@ test('战斗机器人按真实回合流验证撕裂伤口、迸发、吸血与 B
   assert.ok(eventBus.eventsByName('BATTLE_LOG').some(event => String(event.payload?.text || '').includes('迸发 dealt 5 HP')));
   assert.ok(eventBus.eventsByName('BATTLE_LOG').some(event => String(event.payload?.text || '').includes('吸血 healed 测试玩家 for 4 HP')));
 });
+
+test('敌人规划和执行优先使用 enemy skill catalog，不从玩家技能包取同名技能', async () => {
+  const { CoreEngine } = await importCoreEngineClass();
+  const { EnemyActionPlanner } = await importTurnRuntime();
+  const runtime = await importBuffRuntime();
+  const rawBuffs = await loadJson('buffs_v2_7.json');
+  const eventBus = new TestEventBus();
+  const registry = new runtime.BuffRegistry(rawBuffs.buffs);
+  const system = new runtime.BuffSystem(eventBus, registry);
+  system.start();
+  const buffRuntime = { BuffManager: runtime.BuffManager, eventBus, registry, system };
+
+  const player = attachBuffs(createActor('player_1', {
+    hp: 100,
+    maxHp: 100,
+    bodyParts: createBodyParts({ chest: { current: 0, max: 0, weakness: 1 } })
+  }), buffRuntime);
+  const enemy = attachBuffs(createActor('enemy_1', {
+    hp: 50,
+    maxHp: 50,
+    ap: 2,
+    maxAp: 2,
+    skills: ['enemy_skill_probe']
+  }), buffRuntime);
+
+  const playerSkill = {
+    id: 'enemy_skill_probe',
+    name: '错误的玩家同名技能',
+    speed: 0,
+    costs: { ap: 1 },
+    target: {
+      subject: 'SUBJECT_ENEMY',
+      scope: 'SCOPE_PART',
+      selection: { mode: 'single', candidateParts: ['chest'], selectedParts: ['chest'], selectCount: 1 }
+    },
+    actions: [{ effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 99 } }],
+    buffRefs: { apply: [], remove: [] }
+  };
+  const enemySkill = {
+    id: 'enemy_skill_probe',
+    name: '敌人探针技能',
+    speed: 0,
+    costs: { ap: 1 },
+    target: {
+      subject: 'SUBJECT_ENEMY',
+      scope: 'SCOPE_PART',
+      selection: { mode: 'single', candidateParts: ['chest'], selectedParts: ['chest'], selectCount: 1 }
+    },
+    actions: [{ effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 7 } }],
+    buffRefs: { apply: [], remove: [] }
+  };
+
+  const driver = Object.create(CoreEngine.prototype);
+  driver.eventBus = eventBus;
+  driver.buffRegistry = registry;
+  driver.buffSystem = system;
+  driver.playerSkillQueue = [];
+  driver.enemySkillQueue = [];
+  driver.currentHistoryEntry = null;
+  driver.data = {
+    playerData: player,
+    currentLevelData: { enemies: [enemy] },
+    getSkillConfig: skillId => (skillId === playerSkill.id ? playerSkill : null),
+    getEnemySkillConfig: skillId => (skillId === enemySkill.id ? enemySkill : null)
+  };
+  driver.enemyPlanner = new EnemyActionPlanner({
+    getSkillConfig: skillId => driver.data.getEnemySkillConfig(skillId)
+  });
+
+  const plans = driver._buildEnemyPlans();
+  assert.equal(plans.length, 1);
+  assert.equal(plans[0].skillName, '敌人探针技能');
+
+  const result = driver.executeEnemySkill(plans[0]);
+  assert.equal(result.ok, true);
+  assert.equal(result.actions[0].damage, 7);
+  assert.equal(player.stats.hp, 93);
+});
