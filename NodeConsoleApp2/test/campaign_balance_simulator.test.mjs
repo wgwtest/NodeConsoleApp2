@@ -98,6 +98,55 @@ test('campaign balance simulator produces repeatable seeded reports', async () =
   assert.equal(balanceSignature(first), balanceSignature(second));
 });
 
+test('progressive campaign simulator follows level rewards and records skill tree state', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  assert.equal(typeof simulator.runProgressiveCampaignSimulation, 'function');
+
+  const report = await simulator.runProgressiveCampaignSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.5-progressive-campaign'
+  });
+
+  assert.equal(report.meta.levelCount, 30);
+  assert.equal(report.meta.mode, 'progressive');
+  assert.equal(report.results.length, 30);
+  assert.equal(report.results[0].levelId, 'level_1_1');
+  assert.equal(report.results.at(-1).levelId, 'level_3_10');
+
+  const first = report.results[0];
+  assert.equal(first.skillTreeBefore && typeof first.skillTreeBefore, 'object');
+  assert.equal(first.skillTreeAfter && typeof first.skillTreeAfter, 'object');
+  assert.equal(Array.isArray(first.skillTreeBefore.learned), true);
+  assert.equal(Array.isArray(first.skillTreeAfter.learned), true);
+  assert.equal(Array.isArray(first.learnedThisLevel), true);
+  assert.equal(first.rewards && typeof first.rewards.kp, 'number');
+  assert.equal(first.skillTreeAfter.skillPoints >= 0, true);
+
+  const anyLearning = report.results.some(row => row.learnedThisLevel.length > 0);
+  assert.equal(anyLearning, true, '进度式模拟应在可用 KP 和前置满足时自动学习技能');
+  assert.equal(report.summary && typeof report.summary.skillTreeGapCandidates, 'number');
+  assert.equal(Array.isArray(report.summary.finalLearned), true);
+
+  const safeFailures = report.results.filter(row => !row.victory && row.playerRemainingHp >= 60 && !row.levelClass?.isBoss);
+  assert.equal(
+    safeFailures.length <= 2,
+    true,
+    `进度构筑安全残血超时关卡过多：${safeFailures.map(row => `${row.levelId}:${row.enemyRemainingHp}`).join(', ')}`
+  );
+  assert.equal(
+    safeFailures.every(row => row.diagnosis === 'enemy_numbers_too_high'),
+    true,
+    `进度构筑安全失败应归因为敌人数值拖死：${safeFailures.map(row => `${row.levelId}:${row.diagnosis}`).join(', ')}`
+  );
+  const chapterTwoBoss = report.results.find(row => row.levelId === 'level_2_10');
+  assert.equal(
+    Boolean(chapterTwoBoss?.victory && chapterTwoBoss.playerRemainingHp >= 100),
+    false,
+    '进度构筑不应满血通过第二章 Boss'
+  );
+});
+
 test('campaign balance first tuning pass keeps recommended build viable without letting specialist outperform it', async () => {
   const simulator = await import(pathToFileURL(simulatorPath));
   const report = await simulator.runCampaignBalanceSimulation({
@@ -109,7 +158,10 @@ test('campaign balance first tuning pass keeps recommended build viable without 
   const recommended = report.summary.byBuild.find(row => row.buildId === 'recommended');
   const specialist = report.summary.byBuild.find(row => row.buildId === 'specialist');
   const recommendedRows = report.results.filter(row => row.buildId === 'recommended');
-  const recommendedNumberFailures = recommendedRows.filter(row => row.diagnosis === 'enemy_numbers_too_high');
+  const recommendedNumberFailures = recommendedRows.filter(row => (
+    row.diagnosis === 'enemy_numbers_too_high'
+    && !row.levelClass?.isBoss
+  ));
   const recommendedBossRows = recommendedRows.filter(row => row.levelClass?.isBoss);
   const recommendedBossWins = recommendedBossRows.filter(row => row.victory);
   const recommendedBossTooEasy = recommendedBossRows.filter(row => row.diagnosis === 'boss_too_easy');
@@ -131,8 +183,8 @@ test('campaign balance first tuning pass keeps recommended build viable without 
     false,
     '当偏科构筑胜率相同但剩余 HP 明显更低时，报告不应提示偏科没有明显吃亏'
   );
-  assert.equal(recommendedNumberFailures.length <= 4, true, `recommended 数值拖死关卡过多：${recommendedNumberFailures.map(row => row.levelId).join(', ')}`);
+  assert.equal(recommendedNumberFailures.length <= 2, true, `recommended 数值拖死关卡过多：${recommendedNumberFailures.map(row => row.levelId).join(', ')}`);
   assert.equal(recommendedBossWins.length >= 1, true, 'recommended 至少应能打过 1 个 Boss');
   assert.equal(recommendedBossWins.length <= 2, true, 'recommended 不应稳定打过全部 Boss');
-  assert.equal(recommendedBossTooEasy.length <= 1, true, `Boss 过弱数量过多：${recommendedBossTooEasy.map(row => row.levelId).join(', ')}`);
+  assert.equal(recommendedBossTooEasy.length, 0, `Boss 过弱数量过多：${recommendedBossTooEasy.map(row => row.levelId).join(', ')}`);
 });

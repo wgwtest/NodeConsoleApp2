@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-05-24T19:59:59.802Z",
+    "generatedAt": "2026-05-24T20:49:18.869Z",
     "levelCount": 30,
     "buildIds": [
       "basic",
@@ -61,6 +61,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 85,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -87,6 +88,7 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 120,
       "playerRemainingHp": 105,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -114,6 +116,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 73,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -140,6 +143,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 0,
+      "playerMaxHp": 100,
       "playerRemainingHp": 85,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -166,6 +170,7 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 120,
       "playerRemainingHp": 105,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -193,6 +198,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 0,
+      "playerMaxHp": 100,
       "playerRemainingHp": 83,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -219,6 +225,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 80,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -245,6 +252,7 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 120,
       "playerRemainingHp": 105,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -272,6 +280,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 73,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -298,6 +307,7 @@
       "buildLabel": "基础构筑",
       "victory": false,
       "turns": 12,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 54,
       "playerSkillUsage": {
@@ -325,19 +335,21 @@
       "buildLabel": "推荐构筑",
       "victory": false,
       "turns": 12,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
-      "enemyRemainingHp": 10,
+      "enemyRemainingHp": 20,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 5,
+        "skill_block": 2,
         "skill_heavy_swing": 12,
         "skill_skull_cracker": 1,
         "skill_1771769351059": 11,
-        "skill_leftover_lunchbox": 11
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 10
       },
       "enemySkillUsage": {
-        "enemy_skill_orc_headbutt": 6,
-        "skill_warcry": 6
+        "enemy_skill_orc_headbutt": 7,
+        "skill_warcry": 5
       },
       "failureReason": "turn_limit",
       "diagnosis": "enemy_numbers_too_high",
@@ -355,12 +367,14 @@
       "buildLabel": "偏科构筑",
       "victory": false,
       "turns": 12,
+      "playerMaxHp": 100,
       "playerRemainingHp": 76,
       "enemyRemainingHp": 32,
       "playerSkillUsage": {
         "skill_1770474698976": 12,
-        "skill_execute": 12,
-        "skill_heavy_swing": 12
+        "skill_execute": 1,
+        "skill_heavy_swing": 12,
+        "skill_double_thrust": 11
       },
       "enemySkillUsage": {
         "enemy_skill_orc_headbutt": 6,
@@ -382,6 +396,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 95,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -409,16 +424,16 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 3,
-      "playerRemainingHp": 120,
+      "turns": 2,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 104,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 2,
         "skill_heavy_swing": 3,
-        "skill_1771769351059": 3,
-        "skill_leftover_lunchbox": 3,
-        "skill_heal": 1,
-        "skill_skull_cracker": 1
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 2,
+        "skill_execute_copy_1770043820577": 1
       },
       "enemySkillUsage": {
         "enemy_skill_bad_lunchbox": 1,
@@ -440,12 +455,14 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 85,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 2,
-        "skill_execute": 2,
-        "skill_heavy_swing": 2
+        "skill_execute": 1,
+        "skill_heavy_swing": 1,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
         "enemy_skill_bad_lunchbox": 1,
@@ -467,6 +484,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -493,20 +511,22 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 2,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 3,
-        "skill_heavy_swing": 4,
+        "skill_block": 2,
+        "skill_heavy_swing": 3,
         "skill_skull_cracker": 1,
         "skill_1771769351059": 2,
-        "skill_leftover_lunchbox": 2
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "skill_block": 3
+        "enemy_skill_shield_tap": 2,
+        "skill_block": 1
       },
       "failureReason": "victory",
       "diagnosis": "enemy_too_weak",
@@ -524,12 +544,14 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 96,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 2,
-        "skill_execute": 2,
-        "skill_heavy_swing": 2
+        "skill_execute": 1,
+        "skill_heavy_swing": 1,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
         "enemy_skill_shield_tap": 1,
@@ -551,6 +573,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 80,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -577,14 +600,14 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 2,
-      "playerRemainingHp": 120,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 2,
         "skill_heavy_swing": 2,
         "skill_1771769351059": 2,
-        "skill_leftover_lunchbox": 2,
-        "skill_heal": 1
+        "skill_leftover_lunchbox": 2
       },
       "enemySkillUsage": {
         "skill_bite": 2
@@ -605,12 +628,14 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 84,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 2,
-        "skill_execute": 2,
-        "skill_heavy_swing": 2
+        "skill_execute": 1,
+        "skill_heavy_swing": 1,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
         "skill_bite": 1,
@@ -632,7 +657,8 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 1,
-      "playerRemainingHp": 80,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 85,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 2,
@@ -658,6 +684,7 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 120,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -685,6 +712,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 78,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -711,6 +739,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -737,20 +766,22 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 2,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 3,
-        "skill_heavy_swing": 4,
+        "skill_block": 2,
+        "skill_heavy_swing": 3,
         "skill_skull_cracker": 1,
         "skill_1771769351059": 2,
-        "skill_leftover_lunchbox": 2
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "skill_block": 3
+        "enemy_skill_shield_tap": 2,
+        "skill_block": 1
       },
       "failureReason": "victory",
       "diagnosis": "enemy_too_weak",
@@ -768,12 +799,14 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 96,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 2,
-        "skill_execute": 2,
-        "skill_heavy_swing": 2
+        "skill_execute": 1,
+        "skill_heavy_swing": 1,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
         "enemy_skill_shield_tap": 1,
@@ -795,17 +828,18 @@
       "buildLabel": "基础构筑",
       "victory": false,
       "turns": 12,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
-      "enemyRemainingHp": 180,
+      "enemyRemainingHp": 132,
       "playerSkillUsage": {
         "skill_block": 12,
         "skill_double_thrust": 12,
         "skill_heavy_swing": 12,
-        "skill_heal": 2
+        "skill_heal": 3
       },
       "enemySkillUsage": {
-        "enemy_skill_wrecking_swing": 1,
-        "enemy_skill_blood_heat": 6,
+        "enemy_skill_wrecking_swing": 2,
+        "enemy_skill_blood_heat": 5,
         "enemy_skill_orc_headbutt": 5
       },
       "failureReason": "turn_limit",
@@ -824,21 +858,22 @@
       "buildLabel": "推荐构筑",
       "victory": false,
       "turns": 12,
-      "playerRemainingHp": 120,
-      "enemyRemainingHp": 95,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 72,
+      "enemyRemainingHp": 131,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 12,
+        "skill_block": 2,
         "skill_1771769351059": 12,
         "skill_skull_cracker": 1,
         "skill_heavy_swing": 11,
-        "skill_leftover_lunchbox": 11,
-        "skill_heal": 2
+        "skill_leftover_lunchbox": 1,
+        "skill_heal": 11,
+        "skill_execute_copy_1770043820577": 10
       },
       "enemySkillUsage": {
-        "enemy_skill_wrecking_swing": 1,
-        "enemy_skill_blood_heat": 6,
-        "enemy_skill_orc_headbutt": 5
+        "enemy_skill_wrecking_swing": 8,
+        "enemy_skill_blood_heat": 4
       },
       "failureReason": "turn_limit",
       "diagnosis": "enemy_numbers_too_high",
@@ -856,6 +891,7 @@
       "buildLabel": "偏科构筑",
       "victory": false,
       "turns": 4,
+      "playerMaxHp": 100,
       "playerRemainingHp": 0,
       "enemyRemainingHp": 179,
       "playerSkillUsage": {
@@ -883,6 +919,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -910,7 +947,8 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 2,
-      "playerRemainingHp": 114,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
@@ -918,7 +956,7 @@
         "skill_heavy_swing": 3,
         "skill_1771769351059": 2,
         "skill_leftover_lunchbox": 1,
-        "skill_heal": 1
+        "skill_execute_copy_1770043820577": 1
       },
       "enemySkillUsage": {
         "enemy_skill_rusty_shiv": 3
@@ -939,12 +977,14 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 78,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 2,
-        "skill_execute": 2,
-        "skill_heavy_swing": 2
+        "skill_execute": 1,
+        "skill_heavy_swing": 1,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
         "enemy_skill_rusty_shiv": 2
@@ -965,6 +1005,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 74,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -991,6 +1032,7 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 120,
       "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1018,6 +1060,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 81,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1045,6 +1088,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 4,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1053,8 +1097,8 @@
         "skill_heavy_swing": 5
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 4
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 3
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1071,20 +1115,22 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 6,
+      "turns": 4,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 5,
-        "skill_1771769351059": 6,
+        "skill_block": 4,
+        "skill_1771769351059": 4,
         "skill_skull_cracker": 1,
-        "skill_heavy_swing": 5,
-        "skill_leftover_lunchbox": 5
+        "skill_heavy_swing": 3,
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 5
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1102,12 +1148,14 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 3,
-        "skill_execute": 3,
-        "skill_heavy_swing": 3
+        "skill_execute": 2,
+        "skill_heavy_swing": 2,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
         "enemy_skill_shield_tap": 1,
@@ -1129,6 +1177,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 56,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1156,14 +1205,16 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 5,
+      "playerMaxHp": 120,
       "playerRemainingHp": 52,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 4,
-        "skill_heavy_swing": 6,
+        "skill_block": 3,
+        "skill_heavy_swing": 5,
         "skill_1771769351059": 5,
-        "skill_leftover_lunchbox": 5,
-        "skill_heal": 2
+        "skill_leftover_lunchbox": 3,
+        "skill_heal": 2,
+        "skill_execute_copy_1770043820577": 3
       },
       "enemySkillUsage": {
         "enemy_skill_orc_club": 5,
@@ -1185,6 +1236,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 42,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1210,19 +1262,21 @@
       "buildId": "basic",
       "buildLabel": "基础构筑",
       "victory": true,
-      "turns": 4,
+      "turns": 3,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 5,
-        "skill_double_thrust": 5,
-        "skill_heavy_swing": 5
+        "skill_block": 4,
+        "skill_double_thrust": 4,
+        "skill_heavy_swing": 4
       },
       "enemySkillUsage": {
-        "enemy_skill_bone_patch": 5
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 3
       },
       "failureReason": "victory",
-      "diagnosis": "ok",
+      "diagnosis": "enemy_too_weak",
       "levelClass": {
         "order": 5,
         "isBoss": false,
@@ -1236,19 +1290,22 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 2,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_block": 3,
-        "skill_heavy_swing": 4,
+        "skill_heavy_swing": 3,
         "skill_skull_cracker": 1,
         "skill_1771769351059": 2,
-        "skill_leftover_lunchbox": 2
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_bone_patch": 4
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 1
       },
       "failureReason": "victory",
       "diagnosis": "enemy_too_weak",
@@ -1266,15 +1323,18 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 3,
-        "skill_execute": 3,
-        "skill_heavy_swing": 3
+        "skill_execute": 2,
+        "skill_heavy_swing": 2,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_bone_patch": 3
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 2
       },
       "failureReason": "victory",
       "diagnosis": "enemy_too_weak",
@@ -1292,6 +1352,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 95,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1319,24 +1380,25 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 4,
-      "playerRemainingHp": 115,
+      "turns": 3,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 114,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_block": 3,
-        "skill_heavy_swing": 4,
+        "skill_heavy_swing": 3,
         "skill_skull_cracker": 1,
-        "skill_1771769351059": 3,
-        "skill_leftover_lunchbox": 3,
-        "skill_heal": 2
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 2
       },
       "enemySkillUsage": {
         "enemy_skill_bad_lunchbox": 1,
         "enemy_skill_dirty_bandage": 3
       },
       "failureReason": "victory",
-      "diagnosis": "ok",
+      "diagnosis": "enemy_too_weak",
       "levelClass": {
         "order": 6,
         "isBoss": false,
@@ -1351,6 +1413,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 85,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1377,17 +1440,18 @@
       "buildId": "basic",
       "buildLabel": "基础构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 4,
-        "skill_double_thrust": 4,
-        "skill_heavy_swing": 4
+        "skill_block": 3,
+        "skill_double_thrust": 3,
+        "skill_heavy_swing": 3
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 3
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 1
       },
       "failureReason": "victory",
       "diagnosis": "enemy_too_weak",
@@ -1404,23 +1468,25 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 4,
+      "turns": 3,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 4,
-        "skill_1771769351059": 4,
+        "skill_block": 3,
+        "skill_1771769351059": 3,
         "skill_skull_cracker": 1,
-        "skill_heavy_swing": 4,
-        "skill_leftover_lunchbox": 3
+        "skill_heavy_swing": 2,
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 4
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
       },
       "failureReason": "victory",
-      "diagnosis": "ok",
+      "diagnosis": "enemy_too_weak",
       "levelClass": {
         "order": 7,
         "isBoss": false,
@@ -1435,6 +1501,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1462,6 +1529,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 4,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1470,8 +1538,8 @@
         "skill_heavy_swing": 5
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 4
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 3
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1488,20 +1556,22 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 6,
+      "turns": 4,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 5,
-        "skill_1771769351059": 6,
+        "skill_block": 4,
+        "skill_1771769351059": 4,
         "skill_skull_cracker": 1,
-        "skill_heavy_swing": 5,
-        "skill_leftover_lunchbox": 5
+        "skill_heavy_swing": 3,
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 5
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1519,12 +1589,14 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 3,
-        "skill_execute": 3,
-        "skill_heavy_swing": 3
+        "skill_execute": 2,
+        "skill_heavy_swing": 2,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
         "enemy_skill_shield_tap": 1,
@@ -1546,6 +1618,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 56,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1573,14 +1646,16 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 5,
+      "playerMaxHp": 120,
       "playerRemainingHp": 52,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 4,
-        "skill_heavy_swing": 6,
+        "skill_block": 3,
+        "skill_heavy_swing": 5,
         "skill_1771769351059": 5,
-        "skill_leftover_lunchbox": 5,
-        "skill_heal": 2
+        "skill_leftover_lunchbox": 3,
+        "skill_heal": 2,
+        "skill_execute_copy_1770043820577": 3
       },
       "enemySkillUsage": {
         "enemy_skill_orc_club": 5,
@@ -1602,6 +1677,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 42,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1627,18 +1703,19 @@
       "buildId": "basic",
       "buildLabel": "基础构筑",
       "victory": true,
-      "turns": 8,
+      "turns": 7,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 8,
-        "skill_double_thrust": 9,
+        "skill_double_thrust": 8,
         "skill_heavy_swing": 8,
-        "skill_heal": 2
+        "skill_heal": 6
       },
       "enemySkillUsage": {
-        "enemy_skill_wrecking_swing": 1,
-        "enemy_skill_bone_patch": 8
+        "enemy_skill_centurion_wrecking_swing": 3,
+        "enemy_skill_bone_patch": 5
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1655,24 +1732,26 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 9,
-      "playerRemainingHp": 120,
+      "turns": 7,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 106,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 7,
-        "skill_1771769351059": 10,
+        "skill_block": 6,
+        "skill_1771769351059": 6,
         "skill_skull_cracker": 1,
-        "skill_heavy_swing": 9,
-        "skill_leftover_lunchbox": 8,
-        "skill_heal": 2
+        "skill_heavy_swing": 7,
+        "skill_leftover_lunchbox": 4,
+        "skill_heal": 5,
+        "skill_execute_copy_1770043820577": 3
       },
       "enemySkillUsage": {
-        "enemy_skill_wrecking_swing": 1,
-        "enemy_skill_bone_patch": 9
+        "enemy_skill_centurion_wrecking_swing": 3,
+        "enemy_skill_bone_patch": 5
       },
       "failureReason": "victory",
-      "diagnosis": "boss_too_easy",
+      "diagnosis": "ok",
       "levelClass": {
         "order": 10,
         "isBoss": true,
@@ -1687,15 +1766,17 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 3,
-      "playerRemainingHp": 56,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 44,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 4,
-        "skill_execute": 4,
-        "skill_heavy_swing": 4
+        "skill_execute": 3,
+        "skill_heavy_swing": 3,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_wrecking_swing": 1,
+        "enemy_skill_centurion_wrecking_swing": 1,
         "enemy_skill_bone_patch": 3
       },
       "failureReason": "victory",
@@ -1714,13 +1795,14 @@
       "buildLabel": "基础构筑",
       "victory": false,
       "turns": 12,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 33,
       "playerSkillUsage": {
         "skill_block": 11,
         "skill_double_thrust": 12,
         "skill_heavy_swing": 12,
-        "skill_heal": 4
+        "skill_heal": 2
       },
       "enemySkillUsage": {
         "enemy_skill_rusty_shiv": 6,
@@ -1742,16 +1824,18 @@
       "buildLabel": "推荐构筑",
       "victory": false,
       "turns": 12,
-      "playerRemainingHp": 101,
-      "enemyRemainingHp": 14,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 113,
+      "enemyRemainingHp": 25,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 4,
+        "skill_block": 9,
         "skill_heavy_swing": 12,
         "skill_skull_cracker": 1,
         "skill_1771769351059": 11,
-        "skill_leftover_lunchbox": 11,
-        "skill_heal": 2
+        "skill_leftover_lunchbox": 3,
+        "skill_heal": 1,
+        "skill_execute_copy_1770043820577": 8
       },
       "enemySkillUsage": {
         "enemy_skill_rusty_shiv": 6,
@@ -1773,16 +1857,18 @@
       "buildLabel": "偏科构筑",
       "victory": false,
       "turns": 12,
-      "playerRemainingHp": 12,
-      "enemyRemainingHp": 60,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 3,
+      "enemyRemainingHp": 37,
       "playerSkillUsage": {
         "skill_1770474698976": 12,
-        "skill_execute": 12,
-        "skill_heavy_swing": 12
+        "skill_execute": 4,
+        "skill_heavy_swing": 12,
+        "skill_double_thrust": 8
       },
       "enemySkillUsage": {
-        "enemy_skill_rusty_shiv": 6,
-        "enemy_skill_blood_heat": 6
+        "enemy_skill_rusty_shiv": 7,
+        "enemy_skill_blood_heat": 5
       },
       "failureReason": "turn_limit",
       "diagnosis": "player_build_mismatch",
@@ -1800,6 +1886,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 3,
+      "playerMaxHp": 100,
       "playerRemainingHp": 95,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1827,17 +1914,19 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 5,
-      "playerRemainingHp": 120,
+      "turns": 4,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 119,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_block": 4,
         "skill_heavy_swing": 5,
         "skill_skull_cracker": 1,
-        "skill_1771769351059": 4,
-        "skill_leftover_lunchbox": 4,
-        "skill_heal": 1
+        "skill_1771769351059": 3,
+        "skill_leftover_lunchbox": 3,
+        "skill_heal": 1,
+        "skill_execute_copy_1770043820577": 1
       },
       "enemySkillUsage": {
         "enemy_skill_bad_lunchbox": 1,
@@ -1859,6 +1948,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 78,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1886,6 +1976,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 5,
+      "playerMaxHp": 100,
       "playerRemainingHp": 81,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1914,14 +2005,16 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 3,
+      "playerMaxHp": 120,
       "playerRemainingHp": 79,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 3,
         "skill_heavy_swing": 4,
-        "skill_1771769351059": 4,
-        "skill_leftover_lunchbox": 4,
-        "skill_heal": 2
+        "skill_1771769351059": 3,
+        "skill_leftover_lunchbox": 3,
+        "skill_heal": 2,
+        "skill_execute_copy_1770043820577": 1
       },
       "enemySkillUsage": {
         "enemy_skill_orc_club": 4
@@ -1942,6 +2035,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 42,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1968,6 +2062,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 5,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -1976,8 +2071,8 @@
         "skill_heavy_swing": 6
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 5
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 4
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1994,20 +2089,22 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 7,
+      "turns": 4,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 5,
-        "skill_1771769351059": 7,
+        "skill_block": 4,
+        "skill_1771769351059": 4,
         "skill_skull_cracker": 1,
-        "skill_heavy_swing": 6,
-        "skill_leftover_lunchbox": 6
+        "skill_heavy_swing": 4,
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 3
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 6
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 3
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -2025,6 +2122,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -2051,17 +2149,18 @@
       "buildId": "basic",
       "buildLabel": "基础构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 4,
-        "skill_double_thrust": 4,
-        "skill_heavy_swing": 4
+        "skill_block": 3,
+        "skill_double_thrust": 3,
+        "skill_heavy_swing": 3
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 3
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 1
       },
       "failureReason": "victory",
       "diagnosis": "enemy_too_weak",
@@ -2078,23 +2177,25 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 4,
+      "turns": 3,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 4,
-        "skill_1771769351059": 4,
+        "skill_block": 3,
+        "skill_1771769351059": 3,
         "skill_skull_cracker": 1,
-        "skill_heavy_swing": 4,
-        "skill_leftover_lunchbox": 3
+        "skill_heavy_swing": 2,
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 4
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
       },
       "failureReason": "victory",
-      "diagnosis": "ok",
+      "diagnosis": "enemy_too_weak",
       "levelClass": {
         "order": 5,
         "isBoss": false,
@@ -2109,6 +2210,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -2135,19 +2237,21 @@
       "buildId": "basic",
       "buildLabel": "基础构筑",
       "victory": true,
-      "turns": 4,
+      "turns": 3,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 5,
-        "skill_double_thrust": 5,
-        "skill_heavy_swing": 5
+        "skill_block": 4,
+        "skill_double_thrust": 4,
+        "skill_heavy_swing": 4
       },
       "enemySkillUsage": {
-        "enemy_skill_bone_patch": 5
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 3
       },
       "failureReason": "victory",
-      "diagnosis": "ok",
+      "diagnosis": "enemy_too_weak",
       "levelClass": {
         "order": 6,
         "isBoss": false,
@@ -2162,18 +2266,20 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 3,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_block": 3,
-        "skill_heavy_swing": 4,
+        "skill_heavy_swing": 3,
         "skill_skull_cracker": 1,
         "skill_1771769351059": 2,
         "skill_leftover_lunchbox": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_bone_patch": 4
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 1
       },
       "failureReason": "victory",
       "diagnosis": "enemy_too_weak",
@@ -2191,15 +2297,18 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 3,
-        "skill_execute": 3,
-        "skill_heavy_swing": 3
+        "skill_execute": 2,
+        "skill_heavy_swing": 2,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_bone_patch": 3
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 2
       },
       "failureReason": "victory",
       "diagnosis": "enemy_too_weak",
@@ -2217,6 +2326,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 80,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -2243,14 +2353,14 @@
       "buildLabel": "推荐构筑",
       "victory": true,
       "turns": 2,
-      "playerRemainingHp": 120,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 2,
         "skill_heavy_swing": 2,
         "skill_1771769351059": 2,
-        "skill_leftover_lunchbox": 2,
-        "skill_heal": 1
+        "skill_leftover_lunchbox": 2
       },
       "enemySkillUsage": {
         "skill_bite": 2
@@ -2271,12 +2381,14 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 1,
+      "playerMaxHp": 100,
       "playerRemainingHp": 84,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 2,
-        "skill_execute": 2,
-        "skill_heavy_swing": 2
+        "skill_execute": 1,
+        "skill_heavy_swing": 1,
+        "skill_double_thrust": 1
       },
       "enemySkillUsage": {
         "skill_bite": 1,
@@ -2298,13 +2410,14 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 3,
-      "playerRemainingHp": 100,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 95,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 4,
         "skill_double_thrust": 4,
         "skill_heavy_swing": 4,
-        "skill_heal": 1
+        "skill_heal": 2
       },
       "enemySkillUsage": {
         "enemy_skill_bad_lunchbox": 1,
@@ -2325,17 +2438,19 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 5,
-      "playerRemainingHp": 120,
+      "turns": 4,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 119,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_block": 4,
         "skill_heavy_swing": 5,
         "skill_skull_cracker": 1,
-        "skill_1771769351059": 4,
-        "skill_leftover_lunchbox": 4,
-        "skill_heal": 3
+        "skill_1771769351059": 3,
+        "skill_leftover_lunchbox": 3,
+        "skill_heal": 1,
+        "skill_execute_copy_1770043820577": 1
       },
       "enemySkillUsage": {
         "enemy_skill_bad_lunchbox": 1,
@@ -2357,7 +2472,8 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 2,
-      "playerRemainingHp": 88,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 78,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_1770474698976": 3,
@@ -2384,6 +2500,7 @@
       "buildLabel": "基础构筑",
       "victory": true,
       "turns": 5,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -2392,8 +2509,8 @@
         "skill_heavy_swing": 6
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 5
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 4
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -2410,20 +2527,22 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": true,
-      "turns": 7,
+      "turns": 4,
+      "playerMaxHp": 120,
       "playerRemainingHp": 120,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 5,
-        "skill_1771769351059": 7,
+        "skill_block": 4,
+        "skill_1771769351059": 4,
         "skill_skull_cracker": 1,
-        "skill_heavy_swing": 6,
-        "skill_leftover_lunchbox": 6
+        "skill_heavy_swing": 4,
+        "skill_leftover_lunchbox": 1,
+        "skill_execute_copy_1770043820577": 3
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 6
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 3
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -2441,6 +2560,7 @@
       "buildLabel": "偏科构筑",
       "victory": true,
       "turns": 2,
+      "playerMaxHp": 100,
       "playerRemainingHp": 94,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
@@ -2468,18 +2588,19 @@
       "buildLabel": "基础构筑",
       "victory": false,
       "turns": 12,
+      "playerMaxHp": 100,
       "playerRemainingHp": 100,
-      "enemyRemainingHp": 307,
+      "enemyRemainingHp": 217,
       "playerSkillUsage": {
-        "skill_block": 8,
+        "skill_block": 10,
         "skill_double_thrust": 12,
         "skill_heavy_swing": 12,
-        "skill_heal": 2
+        "skill_heal": 4
       },
       "enemySkillUsage": {
-        "enemy_skill_wrecking_swing": 1,
-        "enemy_skill_blood_heat": 6,
-        "enemy_skill_bone_patch": 5
+        "enemy_skill_wrecking_swing": 3,
+        "enemy_skill_blood_heat": 5,
+        "enemy_skill_bone_patch": 4
       },
       "failureReason": "turn_limit",
       "diagnosis": "expected_basic_build_limit",
@@ -2497,21 +2618,22 @@
       "buildLabel": "推荐构筑",
       "victory": false,
       "turns": 12,
-      "playerRemainingHp": 120,
-      "enemyRemainingHp": 210,
+      "playerMaxHp": 120,
+      "playerRemainingHp": 112,
+      "enemyRemainingHp": 176,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 2,
-        "skill_block": 8,
+        "skill_block": 9,
         "skill_1771769351059": 12,
         "skill_skull_cracker": 1,
         "skill_heavy_swing": 11,
-        "skill_heal": 2,
-        "skill_leftover_lunchbox": 10
+        "skill_heal": 4,
+        "skill_execute_copy_1770043820577": 10
       },
       "enemySkillUsage": {
-        "enemy_skill_wrecking_swing": 1,
-        "enemy_skill_blood_heat": 6,
-        "enemy_skill_bone_patch": 5
+        "enemy_skill_wrecking_swing": 3,
+        "enemy_skill_blood_heat": 5,
+        "enemy_skill_bone_patch": 4
       },
       "failureReason": "turn_limit",
       "diagnosis": "enemy_numbers_too_high",
@@ -2529,6 +2651,7 @@
       "buildLabel": "偏科构筑",
       "victory": false,
       "turns": 12,
+      "playerMaxHp": 100,
       "playerRemainingHp": 40,
       "enemyRemainingHp": 196,
       "playerSkillUsage": {
@@ -2558,7 +2681,7 @@
         "attempts": 30,
         "wins": 26,
         "winRate": 0.8666666666666667,
-        "averageTurns": 3.966666666666667,
+        "averageTurns": 3.8,
         "averagePlayerRemainingHp": 91.2
       },
       {
@@ -2567,8 +2690,8 @@
         "attempts": 30,
         "wins": 26,
         "winRate": 0.8666666666666667,
-        "averageTurns": 4.8,
-        "averagePlayerRemainingHp": 110.06666666666666
+        "averageTurns": 4.1,
+        "averagePlayerRemainingHp": 105.5
       },
       {
         "buildId": "specialist",
@@ -2577,7 +2700,7 @@
         "wins": 26,
         "winRate": 0.8666666666666667,
         "averageTurns": 2.566666666666667,
-        "averagePlayerRemainingHp": 74.13333333333334
+        "averagePlayerRemainingHp": 73.1
       }
     ],
     "byChapter": [
@@ -2646,12 +2769,11 @@
       }
     ],
     "diagnosisCounts": {
-      "ok": 45,
-      "enemy_too_weak": 32,
+      "ok": 41,
+      "enemy_too_weak": 37,
       "expected_basic_build_limit": 3,
       "enemy_numbers_too_high": 4,
       "player_build_mismatch": 4,
-      "boss_too_easy": 1,
       "player_skill_tree_gap_candidate": 1
     },
     "diagnosisLegend": {

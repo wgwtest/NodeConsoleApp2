@@ -69,6 +69,24 @@ const playerBuilds = [
   }
 ];
 
+const progressiveLearningPriority = [
+  'skill_block',
+  'skill_1771769351059',
+  'skill_skull_cracker',
+  'skill_shockwave_copy_1770042951717',
+  'skill_leftover_lunchbox',
+  'skill_execute',
+  'skill_execute_copy_1770043820577',
+  'skill_regroup',
+  'skill_execute_copy_1770044052832'
+];
+
+const progressiveBuildProfile = {
+  ...playerBuilds[1],
+  id: 'progressive',
+  label: '进度式推荐构筑'
+};
+
 const diagnosisLegend = {
   ok: '结果处在当前粗调可接受范围内。',
   enemy_too_weak: '胜利过快或剩余血量过高，敌人压力偏弱。',
@@ -250,6 +268,72 @@ function buildPlayer(basePlayer, build) {
   return player;
 }
 
+function snapshotSkillTree(player) {
+  return {
+    skillPoints: Math.max(0, Number(player?.skills?.skillPoints ?? 0) || 0),
+    learned: [...asArray(player?.skills?.learned)]
+  };
+}
+
+function getSkillKpCost(skill) {
+  return Math.max(0, Number(skill?.unlock?.cost?.kp ?? 0) || 0);
+}
+
+function canLearnSkill(skill, player) {
+  if (!skill || !player?.skills) return false;
+  const learned = asArray(player.skills.learned);
+  if (learned.includes(skill.id)) return false;
+  const prereqs = asArray(skill.prerequisites);
+  if (prereqs.some(skillId => !learned.includes(skillId))) return false;
+  const exclusives = asArray(skill?.unlock?.exclusives);
+  if (exclusives.some(skillId => learned.includes(skillId))) return false;
+  return snapshotSkillTree(player).skillPoints >= getSkillKpCost(skill);
+}
+
+function autoLearnProgressiveSkills({ player, skillsById }) {
+  if (!player.skills || typeof player.skills !== 'object') player.skills = {};
+  if (!Array.isArray(player.skills.learned)) player.skills.learned = [];
+  if (typeof player.skills.skillPoints !== 'number') player.skills.skillPoints = 0;
+
+  const learnedThisLevel = [];
+  let progressed = true;
+  while (progressed) {
+    progressed = false;
+    for (const skillId of progressiveLearningPriority) {
+      const skill = skillsById.get(skillId);
+      if (!canLearnSkill(skill, player)) continue;
+      player.skills.skillPoints -= getSkillKpCost(skill);
+      player.skills.learned.push(skill.id);
+      learnedThisLevel.push(skill.id);
+      progressed = true;
+      break;
+    }
+  }
+  return learnedThisLevel;
+}
+
+function buildProgressivePlan(player) {
+  const learned = new Set(asArray(player?.skills?.learned));
+  return progressiveBuildProfile.plan.filter(skillId => learned.has(skillId));
+}
+
+function applyLevelRewardsToPlayer(player, level, victory) {
+  const rewards = victory ? {
+    exp: Math.max(0, Number(level?.rewards?.exp ?? 0) || 0),
+    gold: Math.max(0, Number(level?.rewards?.gold ?? 0) || 0),
+    kp: Math.max(0, Number(level?.rewards?.kp ?? 0) || 0)
+  } : { exp: 0, gold: 0, kp: 0 };
+
+  if (!player.resources || typeof player.resources !== 'object') {
+    player.resources = { exp: 0, gold: 0 };
+  }
+  player.resources.exp = Math.max(0, Number(player.resources.exp ?? 0) || 0) + rewards.exp;
+  player.resources.gold = Math.max(0, Number(player.resources.gold ?? 0) || 0) + rewards.gold;
+  if (!player.skills || typeof player.skills !== 'object') player.skills = {};
+  player.skills.skillPoints = Math.max(0, Number(player.skills.skillPoints ?? 0) || 0) + rewards.kp;
+  return rewards;
+}
+
 function attachBuffs(entity, runtime) {
   entity.buffs = new runtime.BuffManager(entity, runtime.registry, runtime.eventBus);
   runtime.system.registerManager(entity.buffs);
@@ -306,11 +390,34 @@ function summarizeMissingArmor(entity) {
   };
 }
 
-function summarizeSkill(skill) {
+function getEntityBuffStacks(entity, buffId, fallback = 0) {
+  if (!entity || !buffId) return fallback;
+  if (typeof entity.buffs?.getStacks === 'function') {
+    return Number(entity.buffs.getStacks(buffId)) || fallback;
+  }
+  return fallback;
+}
+
+function computeEffectAmountForScore(effect, { target }) {
+  const amount = Math.max(0, Number(effect?.amount ?? 0) || 0);
+  const amountType = effect?.amountType || 'ABS';
+  if (amountType === 'PCT_CURRENT') return Math.max(0, getEntityHp(target) * amount / 100);
+  if (amountType === 'PCT_MAX') return Math.max(0, getEntityMaxHp(target) * amount / 100);
+  if (amountType === 'BUFF_STACKS') {
+    const source = effect?.amountSource || {};
+    const buffId = source.buffId;
+    const stacks = getEntityBuffStacks(target, buffId, Number(source.missingAs ?? 0) || 0);
+    const multiplier = Number(source.multiplier ?? amount ?? 1) || 0;
+    return Math.max(0, stacks * multiplier);
+  }
+  return amount;
+}
+
+function summarizeSkill(skill, { target = null } = {}) {
   const out = { damageHp: 0, damageArmor: 0, heal: 0, armorAdd: 0, dot: 0, control: 0 };
   for (const action of asArray(skill?.actions)) {
     const effect = action?.effect || {};
-    const amount = Math.max(0, Number(effect.amount ?? 0) || 0);
+    const amount = computeEffectAmountForScore(effect, { target });
     if (effect.effectType === 'DMG_HP') out.damageHp += amount;
     if (effect.effectType === 'DMG_ARMOR') out.damageArmor += amount;
     if (effect.effectType === 'HEAL') out.heal += amount;
@@ -335,7 +442,7 @@ function findPrimaryEnemy(enemies) {
 }
 
 function scoreSkillForBuild({ skill, player, target, buildId, chapter }) {
-  const summary = summarizeSkill(skill);
+  const summary = summarizeSkill(skill, { target });
   const hpRatio = player.stats.maxHp > 0 ? player.stats.hp / player.stats.maxHp : 1;
   const missingHp = Math.max(0, (Number(player.stats.maxHp ?? 0) || 0) - (Number(player.stats.hp ?? 0) || 0));
   const missingArmor = summarizeMissingArmor(player);
@@ -347,6 +454,7 @@ function scoreSkillForBuild({ skill, player, target, buildId, chapter }) {
     const shouldFinishFight = buildId === 'recommended' && hpRatio >= 0.75 && targetHpRatio <= 0.35;
     if (shouldFinishFight) return 0;
     if (summary.heal > 0 && missingHp > 0) {
+      if (['recommended', 'progressive'].includes(buildId) && hpRatio >= 0.8 && missingHp < summary.heal) return 0;
       score += summary.heal * (hpRatio < 0.7 ? 2.8 : 0.8);
       score += Math.min(missingHp, summary.heal) * 1.5;
     }
@@ -371,8 +479,8 @@ function scoreSkillForBuild({ skill, player, target, buildId, chapter }) {
   score += summary.dot * (chapter >= 3 ? 1.5 : 1.0);
   score += summary.control;
   if (buildId === 'recommended' && targetHpRatio <= 0.35) {
-    score += hpThroughArmor * 2.8;
-    score += summary.damageHp >= targetHp ? 30 : 0;
+    score += hpThroughArmor * 4.0;
+    score += summary.damageHp >= targetHp ? 120 : 0;
     score -= summary.dot * 0.8;
   }
 
@@ -584,11 +692,14 @@ function classifyLevel(level) {
 function diagnose(row, level) {
   if (row.victory) {
     if (row.playerRemainingHp >= 90 && row.turns <= 3) return 'enemy_too_weak';
-    if (row.buildId === 'recommended' && level.isBoss && row.playerRemainingHp >= 80) return 'boss_too_easy';
+    if (row.buildId === 'recommended' && level.isBoss && row.playerRemainingHp >= (row.playerMaxHp ?? row.playerRemainingHp) * 0.9) return 'boss_too_easy';
     return 'ok';
   }
   if (row.buildId === 'recommended') {
     return row.playerRemainingHp >= 60 ? 'enemy_numbers_too_high' : 'enemy_skill_pressure_high';
+  }
+  if (row.buildId === 'progressive') {
+    return row.playerRemainingHp >= 60 ? 'enemy_numbers_too_high' : 'player_skill_tree_gap_candidate';
   }
   if (row.buildId === 'specialist') return 'player_build_mismatch';
   return level.isBoss || level.isElite ? 'expected_basic_build_limit' : 'player_skill_tree_gap_candidate';
@@ -758,6 +869,7 @@ async function simulateLevelBuild({ CoreEngine, modules, data, levelId, build, m
     buildLabel: build.label,
     victory,
     turns,
+    playerMaxHp: Math.max(0, getEntityMaxHp(driver.data.playerData)),
     playerRemainingHp,
     enemyRemainingHp,
     playerSkillUsage: countSkillUsage(driver.eventBus.eventsByName('TIMELINE_ENTRY_END'), 'PLAYER'),
@@ -768,6 +880,50 @@ async function simulateLevelBuild({ CoreEngine, modules, data, levelId, build, m
   };
   row.diagnosis = diagnose(row, levelClass);
   return row;
+}
+
+async function simulateProgressiveLevel({ CoreEngine, modules, data, levelId, player, maxTurns }) {
+  const learnedThisLevel = autoLearnProgressiveSkills({
+    player,
+    skillsById: data.skillMaps.playerSkills
+  });
+  const skillTreeBefore = snapshotSkillTree(player);
+  const build = {
+    ...progressiveBuildProfile,
+    learned: [...skillTreeBefore.learned],
+    maxAp: Number(player.stats?.maxAp ?? progressiveBuildProfile.maxAp) || progressiveBuildProfile.maxAp,
+    hpBonus: 0,
+    plan: buildProgressivePlan(player)
+  };
+  const row = await simulateLevelBuild({ CoreEngine, modules, data, levelId, build, maxTurns });
+  const rewards = applyLevelRewardsToPlayer(player, data.levels.levels[levelId], row.victory);
+  row.skillTreeBefore = skillTreeBefore;
+  row.skillTreeAfter = snapshotSkillTree(player);
+  row.learnedThisLevel = learnedThisLevel;
+  row.rewards = rewards;
+  return row;
+}
+
+function summarizeProgressiveReport(results, player) {
+  const wins = results.filter(row => row.victory).length;
+  const diagnosisCounts = Object.create(null);
+  for (const row of results) {
+    diagnosisCounts[row.diagnosis] = (diagnosisCounts[row.diagnosis] || 0) + 1;
+  }
+  const failedWithAllPrioritySkills = results.filter(row => (
+    !row.victory
+    && progressiveLearningPriority.every(skillId => row.skillTreeBefore.learned.includes(skillId))
+    && row.playerRemainingHp < 60
+  ));
+  return {
+    attempts: results.length,
+    wins,
+    winRate: results.length > 0 ? wins / results.length : 0,
+    diagnosisCounts,
+    skillTreeGapCandidates: failedWithAllPrioritySkills.length,
+    finalSkillPoints: snapshotSkillTree(player).skillPoints,
+    finalLearned: snapshotSkillTree(player).learned
+  };
 }
 
 export async function runCampaignBalanceSimulation(options = {}) {
@@ -815,6 +971,57 @@ export async function runCampaignBalanceSimulation(options = {}) {
       })),
       results,
       summary: summarizeReport(results)
+    };
+  });
+}
+
+export async function runProgressiveCampaignSimulation(options = {}) {
+  const projectRoot = path.resolve(options.projectRoot || defaultProjectRoot);
+  const maxTurns = Number(options.maxTurns ?? 12) || 12;
+  const randomSeed = String(options.randomSeed || 'campaign-progressive-v1');
+
+  return withSeededRandom(randomSeed, async () => {
+    const { CoreEngine } = await importCoreEngineClass(projectRoot);
+    const modules = await importRuntimeModules(projectRoot);
+    const levels = await readJson(projectRoot, 'assets/map_packs/current/story_pack_v1/levels.json');
+    const data = {
+      levels,
+      enemies: await readJson(projectRoot, 'assets/data/enemies.json'),
+      player: await readJson(projectRoot, 'assets/data/player.json'),
+      buffs: await readJson(projectRoot, 'assets/data/buffs_v2_7.json'),
+      slotLayouts: await readJson(projectRoot, 'assets/data/slot_layouts.json')
+    };
+    data.skillMaps = buildRuntimeSkillMaps(
+      await readJson(projectRoot, 'assets/data/skills_melee_v4_5.json'),
+      await readJson(projectRoot, 'assets/data/skills_enemy_v1.json')
+    );
+
+    const player = buildPlayer(data.player.default, {
+      ...progressiveBuildProfile,
+      learned: asArray(data.player.default?.skills?.learned),
+      maxAp: data.player.default?.stats?.maxAp ?? progressiveBuildProfile.maxAp,
+      hpBonus: 0
+    });
+    player.skills.skillPoints = Math.max(0, Number(data.player.default?.skills?.skillPoints ?? 0) || 0);
+    player.resources = clone(data.player.default?.resources || { exp: 0, gold: 0 });
+
+    const results = [];
+    for (const levelId of storyLevelIds) {
+      results.push(await simulateProgressiveLevel({ CoreEngine, modules, data, levelId, player, maxTurns }));
+    }
+
+    return {
+      meta: {
+        generatedAt: new Date().toISOString(),
+        mode: 'progressive',
+        levelCount: storyLevelIds.length,
+        maxTurns,
+        randomSeed,
+        source: 'tools/campaign_balance_simulator.mjs'
+      },
+      learningPriority: [...progressiveLearningPriority],
+      results,
+      summary: summarizeProgressiveReport(results, player)
     };
   });
 }

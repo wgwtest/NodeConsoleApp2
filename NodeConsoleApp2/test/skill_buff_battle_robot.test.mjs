@@ -513,3 +513,57 @@ test('敌人规划不会连续刷新已存在的自我增益而放弃攻击', as
 
   assert.equal(action?.skillId, 'enemy_skill_orc_club');
 });
+
+test('高血量敌人不会因护甲重损而连续修甲放弃攻击', async () => {
+  const { EnemyActionPlanner } = await importTurnRuntime();
+  const player = createActor('player_1', {
+    hp: 100,
+    maxHp: 100,
+    bodyParts: createBodyParts({ head: { current: 0, max: 20, weakness: 1.5 } })
+  });
+  const enemy = createActor('enemy_1', {
+    hp: 240,
+    maxHp: 260,
+    ap: 4,
+    maxAp: 4,
+    bodyParts: createBodyParts({
+      chest: { current: 0, max: 64, weakness: 0.8 },
+      head: { current: 26, max: 26, weakness: 1.15 }
+    }),
+    skills: ['enemy_skill_bone_patch', 'enemy_skill_wrecking_swing']
+  });
+
+  const skills = {
+    enemy_skill_bone_patch: {
+      id: 'enemy_skill_bone_patch',
+      name: '补骨',
+      speed: 3,
+      costs: { ap: 1 },
+      target: {
+        subject: 'SUBJECT_SELF',
+        scope: 'SCOPE_PART',
+        selection: { mode: 'single', candidateParts: ['head', 'chest'], selectedParts: [], selectCount: 1 }
+      },
+      actions: [{ effect: { effectType: 'ARMOR_ADD', amountType: 'ABS', amount: 12 } }],
+      buffRefs: { apply: [], remove: [] }
+    },
+    enemy_skill_wrecking_swing: {
+      id: 'enemy_skill_wrecking_swing',
+      name: '拆迁抡',
+      speed: -4,
+      costs: { ap: 3 },
+      target: {
+        subject: 'SUBJECT_ENEMY',
+        scope: 'SCOPE_PART',
+        selection: { mode: 'single', candidateParts: ['head', 'chest'], selectedParts: [], selectCount: 1 }
+      },
+      actions: [{ effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 24 } }],
+      buffRefs: { apply: [], remove: [] }
+    }
+  };
+
+  const planner = new EnemyActionPlanner({ getSkillConfig: skillId => skills[skillId] || null });
+  const action = planner.planTurn({ enemy, player, playerBodyParts: player.bodyParts });
+
+  assert.equal(action?.skillId, 'enemy_skill_wrecking_swing');
+});

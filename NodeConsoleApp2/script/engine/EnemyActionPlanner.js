@@ -78,7 +78,7 @@ export default class EnemyActionPlanner {
             score += summary.healHp * (1.8 - hpRatio);
             score += summary.addArmor * (1.4 - hpRatio);
             score += summary.buffRefsSelf * 12;
-            score += this._scoreSelfProtection(skill, enemy);
+            score += this._scoreSelfProtection(skill, enemy, { hpRatio });
             if (hpRatio <= 0.35) score += 25;
             if (hpRatio <= 0.2) score += 15;
             score -= this._scoreRepeatedSelfBuffPenalty(skill, enemy);
@@ -157,7 +157,7 @@ export default class EnemyActionPlanner {
         return score;
     }
 
-    _scoreSelfProtection(skill, enemy) {
+    _scoreSelfProtection(skill, enemy, { hpRatio = 1 } = {}) {
         const bodyParts = enemy?.bodyParts;
         if (!bodyParts || typeof bodyParts !== 'object') return 0;
 
@@ -173,11 +173,13 @@ export default class EnemyActionPlanner {
         const missingArmor = Math.max(0, maxArmor - currentArmor);
         const missingRatio = missingArmor / maxArmor;
 
-        let score = missingArmor * 1.8;
+        const repairMultiplier = hpRatio >= 0.75 ? 0.75 : 1.8;
+        let score = missingArmor * repairMultiplier;
         score += missingRatio * 30;
 
-        if (missingRatio >= 0.5) score += 25;
-        if (currentArmor <= 0) score += 20;
+        if (missingRatio >= 0.5) score += hpRatio >= 0.75 ? 8 : 25;
+        if (currentArmor <= 0) score += hpRatio >= 0.75 ? 6 : 20;
+        if (hpRatio >= 0.75) score = Math.min(score, 55);
 
         return score;
     }

@@ -655,6 +655,74 @@
       ]
     },
     {
+      "id": "enemy_skill_centurion_wrecking_swing",
+      "name": "冻原重抡",
+      "rarity": "Rare",
+      "description": "冻原百夫长专用慢速重击，用来给第二章 Boss 提供明确生命压力。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 1014,
+        "y": 614,
+        "group": "enemy_undead",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -4,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 3,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_centurion_wreck",
+          "name": "冻原重抡",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 32
+          }
+        }
+      ]
+    },
+    {
       "id": "enemy_skill_shield_tap",
       "name": "盾牌敲头",
       "rarity": "Uncommon",
