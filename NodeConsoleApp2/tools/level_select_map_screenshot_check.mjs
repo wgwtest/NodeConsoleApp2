@@ -228,6 +228,7 @@ try {
             edgeCount: document.querySelectorAll(".level-map-edge").length,
             selectedNodeCount: nodes.filter(node => node.selected).length,
             lockedNodeCount: nodes.filter(node => node.disabled).length,
+            markerCount: document.querySelectorAll(".level-map-node__marker").length,
             markerPlateCount: document.querySelectorAll(".level-map-node__plate").length,
             markerPinCount: document.querySelectorAll(".level-map-node__pin").length,
             drawerMetaRows: document.querySelectorAll(".level-map-drawer__meta-row").length,
@@ -247,7 +248,8 @@ try {
     assertCondition(report.pressedMapButtonCount === 1, `当前地图切换状态数量异常：${report.pressedMapButtonCount}`);
     assertCondition(report.edgeCount >= 2, '地图连线数量不足');
     assertCondition(report.selectedNodeCount >= 1, '缺少选中或推荐节点');
-    assertCondition(report.markerPlateCount === report.nodeCount, `地图节点未全部使用一体化标牌：${report.markerPlateCount}/${report.nodeCount}`);
+    assertCondition(report.markerCount === report.nodeCount, `地图节点未全部使用紧凑图标 marker：${report.markerCount}/${report.nodeCount}`);
+    assertCondition(report.markerPlateCount === 0, `旧横向标牌结构未移除：${report.markerPlateCount}`);
     assertCondition(report.markerPinCount === 0, `旧 pin 节点结构未移除：${report.markerPinCount}`);
     assertCondition(report.stageBackgroundImage === 'none', '地图背景不应继续挂在固定舞台上');
     assertCondition(report.surfaceBackgroundImage.includes('image_w2752_h1536_map-bg-01'), '地图背景图未加载到可缩放 surface');

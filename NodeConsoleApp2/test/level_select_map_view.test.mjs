@@ -218,7 +218,13 @@ test('LevelSelectMapView 会把节点选择、进入确认和视图缩放拆开'
     assert.ok(detail, '缺少关卡详情抽屉');
     assert.ok(enterBtn, '缺少进入按钮');
     assert.equal(controls.length >= 4, true, '缺少地图缩放控制');
-    assert.equal(nodes.every(node => node.querySelector('.level-map-node__plate')), true, '地图节点应使用一体化地图标牌');
+    assert.equal(nodes.every(node => node.querySelector('.level-map-node__marker')), true, '地图节点应使用紧凑图标 marker');
+    assert.equal(nodes.every(node => node.querySelector('.level-map-node__art')), true, '地图节点应保留关卡图形主体');
+    assert.equal(nodes.every(node => node.querySelector('.level-map-node__kind')), true, '地图节点应使用符号标识类型');
+    assert.equal(nodes.every(node => node.querySelector('.level-map-node__label')), true, '地图节点应仅保留短编号标签');
+    assert.equal(nodes.some(node => node.querySelector('.level-map-node__plate')), false, '地图节点不应继续使用横向标牌');
+    assert.equal(nodes.some(node => node.querySelector('.level-map-node__title')), false, '地图节点不应在地图上显示长标题');
+    assert.equal(nodes.some(node => node.querySelector('.level-map-node__status')), false, '地图节点不应在地图上显示状态文案');
     assert.equal(nodes.some(node => node.querySelector('.level-map-node__pin')), false, '地图节点不应继续使用圆形 pin 视觉层');
     assert.equal(nodes.some(node => node.querySelector('.level-map-node__caption')), false, '地图节点不应继续使用独立冒泡标签');
     assert.deepEqual(controls.map(item => item.getAttribute('aria-label')), ['缩小地图', '适配视图', '放大地图', '进入关卡']);

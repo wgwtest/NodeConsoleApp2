@@ -100,7 +100,7 @@ function projectPoint(point, metrics) {
 }
 
 function getNodeVisualSize(display) {
-    return 168 * display.nodeScale;
+    return 64 * display.nodeScale;
 }
 
 function resolveNodeFrame(projectedPoint, display) {
@@ -171,6 +171,24 @@ function buildNodePayload(map, node) {
 
 function resolveNodeTitle(node) {
     return node?.levelName || node?.title || node?.levelId || '';
+}
+
+function getNodeKindSymbol(kind) {
+    if (kind === 'branch') return '✦';
+    if (kind === 'supply' || kind === 'event') return '☩';
+    if (kind === 'elite') return '◆';
+    if (kind === 'boss') return '♛';
+    return '⚔';
+}
+
+function getNodeKindLabel(kind) {
+    if (kind === 'main') return '主线';
+    if (kind === 'branch') return '分支';
+    if (kind === 'supply') return '补给';
+    if (kind === 'elite') return '精英';
+    if (kind === 'boss') return '首领';
+    if (kind === 'event') return '事件';
+    return '战斗';
 }
 
 function renderDrawerRow(label, value) {
@@ -526,6 +544,7 @@ export class LevelSelectMapView {
                 ? `translate(0px, 0px) scale(${display.nodeScale})`
                 : `translate(-50%, -50%) scale(${display.nodeScale})`;
             button.setAttribute('aria-label', `${node.label || ''} ${resolveNodeTitle(node)} ${node.statusLabel || ''}`.trim());
+            button.title = `${node.label || ''} ${resolveNodeTitle(node)} ${node.statusLabel || ''}`.trim();
             if (!node.isUnlocked && !node.selectLevelId) {
                 button.disabled = true;
                 button.setAttribute('aria-disabled', 'true');
@@ -535,14 +554,22 @@ export class LevelSelectMapView {
                     this._selectNode(node.id);
                 });
             }
+            const kind = node.kind || 'battle';
+            const kindLabel = node.iconLabel || getNodeKindLabel(kind);
+            const stateMark = node.isCompleted
+                ? '✓'
+                : node.status === 'recommended'
+                    ? '!'
+                    : node.status === 'locked'
+                        ? '×'
+                        : '';
             button.innerHTML = `
-                <span class="level-map-node__plate">
-                    <span class="level-map-node__label">${escapeHtml(node.label || '')}</span>
-                    <strong class="level-map-node__title">${escapeHtml(resolveNodeTitle(node))}</strong>
-                    <span class="level-map-node__status">${escapeHtml(node.statusLabel || '')}</span>
-                    <span class="level-map-node__kind">${escapeHtml(node.iconLabel || node.kind || '')}</span>
+                <span class="level-map-node__marker" aria-hidden="true">
                     <span class="level-map-node__art"></span>
+                    <span class="level-map-node__kind" title="${escapeHtml(kindLabel)}">${escapeHtml(getNodeKindSymbol(kind))}</span>
+                    <span class="level-map-node__state">${escapeHtml(stateMark)}</span>
                 </span>
+                <span class="level-map-node__label">${escapeHtml(node.label || '')}</span>
             `;
             if (artImage) {
                 const art = button.querySelector('.level-map-node__art');
