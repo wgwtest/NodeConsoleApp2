@@ -15,6 +15,7 @@
 | [11-敌人系统(enemy_design)-设计说明](./11-敌人系统(enemy_design)-设计说明.md) | 敌人系统设计 |
 | [28-敌人编辑器(enemy_editor)-设计说明](./28-敌人编辑器(enemy_editor)-设计说明.md) | 敌人模板作者工具与地图编辑器服务边界设计 |
 | [29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明](../S4_技能系统与编辑器/29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明.md) | 敌人技能包独立真源、敌人技能引用与技能编辑器敌方模式设计 |
+| [30-三章关卡敌人与技能平衡(content_balance_campaign)-设计说明](./30-三章关卡敌人与技能平衡(content_balance_campaign)-设计说明.md) | 三章 30 关敌人扩充、敌人技能补全、自动试玩和平衡闭环设计 |
 
 ## 3. 归属规则
 

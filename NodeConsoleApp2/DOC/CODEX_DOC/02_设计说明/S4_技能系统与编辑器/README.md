@@ -20,6 +20,7 @@
 | [08-技能头脑风暴(skill_design_brainStorm)-设计说明](./08-技能头脑风暴(skill_design_brainStorm)-设计说明.md) | 技能思路补充与脑暴记录 |
 | [25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明](./25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md) | 旧技能字段退役与迁移方案 |
 | [29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明](./29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明.md) | 敌人技能包独立真源与技能编辑器多技能域切换设计 |
+| [30-三章关卡敌人与技能平衡(content_balance_campaign)-设计说明](../S6_敌人系统与编辑器/30-三章关卡敌人与技能平衡(content_balance_campaign)-设计说明.md) | 三章关卡平衡中玩家技能树补洞、敌人技能引用和自动试玩指标的跨子系统设计 |
 
 ## 3. 归属规则
 
