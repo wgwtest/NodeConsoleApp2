@@ -574,7 +574,7 @@ export class LevelSelectMapView {
             if (artImage) {
                 const art = button.querySelector('.level-map-node__art');
                 if (art) {
-                    art.style.backgroundImage = `linear-gradient(180deg, rgba(255, 238, 180, 0.05), rgba(22, 13, 6, 0.28)), url("${artImage}")`;
+                    art.style.backgroundImage = `linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(10, 12, 16, 0.08)), url("${artImage}")`;
                     art.style.backgroundSize = 'cover';
                     art.style.backgroundPosition = 'center';
                 }
