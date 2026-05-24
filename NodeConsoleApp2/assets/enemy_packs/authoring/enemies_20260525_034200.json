@@ -67,7 +67,8 @@
     },
     "skills": [
       "skill_smash",
-      "skill_warcry"
+      "skill_warcry",
+      "enemy_skill_orc_headbutt"
     ],
     "bodyParts": {
       "head": {

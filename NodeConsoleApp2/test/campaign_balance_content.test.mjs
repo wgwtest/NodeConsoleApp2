@@ -115,6 +115,16 @@ function collectStoryLevelEnemyIds(levelsDocument) {
   return rows;
 }
 
+function getEnemySkillMap(enemySkillPack) {
+  return new Map((enemySkillPack.skills || [])
+    .filter(skill => skill?.id)
+    .map(skill => [skill.id, skill]));
+}
+
+function getSkillApCost(skill) {
+  return Number(skill?.costs?.ap ?? skill?.cost?.ap ?? skill?.apCost ?? 0) || 0;
+}
+
 function listMissingEnemyFields(enemyId, enemy) {
   const missing = [];
   const stats = asObject(enemy.stats);
@@ -240,7 +250,7 @@ test('关卡事实源定义 30 个 story 关卡、6 个路线变体和独立敌�
 test('三章 30 关敌人模板满足 WBS-3.4.2 的数量、角色和字段完整性约束', async () => {
   const enemies = normalizeEnemies(await readJson('assets/data/enemies.json'));
   const enemySkillPack = await readJson('assets/data/skills_enemy_v1.json');
-  const enemySkillIds = new Set((enemySkillPack.skills || []).map(skill => skill.id).filter(Boolean));
+  const enemySkillIds = new Set(getEnemySkillMap(enemySkillPack).keys());
   const enemyEntries = Object.entries(enemies);
 
   assert.equal(enemyEntries.length >= 18, true, '敌人模板总数应不少于 18 个');
@@ -286,6 +296,74 @@ test('三章 30 关敌人模板满足 WBS-3.4.2 的数量、角色和字段完�
       assert.equal(chapterRoles.has(roleTag), true, `第 ${chapter} 章缺少敌人角色 ${roleTag}`);
     }
   }
+});
+
+test('三章 30 关实际使用敌人的技能组满足 WBS-3.4.3 的数量、AP 和首回合行动约束', async () => {
+  const enemies = normalizeEnemies(await readJson('assets/data/enemies.json'));
+  const enemySkillMap = getEnemySkillMap(await readJson('assets/data/skills_enemy_v1.json'));
+  const levelsDocument = await readJson('assets/map_packs/current/story_pack_v1/levels.json');
+  const usedEnemyIds = [...new Set(collectStoryLevelEnemyIds(levelsDocument).map(row => row.templateId))].sort();
+  const { default: EnemyActionPlanner } = await importSourceModule('script/engine/EnemyActionPlanner.js');
+  const planner = new EnemyActionPlanner({
+    getSkillConfig: skillId => enemySkillMap.get(skillId) || null
+  });
+  const player = {
+    id: 'player_balance_probe',
+    stats: { hp: 100, maxHp: 100, ap: 6, speed: 10 },
+    bodyParts: {
+      head: { current: 12, max: 20, weakness: 1.2 },
+      chest: { current: 18, max: 24, weakness: 1 },
+      abdomen: { current: 10, max: 18, weakness: 1.1 },
+      arm: { current: 8, max: 16, weakness: 1 },
+      leg: { current: 6, max: 16, weakness: 1 }
+    }
+  };
+
+  const skillCountIssues = [];
+  const apIssues = [];
+  const pressureIssues = [];
+  const actionIssues = [];
+
+  for (const enemyId of usedEnemyIds) {
+    const enemy = enemies[enemyId];
+    const tags = Array.isArray(enemy.tags) ? enemy.tags : [];
+    const skills = Array.isArray(enemy.skills) ? enemy.skills : [];
+    const enemyAp = Number(enemy.stats?.ap ?? 0) || 0;
+    const expectedSkillCount = tags.includes('role_boss')
+      ? 4
+      : tags.includes('role_elite')
+        ? 3
+        : null;
+
+    if (expectedSkillCount !== null && skills.length !== expectedSkillCount) {
+      skillCountIssues.push(`${enemyId}: expected ${expectedSkillCount}, got ${skills.length}`);
+    } else if (expectedSkillCount === null && (skills.length < 2 || skills.length > 3)) {
+      skillCountIssues.push(`${enemyId}: expected 2-3, got ${skills.length}`);
+    }
+
+    const resolvedSkills = skills.map(skillId => enemySkillMap.get(skillId)).filter(Boolean);
+    for (const skill of resolvedSkills) {
+      const cost = getSkillApCost(skill);
+      if (cost > enemyAp) {
+        apIssues.push(`${enemyId}.${skill.id}: cost ${cost} > ap ${enemyAp}`);
+      }
+    }
+    if (!resolvedSkills.some(skill => skill?.target?.subject === 'SUBJECT_ENEMY')) {
+      pressureIssues.push(enemyId);
+    }
+
+    const action = planner.planTurn({ enemy, player, playerBodyParts: player.bodyParts });
+    if (!action?.skillId || !action.targetId) {
+      actionIssues.push(enemyId);
+    } else if ((Number(action.cost ?? 0) || 0) > enemyAp) {
+      actionIssues.push(`${enemyId}: planned ${action.skillId} cost ${action.cost} > ap ${enemyAp}`);
+    }
+  }
+
+  assert.deepEqual(skillCountIssues, [], '普通敌人应有 2-3 个技能，精英应有 3 个技能，Boss 应有 4 个技能');
+  assert.deepEqual(apIssues, [], '实际使用敌人的技能 AP 成本不能超过敌人自身 AP');
+  assert.deepEqual(pressureIssues, [], '实际使用敌人至少需要 1 个攻击玩家的技能来形成压力');
+  assert.deepEqual(actionIssues, [], 'EnemyActionPlanner 应能为每个实际使用敌人生成可支付的首回合行动');
 });
 
 test('DataManagerV2 能实例化 30 个正式关卡，并让路线变体节点保留自身进入目标', async () => {
