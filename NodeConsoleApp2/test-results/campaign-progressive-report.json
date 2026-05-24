@@ -1,0 +1,2178 @@
+{
+  "meta": {
+    "generatedAt": "2026-05-24T21:00:31.565Z",
+    "mode": "progressive",
+    "levelCount": 30,
+    "maxTurns": 12,
+    "randomSeed": "wbs-3.4.5-progressive-campaign",
+    "source": "tools/campaign_balance_simulator.mjs"
+  },
+  "learningPriority": [
+    "skill_block",
+    "skill_1771769351059",
+    "skill_skull_cracker",
+    "skill_shockwave_copy_1770042951717",
+    "skill_leftover_lunchbox",
+    "skill_execute",
+    "skill_execute_copy_1770043820577",
+    "skill_regroup",
+    "skill_execute_copy_1770044052832"
+  ],
+  "results": [
+    {
+      "levelId": "level_1_1",
+      "levelName": "森林外缘",
+      "chapter": 1,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 1,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 80,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 2,
+        "skill_heavy_swing": 2,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 2,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 3,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [
+        "skill_block",
+        "skill_1771769351059",
+        "skill_skull_cracker",
+        "skill_shockwave_copy_1770042951717",
+        "skill_leftover_lunchbox",
+        "skill_execute",
+        "skill_execute_copy_1770043820577",
+        "skill_regroup",
+        "skill_execute_copy_1770044052832"
+      ],
+      "rewards": {
+        "exp": 133,
+        "gold": 69,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_1_2",
+      "levelName": "失联路标",
+      "chapter": 1,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 1,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 85,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "skill_throw_stone": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 3,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 3,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 151,
+        "gold": 78,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_1_3",
+      "levelName": "北侧树冠",
+      "chapter": 1,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 1,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 85,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 2,
+        "skill_heavy_swing": 2,
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 2
+      },
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 3,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 3,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 169,
+        "gold": 87,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_1_4",
+      "levelName": "猎手埋伏",
+      "chapter": 1,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 15,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 12,
+        "skill_heavy_swing": 12,
+        "skill_1771769351059": 7,
+        "skill_execute_copy_1770043820577": 5,
+        "skill_leftover_lunchbox": 6
+      },
+      "enemySkillUsage": {
+        "enemy_skill_orc_headbutt": 6,
+        "skill_warcry": 6
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      },
+      "skillTreeBefore": {
+        "skillPoints": 3,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 3,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_1_5",
+      "levelName": "密林前哨",
+      "chapter": 1,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 2,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 84,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 3,
+        "skill_heavy_swing": 3,
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 2,
+        "skill_execute_copy_1770043820577": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 3,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 4,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 205,
+        "gold": 105,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_1_6",
+      "levelName": "雾中岔口",
+      "chapter": 1,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 3,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 4,
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 1,
+        "skill_execute_copy_1770043820577": 2
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "skill_block": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 4,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 4,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 223,
+        "gold": 114,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_1_7",
+      "levelName": "古井回声",
+      "chapter": 1,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 2,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 80,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 2,
+        "skill_heavy_swing": 2,
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 2
+      },
+      "enemySkillUsage": {
+        "skill_bite": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 4,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 4,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 241,
+        "gold": 123,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_1_8",
+      "levelName": "废墟斜坡",
+      "chapter": 1,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 1,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 85,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 2,
+        "skill_heavy_swing": 2,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 4,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 5,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 259,
+        "gold": 132,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_1_9",
+      "levelName": "关隘守卫",
+      "chapter": 1,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 3,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 4,
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 1,
+        "skill_execute_copy_1770043820577": 2
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "skill_block": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      },
+      "skillTreeBefore": {
+        "skillPoints": 5,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 6,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 322,
+        "gold": 176,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_1_10",
+      "levelName": "废墟关隘",
+      "chapter": 1,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 82,
+      "enemyRemainingHp": 65,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 12,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 10,
+        "skill_1771769351059": 8,
+        "skill_heal": 3,
+        "skill_execute_copy_1770043820577": 3,
+        "skill_leftover_lunchbox": 6
+      },
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 3,
+        "enemy_skill_blood_heat": 5,
+        "enemy_skill_orc_headbutt": 4
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 6,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 6,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_2_1",
+      "levelName": "霜雾山口",
+      "chapter": 2,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 2,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 69,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 3,
+        "skill_heavy_swing": 3,
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 2
+      },
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 6,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 7,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 168,
+        "gold": 89,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_2_2",
+      "levelName": "冻土营火",
+      "chapter": 2,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 1,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 74,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 2,
+        "skill_heavy_swing": 2,
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "skill_throw_stone": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 7,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 7,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 186,
+        "gold": 98,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_2_3",
+      "levelName": "哨塔外墙",
+      "chapter": 2,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 5,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 6,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 5,
+        "skill_1771769351059": 3,
+        "skill_leftover_lunchbox": 3,
+        "skill_execute_copy_1770043820577": 2
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 4
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 7,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 7,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 204,
+        "gold": 107,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_2_4",
+      "levelName": "寒塔哨站",
+      "chapter": 2,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 5,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 68,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 6,
+        "skill_heavy_swing": 6,
+        "skill_1771769351059": 5,
+        "skill_leftover_lunchbox": 1,
+        "skill_heal": 3,
+        "skill_execute_copy_1770043820577": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 5,
+        "enemy_skill_blood_heat": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      },
+      "skillTreeBefore": {
+        "skillPoints": 7,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 8,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 267,
+        "gold": 151,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_2_5",
+      "levelName": "旧矿洞口",
+      "chapter": 2,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 3,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_heavy_swing": 3,
+        "skill_skull_cracker": 1,
+        "skill_block": 3,
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 2,
+        "skill_execute_copy_1770043820577": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 8,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 9,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 240,
+        "gold": 125,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_2_6",
+      "levelName": "冰雾裂谷",
+      "chapter": 2,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 3,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 79,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 4,
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 2,
+        "skill_execute_copy_1770043820577": 2
+      },
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 9,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 9,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 258,
+        "gold": 134,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_2_7",
+      "levelName": "古代热源",
+      "chapter": 2,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 4,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 4,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 3,
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 2,
+        "skill_execute_copy_1770043820577": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 9,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 9,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 276,
+        "gold": 143,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_2_8",
+      "levelName": "冰封军械库",
+      "chapter": 2,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 5,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 6,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 5,
+        "skill_1771769351059": 3,
+        "skill_leftover_lunchbox": 3,
+        "skill_execute_copy_1770043820577": 2
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 4
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 9,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 10,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 294,
+        "gold": 152,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_2_9",
+      "levelName": "中庭门卫",
+      "chapter": 2,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 5,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 68,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 6,
+        "skill_heavy_swing": 6,
+        "skill_1771769351059": 5,
+        "skill_leftover_lunchbox": 1,
+        "skill_heal": 3,
+        "skill_execute_copy_1770043820577": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 5,
+        "enemy_skill_blood_heat": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      },
+      "skillTreeBefore": {
+        "skillPoints": 10,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 11,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 357,
+        "gold": 196,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_2_10",
+      "levelName": "冰封中庭",
+      "chapter": 2,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 11,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 86,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 10,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 9,
+        "skill_1771769351059": 7,
+        "skill_heal": 5,
+        "skill_execute_copy_1770043820577": 3,
+        "skill_leftover_lunchbox": 3
+      },
+      "enemySkillUsage": {
+        "enemy_skill_centurion_wrecking_swing": 3,
+        "enemy_skill_bone_patch": 8
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 11,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 13,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 450,
+        "gold": 250,
+        "kp": 2
+      }
+    },
+    {
+      "levelId": "level_3_1",
+      "levelName": "暮色关门",
+      "chapter": 3,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 85,
+      "enemyRemainingHp": 9,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 10,
+        "skill_heavy_swing": 12,
+        "skill_1771769351059": 10,
+        "skill_leftover_lunchbox": 7,
+        "skill_execute_copy_1770043820577": 4
+      },
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 6,
+        "enemy_skill_blood_heat": 6
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 13,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 13,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_3_2",
+      "levelName": "旧路碑",
+      "chapter": 3,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 4,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 99,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 5,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 3,
+        "skill_leftover_lunchbox": 2,
+        "skill_heal": 1,
+        "skill_execute_copy_1770043820577": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 4
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 13,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 13,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 221,
+        "gold": 118,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_3_3",
+      "levelName": "断桥伏击",
+      "chapter": 3,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 6,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 71,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 7,
+        "skill_heavy_swing": 6,
+        "skill_1771769351059": 5,
+        "skill_leftover_lunchbox": 2,
+        "skill_heal": 4,
+        "skill_execute_copy_1770043820577": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 6,
+        "enemy_skill_blood_heat": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 13,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 14,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 284,
+        "gold": 162,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_3_4",
+      "levelName": "暮鸦林道",
+      "chapter": 3,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 6,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 7,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 6,
+        "skill_1771769351059": 4,
+        "skill_leftover_lunchbox": 4,
+        "skill_execute_copy_1770043820577": 2
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 5
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      },
+      "skillTreeBefore": {
+        "skillPoints": 14,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 15,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 302,
+        "gold": 171,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_3_5",
+      "levelName": "祭坛侧阶",
+      "chapter": 3,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 4,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 4,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 3,
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 2,
+        "skill_execute_copy_1770043820577": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 15,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 16,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 275,
+        "gold": 145,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_3_6",
+      "levelName": "影卫巡路",
+      "chapter": 3,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 3,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_heavy_swing": 4,
+        "skill_skull_cracker": 1,
+        "skill_block": 3,
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 2
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 16,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 17,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 338,
+        "gold": 189,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_3_7",
+      "levelName": "暮堡暗门",
+      "chapter": 3,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 2,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 80,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_block": 2,
+        "skill_heavy_swing": 2,
+        "skill_1771769351059": 2,
+        "skill_leftover_lunchbox": 2
+      },
+      "enemySkillUsage": {
+        "skill_bite": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 17,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 17,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 311,
+        "gold": 163,
+        "kp": 0
+      }
+    },
+    {
+      "levelId": "level_3_8",
+      "levelName": "外环营垒",
+      "chapter": 3,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 4,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 99,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 5,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 3,
+        "skill_leftover_lunchbox": 2,
+        "skill_heal": 1,
+        "skill_execute_copy_1770043820577": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 4
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 17,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 18,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 329,
+        "gold": 172,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_3_9",
+      "levelName": "暮堡守门人",
+      "chapter": 3,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": true,
+      "turns": 6,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 7,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 6,
+        "skill_1771769351059": 4,
+        "skill_leftover_lunchbox": 4,
+        "skill_execute_copy_1770043820577": 2
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 5
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      },
+      "skillTreeBefore": {
+        "skillPoints": 18,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 19,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 392,
+        "gold": 216,
+        "kp": 1
+      }
+    },
+    {
+      "levelId": "level_3_10",
+      "levelName": "暮堡外环",
+      "chapter": 3,
+      "buildId": "progressive",
+      "buildLabel": "进度式推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerMaxHp": 100,
+      "playerRemainingHp": 96,
+      "enemyRemainingHp": 168,
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 2,
+        "skill_block": 11,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 10,
+        "skill_heal": 5,
+        "skill_1771769351059": 8,
+        "skill_execute_copy_1770043820577": 3,
+        "skill_leftover_lunchbox": 4
+      },
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 4,
+        "enemy_skill_blood_heat": 4,
+        "enemy_skill_bone_patch": 4
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      },
+      "skillTreeBefore": {
+        "skillPoints": 19,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "skillTreeAfter": {
+        "skillPoints": 19,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute",
+          "skill_execute_copy_1770043820577",
+          "skill_regroup",
+          "skill_execute_copy_1770044052832"
+        ]
+      },
+      "learnedThisLevel": [],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    }
+  ],
+  "summary": {
+    "attempts": 30,
+    "wins": 26,
+    "winRate": 0.8666666666666667,
+    "diagnosisCounts": {
+      "ok": 22,
+      "enemy_numbers_too_high": 4,
+      "enemy_too_weak": 4
+    },
+    "skillTreeGapCandidates": 0,
+    "finalSkillPoints": 19,
+    "finalLearned": [
+      "skill_heal",
+      "skill_heavy_swing",
+      "skill_savage_charge",
+      "skill_block",
+      "skill_1771769351059",
+      "skill_skull_cracker",
+      "skill_shockwave_copy_1770042951717",
+      "skill_leftover_lunchbox",
+      "skill_execute",
+      "skill_execute_copy_1770043820577",
+      "skill_regroup",
+      "skill_execute_copy_1770044052832"
+    ]
+  }
+}

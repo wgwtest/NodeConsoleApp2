@@ -765,31 +765,60 @@ function summarizeReport(results) {
 function renderSummary(report) {
   const lines = ['# Campaign Balance Summary', ''];
   lines.push(`Generated: ${report.meta.generatedAt}`);
+  if (report.meta.mode) lines.push(`Mode: ${report.meta.mode}`);
   lines.push(`Levels: ${report.meta.levelCount}`);
-  lines.push(`Builds: ${report.meta.buildIds.join(', ')}`);
-  lines.push('');
-  lines.push('## Build Summary');
-  lines.push('');
-  lines.push('| Build | Wins | Attempts | Win Rate | Avg Turns | Avg Player HP |');
-  lines.push('| --- | ---: | ---: | ---: | ---: | ---: |');
-  for (const row of report.summary.byBuild) {
-    lines.push(`| ${row.buildId} | ${row.wins} | ${row.attempts} | ${(row.winRate * 100).toFixed(1)}% | ${row.averageTurns.toFixed(1)} | ${row.averagePlayerRemainingHp.toFixed(1)} |`);
+  if (Array.isArray(report.meta.buildIds)) {
+    lines.push(`Builds: ${report.meta.buildIds.join(', ')}`);
   }
   lines.push('');
+
+  if (Array.isArray(report.summary?.byBuild)) {
+    lines.push('## Build Summary');
+    lines.push('');
+    lines.push('| Build | Wins | Attempts | Win Rate | Avg Turns | Avg Player HP |');
+    lines.push('| --- | ---: | ---: | ---: | ---: | ---: |');
+    for (const row of report.summary.byBuild) {
+      lines.push(`| ${row.buildId} | ${row.wins} | ${row.attempts} | ${(row.winRate * 100).toFixed(1)}% | ${row.averageTurns.toFixed(1)} | ${row.averagePlayerRemainingHp.toFixed(1)} |`);
+    }
+    lines.push('');
+  }
+
+  if (report.meta.mode === 'progressive') {
+    lines.push('## Progressive Learning Summary');
+    lines.push('');
+    lines.push(`Wins: ${report.summary.wins}/${report.summary.attempts} (${(report.summary.winRate * 100).toFixed(1)}%)`);
+    lines.push(`Skill tree gap candidates: ${report.summary.skillTreeGapCandidates}`);
+    lines.push(`Final skill points: ${report.summary.finalSkillPoints}`);
+    lines.push(`Final learned skills: ${report.summary.finalLearned.join(', ')}`);
+    lines.push('');
+  }
+
   lines.push('## Level Results');
   lines.push('');
-  lines.push('| Level | Build | Victory | Turns | Player HP | Enemy HP | Diagnosis |');
-  lines.push('| --- | --- | --- | ---: | ---: | ---: | --- |');
-  for (const row of report.results) {
-    lines.push(`| ${row.levelId} | ${row.buildId} | ${row.victory ? 'Y' : 'N'} | ${row.turns} | ${row.playerRemainingHp} | ${row.enemyRemainingHp} | ${row.diagnosis} |`);
+  if (report.meta.mode === 'progressive') {
+    lines.push('| Level | Victory | Turns | Player HP | Enemy HP | Learned this level | Rewards KP | Diagnosis |');
+    lines.push('| --- | --- | ---: | ---: | ---: | --- | ---: | --- |');
+    for (const row of report.results) {
+      lines.push(`| ${row.levelId} | ${row.victory ? 'Y' : 'N'} | ${row.turns} | ${row.playerRemainingHp} | ${row.enemyRemainingHp} | ${row.learnedThisLevel.join(', ') || '-'} | ${row.rewards?.kp ?? 0} | ${row.diagnosis} |`);
+    }
+  } else {
+    lines.push('| Level | Build | Victory | Turns | Player HP | Enemy HP | Diagnosis |');
+    lines.push('| --- | --- | --- | ---: | ---: | ---: | --- |');
+    for (const row of report.results) {
+      lines.push(`| ${row.levelId} | ${row.buildId} | ${row.victory ? 'Y' : 'N'} | ${row.turns} | ${row.playerRemainingHp} | ${row.enemyRemainingHp} | ${row.diagnosis} |`);
+    }
   }
   lines.push('');
-  lines.push('## Recommendations');
-  lines.push('');
-  for (const item of report.summary.recommendations) {
-    lines.push(`- ${item}`);
+
+  if (Array.isArray(report.summary?.recommendations)) {
+    lines.push('## Recommendations');
+    lines.push('');
+    for (const item of report.summary.recommendations) {
+      lines.push(`- ${item}`);
+    }
+    lines.push('');
   }
-  lines.push('');
+
   lines.push('## Diagnosis Legend');
   lines.push('');
   for (const [key, value] of Object.entries(report.summary.diagnosisLegend || diagnosisLegend)) {
@@ -1028,7 +1057,11 @@ export async function runProgressiveCampaignSimulation(options = {}) {
 
 export async function writeCampaignBalanceReport(report, { reportPath } = {}) {
   const resolvedReportPath = path.resolve(reportPath || path.join(defaultProjectRoot, 'test-results/campaign-balance-report.json'));
-  const summaryPath = path.join(path.dirname(resolvedReportPath), 'campaign-balance-summary.md');
+  const parsedReportPath = path.parse(resolvedReportPath);
+  const defaultReportPath = path.resolve(defaultProjectRoot, 'test-results/campaign-balance-report.json');
+  const summaryPath = resolvedReportPath === defaultReportPath
+    ? path.join(parsedReportPath.dir, 'campaign-balance-summary.md')
+    : path.join(parsedReportPath.dir, `${parsedReportPath.name}-summary.md`);
   await fs.mkdir(path.dirname(resolvedReportPath), { recursive: true });
   await fs.writeFile(resolvedReportPath, `${JSON.stringify(report, null, 2)}\n`);
   await fs.writeFile(summaryPath, renderSummary(report));
@@ -1048,6 +1081,9 @@ function parseCliArgs(argv) {
     } else if (arg === '--seed') {
       out.randomSeed = argv[index + 1];
       index += 1;
+    } else if (arg === '--mode') {
+      out.mode = argv[index + 1];
+      index += 1;
     }
   }
   return out;
@@ -1055,7 +1091,10 @@ function parseCliArgs(argv) {
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const args = parseCliArgs(process.argv.slice(2));
-  const report = await runCampaignBalanceSimulation({
+  const runner = args.mode === 'progressive'
+    ? runProgressiveCampaignSimulation
+    : runCampaignBalanceSimulation;
+  const report = await runner({
     projectRoot: defaultProjectRoot,
     maxTurns: args.maxTurns,
     randomSeed: args.randomSeed

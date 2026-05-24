@@ -70,7 +70,7 @@ test('campaign balance simulator covers 30 story levels with three player builds
   const written = await simulator.writeCampaignBalanceReport(report, { reportPath });
 
   assert.equal(written.reportPath, reportPath);
-  assert.equal(written.summaryPath, path.join(outputDir, 'campaign-balance-summary.md'));
+  assert.equal(written.summaryPath, path.join(outputDir, 'campaign-balance-report-summary.md'));
 
   const savedReport = JSON.parse(await fs.readFile(written.reportPath, 'utf8'));
   const savedSummary = await fs.readFile(written.summaryPath, 'utf8');
@@ -145,6 +145,31 @@ test('progressive campaign simulator follows level rewards and records skill tre
     false,
     '进度构筑不应满血通过第二章 Boss'
   );
+});
+
+test('progressive campaign report can be written with learning and reward details', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const report = await simulator.runProgressiveCampaignSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.5-progressive-report'
+  });
+
+  const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), 'campaign-progressive-'));
+  const reportPath = path.join(outputDir, 'campaign-progressive-report.json');
+  const written = await simulator.writeCampaignBalanceReport(report, { reportPath });
+  const savedReport = JSON.parse(await fs.readFile(written.reportPath, 'utf8'));
+  const savedSummary = await fs.readFile(written.summaryPath, 'utf8');
+
+  assert.equal(written.summaryPath, path.join(outputDir, 'campaign-progressive-report-summary.md'));
+  assert.equal(savedReport.meta.mode, 'progressive');
+  assert.equal(savedReport.results.length, 30);
+  assert.match(savedSummary, /# Campaign Balance Summary/u);
+  assert.match(savedSummary, /Mode: progressive/u);
+  assert.match(savedSummary, /## Progressive Learning Summary/u);
+  assert.match(savedSummary, /Final learned skills/u);
+  assert.match(savedSummary, /Learned this level/u);
+  assert.match(savedSummary, /Rewards KP/u);
 });
 
 test('campaign balance first tuning pass keeps recommended build viable without letting specialist outperform it', async () => {
