@@ -207,6 +207,7 @@ test('enemy editor page fixture contains required authoring controls', async () 
         'enemyList',
         'enemyNameInput',
         'portraitRefInput',
+        'battleSpriteSelect',
         'mapPreviewPortrait',
         'issueList'
     ]) {
@@ -226,6 +227,9 @@ test('EnemyEditorPage renders enemies, edits current enemy, and updates preview'
     assert.equal(dom.window.document.getElementById('enemyList').children.length, 2);
     assert.equal(dom.window.document.getElementById('enemyNameInput').value, '哥布林追猎手');
     assert.equal(dom.window.document.getElementById('mapPreviewPortrait').getAttribute('src'), '../assets/images/level_map/portraits/enemy_goblin_hunter.svg');
+    assert.equal(dom.window.document.getElementById('artPreviewPortrait').getAttribute('src'), null);
+    assert.equal(dom.window.document.getElementById('artPreviewPortrait').getAttribute('hidden'), 'hidden');
+    assert.equal(dom.window.document.getElementById('artPreviewState').textContent, '未绑定完整原画');
 
     dom.window.document.getElementById('enemyNameInput').value = '哥布林追猎手·编辑后';
     dom.window.document.getElementById('enemyApInput').value = '5';
@@ -237,6 +241,47 @@ test('EnemyEditorPage renders enemies, edits current enemy, and updates preview'
     assert.equal(exported.goblin_story_headhunter.stats.ap, 5);
     assert.equal(exported.goblin_story_headhunter.presentation.portraitRef, 'enemy_goblin_hunter_alt');
     assert.match(dom.window.document.getElementById('status').textContent, /已保存当前敌人/);
+});
+
+test('EnemyEditorPage uses battle sprite dropdown as the primary art selector', async () => {
+    const { page, dom } = await createPageContext();
+    const spriteRef = '../source/character/敌人-001-状态001-正常状态.png';
+    const alternateSpriteRef = '../source/character/敌人-001-状态003-盾牌破损.png';
+    page.loadDocument({
+        goblin_story_headhunter: {
+            ...buildEnemies().goblin_story_headhunter,
+            presentation: {
+                portraitRef: 'enemy_goblin_hunter',
+                mapPortraitRef: 'enemy_goblin_hunter',
+                battleSpriteRef: spriteRef
+            }
+        }
+    }, {
+        skillCatalog: { skill_throw_stone: { id: 'skill_throw_stone', name: 'Throw Stone', costs: { ap: 2 } } },
+        assetCatalog: {
+            enemy_goblin_hunter: { id: 'enemy_goblin_hunter', src: '../assets/images/level_map/portraits/enemy_goblin_hunter.svg' },
+            [spriteRef]: { id: spriteRef, src: spriteRef },
+            [alternateSpriteRef]: { id: alternateSpriteRef, src: alternateSpriteRef }
+        }
+    });
+
+    const select = dom.window.document.getElementById('battleSpriteSelect');
+    const options = select.children.map(option => option.value);
+    assert(options.includes(spriteRef));
+    assert(options.includes(alternateSpriteRef));
+
+    assert.equal(dom.window.document.getElementById('artPreviewPortrait').getAttribute('src'), spriteRef);
+    assert.equal(dom.window.document.getElementById('mapPreviewPortrait').getAttribute('src'), '../assets/images/level_map/portraits/enemy_goblin_hunter.svg');
+
+    select.value = alternateSpriteRef;
+    select.dispatchEvent(new Event('change'));
+    assert.equal(dom.window.document.getElementById('artPreviewPortrait').getAttribute('src'), alternateSpriteRef);
+
+    page.saveCurrentEnemy();
+
+    const exported = page.workspace.exportDocument();
+    assert.equal(exported.goblin_story_headhunter.presentation.battleSpriteRef, alternateSpriteRef);
+    assert.equal(dom.window.document.getElementById('artPreviewPortrait').getAttribute('src'), alternateSpriteRef);
 });
 
 test('EnemyEditorPage saves draft and publishes runtime enemy JSON through project file API', async () => {

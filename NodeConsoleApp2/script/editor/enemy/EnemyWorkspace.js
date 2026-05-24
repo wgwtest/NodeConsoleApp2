@@ -1,4 +1,41 @@
 const STANDARD_BODY_PARTS = ['head', 'chest', 'abdomen', 'arm', 'leg'];
+const BUILT_IN_CHARACTER_SPRITES = [
+    {
+        id: '../source/character/敌人-001-状态001-正常状态.png',
+        label: '敌人-001 正常状态',
+        src: '../source/character/敌人-001-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-001-状态002-丢失盾牌.png',
+        label: '敌人-001 丢失盾牌',
+        src: '../source/character/敌人-001-状态002-丢失盾牌.png'
+    },
+    {
+        id: '../source/character/敌人-001-状态003-盾牌破损.png',
+        label: '敌人-001 盾牌破损',
+        src: '../source/character/敌人-001-状态003-盾牌破损.png'
+    },
+    {
+        id: '../source/character/敌人-002-状态001-正常状态.png',
+        label: '敌人-002 双刀斥候',
+        src: '../source/character/敌人-002-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-003-状态001-正常状态.png',
+        label: '敌人-003 重盾守卫',
+        src: '../source/character/敌人-003-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-004-状态001-正常状态.png',
+        label: '敌人-004 长枪骑士',
+        src: '../source/character/敌人-004-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-005-状态001-正常状态.png',
+        label: '敌人-005 破盾老兵',
+        src: '../source/character/敌人-005-状态001-正常状态.png'
+    }
+];
 const DEFAULT_ENEMY_SKILL_ALIASES = {
     skill_bite: 'skill_heavy_swing',
     skill_throw_stone: 'skill_skull_cracker',
@@ -154,10 +191,22 @@ function normalizeAssetCatalog(value) {
     const assetLibrary = asObject(source.assetLibrary);
     ['portraits', 'nodeArts', 'backgrounds', 'sprites', 'icons'].forEach((key) => {
         asArray(assetLibrary[key]).forEach((asset) => {
-            if (asset?.id) result[asset.id] = asset;
+            if (asset?.id) result[asset.id] = { ...asset, assetKind: key };
         });
     });
     return result;
+}
+
+function normalizeSpriteAsset(asset) {
+    const source = asObject(asset);
+    const id = normalizeString(source.id, normalizeString(source.src, ''));
+    if (!id) return null;
+    return {
+        ...clone(source),
+        id,
+        label: normalizeString(source.label || source.name, id.split('/').pop() || id),
+        src: normalizeString(source.src, id)
+    };
 }
 
 function collectLevelReferences(levelsDocument) {
@@ -211,6 +260,9 @@ export class EnemyWorkspace {
         this.skillCatalog = normalizeSkillCatalog(context.skillCatalog);
         this.skillAliases = { ...DEFAULT_ENEMY_SKILL_ALIASES, ...asObject(context.skillAliases) };
         this.assetCatalog = normalizeAssetCatalog(context.assetCatalog);
+        BUILT_IN_CHARACTER_SPRITES.forEach((asset) => {
+            this.assetCatalog[asset.id] = { ...asset, ...asObject(this.assetCatalog[asset.id]) };
+        });
         this.levelsDocument = asObject(context.levelsDocument);
         this.mapPack = asObject(context.mapPack);
         this.enemies = {};
@@ -305,6 +357,26 @@ export class EnemyWorkspace {
         return null;
     }
 
+    listCharacterSpriteAssets() {
+        const spriteMap = new Map();
+        BUILT_IN_CHARACTER_SPRITES.forEach((asset) => {
+            const normalized = normalizeSpriteAsset(asset);
+            if (normalized) spriteMap.set(normalized.id, normalized);
+        });
+        Object.values(this.assetCatalog).forEach((asset) => {
+            const normalized = normalizeSpriteAsset(asset);
+            if (!normalized) return;
+            if (
+                normalized.assetKind === 'sprites'
+                || normalized.id.includes('source/character/')
+                || normalized.src.includes('source/character/')
+            ) {
+                spriteMap.set(normalized.id, normalized);
+            }
+        });
+        return [...spriteMap.values()];
+    }
+
     resolveSkill(skillId) {
         const id = normalizeString(skillId, '');
         if (!id) return null;
@@ -322,6 +394,8 @@ export class EnemyWorkspace {
         const defaultPortraitRef = inferDefaultPortraitRef(enemy);
         const mapRef = explicitMapRef || defaultPortraitRef;
         const resolvedMapPortrait = this.resolveAsset(mapRef);
+        const spriteRef = presentation.battleSpriteRef || '';
+        const resolvedBattleSprite = this.resolveAsset(spriteRef);
         const missingAssets = [];
         ['portraitRef', 'mapPortraitRef', 'battleSpriteRef', 'iconRef'].forEach((field) => {
             const ref = presentation[field];
@@ -333,6 +407,8 @@ export class EnemyWorkspace {
             battleSpriteRef: presentation.battleSpriteRef || '',
             iconRef: presentation.iconRef || '',
             defaultPortraitRef,
+            resolvedBattleSpriteRef: resolvedBattleSprite?.id || spriteRef,
+            resolvedBattleSpriteSrc: resolvedBattleSprite?.src || '',
             resolvedMapPortraitRef: resolvedMapPortrait?.id || mapRef,
             resolvedMapPortraitSrc: resolvedMapPortrait?.src || '',
             missingAssets

@@ -152,6 +152,66 @@ test('EnemyWorkspace resolves default portrait assets for enemies without explic
     );
 });
 
+test('EnemyWorkspace resolves built-in full-body character PNG refs as sprite assets', async () => {
+    const { EnemyWorkspace } = await importSourceModule(workspaceModulePath);
+    const spriteRef = '../source/character/敌人-001-状态001-正常状态.png';
+    const workspace = new EnemyWorkspace({
+        enemy_full_body: {
+            id: 'enemy_full_body',
+            name: '完整敌人立绘',
+            stats: { hp: 80, maxHp: 80, ap: 3, speed: 8 },
+            bodyParts: {},
+            skills: ['skill_bite'],
+            presentation: { battleSpriteRef: spriteRef }
+        }
+    }, {
+        skillCatalog: { skill_bite: { id: 'skill_bite', name: 'Bite', costs: { ap: 1 } } }
+    });
+
+    assert.deepEqual(workspace.listCharacterSpriteAssets().map(asset => asset.id), [
+        '../source/character/敌人-001-状态001-正常状态.png',
+        '../source/character/敌人-001-状态002-丢失盾牌.png',
+        '../source/character/敌人-001-状态003-盾牌破损.png',
+        '../source/character/敌人-002-状态001-正常状态.png',
+        '../source/character/敌人-003-状态001-正常状态.png',
+        '../source/character/敌人-004-状态001-正常状态.png',
+        '../source/character/敌人-005-状态001-正常状态.png'
+    ]);
+    assert.equal(workspace.resolveAsset(spriteRef).src, spriteRef);
+    assert.equal(
+        workspace.validateEnemy('enemy_full_body').some(issue => issue.code === 'missing_asset_reference'),
+        false
+    );
+});
+
+test('EnemyWorkspace keeps map portraits and backgrounds out of the battle sprite dropdown', async () => {
+    const { EnemyWorkspace } = await importSourceModule(workspaceModulePath);
+    const workspace = new EnemyWorkspace({}, {
+        assetCatalog: {
+            assetLibrary: {
+                portraits: [
+                    { id: 'enemy_map_portrait', src: '../assets/images/level_map/portraits/enemy_map_portrait.svg' }
+                ],
+                nodeArts: [
+                    { id: 'node_icon_goblin_warrior', src: '../assets/images/level_map/node_icons/node_icon_goblin_warrior.png' }
+                ],
+                backgrounds: [
+                    { id: 'bg_map_glade_01', src: '../source/map/image_w2752_h1536_map-bg-01.jpeg' }
+                ],
+                sprites: [
+                    { id: 'enemy_custom_sprite', label: '自定义敌人原画', src: '../source/character/enemy_custom_sprite.png' }
+                ]
+            }
+        }
+    });
+
+    const ids = workspace.listCharacterSpriteAssets().map(asset => asset.id);
+    assert(ids.includes('enemy_custom_sprite'));
+    assert(!ids.includes('enemy_map_portrait'));
+    assert(!ids.includes('node_icon_goblin_warrior'));
+    assert(!ids.includes('bg_map_glade_01'));
+});
+
 test('EnemyWorkspace creates and deletes enemies with reference protection', async () => {
     const { EnemyWorkspace } = await importSourceModule(workspaceModulePath);
     const workspace = new EnemyWorkspace(buildFixtureEnemies(), {

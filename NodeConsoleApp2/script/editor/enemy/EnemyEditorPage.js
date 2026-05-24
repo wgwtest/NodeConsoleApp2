@@ -80,6 +80,7 @@ export class EnemyEditorPage {
             'enemySpeedInput',
             'portraitRefInput',
             'mapPortraitRefInput',
+            'battleSpriteSelect',
             'battleSpriteRefInput',
             'iconRefInput',
             'skillListInput',
@@ -104,6 +105,20 @@ export class EnemyEditorPage {
         this.bindClick('duplicateEnemyBtn', () => this.duplicateEnemy());
         this.bindClick('deleteEnemyBtn', () => this.deleteEnemy());
         this.bindClick('saveEnemyBtn', () => this.saveCurrentEnemy());
+        this.elements.battleSpriteSelect?.addEventListener('change', () => {
+            if (this.elements.battleSpriteRefInput) {
+                this.elements.battleSpriteRefInput.value = this.elements.battleSpriteSelect.value || '';
+            }
+            const enemy = this.getCurrentEnemy();
+            if (!enemy || !this.workspace) return;
+            this.renderPreview({
+                ...enemy,
+                presentation: {
+                    ...enemy.presentation,
+                    battleSpriteRef: this.elements.battleSpriteSelect.value || ''
+                }
+            });
+        });
     }
 
     bindClick(id, handler) {
@@ -213,18 +228,51 @@ export class EnemyEditorPage {
         setValue('battleSpriteRefInput', enemy.presentation.battleSpriteRef || '');
         setValue('iconRefInput', enemy.presentation.iconRef || '');
         setValue('skillListInput', enemy.skills.join('\n'));
+        this.renderBattleSpriteOptions(enemy.presentation.battleSpriteRef || '');
         this.renderPreview(enemy);
+    }
+
+    renderBattleSpriteOptions(selectedRef = '') {
+        const select = this.elements.battleSpriteSelect;
+        if (!select) return;
+        select.innerHTML = '';
+        select.textContent = '';
+
+        const emptyOption = createElement(this.document, 'option');
+        emptyOption.value = '';
+        emptyOption.textContent = '未选择原画';
+        select.appendChild(emptyOption);
+
+        const assets = typeof this.workspace?.listCharacterSpriteAssets === 'function'
+            ? this.workspace.listCharacterSpriteAssets()
+            : [];
+        assets.forEach((asset) => {
+            const option = createElement(this.document, 'option');
+            option.value = asset.id;
+            option.textContent = asset.label || asset.id;
+            select.appendChild(option);
+        });
+        select.value = selectedRef || '';
     }
 
     renderPreview(enemy) {
         const summary = this.workspace.buildCatalogEntry(enemy.id);
-        const presentation = summary.presentationSummary;
-        const src = presentation.resolvedMapPortraitSrc;
+        const basePresentation = summary.presentationSummary;
+        const draftSpriteRef = asObject(enemy.presentation).battleSpriteRef || '';
+        const draftSprite = draftSpriteRef ? this.workspace.resolveAsset(draftSpriteRef) : null;
+        const presentation = {
+            ...basePresentation,
+            battleSpriteRef: draftSpriteRef,
+            resolvedBattleSpriteRef: draftSprite?.id || draftSpriteRef,
+            resolvedBattleSpriteSrc: draftSprite?.src || ''
+        };
+        const mapSrc = presentation.resolvedMapPortraitSrc;
+        const artSrc = presentation.resolvedBattleSpriteSrc;
         if (this.elements.mapPreviewName) this.elements.mapPreviewName.textContent = enemy.name;
         if (this.elements.mapPreviewId) this.elements.mapPreviewId.textContent = `templateId: ${enemy.id}`;
         if (this.elements.mapPreviewPortrait) {
-            if (src) {
-                this.elements.mapPreviewPortrait.setAttribute('src', src);
+            if (mapSrc) {
+                this.elements.mapPreviewPortrait.setAttribute('src', mapSrc);
                 this.elements.mapPreviewPortrait.removeAttribute?.('hidden');
             } else {
                 this.elements.mapPreviewPortrait.removeAttribute?.('src');
@@ -232,8 +280,8 @@ export class EnemyEditorPage {
             }
         }
         if (this.elements.artPreviewPortrait) {
-            if (src) {
-                this.elements.artPreviewPortrait.setAttribute('src', src);
+            if (artSrc) {
+                this.elements.artPreviewPortrait.setAttribute('src', artSrc);
                 this.elements.artPreviewPortrait.removeAttribute?.('hidden');
             } else {
                 this.elements.artPreviewPortrait.removeAttribute?.('src');
@@ -241,9 +289,9 @@ export class EnemyEditorPage {
             }
         }
         if (this.elements.artPreviewState) {
-            this.elements.artPreviewState.textContent = src
-                ? `${presentation.resolvedMapPortraitRef || ''} · ${src}`
-                : '未绑定原画资产';
+            this.elements.artPreviewState.textContent = artSrc
+                ? `${presentation.resolvedBattleSpriteRef || ''} · ${artSrc}`
+                : '未绑定完整原画';
         }
         if (this.elements.mapPreviewStats) {
             this.elements.mapPreviewStats.textContent = `HP ${enemy.stats.hp}/${enemy.stats.maxHp} · AP ${enemy.stats.ap} · SPD ${enemy.stats.speed}`;
@@ -284,7 +332,7 @@ export class EnemyEditorPage {
                 ...asObject(enemy.presentation),
                 portraitRef: this.elements.portraitRefInput?.value || '',
                 mapPortraitRef: this.elements.mapPortraitRefInput?.value || '',
-                battleSpriteRef: this.elements.battleSpriteRefInput?.value || '',
+                battleSpriteRef: this.elements.battleSpriteSelect?.value || this.elements.battleSpriteRefInput?.value || '',
                 iconRef: this.elements.iconRefInput?.value || ''
             },
             skills: splitTextList(this.elements.skillListInput?.value || '')
