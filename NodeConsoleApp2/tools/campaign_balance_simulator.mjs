@@ -40,6 +40,8 @@ const playerBuilds = [
       'skill_block',
       'skill_heal',
       'skill_shockwave_copy_1770042951717',
+      'skill_regroup',
+      'skill_execute_copy_1770044052832',
       'skill_skull_cracker',
       'skill_execute_copy_1770043820577',
       'skill_heavy_swing',
@@ -314,7 +316,14 @@ function autoLearnProgressiveSkills({ player, skillsById }) {
 
 function buildProgressivePlan(player) {
   const learned = new Set(asArray(player?.skills?.learned));
-  return progressiveBuildProfile.plan.filter(skillId => learned.has(skillId));
+  const plan = [];
+  for (const skillId of progressiveBuildProfile.plan) {
+    if (learned.has(skillId) && !plan.includes(skillId)) plan.push(skillId);
+  }
+  for (const skillId of progressiveLearningPriority) {
+    if (learned.has(skillId) && !plan.includes(skillId)) plan.push(skillId);
+  }
+  return plan;
 }
 
 function applyLevelRewardsToPlayer(player, level, victory) {
@@ -413,11 +422,14 @@ function computeEffectAmountForScore(effect, { target }) {
   return amount;
 }
 
-function summarizeSkill(skill, { target = null } = {}) {
-  const out = { damageHp: 0, damageArmor: 0, heal: 0, armorAdd: 0, dot: 0, control: 0 };
+function summarizeSkill(skill, { target = null, actor = null, skillTarget = null } = {}) {
+  const out = { damageHp: 0, damageArmor: 0, heal: 0, armorAdd: 0, preHitArmor: 0, dot: 0, control: 0 };
   for (const action of asArray(skill?.actions)) {
     const effect = action?.effect || {};
-    const amount = computeEffectAmountForScore(effect, { target });
+    const amountTarget = effect?.amountSource?.owner === 'actor' || effect?.amountSource?.owner === 'self'
+      ? actor
+      : (effect?.amountSource?.owner === 'skillTarget' ? skillTarget : target);
+    const amount = computeEffectAmountForScore(effect, { target: amountTarget || target });
     if (effect.effectType === 'DMG_HP') out.damageHp += amount;
     if (effect.effectType === 'DMG_ARMOR') out.damageArmor += amount;
     if (effect.effectType === 'HEAL') out.heal += amount;
@@ -426,6 +438,9 @@ function summarizeSkill(skill, { target = null } = {}) {
   for (const row of asArray(skill?.buffRefs?.apply)) {
     if (['buff_bleed', 'buff_poison', 'buff_tear_wound'].includes(row?.buffId)) out.dot += 10;
     if (['buff_slow', 'buff_vulnerable'].includes(row?.buffId)) out.control += 6;
+    if (row?.buffId === 'new_buff_1771485041778') {
+      out.preHitArmor += Math.max(0, Number(row?.params?.healArmorVal ?? 5) || 5);
+    }
   }
   return out;
 }
@@ -442,15 +457,21 @@ function findPrimaryEnemy(enemies) {
 }
 
 function scoreSkillForBuild({ skill, player, target, buildId, chapter }) {
-  const summary = summarizeSkill(skill, { target });
+  const subject = skill.target?.subject;
+  const summary = summarizeSkill(skill, {
+    target: subject === 'SUBJECT_SELF' ? player : target,
+    actor: player,
+    skillTarget: target
+  });
   const hpRatio = player.stats.maxHp > 0 ? player.stats.hp / player.stats.maxHp : 1;
   const missingHp = Math.max(0, (Number(player.stats.maxHp ?? 0) || 0) - (Number(player.stats.hp ?? 0) || 0));
   const missingArmor = summarizeMissingArmor(player);
   const targetHp = getEntityHp(target);
   const targetMaxHp = getEntityMaxHp(target) || targetHp || 1;
   const targetHpRatio = targetMaxHp > 0 ? targetHp / targetMaxHp : 1;
+  const targetBleedStacks = getEntityBuffStacks(target, 'buff_bleed', 0);
   let score = 0;
-  if (skill.target?.subject === 'SUBJECT_SELF') {
+  if (subject === 'SUBJECT_SELF') {
     const shouldFinishFight = buildId === 'recommended' && hpRatio >= 0.75 && targetHpRatio <= 0.35;
     if (shouldFinishFight) return 0;
     if (summary.heal > 0 && missingHp > 0) {
@@ -463,6 +484,12 @@ function scoreSkillForBuild({ skill, player, target, buildId, chapter }) {
       score += Math.min(missingArmor.maxPart, summary.armorAdd) * 1.8;
       if (buildId === 'basic') score += Math.min(missingArmor.total, summary.armorAdd);
       if (buildId === 'recommended' && chapter >= 2) score += Math.min(missingArmor.total, summary.armorAdd) * 0.6;
+    }
+    if (summary.preHitArmor > 0) {
+      const pressure = chapter >= 3 ? 1.6 : 1.2;
+      score += summary.preHitArmor * pressure;
+      if (hpRatio < 0.75) score += summary.preHitArmor * 2.0;
+      if (['recommended', 'progressive'].includes(buildId) && chapter >= 2) score += 18;
     }
     return score;
   }
@@ -478,6 +505,15 @@ function scoreSkillForBuild({ skill, player, target, buildId, chapter }) {
   score += armorFromArmorSkill * (chapter >= 2 ? 2.0 : 1.2);
   score += summary.dot * (chapter >= 3 ? 1.5 : 1.0);
   score += summary.control;
+  if (summary.heal > 0 && missingHp > 0) {
+    const bleedSustain = targetBleedStacks > 0 && ['recommended', 'progressive'].includes(buildId);
+    score += summary.heal * (hpRatio < 0.7 ? 3.4 : 1.0);
+    score += Math.min(missingHp, summary.heal) * 1.8;
+    if (bleedSustain) {
+      score += 26 + targetBleedStacks * 5;
+      if (hpRatio < 0.75) score += 16;
+    }
+  }
   if (buildId === 'recommended' && targetHpRatio <= 0.35) {
     score += hpThroughArmor * 4.0;
     score += summary.damageHp >= targetHp ? 120 : 0;
@@ -520,8 +556,9 @@ function buildPlayerDraft({ driver, build, skillsById, chapter }) {
     const side = subject === 'SUBJECT_SELF' ? 'self' : 'enemy';
     const selectedPart = side === 'self' ? pickMostDamagedSelfPart(player) : pickWeakestPart(target, skill);
     const slotPart = selectedPart || (side === 'self' ? 'chest' : 'chest');
+    const slotCap = Number(driver._getBattleSlotLayout?.()?.slotCounts?.[slotPart]?.[side] ?? 0) || 0;
     let slotKey = null;
-    for (let index = 0; index < 3; index += 1) {
+    for (let index = 0; index < slotCap; index += 1) {
       const candidate = `${side}:${slotPart}:${index}`;
       if (!occupied.has(candidate)) {
         slotKey = candidate;
@@ -636,8 +673,13 @@ function buildDriver({ CoreEngine, modules, runtime, player, enemies, skillMaps,
 
 async function playOneTurn(driver, draft) {
   const roundId = driver.currentTurn;
+  const failuresBefore = driver.eventBus.eventsByName('PLANNING_COMMIT_FAILED').length;
   driver.commitPlanning({ planningDraftBySkill: draft });
   if (driver.timeline.phase !== 'READY') {
+    const failure = driver.eventBus.eventsByName('PLANNING_COMMIT_FAILED').slice(failuresBefore).at(-1);
+    if (failure?.payload?.reason) {
+      return { ok: false, reason: `planning_commit_failed:${failure.payload.reason}` };
+    }
     return { ok: false, reason: `timeline_not_ready_${driver.timeline.phase}` };
   }
   driver.commitTurn();

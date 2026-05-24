@@ -201,6 +201,84 @@ test('progressive campaign diagnoses boss and elite lethal failures as enemy pre
   );
 });
 
+test('progressive campaign uses learned late defensive and sustain skills in pressure fights', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const report = await simulator.runProgressiveCampaignSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.8-progressive-late-skill-usage'
+  });
+
+  const pressureRows = report.results.filter(row => ['level_2_10', 'level_3_9', 'level_3_10'].includes(row.levelId));
+  assert.equal(pressureRows.length, 3);
+  assert.equal(
+    pressureRows.every(row => row.skillTreeBefore.learned.includes('skill_regroup')),
+    true,
+    '后期压力关前应已经学会受击备甲'
+  );
+  assert.equal(
+    pressureRows.every(row => row.skillTreeBefore.learned.includes('skill_execute_copy_1770044052832')),
+    true,
+    '后期压力关前应已经学会吸血'
+  );
+  assert.equal(
+    pressureRows.some(row => (row.playerSkillUsage.skill_regroup || 0) > 0),
+    true,
+    `后期压力关应实际使用受击备甲：${pressureRows.map(row => `${row.levelId}:${row.playerSkillUsage.skill_regroup || 0}`).join(', ')}`
+  );
+  assert.equal(
+    pressureRows.some(row => (row.playerSkillUsage.skill_execute_copy_1770044052832 || 0) > 0),
+    true,
+    `后期压力关应实际使用吸血：${pressureRows.map(row => `${row.levelId}:${row.playerSkillUsage.skill_execute_copy_1770044052832 || 0}`).join(', ')}`
+  );
+});
+
+test('progressive late skill plan keeps basic heal and direct damage available', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const report = await simulator.runProgressiveCampaignSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.8-progressive-plan-keeps-foundation'
+  });
+
+  const firstBoss = report.results.find(row => row.levelId === 'level_1_10');
+  assert(firstBoss, '缺少第一章 Boss 结果');
+  assert.equal(firstBoss.victory, true, '补入后期技能后不应让第一章 Boss 从可通关退化为失败');
+  assert.equal(
+    (firstBoss.playerSkillUsage.skill_heal || 0) > 0,
+    true,
+    `第一章 Boss 压力战仍应能使用基础治疗：${JSON.stringify(firstBoss.playerSkillUsage)}`
+  );
+  assert.equal(
+    (firstBoss.playerSkillUsage.skill_heavy_swing || 0) > 0,
+    true,
+    `第一章 Boss 压力战仍应保留基础直伤：${JSON.stringify(firstBoss.playerSkillUsage)}`
+  );
+});
+
+test('progressive campaign final boss remains a pressure fight after late sustain tuning', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const report = await simulator.runProgressiveCampaignSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.8-final-boss-pressure'
+  });
+
+  const finalBoss = report.results.find(row => row.levelId === 'level_3_10');
+  assert(finalBoss, '缺少第三章 Boss 结果');
+  assert.equal(finalBoss.victory, true, '进度式构筑应能通关第三章 Boss');
+  assert.equal(
+    finalBoss.playerRemainingHp < finalBoss.playerMaxHp * 0.75,
+    true,
+    `第三章 Boss 不应被高血量通过：${finalBoss.playerRemainingHp}/${finalBoss.playerMaxHp}`
+  );
+  assert.equal(
+    (finalBoss.playerSkillUsage.skill_execute_copy_1770044052832 || 0) > 0,
+    true,
+    `第三章 Boss 应促使玩家实际使用后期吸血：${JSON.stringify(finalBoss.playerSkillUsage)}`
+  );
+});
+
 test('campaign balance first tuning pass keeps recommended build viable without letting specialist outperform it', async () => {
   const simulator = await import(pathToFileURL(simulatorPath));
   const report = await simulator.runCampaignBalanceSimulation({

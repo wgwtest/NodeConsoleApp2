@@ -1,6 +1,6 @@
 # Campaign Balance Summary
 
-Generated: 2026-05-24T21:31:26.941Z
+Generated: 2026-05-24T21:57:46.978Z
 Levels: 30
 Builds: basic, recommended, specialist
 
@@ -8,8 +8,8 @@ Builds: basic, recommended, specialist
 
 | Build | Wins | Attempts | Win Rate | Avg Turns | Avg Player HP |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| basic | 28 | 30 | 93.3% | 2.5 | 74.6 |
-| recommended | 27 | 30 | 90.0% | 2.7 | 87.4 |
+| basic | 27 | 30 | 90.0% | 2.4 | 74.2 |
+| recommended | 27 | 30 | 90.0% | 2.6 | 87.4 |
 | specialist | 27 | 30 | 90.0% | 1.4 | 64.3 |
 
 ## Level Results
@@ -103,8 +103,8 @@ Builds: basic, recommended, specialist
 | level_3_9 | basic | N | 3 | 0 | 86 | expected_basic_build_limit |
 | level_3_9 | recommended | N | 3 | 0 | 105 | enemy_skill_pressure_high |
 | level_3_9 | specialist | N | 2 | 0 | 27 | player_build_mismatch |
-| level_3_10 | basic | Y | 7 | 12 | 0 | ok |
-| level_3_10 | recommended | N | 6 | 0 | 38 | enemy_skill_pressure_high |
+| level_3_10 | basic | N | 3 | 0 | 195 | expected_basic_build_limit |
+| level_3_10 | recommended | N | 3 | 0 | 221 | enemy_skill_pressure_high |
 | level_3_10 | specialist | N | 2 | 0 | 68 | player_build_mismatch |
 
 ## Recommendations

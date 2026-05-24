@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-05-24T21:31:26.941Z",
+    "generatedAt": "2026-05-24T21:57:46.978Z",
     "levelCount": 30,
     "buildIds": [
       "basic",
@@ -2554,22 +2554,22 @@
       "chapter": 3,
       "buildId": "basic",
       "buildLabel": "基础构筑",
-      "victory": true,
-      "turns": 7,
+      "victory": false,
+      "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 12,
-      "enemyRemainingHp": 0,
+      "playerRemainingHp": 0,
+      "enemyRemainingHp": 195,
       "playerSkillUsage": {
-        "skill_block": 8,
-        "skill_double_thrust": 8,
-        "skill_heavy_swing": 8,
-        "skill_heal": 6
+        "skill_block": 4,
+        "skill_double_thrust": 4,
+        "skill_heavy_swing": 3,
+        "skill_heal": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_wrecking_swing": 8
+        "enemy_skill_twilight_bastion_swing": 4
       },
-      "failureReason": "victory",
-      "diagnosis": "ok",
+      "failureReason": "player_hp_zero",
+      "diagnosis": "expected_basic_build_limit",
       "levelClass": {
         "order": 10,
         "isBoss": true,
@@ -2583,21 +2583,21 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": false,
-      "turns": 6,
+      "turns": 3,
       "playerMaxHp": 120,
       "playerRemainingHp": 0,
-      "enemyRemainingHp": 38,
+      "enemyRemainingHp": 221,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 2,
         "skill_block": 2,
-        "skill_1771769351059": 6,
+        "skill_1771769351059": 3,
         "skill_skull_cracker": 1,
-        "skill_heavy_swing": 5,
-        "skill_heal": 5,
-        "skill_execute_copy_1770043820577": 4
+        "skill_heavy_swing": 2,
+        "skill_heal": 2,
+        "skill_execute_copy_1770043820577": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_wrecking_swing": 7
+        "enemy_skill_twilight_bastion_swing": 4
       },
       "failureReason": "player_hp_zero",
       "diagnosis": "enemy_skill_pressure_high",
@@ -2624,7 +2624,7 @@
         "skill_heavy_swing": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_wrecking_swing": 3
+        "enemy_skill_twilight_bastion_swing": 3
       },
       "failureReason": "player_hp_zero",
       "diagnosis": "player_build_mismatch",
@@ -2641,10 +2641,10 @@
         "buildId": "basic",
         "label": "基础构筑",
         "attempts": 30,
-        "wins": 28,
-        "winRate": 0.9333333333333333,
-        "averageTurns": 2.533333333333333,
-        "averagePlayerRemainingHp": 74.63333333333334
+        "wins": 27,
+        "winRate": 0.9,
+        "averageTurns": 2.4,
+        "averagePlayerRemainingHp": 74.23333333333333
       },
       {
         "buildId": "recommended",
@@ -2652,7 +2652,7 @@
         "attempts": 30,
         "wins": 27,
         "winRate": 0.9,
-        "averageTurns": 2.7,
+        "averageTurns": 2.6,
         "averagePlayerRemainingHp": 87.4
       },
       {
@@ -2712,8 +2712,8 @@
         "chapter": 3,
         "buildId": "basic",
         "attempts": 10,
-        "wins": 9,
-        "winRate": 0.9
+        "wins": 8,
+        "winRate": 0.8
       },
       {
         "chapter": 3,
@@ -2731,9 +2731,9 @@
       }
     ],
     "diagnosisCounts": {
-      "ok": 52,
+      "ok": 51,
       "enemy_too_weak": 30,
-      "expected_basic_build_limit": 2,
+      "expected_basic_build_limit": 3,
       "enemy_skill_pressure_high": 3,
       "player_build_mismatch": 3
     },

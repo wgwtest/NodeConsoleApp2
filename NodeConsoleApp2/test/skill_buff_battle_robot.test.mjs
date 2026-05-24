@@ -364,8 +364,8 @@ test('战斗机器人按真实回合流验证撕裂伤口、迸发、吸血与 B
     targetId: enemy.id
   });
   const drainResult = findTimelineResult(eventBus, 'skill_execute_copy_1770044052832');
-  assert.equal(drainResult?.actions?.[0]?.heal, 4);
-  assert.equal(player.stats.hp, 74);
+  assert.equal(drainResult?.actions?.[0]?.heal, 8);
+  assert.equal(player.stats.hp, 78);
   assert.equal(enemy.hp, 85);
   assert.equal(enemy.stats.hp, 85);
   assert.equal(enemy.buffs.has('buff_bleed'), false);
@@ -377,7 +377,7 @@ test('战斗机器人按真实回合流验证撕裂伤口、迸发、吸血与 B
   assert.equal(eventBus.eventsByName('TIMELINE_ERROR').length, 0);
   assert.ok(eventBus.eventsByName('BATTLE_LOG').some(event => String(event.payload?.text || '').includes('撕裂伤口')));
   assert.ok(eventBus.eventsByName('BATTLE_LOG').some(event => String(event.payload?.text || '').includes('迸发 dealt 5 HP')));
-  assert.ok(eventBus.eventsByName('BATTLE_LOG').some(event => String(event.payload?.text || '').includes('吸血 healed 测试玩家 for 4 HP')));
+  assert.ok(eventBus.eventsByName('BATTLE_LOG').some(event => String(event.payload?.text || '').includes('吸血 healed 测试玩家 for 8 HP')));
 });
 
 test('敌人规划和执行优先使用 enemy skill catalog，不从玩家技能包取同名技能', async () => {

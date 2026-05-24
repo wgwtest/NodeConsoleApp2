@@ -2384,7 +2384,7 @@
       "id": "skill_execute_copy_1770044052832",
       "name": "吸血",
       "rarity": "Epic",
-      "description": "获取流血层数*2的血量",
+      "description": "获取流血层数*4的血量",
       "prerequisites": [
         "skill_shockwave_copy_1770042951717"
       ],
@@ -2463,7 +2463,7 @@
             "amountSource": {
               "owner": "skillTarget",
               "buffId": "buff_bleed",
-              "multiplier": 2,
+              "multiplier": 4,
               "missingAs": 0
             },
             "note": "按目标流血层数回复自身 HP；当前不消耗流血层数。"

@@ -308,7 +308,7 @@ function validateExecutionRow(row, skill) {
   }
   if (skill.id === 'skill_execute_copy_1770044052832') {
     const heal = actionResults[0]?.heal;
-    if (heal !== 6) failures.push(`吸血 expected 6 heal from 3 bleed stacks, got ${heal}`);
+    if (heal !== 12) failures.push(`吸血 expected 12 heal from 3 bleed stacks, got ${heal}`);
   }
 
   return failures;
