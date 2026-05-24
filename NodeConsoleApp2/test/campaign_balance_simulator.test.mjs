@@ -408,3 +408,35 @@ test('campaign balance midgame armor repair and status levels create real attrit
     `推荐构筑应可通关但产生损耗：${recommendedRows.map(row => `${row.levelId}:${row.playerRemainingHp}/${row.playerMaxHp}:${row.diagnosis}`).join(', ')}`
   );
 });
+
+test('campaign balance remaining weak rows are not concentrated on repair or plague enemies', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const report = await simulator.runCampaignBalanceSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.11-remaining-weak-concentration'
+  });
+
+  const weakRows = report.results.filter(row => row.diagnosis === 'enemy_too_weak');
+  assert.equal(
+    weakRows.length <= 4,
+    true,
+    `剩余 enemy_too_weak 不应继续超过 4 条：${weakRows.map(row => `${row.levelId}:${row.buildId}`).join(', ')}`
+  );
+
+  const repeatedWeakRows = weakRows.filter(row => (
+    ['level_2_5', 'level_3_6', 'level_3_2', 'level_3_8'].includes(row.levelId)
+  ));
+  assert.equal(
+    repeatedWeakRows.length <= 2,
+    true,
+    `残甲骷髅卫士/疫雾召唤者不应继续构成主要偏弱来源：${repeatedWeakRows.map(row => `${row.levelId}:${row.buildId}`).join(', ')}`
+  );
+
+  const recommendedWeakRows = weakRows.filter(row => row.buildId === 'recommended');
+  assert.deepEqual(
+    recommendedWeakRows.map(row => row.levelId),
+    [],
+    `推荐构筑不能继续在剩余弱关中无压通过：${recommendedWeakRows.map(row => `${row.levelId}:${row.playerRemainingHp}/${row.playerMaxHp}`).join(', ')}`
+  );
+});

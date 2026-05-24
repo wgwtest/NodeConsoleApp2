@@ -547,7 +547,7 @@
     "skills": [
       "enemy_skill_shield_tap",
       "enemy_skill_bone_patch",
-      "enemy_skill_dead_air"
+      "enemy_skill_bone_splinter_jab"
     ],
     "tags": [
       "chapter_2",
@@ -1167,7 +1167,7 @@
     },
     "skills": [
       "enemy_skill_bad_lunchbox",
-      "enemy_skill_dirty_bandage",
+      "enemy_skill_plague_mist_burst",
       "enemy_skill_dead_air"
     ],
     "bodyParts": {

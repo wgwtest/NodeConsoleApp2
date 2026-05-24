@@ -1038,6 +1038,157 @@
       ]
     },
     {
+      "id": "enemy_skill_bone_splinter_jab",
+      "name": "骨刺反扎",
+      "rarity": "Uncommon",
+      "description": "残甲骷髅卫士专用反扎，用较低 AP 在修复间隙制造生命损耗。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 814,
+        "y": 614,
+        "group": "enemy_undead",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "arm"
+          ],
+          "selectedParts": [
+            "arm"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_bleed",
+            "target": "enemy",
+            "chance": 0.65,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_bone_splinter_jab",
+          "name": "骨刺反扎",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 16
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_plague_mist_burst",
+      "name": "疫雾爆散",
+      "rarity": "Uncommon",
+      "description": "疫雾召唤者专用爆散，牺牲部分治疗节奏换取更明确的毒性压迫。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 1014,
+        "y": 614,
+        "group": "enemy_undead",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_poison",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 3,
+            "params": {
+              "damageVal": 7
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_plague_mist_burst",
+          "name": "疫雾爆散",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 10
+          }
+        }
+      ]
+    },
+    {
       "id": "skill_bite",
       "name": "乱咬",
       "rarity": "Common",

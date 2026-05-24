@@ -1,6 +1,6 @@
 # Campaign Balance Summary
 
-Generated: 2026-05-24T22:23:15.196Z
+Generated: 2026-05-24T22:33:09.816Z
 Mode: progressive
 Levels: 30
 
@@ -29,20 +29,20 @@ Final learned skills: skill_heal, skill_heavy_swing, skill_savage_charge, skill_
 | level_2_2 | Y | 1 | 74 | 0 | - | 0 | ok |
 | level_2_3 | Y | 3 | 100 | 0 | - | 0 | enemy_too_weak |
 | level_2_4 | Y | 2 | 65 | 0 | - | 1 | ok |
-| level_2_5 | Y | 3 | 100 | 0 | - | 1 | enemy_too_weak |
+| level_2_5 | Y | 4 | 97 | 0 | - | 1 | ok |
 | level_2_6 | Y | 2 | 70 | 0 | - | 0 | ok |
 | level_2_7 | Y | 4 | 80 | 0 | - | 0 | ok |
 | level_2_8 | Y | 3 | 100 | 0 | - | 1 | enemy_too_weak |
 | level_2_9 | Y | 2 | 65 | 0 | - | 1 | ok |
 | level_2_10 | Y | 6 | 29 | 0 | - | 2 | ok |
 | level_3_1 | Y | 1 | 76 | 0 | - | 1 | ok |
-| level_3_2 | Y | 3 | 85 | 0 | - | 0 | ok |
+| level_3_2 | Y | 3 | 81 | 0 | - | 0 | ok |
 | level_3_3 | Y | 3 | 76 | 0 | - | 1 | ok |
 | level_3_4 | Y | 4 | 100 | 0 | - | 1 | ok |
 | level_3_5 | Y | 4 | 88 | 0 | - | 1 | ok |
-| level_3_6 | Y | 3 | 100 | 0 | - | 1 | enemy_too_weak |
+| level_3_6 | Y | 4 | 97 | 0 | - | 1 | ok |
 | level_3_7 | Y | 1 | 80 | 0 | - | 0 | ok |
-| level_3_8 | Y | 3 | 85 | 0 | - | 1 | ok |
+| level_3_8 | Y | 3 | 81 | 0 | - | 1 | ok |
 | level_3_9 | Y | 6 | 9 | 0 | - | 1 | ok |
 | level_3_10 | Y | 7 | 29 | 0 | - | 2 | ok |
 

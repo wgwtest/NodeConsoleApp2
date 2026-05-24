@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-05-24T22:23:15.196Z",
+    "generatedAt": "2026-05-24T22:33:09.816Z",
     "mode": "progressive",
     "levelCount": 30,
     "maxTurns": 12,
@@ -1002,25 +1002,24 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 100,
+      "playerRemainingHp": 97,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_heavy_swing": 4,
+        "skill_heavy_swing": 3,
         "skill_skull_cracker": 1,
         "skill_block": 3,
         "skill_execute": 1,
-        "skill_1771769351059": 1,
-        "skill_heal": 1,
-        "skill_execute_copy_1770044052832": 1
+        "skill_heal": 3,
+        "skill_1771769351059": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 2,
-        "enemy_skill_bone_patch": 2
+        "enemy_skill_bone_splinter_jab": 3,
+        "enemy_skill_bone_patch": 1
       },
       "failureReason": "victory",
-      "diagnosis": "enemy_too_weak",
+      "diagnosis": "ok",
       "levelClass": {
         "order": 5,
         "isBoss": false,
@@ -1500,22 +1499,21 @@
       "victory": true,
       "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 85,
+      "playerRemainingHp": 81,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_execute": 2,
+        "skill_execute": 1,
         "skill_heavy_swing": 3,
-        "skill_block": 2,
-        "skill_regroup": 2,
+        "skill_block": 3,
+        "skill_1771769351059": 2,
+        "skill_heal": 2,
         "skill_execute_copy_1770044052832": 1,
-        "skill_heal": 1,
-        "skill_1771769351059": 1,
+        "skill_regroup": 1,
         "skill_leftover_lunchbox": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_bad_lunchbox": 2,
-        "enemy_skill_dirty_bandage": 2
+        "enemy_skill_plague_mist_burst": 4
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1789,25 +1787,24 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 100,
+      "playerRemainingHp": 97,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_heavy_swing": 4,
+        "skill_heavy_swing": 3,
         "skill_skull_cracker": 1,
         "skill_block": 3,
         "skill_execute": 1,
-        "skill_1771769351059": 1,
-        "skill_heal": 1,
-        "skill_execute_copy_1770044052832": 1
+        "skill_heal": 3,
+        "skill_1771769351059": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 2,
-        "enemy_skill_bone_patch": 2
+        "enemy_skill_bone_splinter_jab": 3,
+        "enemy_skill_bone_patch": 1
       },
       "failureReason": "victory",
-      "diagnosis": "enemy_too_weak",
+      "diagnosis": "ok",
       "levelClass": {
         "order": 6,
         "isBoss": false,
@@ -1933,22 +1930,21 @@
       "victory": true,
       "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 85,
+      "playerRemainingHp": 81,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_execute": 2,
+        "skill_execute": 1,
         "skill_heavy_swing": 3,
-        "skill_block": 2,
-        "skill_regroup": 2,
+        "skill_block": 3,
+        "skill_1771769351059": 2,
+        "skill_heal": 2,
         "skill_execute_copy_1770044052832": 1,
-        "skill_heal": 1,
-        "skill_1771769351059": 1,
+        "skill_regroup": 1,
         "skill_leftover_lunchbox": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_bad_lunchbox": 2,
-        "enemy_skill_dirty_bandage": 2
+        "enemy_skill_plague_mist_burst": 4
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -2148,8 +2144,8 @@
     "wins": 30,
     "winRate": 1,
     "diagnosisCounts": {
-      "ok": 26,
-      "enemy_too_weak": 4
+      "ok": 28,
+      "enemy_too_weak": 2
     },
     "skillTreeGapCandidates": 0,
     "finalSkillPoints": 25,
