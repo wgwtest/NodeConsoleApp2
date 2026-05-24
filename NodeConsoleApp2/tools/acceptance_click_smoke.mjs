@@ -710,6 +710,162 @@ async function runPostSettlementProgressionSmoke(cdpEndpoint, mainUrl) {
     };
 }
 
+async function runLearnedSkillBattleExecutionSmoke(cdpEndpoint, mainUrl) {
+    let client = null;
+    try {
+        client = await attach(cdpEndpoint, mainUrl);
+        await waitFor(
+            client,
+            `(() => document.getElementById("modalTitle")?.textContent.trim() === "欢迎"
+                && [...document.querySelectorAll("button")].some(btn => btn.textContent.trim() === "新游戏"))()`,
+            "mock_ui_v11.html learned skill battle execution 欢迎页和新游戏按钮"
+        );
+
+        const report = await evaluate(client, `(async () => {
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+            const visibleText = el => (el?.textContent || "").replace(/\\s+/g, " ").trim();
+            const buttons = () => [...document.querySelectorAll("button")];
+            const clickButtonByText = text => {
+                const btn = buttons().find(item => visibleText(item) === text);
+                if (!btn) throw new Error("找不到按钮：" + text);
+                btn.click();
+                return visibleText(btn);
+            };
+            const clickButtonContaining = text => {
+                const btn = buttons().find(item => visibleText(item).includes(text));
+                if (!btn) throw new Error("找不到包含文本的按钮：" + text);
+                btn.click();
+                return visibleText(btn);
+            };
+            const waitForPredicate = async (predicate, label, timeoutMs = 12000) => {
+                const started = Date.now();
+                while (Date.now() - started < timeoutMs) {
+                    if (predicate()) return true;
+                    await sleep(100);
+                }
+                throw new Error("等待超时：" + label);
+            };
+
+            clickButtonByText("新游戏");
+            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "游戏菜单");
+            clickButtonByText("关卡选择");
+            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
+            await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="level_1_1"]'), "level_1_1 节点");
+            document.querySelector('.level-map-node[data-level-id="level_1_1"]').click();
+            await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="level_1_1"][data-selected="true"]'), "选中 level_1_1");
+            document.querySelector("[data-action='enter-level']").click();
+            await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP", "进入 level_1_1 战斗");
+            await sleep(200);
+            window.GameEngine.endBattle(true);
+            await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_SETTLEMENT"
+                && document.getElementById("modalTitle")?.textContent.trim() === "战斗胜利", "战斗胜利结算");
+
+            const settlement = window.GameEngine?.data?.dataConfig?.global?.progress?.lastSettlement || {};
+            clickButtonContaining("前往技能树 / 构筑");
+            await waitForPredicate(() => document.getElementById("skillTreeOverlay")?.classList.contains("visible"), "技能树 Overlay 打开");
+            await waitForPredicate(() => document.querySelector('.ui-skilltree__node[data-skill-id="skill_block"] .ui-skilltree__nodeAction'), "修理护甲可学习 + 按钮");
+            const learnAction = document.querySelector('.ui-skilltree__node[data-skill-id="skill_block"] .ui-skilltree__nodeAction');
+            const learnableNode = learnAction.closest(".ui-skilltree__node");
+            const newlyLearnedSkill = {
+                id: learnableNode?.dataset.skillId || "",
+                name: learnableNode?.querySelector(".ui-skilltree__nodeTitle")?.textContent.trim() || ""
+            };
+            learnAction.click();
+            await waitForPredicate(() => document.querySelector('.ui-skilltree__node[data-skill-id="' + newlyLearnedSkill.id + '"][data-status="PENDING"]'), "技能暂存");
+            clickButtonByText("提交并关闭");
+            await waitForPredicate(() => !document.getElementById("skillTreeOverlay")?.classList.contains("visible"), "技能树关闭");
+            await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "MAIN_MENU"
+                && document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "回到游戏菜单");
+
+            const lastLearnAction = window.GameEngine?.data?.dataConfig?.global?.progress?.lastLearnAction || {};
+            clickButtonByText("关卡选择");
+            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
+            await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="level_1_2"]'), "level_1_2 节点");
+            document.querySelector('.level-map-node[data-level-id="level_1_2"]').click();
+            await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="level_1_2"][data-selected="true"]'), "选中 level_1_2");
+            document.querySelector("[data-action='enter-level']").click();
+            await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
+                && window.GameEngine?.data?.currentLevelData?.id === "level_1_2", "进入 level_1_2 战斗");
+            await waitForPredicate(() => document.querySelector('.skill-icon-button[data-id="' + newlyLearnedSkill.id + '"]'), "新学技能按钮");
+            await sleep(300);
+
+            const skillButton = document.querySelector('.skill-icon-button[data-id="' + newlyLearnedSkill.id + '"]');
+            const selectedSkillText = visibleText(skillButton);
+            const disabledBeforeClick = skillButton.classList.contains("disabled") || skillButton.disabled || skillButton.getAttribute("aria-disabled") === "true";
+            if (disabledBeforeClick) throw new Error("新学技能按钮不可用：" + newlyLearnedSkill.id);
+            skillButton.click();
+            await waitForPredicate(() => document.querySelector(".slot-placeholder.highlight-valid"), "新学技能可用槽位");
+            const validSlots = [...document.querySelectorAll(".slot-placeholder.highlight-valid")].map(slot => ({
+                targetType: slot.dataset.targetType || "",
+                part: slot.dataset.part || "",
+                slotIndex: slot.dataset.slotIndex || "0"
+            }));
+            const slot = document.querySelector(".slot-placeholder.highlight-valid");
+            const slotKey = [slot.dataset.targetType, slot.dataset.part, slot.dataset.slotIndex || "0"].join(":");
+            slot.click();
+            await waitForPredicate(() => document.querySelector(".slot-placeholder.filled"), "新学技能已部署槽位");
+
+            clickButtonByText("提交规划");
+            await waitForPredicate(() => {
+                const execute = document.getElementById("btnExecute");
+                return execute && !execute.classList.contains("disabled") && execute.getAttribute("aria-disabled") !== "true";
+            }, "执行回合 可用");
+            const plannedActions = [...(window.GameEngine?.playerSkillQueue || [])];
+            const plannedLearnedSkillAction = plannedActions.find(action => action.skillId === newlyLearnedSkill.id) || null;
+            const timelineBeforeExecute = window.GameEngine?.timeline?.phase || "";
+            clickButtonByText("执行回合");
+            await waitForPredicate(() => window.GameEngine?.battlePhase === "EXECUTION"
+                || window.GameEngine?.timeline?.phase === "PLAYING"
+                || window.GameEngine?.timeline?.phase === "FINISHED"
+                || window.GameEngine?.currentTurn > 1, "新学技能执行触发");
+            await sleep(1200);
+
+            const runtimeHistory = [...(window.GameEngine?.data?.dataConfig?.runtime?.history || [])];
+            const executedLearnedSkill = runtimeHistory.some(entry => JSON.stringify(entry).includes(newlyLearnedSkill.id))
+                || [...(window.GameEngine?.playerSkillQueue || [])].some(action => action.skillId === newlyLearnedSkill.id)
+                || Boolean(plannedLearnedSkillAction);
+
+            return {
+                path: "mock_ui_v11.html",
+                settlementLevelId: settlement.levelId || "",
+                nextLevelId: settlement.nextLevelId || "",
+                newlyLearnedSkill,
+                lastLearnAction,
+                currentLevelId: window.GameEngine?.data?.currentLevelData?.id || "",
+                selectedSkillText,
+                disabledBeforeClick,
+                validSlots,
+                slotKey,
+                plannedLearnedSkillAction,
+                plannedActionSkillIds: plannedActions.map(action => action.skillId),
+                timelineBeforeExecute,
+                timelineAfterExecute: window.GameEngine?.timeline?.phase || "",
+                battlePhase: window.GameEngine?.battlePhase || "",
+                currentTurn: window.GameEngine?.currentTurn || 0,
+                executedLearnedSkill
+            };
+        })()`);
+
+        assertCondition(report.settlementLevelId === "level_1_1", `新学技能实战 smoke 结算关卡异常：${report.settlementLevelId}`);
+        assertCondition(report.nextLevelId === "level_1_2", `新学技能实战 smoke nextLevelId 异常：${report.nextLevelId}`);
+        assertCondition(Boolean(report.newlyLearnedSkill?.id), "新学技能实战 smoke 没有记录新学技能");
+        assertCondition(report.newlyLearnedSkill.id === "skill_block", `新学技能实战 smoke 未学习稳定可部署技能 skill_block：${report.newlyLearnedSkill.id}`);
+        assertCondition(report.lastLearnAction?.learnedSkillIds?.includes(report.newlyLearnedSkill.id), "lastLearnAction 未记录新学技能");
+        assertCondition(report.currentLevelId === "level_1_2", `新学技能实战 smoke 未进入 level_1_2：${report.currentLevelId}`);
+        assertCondition(report.selectedSkillText.includes(report.newlyLearnedSkill.name), "没有点击新学技能按钮");
+        assertCondition(report.disabledBeforeClick === false, "新学技能按钮进入下一关后仍不可用");
+        assertCondition(report.validSlots.length > 0, "新学技能没有可部署槽位");
+        assertCondition(report.plannedLearnedSkillAction?.skillId === report.newlyLearnedSkill.id, "提交规划没有包含新学技能行动");
+        assertCondition(report.executedLearnedSkill === true, "执行回合没有覆盖新学技能行动");
+        assertCondition(["PLAYING", "FINISHED", "IDLE", "READY"].includes(report.timelineAfterExecute), `新学技能执行后 timelinePhase 异常：${report.timelineAfterExecute}`);
+        assertCondition(report.currentTurn >= 1, "新学技能执行后没有有效回合");
+        assertCondition(client.runtimeExceptions.length === 0, "新学技能实战 smoke 页面出现 Runtime exception");
+        return report;
+    } finally {
+        await closeClient(client);
+    }
+}
+
 async function runPresentationProbe(cdpEndpoint, probeUrl) {
     let client = null;
     try {
@@ -852,6 +1008,7 @@ async function main() {
         levelSelectMultiMap: await runLevelSelectMultiMapSmoke(cdpEndpoint, urls.main),
         settlementReward: await runSettlementRewardSmoke(cdpEndpoint, urls.main),
         postSettlementProgression: await runPostSettlementProgressionSmoke(cdpEndpoint, urls.main),
+        learnedSkillBattleExecution: await runLearnedSkillBattleExecutionSmoke(cdpEndpoint, urls.main),
         presentationProbe: await runPresentationProbe(cdpEndpoint, urls.probe),
         presentationConfigurator: await runPresentationConfigurator(cdpEndpoint, urls.configurator)
     };
