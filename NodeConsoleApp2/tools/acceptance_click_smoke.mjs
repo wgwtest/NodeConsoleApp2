@@ -523,6 +523,193 @@ async function runSettlementRewardSmoke(cdpEndpoint, mainUrl) {
     }
 }
 
+async function runPostSettlementProgressionSmoke(cdpEndpoint, mainUrl) {
+    const runScenario = async (scenario) => {
+        let client = null;
+        try {
+            client = await attach(cdpEndpoint, mainUrl);
+            await waitFor(
+                client,
+                `(() => document.getElementById("modalTitle")?.textContent.trim() === "欢迎"
+                    && [...document.querySelectorAll("button")].some(btn => btn.textContent.trim() === "新游戏"))()`,
+                `mock_ui_v11.html ${scenario} 欢迎页和新游戏按钮`
+            );
+
+            const report = await evaluate(client, `(async () => {
+                const scenario = ${JSON.stringify(scenario)};
+                const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+                const visibleText = el => (el?.textContent || "").replace(/\\s+/g, " ").trim();
+                const buttons = () => [...document.querySelectorAll("button")];
+                const clickButtonByText = text => {
+                    const btn = buttons().find(item => visibleText(item) === text);
+                    if (!btn) throw new Error("找不到按钮：" + text);
+                    btn.click();
+                    return visibleText(btn);
+                };
+                const clickButtonContaining = text => {
+                    const btn = buttons().find(item => visibleText(item).includes(text));
+                    if (!btn) throw new Error("找不到包含文本的按钮：" + text);
+                    btn.click();
+                    return visibleText(btn);
+                };
+                const waitForPredicate = async (predicate, label, timeoutMs = 12000) => {
+                    const started = Date.now();
+                    while (Date.now() - started < timeoutMs) {
+                        if (predicate()) return true;
+                        await sleep(100);
+                    }
+                    throw new Error("等待超时：" + label);
+                };
+                const enterLevel111AndWin = async () => {
+                    clickButtonByText("新游戏");
+                    await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "游戏菜单");
+                    clickButtonByText("关卡选择");
+                    await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
+                    await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="level_1_1"]'), "level_1_1 节点");
+                    const levelNode = document.querySelector('.level-map-node[data-level-id="level_1_1"]');
+                    levelNode.click();
+                    await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="level_1_1"][data-selected="true"]'), "选中 level_1_1");
+                    document.querySelector("[data-action='enter-level']").click();
+
+                    await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP", "BATTLE_LOOP");
+                    await sleep(200);
+                    window.GameEngine.endBattle(true);
+                    await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_SETTLEMENT"
+                        && document.getElementById("modalTitle")?.textContent.trim() === "战斗胜利", "战斗胜利结算");
+                    return window.GameEngine?.data?.dataConfig?.global?.progress?.lastSettlement || {};
+                };
+
+                const settlement = await enterLevel111AndWin();
+                const settlementText = visibleText(document.getElementById("modalBody"));
+
+                if (scenario === "next-level-direct") {
+                    const clickedNext = clickButtonContaining("前往下一关");
+                    await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
+                        && window.GameEngine?.data?.currentLevelData?.id === "level_1_2", "进入 level_1_2");
+                    await sleep(300);
+                    return {
+                        scenario,
+                        settlementLevelId: settlement.levelId || "",
+                        nextLevelId: settlement.nextLevelId || "",
+                        clickedNext,
+                        currentState: window.GameEngine?.fsm?.currentState || "",
+                        currentLevelId: window.GameEngine?.data?.currentLevelData?.id || "",
+                        currentLevelName: window.GameEngine?.data?.currentLevelData?.name || "",
+                        settlementText
+                    };
+                }
+
+                if (scenario !== "skill-tree-learn-then-next") {
+                    throw new Error("未知 post-settlement progression scenario：" + scenario);
+                }
+
+                const beforeSkills = window.GameEngine?.data?.playerData?.skills || {};
+                const beforeSkillPoints = Number(beforeSkills.skillPoints ?? 0) || 0;
+                const beforeLearned = [...(Array.isArray(beforeSkills.learned) ? beforeSkills.learned : [])];
+                const openedSkillTreeBy = clickButtonContaining("前往技能树 / 构筑");
+                await waitForPredicate(() => document.getElementById("skillTreeOverlay")?.classList.contains("visible"), "技能树 Overlay 打开");
+                await waitForPredicate(() => document.querySelector(".ui-skilltree__nodeAction"), "可学习技能 + 按钮");
+
+                const learnAction = document.querySelector(".ui-skilltree__nodeAction");
+                const learnableNode = learnAction.closest(".ui-skilltree__node");
+                const learnedSkillId = learnableNode?.dataset.skillId || "";
+                const learnedSkillName = learnableNode?.querySelector(".ui-skilltree__nodeTitle")?.textContent.trim() || "";
+                learnAction.click();
+                await waitForPredicate(() => document.querySelector('.ui-skilltree__node[data-skill-id="' + learnedSkillId + '"][data-status="PENDING"]'), "技能暂存");
+                clickButtonByText("提交并关闭");
+                await waitForPredicate(() => !document.getElementById("skillTreeOverlay")?.classList.contains("visible"), "技能树关闭");
+                await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "MAIN_MENU"
+                    && document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "回到游戏菜单");
+
+                const afterSkills = window.GameEngine?.data?.playerData?.skills || {};
+                const afterSkillPoints = Number(afterSkills.skillPoints ?? 0) || 0;
+                const afterLearned = [...(Array.isArray(afterSkills.learned) ? afterSkills.learned : [])];
+                const lastLearnAction = window.GameEngine?.data?.dataConfig?.global?.progress?.lastLearnAction || {};
+                const mainMenuTextAfterLearn = visibleText(document.getElementById("modalBody"));
+
+                clickButtonByText("关卡选择");
+                await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
+                await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="level_1_2"]'), "level_1_2 节点");
+                const nextNode = document.querySelector('.level-map-node[data-level-id="level_1_2"]');
+                nextNode.click();
+                await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="level_1_2"][data-selected="true"]'), "选中 level_1_2");
+                const levelSelectText = visibleText(document.getElementById("modalBody"));
+                document.querySelector("[data-action='enter-level']").click();
+                await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
+                    && window.GameEngine?.data?.currentLevelData?.id === "level_1_2", "学习后进入 level_1_2");
+                await sleep(300);
+
+                const battleSkillButtons = [...document.querySelectorAll(".skill-icon-button")];
+                const battleSkillIds = battleSkillButtons
+                    .map(btn => btn.dataset.id || "")
+                    .filter(Boolean);
+                const battleSkillText = battleSkillButtons.map(btn => visibleText(btn)).join(" ");
+
+                return {
+                    scenario,
+                    settlementLevelId: settlement.levelId || "",
+                    nextLevelId: settlement.nextLevelId || "",
+                    openedSkillTreeBy,
+                    learnedSkillId,
+                    learnedSkillName,
+                    beforeSkillPoints,
+                    afterSkillPoints,
+                    beforeLearned,
+                    afterLearned,
+                    lastLearnAction,
+                    mainMenuTextAfterLearn,
+                    levelSelectText,
+                    currentState: window.GameEngine?.fsm?.currentState || "",
+                    currentLevelId: window.GameEngine?.data?.currentLevelData?.id || "",
+                    currentLevelName: window.GameEngine?.data?.currentLevelData?.name || "",
+                    battleSkillIds,
+                    battleSkillText
+                };
+            })()`);
+            assertCondition(client.runtimeExceptions.length === 0, `${scenario} 页面出现 Runtime exception`);
+            return report;
+        } finally {
+            await closeClient(client);
+        }
+    };
+
+    const directNextLevel = await runScenario("next-level-direct");
+    const skillTreeLearnThenNext = await runScenario("skill-tree-learn-then-next");
+
+    assertCondition(directNextLevel.settlementLevelId === "level_1_1", `下一关 smoke 结算关卡异常：${directNextLevel.settlementLevelId}`);
+    assertCondition(directNextLevel.nextLevelId === "level_1_2", `下一关 smoke 结算 nextLevelId 异常：${directNextLevel.nextLevelId}`);
+    assertCondition(directNextLevel.clickedNext.includes("前往下一关"), "结算页没有点击前往下一关按钮");
+    assertCondition(directNextLevel.currentState === "BATTLE_LOOP", `点击前往下一关后状态异常：${directNextLevel.currentState}`);
+    assertCondition(directNextLevel.currentLevelId === "level_1_2", `点击前往下一关后没有进入 level_1_2：${directNextLevel.currentLevelId}`);
+
+    assertCondition(skillTreeLearnThenNext.settlementLevelId === "level_1_1", `技能树 smoke 结算关卡异常：${skillTreeLearnThenNext.settlementLevelId}`);
+    assertCondition(skillTreeLearnThenNext.nextLevelId === "level_1_2", `技能树 smoke 结算 nextLevelId 异常：${skillTreeLearnThenNext.nextLevelId}`);
+    assertCondition(skillTreeLearnThenNext.openedSkillTreeBy.includes("前往技能树 / 构筑"), "结算页没有点击前往技能树 / 构筑按钮");
+    assertCondition(Boolean(skillTreeLearnThenNext.learnedSkillId), "技能树 smoke 没有记录学习技能 ID");
+    assertCondition(skillTreeLearnThenNext.afterLearned.includes(skillTreeLearnThenNext.learnedSkillId), "提交并关闭后 learned 没有写入新技能");
+    assertCondition(skillTreeLearnThenNext.afterLearned.length === skillTreeLearnThenNext.beforeLearned.length + 1, "提交并关闭后已学技能数量没有增加 1");
+    assertCondition(skillTreeLearnThenNext.afterSkillPoints < skillTreeLearnThenNext.beforeSkillPoints, "提交并关闭后 KP 没有扣减");
+    assertCondition(skillTreeLearnThenNext.lastLearnAction?.learnedSkillIds?.includes(skillTreeLearnThenNext.learnedSkillId), "lastLearnAction 没有记录新学技能");
+    assertCondition(skillTreeLearnThenNext.mainMenuTextAfterLearn.includes("最近学习结果"), "主菜单没有展示最近学习结果");
+    assertCondition(
+        skillTreeLearnThenNext.mainMenuTextAfterLearn.includes(skillTreeLearnThenNext.learnedSkillName)
+            || skillTreeLearnThenNext.mainMenuTextAfterLearn.includes(skillTreeLearnThenNext.learnedSkillId),
+        "主菜单最近学习结果没有展示新学技能"
+    );
+    assertCondition(skillTreeLearnThenNext.currentState === "BATTLE_LOOP", `学习后进入下一关状态异常：${skillTreeLearnThenNext.currentState}`);
+    assertCondition(skillTreeLearnThenNext.currentLevelId === "level_1_2", `学习后没有进入 level_1_2：${skillTreeLearnThenNext.currentLevelId}`);
+    assertCondition(
+        skillTreeLearnThenNext.battleSkillIds.includes(skillTreeLearnThenNext.learnedSkillId)
+            || skillTreeLearnThenNext.battleSkillText.includes(skillTreeLearnThenNext.learnedSkillName),
+        "学习后的下一场战斗技能面板没有出现新学技能"
+    );
+
+    return {
+        directNextLevel,
+        skillTreeLearnThenNext
+    };
+}
+
 async function runPresentationProbe(cdpEndpoint, probeUrl) {
     let client = null;
     try {
@@ -664,6 +851,7 @@ async function main() {
         mainFlow: await runMainFlow(cdpEndpoint, urls.main),
         levelSelectMultiMap: await runLevelSelectMultiMapSmoke(cdpEndpoint, urls.main),
         settlementReward: await runSettlementRewardSmoke(cdpEndpoint, urls.main),
+        postSettlementProgression: await runPostSettlementProgressionSmoke(cdpEndpoint, urls.main),
         presentationProbe: await runPresentationProbe(cdpEndpoint, urls.probe),
         presentationConfigurator: await runPresentationConfigurator(cdpEndpoint, urls.configurator)
     };
