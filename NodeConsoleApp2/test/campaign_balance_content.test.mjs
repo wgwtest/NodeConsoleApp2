@@ -43,6 +43,16 @@ const expectedRouteVariantIds = [
   'level_3_5_well_route'
 ];
 
+const standardBodyParts = ['head', 'chest', 'abdomen', 'arm', 'leg'];
+const requiredEnemyRoleTags = [
+  'role_fast',
+  'role_armor',
+  'role_repair',
+  'role_status',
+  'role_elite',
+  'role_boss'
+];
+
 function asObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
@@ -76,6 +86,70 @@ function collectTemplateIds(levelsDocument) {
     .flatMap(pool => Array.isArray(pool.members) ? pool.members : [])
     .map(member => member?.templateId)
     .filter(Boolean);
+}
+
+function collectStoryLevelEnemyIds(levelsDocument) {
+  const levels = asObject(levelsDocument.levels);
+  const enemyPools = asObject(levelsDocument.enemyPools);
+  const rows = [];
+
+  for (const level of Object.values(levels)) {
+    if (level?.flow?.kind !== 'story') {
+      continue;
+    }
+    const poolId = level.waves?.[0]?.enemyPoolId;
+    const members = Array.isArray(enemyPools[poolId]?.members) ? enemyPools[poolId].members : [];
+    for (const member of members) {
+      if (!member?.templateId) {
+        continue;
+      }
+      rows.push({
+        chapter: Number(level.flow.chapterOrder),
+        levelId: level.id,
+        poolId,
+        templateId: member.templateId
+      });
+    }
+  }
+
+  return rows;
+}
+
+function listMissingEnemyFields(enemyId, enemy) {
+  const missing = [];
+  const stats = asObject(enemy.stats);
+  const bodyParts = asObject(enemy.bodyParts);
+  const presentation = asObject(enemy.presentation);
+
+  for (const fieldName of ['race', 'class', 'description']) {
+    if (typeof enemy[fieldName] !== 'string' || enemy[fieldName].trim().length === 0) {
+      missing.push(fieldName);
+    }
+  }
+  if (!Array.isArray(enemy.tags) || enemy.tags.length === 0) {
+    missing.push('tags');
+  }
+  for (const statName of ['hp', 'maxHp', 'ap', 'speed']) {
+    if (typeof stats[statName] !== 'number' || stats[statName] <= 0) {
+      missing.push(`stats.${statName}`);
+    }
+  }
+  for (const partName of standardBodyParts) {
+    const part = asObject(bodyParts[partName]);
+    for (const fieldName of ['current', 'max', 'weakness']) {
+      if (typeof part[fieldName] !== 'number') {
+        missing.push(`bodyParts.${partName}.${fieldName}`);
+      }
+    }
+  }
+  if (!Array.isArray(enemy.skills) || enemy.skills.length === 0) {
+    missing.push('skills');
+  }
+  if (typeof presentation.battleSpriteRef !== 'string' || presentation.battleSpriteRef.trim().length === 0) {
+    missing.push('presentation.battleSpriteRef');
+  }
+
+  return missing.length > 0 ? `${enemyId}: ${missing.join(', ')}` : null;
 }
 
 test('故事地图包暴露 30 个正式编号节点，并将 6 个路线变体排除在正式关卡外', async () => {
@@ -160,6 +234,57 @@ test('关卡事实源定义 30 个 story 关卡、6 个路线变体和独立敌�
 
     const missingTemplates = collectTemplateIds(levelsDocument).filter(templateId => !enemyIds.has(templateId));
     assert.deepEqual(missingTemplates, [], `${relativePath} 不应引用不存在的敌人模板`);
+  }
+});
+
+test('三章 30 关敌人模板满足 WBS-3.4.2 的数量、角色和字段完整性约束', async () => {
+  const enemies = normalizeEnemies(await readJson('assets/data/enemies.json'));
+  const enemySkillPack = await readJson('assets/data/skills_enemy_v1.json');
+  const enemySkillIds = new Set((enemySkillPack.skills || []).map(skill => skill.id).filter(Boolean));
+  const enemyEntries = Object.entries(enemies);
+
+  assert.equal(enemyEntries.length >= 18, true, '敌人模板总数应不少于 18 个');
+  assert.equal(enemyEntries.length <= 24, true, '敌人模板总数应不超过 24 个，避免第一轮内容膨胀失控');
+
+  const missingFields = enemyEntries
+    .map(([enemyId, enemy]) => listMissingEnemyFields(enemyId, enemy))
+    .filter(Boolean);
+  assert.deepEqual(missingFields, [], '所有敌人模板都应补齐 race/class/tags/description/stats/bodyParts/skills/presentation');
+
+  const missingSkillRefs = enemyEntries.flatMap(([enemyId, enemy]) => {
+    return (Array.isArray(enemy.skills) ? enemy.skills : [])
+      .filter(skillId => !enemySkillIds.has(skillId))
+      .map(skillId => `${enemyId}.${skillId}`);
+  });
+  assert.deepEqual(missingSkillRefs, [], '敌人技能引用必须全部存在于 assets/data/skills_enemy_v1.json');
+
+  const levelDocuments = await Promise.all(levelDocumentPaths.map(async relativePath => ({
+    relativePath,
+    document: await readJson(relativePath)
+  })));
+  const usedByRuntimeStory = collectStoryLevelEnemyIds(levelDocuments[0].document);
+  const usedEnemyIds = new Set(usedByRuntimeStory.map(row => row.templateId));
+
+  assert.equal(usedEnemyIds.size >= 15, true, '30 个正式关卡实际使用的敌人模板应不少于 15 个');
+
+  for (const { relativePath, document } of levelDocuments) {
+    assert.deepEqual(
+      collectStoryLevelEnemyIds(document),
+      usedByRuntimeStory,
+      `${relativePath} 的 story 敌人池分布应与 current/story_pack_v1 保持一致`
+    );
+  }
+
+  for (const chapter of [1, 2, 3]) {
+    const chapterEnemyIds = new Set(usedByRuntimeStory
+      .filter(row => row.chapter === chapter)
+      .map(row => row.templateId));
+    const chapterRoles = new Set([...chapterEnemyIds].flatMap(enemyId => enemies[enemyId]?.tags || []));
+
+    assert.equal(chapterEnemyIds.size >= 6, true, `第 ${chapter} 章实际使用敌人应不少于 6 个`);
+    for (const roleTag of requiredEnemyRoleTags) {
+      assert.equal(chapterRoles.has(roleTag), true, `第 ${chapter} 章缺少敌人角色 ${roleTag}`);
+    }
   }
 });
 

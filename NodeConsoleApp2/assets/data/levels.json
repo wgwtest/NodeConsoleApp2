@@ -41,7 +41,7 @@
       "name": "幽暗森林 1 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_headhunter",
+          "templateId": "enemy_c1_razor_runner",
           "position": 1
         }
       ]
@@ -61,7 +61,7 @@
       "name": "幽暗森林 3 敌人池",
       "members": [
         {
-          "templateId": "goblin_scout_lvl3",
+          "templateId": "goblin_story_headhunter",
           "position": 1
         }
       ]
@@ -81,7 +81,7 @@
       "name": "幽暗森林 5 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_medic",
+          "templateId": "enemy_c1_thorn_mender",
           "position": 1
         }
       ]
@@ -91,7 +91,7 @@
       "name": "幽暗森林 6 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_headhunter",
+          "templateId": "enemy_c1_barkshield_guard",
           "position": 1
         }
       ]
@@ -111,7 +111,7 @@
       "name": "幽暗森林 8 敌人池",
       "members": [
         {
-          "templateId": "skeleton_guard_lvl4",
+          "templateId": "enemy_c1_razor_runner",
           "position": 1
         }
       ]
@@ -121,7 +121,7 @@
       "name": "幽暗森林 9 敌人池",
       "members": [
         {
-          "templateId": "skeleton_story_repair_guard",
+          "templateId": "enemy_c1_barkshield_guard",
           "position": 1
         }
       ]
@@ -131,7 +131,7 @@
       "name": "幽暗森林 10 敌人池",
       "members": [
         {
-          "templateId": "skeleton_story_repair_guard",
+          "templateId": "boss_c1_ruin_bruiser",
           "position": 1
         }
       ]
@@ -141,7 +141,7 @@
       "name": "霜雾峡谷 1 敌人池",
       "members": [
         {
-          "templateId": "goblin_scout_lvl3",
+          "templateId": "enemy_c2_frost_skirmisher",
           "position": 1
         }
       ]
@@ -151,7 +151,7 @@
       "name": "霜雾峡谷 2 敌人池",
       "members": [
         {
-          "templateId": "skeleton_guard_lvl4",
+          "templateId": "goblin_scout_lvl3",
           "position": 1
         }
       ]
@@ -161,7 +161,7 @@
       "name": "霜雾峡谷 3 敌人池",
       "members": [
         {
-          "templateId": "orc_warrior",
+          "templateId": "enemy_c2_iceplate_guard",
           "position": 1
         }
       ]
@@ -171,7 +171,7 @@
       "name": "霜雾峡谷 4 敌人池",
       "members": [
         {
-          "templateId": "skeleton_story_repair_guard",
+          "templateId": "orc_berserker_lvl5",
           "position": 1
         }
       ]
@@ -181,7 +181,7 @@
       "name": "霜雾峡谷 5 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_medic",
+          "templateId": "skeleton_story_repair_guard",
           "position": 1
         }
       ]
@@ -191,7 +191,7 @@
       "name": "霜雾峡谷 6 敌人池",
       "members": [
         {
-          "templateId": "skeleton_guard_lvl4",
+          "templateId": "enemy_c2_chill_hexer",
           "position": 1
         }
       ]
@@ -201,7 +201,7 @@
       "name": "霜雾峡谷 7 敌人池",
       "members": [
         {
-          "templateId": "orc_berserker_lvl5",
+          "templateId": "skeleton_guard_lvl4",
           "position": 1
         }
       ]
@@ -211,7 +211,7 @@
       "name": "霜雾峡谷 8 敌人池",
       "members": [
         {
-          "templateId": "skeleton_story_repair_guard",
+          "templateId": "enemy_c2_iceplate_guard",
           "position": 1
         }
       ]
@@ -231,7 +231,7 @@
       "name": "霜雾峡谷 10 敌人池",
       "members": [
         {
-          "templateId": "orc_berserker_lvl5",
+          "templateId": "boss_c2_frozen_centurion",
           "position": 1
         }
       ]
@@ -241,7 +241,7 @@
       "name": "暮色古道 1 敌人池",
       "members": [
         {
-          "templateId": "goblin_scout_lvl3",
+          "templateId": "enemy_c3_dusk_runner",
           "position": 1
         }
       ]
@@ -251,7 +251,7 @@
       "name": "暮色古道 2 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_medic",
+          "templateId": "enemy_c3_plague_caller",
           "position": 1
         }
       ]
@@ -271,7 +271,7 @@
       "name": "暮色古道 4 敌人池",
       "members": [
         {
-          "templateId": "skeleton_guard_lvl4",
+          "templateId": "enemy_c3_graveplate_guard",
           "position": 1
         }
       ]
@@ -281,7 +281,7 @@
       "name": "暮色古道 5 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_headhunter",
+          "templateId": "skeleton_guard_lvl4",
           "position": 1
         }
       ]
@@ -311,7 +311,7 @@
       "name": "暮色古道 8 敌人池",
       "members": [
         {
-          "templateId": "orc_berserker_lvl5",
+          "templateId": "enemy_c3_plague_caller",
           "position": 1
         }
       ]
@@ -321,7 +321,7 @@
       "name": "暮色古道 9 敌人池",
       "members": [
         {
-          "templateId": "skeleton_story_repair_guard",
+          "templateId": "enemy_c3_graveplate_guard",
           "position": 1
         }
       ]
@@ -331,7 +331,7 @@
       "name": "暮色古道 10 敌人池",
       "members": [
         {
-          "templateId": "orc_berserker_lvl5",
+          "templateId": "boss_c3_twilight_bastion",
           "position": 1
         }
       ]
@@ -341,7 +341,7 @@
       "name": "南侧补给道 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_medic",
+          "templateId": "enemy_c1_thorn_mender",
           "position": 1
         }
       ]
@@ -351,7 +351,7 @@
       "name": "破损营地 敌人池",
       "members": [
         {
-          "templateId": "skeleton_guard_lvl4",
+          "templateId": "enemy_c1_barkshield_guard",
           "position": 1
         }
       ]
@@ -361,7 +361,7 @@
       "name": "冰桥近路 敌人池",
       "members": [
         {
-          "templateId": "goblin_scout_lvl3",
+          "templateId": "enemy_c2_frost_skirmisher",
           "position": 1
         }
       ]
@@ -371,7 +371,7 @@
       "name": "裂冰伏击 敌人池",
       "members": [
         {
-          "templateId": "skeleton_story_repair_guard",
+          "templateId": "orc_berserker_lvl5",
           "position": 1
         }
       ]
@@ -381,7 +381,7 @@
       "name": "商队残骸 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_medic",
+          "templateId": "enemy_c3_plague_caller",
           "position": 1
         }
       ]
@@ -391,7 +391,7 @@
       "name": "塌陷古井 敌人池",
       "members": [
         {
-          "templateId": "skeleton_guard_lvl4",
+          "templateId": "skeleton_story_repair_guard",
           "position": 1
         }
       ]
@@ -422,7 +422,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_headhunter"
+        "templateId": "enemy_c1_razor_runner"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -518,7 +518,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_scout_lvl3"
+        "templateId": "goblin_story_headhunter"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -614,7 +614,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_medic"
+        "templateId": "enemy_c1_thorn_mender"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -662,7 +662,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_headhunter"
+        "templateId": "enemy_c1_barkshield_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -758,7 +758,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_guard_lvl4"
+        "templateId": "enemy_c1_razor_runner"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -806,7 +806,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_story_repair_guard"
+        "templateId": "enemy_c1_barkshield_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -855,7 +855,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_story_repair_guard"
+        "templateId": "boss_c1_ruin_bruiser"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -903,7 +903,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_scout_lvl3"
+        "templateId": "enemy_c2_frost_skirmisher"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -951,7 +951,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_guard_lvl4"
+        "templateId": "goblin_scout_lvl3"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -999,7 +999,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "orc_warrior"
+        "templateId": "enemy_c2_iceplate_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1047,7 +1047,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_story_repair_guard"
+        "templateId": "orc_berserker_lvl5"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1095,7 +1095,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_medic"
+        "templateId": "skeleton_story_repair_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1143,7 +1143,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_guard_lvl4"
+        "templateId": "enemy_c2_chill_hexer"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1191,7 +1191,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "orc_berserker_lvl5"
+        "templateId": "skeleton_guard_lvl4"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1239,7 +1239,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_story_repair_guard"
+        "templateId": "enemy_c2_iceplate_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1336,7 +1336,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "orc_berserker_lvl5"
+        "templateId": "boss_c2_frozen_centurion"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1384,7 +1384,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_scout_lvl3"
+        "templateId": "enemy_c3_dusk_runner"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1432,7 +1432,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_medic"
+        "templateId": "enemy_c3_plague_caller"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1528,7 +1528,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_guard_lvl4"
+        "templateId": "enemy_c3_graveplate_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1576,7 +1576,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_headhunter"
+        "templateId": "skeleton_guard_lvl4"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1720,7 +1720,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "orc_berserker_lvl5"
+        "templateId": "enemy_c3_plague_caller"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1768,7 +1768,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_story_repair_guard"
+        "templateId": "enemy_c3_graveplate_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1817,7 +1817,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "orc_berserker_lvl5"
+        "templateId": "boss_c3_twilight_bastion"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1865,7 +1865,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_medic"
+        "templateId": "enemy_c1_thorn_mender"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1913,7 +1913,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_guard_lvl4"
+        "templateId": "enemy_c1_barkshield_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1961,7 +1961,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_scout_lvl3"
+        "templateId": "enemy_c2_frost_skirmisher"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -2009,7 +2009,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_story_repair_guard"
+        "templateId": "orc_berserker_lvl5"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -2057,7 +2057,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_medic"
+        "templateId": "enemy_c3_plague_caller"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -2105,7 +2105,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_guard_lvl4"
+        "templateId": "skeleton_story_repair_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
