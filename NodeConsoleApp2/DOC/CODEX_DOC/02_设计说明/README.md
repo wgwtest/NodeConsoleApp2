@@ -1,6 +1,6 @@
 # 设计说明 README
 
-最后整理时间：2026-05-24
+最后整理时间：2026-05-25
 
 状态：`当前有效 / 子系统化设计说明目录`
 
@@ -85,6 +85,7 @@
 | [07-技能测试(skill_test_design)-设计说明](./S4_技能系统与编辑器/07-技能测试(skill_test_design)-设计说明.md) | 技能测试设计 |
 | [08-技能头脑风暴(skill_design_brainStorm)-设计说明](./S4_技能系统与编辑器/08-技能头脑风暴(skill_design_brainStorm)-设计说明.md) | 技能思路补充与脑暴记录 |
 | [25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明](./S4_技能系统与编辑器/25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md) | 旧技能字段退役与迁移方案 |
+| [29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明](./S4_技能系统与编辑器/29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明.md) | 敌人技能包独立真源与技能编辑器多技能域切换设计 |
 
 ### 4.6 S5 Buff 系统与编辑器
 
@@ -99,6 +100,7 @@
 | --- | --- |
 | [11-敌人系统(enemy_design)-设计说明](./S6_敌人系统与编辑器/11-敌人系统(enemy_design)-设计说明.md) | 敌人系统设计 |
 | [28-敌人编辑器(enemy_editor)-设计说明](./S6_敌人系统与编辑器/28-敌人编辑器(enemy_editor)-设计说明.md) | 敌人模板作者工具与地图编辑器服务边界设计 |
+| [29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明](./S4_技能系统与编辑器/29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明.md) | 敌人技能包独立真源、敌人技能引用与技能编辑器敌方模式设计 |
 
 ### 4.8 S7 数据存档与内容契约
 

@@ -14,10 +14,10 @@ class CoreEngine {
         this.loop = GameLoop;
         this.data = DataManager;
 
-		this.buffRegistry = new BuffRegistry();
+        this.buffRegistry = new BuffRegistry();
 		this.buffSystem = new BuffSystem(this.eventBus, this.buffRegistry);
         this.enemyPlanner = new EnemyActionPlanner({
-            getSkillConfig: (skillId) => this.data.getSkillConfig(skillId)
+            getSkillConfig: (skillId) => this._getEnemySkillConfig(skillId)
         });
 
         this.turnPlanner = new TurnPlanner({
@@ -88,6 +88,12 @@ class CoreEngine {
             out[id] = this._getSkillApCostStrict(cfg, id, this.data.playerData);
         }
         return out;
+    }
+
+    _getEnemySkillConfig(skillId) {
+        return this.data?.getEnemySkillConfig
+            ? this.data.getEnemySkillConfig(skillId)
+            : this.data?.getSkillConfig?.(skillId);
     }
 
     _getPlanningApCostModifier(actor) {
@@ -1850,7 +1856,7 @@ class CoreEngine {
 
     executeEnemySkill(action) {
         const enemy = this._getEntityById(action.sourceId);
-        const skillConfig = this.data.getSkillConfig(action.skillId);
+        const skillConfig = this._getEnemySkillConfig(action.skillId);
         if (!enemy || !skillConfig) return null;
         if (this._getEntityCurrentHp(this.data.playerData) <= 0) return { isHit: false, reason: 'dead' };
 
@@ -1957,7 +1963,7 @@ class CoreEngine {
     emitBattleUpdate() {
         // Merge runtime bodyParts into player data for UI
         let playerPayload = this.data.playerData;
-        if (this.data.dataConfig.runtime && this.data.dataConfig.runtime.playerBattleState) {
+        if (this.data?.dataConfig?.runtime?.playerBattleState) {
              playerPayload = {
                  ...this.data.playerData,
                  bodyParts: this.data.dataConfig.runtime.playerBattleState.bodyParts

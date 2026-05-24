@@ -288,6 +288,43 @@ test('EnemyEditorPage uses battle sprite dropdown as the primary art selector', 
     assert.equal(dom.window.document.getElementById('artPreviewPortrait').getAttribute('src'), alternateSpriteRef);
 });
 
+test('EnemyEditorPage loads enemy skill pack as the default skill reference source', async () => {
+    const reads = new Map([
+        ['assets/data/enemies.json', buildEnemies()],
+        ['assets/data/skills_enemy_v1.json', {
+            skills: [{ id: 'skill_throw_stone', name: '投石', costs: { ap: 2 } }]
+        }],
+        ['assets/data/levels.json', { enemyPools: {} }],
+        ['assets/data/level_map_pack_v1.json', { assetLibrary: {} }]
+    ]);
+    const requestedPaths = [];
+    const fetchImpl = async (url) => {
+        const parsed = new URL(String(url), 'http://127.0.0.1:3101');
+        const filePath = parsed.searchParams.get('path');
+        requestedPaths.push(filePath);
+        assert(reads.has(filePath), `unexpected read ${filePath}`);
+        return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+                ok: true,
+                path: filePath,
+                content: JSON.stringify(reads.get(filePath), null, 2)
+            })
+        };
+    };
+    const { page } = await createPageContext(fetchImpl);
+
+    await page.loadDefault();
+
+    assert(requestedPaths.includes('assets/data/skills_enemy_v1.json'));
+    assert(!requestedPaths.includes('assets/data/skills_melee_v4_5.json'));
+    assert.equal(
+        page.workspace.validateEnemy('goblin_story_headhunter').some(issue => issue.code === 'missing_skill_reference'),
+        false
+    );
+});
+
 test('EnemyEditorPage saves draft and publishes runtime enemy JSON through project file API', async () => {
     const writes = [];
     const fetchImpl = async (url, options = {}) => {
@@ -336,7 +373,7 @@ test('EnemyEditorPage refreshes and loads enemy libraries from the toolbar dropd
                 skills: []
             }
         }],
-        ['assets/data/skills_melee_v4_5.json', { skills: [] }],
+        ['assets/data/skills_enemy_v1.json', { skills: [] }],
         ['assets/data/levels.json', { enemyPools: {} }],
         ['assets/data/level_map_pack_v1.json', { assetLibrary: {} }]
     ]);
@@ -413,7 +450,7 @@ test('EnemyEditorPage default startup loads the newest enemy authoring draft whe
                 skills: []
             }
         }],
-        ['assets/data/skills_melee_v4_5.json', { skills: [] }],
+        ['assets/data/skills_enemy_v1.json', { skills: [] }],
         ['assets/data/levels.json', { enemyPools: {} }],
         ['assets/data/level_map_pack_v1.json', { assetLibrary: {} }]
     ]);
@@ -471,7 +508,7 @@ test('EnemyEditorPage loads enemy, skill, and level reference sources together',
             },
             ...buildEnemies()
         }],
-        ['assets/data/skills_melee_v4_5.json', {
+        ['assets/data/skills_enemy_v1.json', {
             skills: [{ id: 'skill_skull_cracker', name: 'Skull Cracker', costs: { ap: 2 } }]
         }],
         ['assets/data/levels.json', {

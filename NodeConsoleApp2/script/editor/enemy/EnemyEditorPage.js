@@ -84,7 +84,7 @@ export class EnemyEditorPage {
         this.fetchImpl = options.fetchImpl || globalThis.fetch?.bind(globalThis);
         this.workspaceFactory = options.workspaceFactory || ((raw, context) => new EnemyWorkspace(raw, context));
         this.defaultEnemyPath = options.defaultEnemyPath || 'assets/data/enemies.json';
-        this.defaultSkillPath = options.defaultSkillPath || 'assets/data/skills_melee_v4_5.json';
+        this.defaultSkillPath = options.defaultSkillPath || 'assets/data/skills_enemy_v1.json';
         this.defaultLevelPath = options.defaultLevelPath || 'assets/data/levels.json';
         this.defaultMapPackPath = options.defaultMapPackPath || 'assets/data/level_map_pack_v1.json';
         this.defaultSourceUrl = options.defaultSourceUrl || '../assets/data/enemies.json';
