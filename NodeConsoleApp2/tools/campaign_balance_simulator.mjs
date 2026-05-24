@@ -733,7 +733,9 @@ function classifyLevel(level) {
 
 function diagnose(row, level) {
   if (row.victory) {
-    if (row.playerRemainingHp >= 90 && row.turns <= 3) return 'enemy_too_weak';
+    const playerMaxHp = Number(row.playerMaxHp ?? row.playerRemainingHp ?? 0) || 0;
+    const playerHpRatio = playerMaxHp > 0 ? row.playerRemainingHp / playerMaxHp : 1;
+    if (playerHpRatio > 0.9 && row.turns <= 3) return 'enemy_too_weak';
     if (row.buildId === 'recommended' && level.isBoss && row.playerRemainingHp >= (row.playerMaxHp ?? row.playerRemainingHp) * 0.9) return 'boss_too_easy';
     return 'ok';
   }

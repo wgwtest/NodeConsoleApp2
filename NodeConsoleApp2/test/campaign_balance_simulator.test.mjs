@@ -381,3 +381,30 @@ test('campaign balance second tuning pass removes safe timeout failures from non
   assert.equal(recommendedBossWins.length >= 1, true, 'recommended 至少应能打过 1 个 Boss');
   assert.equal(recommendedBossWins.length <= 2, true, 'recommended 不应稳定打过全部 Boss');
 });
+
+test('campaign balance midgame armor repair and status levels create real attrition', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const report = await simulator.runCampaignBalanceSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.10-midgame-attrition'
+  });
+
+  const targetLevels = new Set(['level_2_5', 'level_2_6', 'level_2_7', 'level_3_5', 'level_3_6']);
+  const rows = report.results.filter(row => targetLevels.has(row.levelId));
+  assert.equal(rows.length, targetLevels.size * 3, '应覆盖 5 个中段压力关的 3 套固定构筑结果');
+
+  const weakRows = rows.filter(row => row.diagnosis === 'enemy_too_weak');
+  assert.equal(
+    weakRows.length <= 4,
+    true,
+    `中段护甲/修复/状态关不应继续大面积满血碾压：${weakRows.map(row => `${row.levelId}:${row.buildId}`).join(', ')}`
+  );
+
+  const recommendedRows = rows.filter(row => row.buildId === 'recommended');
+  assert.equal(
+    recommendedRows.every(row => row.victory && row.playerRemainingHp < row.playerMaxHp),
+    true,
+    `推荐构筑应可通关但产生损耗：${recommendedRows.map(row => `${row.levelId}:${row.playerRemainingHp}/${row.playerMaxHp}:${row.diagnosis}`).join(', ')}`
+  );
+});

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-05-24T22:05:28.556Z",
+    "generatedAt": "2026-05-24T22:23:15.196Z",
     "mode": "progressive",
     "levelCount": 30,
     "maxTurns": 12,
@@ -312,21 +312,18 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 2,
       "playerMaxHp": 100,
-      "playerRemainingHp": 79,
+      "playerRemainingHp": 70,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 3,
         "skill_execute": 2,
-        "skill_heavy_swing": 3,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1,
-        "skill_leftover_lunchbox": 1
+        "skill_heavy_swing": 3
       },
       "enemySkillUsage": {
-        "enemy_skill_bad_lunchbox": 1,
-        "enemy_skill_dirty_bandage": 2
+        "enemy_skill_bad_lunchbox": 2,
+        "enemy_skill_dirty_bandage": 1
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -522,7 +519,7 @@
       "victory": true,
       "turns": 1,
       "playerMaxHp": 100,
-      "playerRemainingHp": 80,
+      "playerRemainingHp": 85,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 2,
@@ -729,13 +726,12 @@
       "victory": true,
       "turns": 2,
       "playerMaxHp": 100,
-      "playerRemainingHp": 79,
+      "playerRemainingHp": 74,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 3,
         "skill_execute": 2,
-        "skill_heavy_swing": 3,
-        "skill_regroup": 1
+        "skill_heavy_swing": 3
       },
       "enemySkillUsage": {
         "enemy_skill_rusty_shiv": 3
@@ -864,7 +860,7 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 4,
+      "turns": 3,
       "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
@@ -882,7 +878,7 @@
         "enemy_skill_bone_patch": 3
       },
       "failureReason": "victory",
-      "diagnosis": "ok",
+      "diagnosis": "enemy_too_weak",
       "levelClass": {
         "order": 3,
         "isBoss": false,
@@ -1014,11 +1010,14 @@
         "skill_heavy_swing": 4,
         "skill_skull_cracker": 1,
         "skill_block": 3,
-        "skill_execute": 2,
-        "skill_regroup": 1
+        "skill_execute": 1,
+        "skill_1771769351059": 1,
+        "skill_heal": 1,
+        "skill_execute_copy_1770044052832": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_bone_patch": 4
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
       },
       "failureReason": "victory",
       "diagnosis": "enemy_too_weak",
@@ -1077,19 +1076,17 @@
       "victory": true,
       "turns": 2,
       "playerMaxHp": 100,
-      "playerRemainingHp": 84,
+      "playerRemainingHp": 70,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 3,
+        "skill_block": 2,
         "skill_execute": 2,
         "skill_heavy_swing": 3,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1,
-        "skill_leftover_lunchbox": 1
+        "skill_regroup": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_bad_lunchbox": 1,
-        "enemy_skill_dirty_bandage": 2
+        "enemy_skill_bad_lunchbox": 2,
+        "enemy_skill_dirty_bandage": 1
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1148,21 +1145,20 @@
       "victory": true,
       "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 100,
+      "playerRemainingHp": 80,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 4,
+        "skill_block": 5,
         "skill_skull_cracker": 1,
         "skill_execute": 2,
         "skill_heavy_swing": 3,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1,
-        "skill_leftover_lunchbox": 1
+        "skill_execute_copy_1770044052832": 1,
+        "skill_heal": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 3
+        "enemy_skill_shield_tap": 4,
+        "enemy_skill_bone_patch": 1
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1219,7 +1215,7 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 4,
+      "turns": 3,
       "playerMaxHp": 100,
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
@@ -1237,7 +1233,7 @@
         "enemy_skill_bone_patch": 3
       },
       "failureReason": "victory",
-      "diagnosis": "ok",
+      "diagnosis": "enemy_too_weak",
       "levelClass": {
         "order": 8,
         "isBoss": false,
@@ -1435,7 +1431,7 @@
       "victory": true,
       "turns": 1,
       "playerMaxHp": 100,
-      "playerRemainingHp": 82,
+      "playerRemainingHp": 76,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
@@ -1445,7 +1441,7 @@
         "skill_block": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_rusty_shiv": 2
+        "enemy_skill_bad_lunchbox": 2
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1504,20 +1500,22 @@
       "victory": true,
       "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 83,
+      "playerRemainingHp": 85,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_execute": 2,
-        "skill_heavy_swing": 4,
-        "skill_block": 3,
+        "skill_heavy_swing": 3,
+        "skill_block": 2,
+        "skill_regroup": 2,
         "skill_execute_copy_1770044052832": 1,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1
+        "skill_heal": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_bad_lunchbox": 1,
-        "enemy_skill_dirty_bandage": 3
+        "enemy_skill_bad_lunchbox": 2,
+        "enemy_skill_dirty_bandage": 2
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1650,13 +1648,13 @@
       "playerRemainingHp": 100,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_regroup": 3,
+        "skill_regroup": 2,
         "skill_shockwave_copy_1770042951717": 1,
         "skill_block": 5,
         "skill_execute": 3,
         "skill_heavy_swing": 4,
-        "skill_1771769351059": 1,
-        "skill_leftover_lunchbox": 1
+        "skill_execute_copy_1770044052832": 1,
+        "skill_1771769351059": 1
       },
       "enemySkillUsage": {
         "enemy_skill_shield_tap": 2,
@@ -1719,21 +1717,22 @@
       "victory": true,
       "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 100,
+      "playerRemainingHp": 88,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_block": 4,
         "skill_skull_cracker": 1,
-        "skill_execute": 2,
-        "skill_heavy_swing": 3,
+        "skill_execute": 1,
+        "skill_heavy_swing": 2,
+        "skill_execute_copy_1770044052832": 1,
+        "skill_heal": 1,
         "skill_regroup": 1,
         "skill_1771769351059": 1,
         "skill_leftover_lunchbox": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 3
+        "enemy_skill_shield_tap": 4
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1798,11 +1797,14 @@
         "skill_heavy_swing": 4,
         "skill_skull_cracker": 1,
         "skill_block": 3,
-        "skill_execute": 2,
-        "skill_regroup": 1
+        "skill_execute": 1,
+        "skill_1771769351059": 1,
+        "skill_heal": 1,
+        "skill_execute_copy_1770044052832": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_bone_patch": 4
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
       },
       "failureReason": "victory",
       "diagnosis": "enemy_too_weak",
@@ -1931,20 +1933,22 @@
       "victory": true,
       "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 83,
+      "playerRemainingHp": 85,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_execute": 2,
-        "skill_heavy_swing": 4,
-        "skill_block": 3,
+        "skill_heavy_swing": 3,
+        "skill_block": 2,
+        "skill_regroup": 2,
         "skill_execute_copy_1770044052832": 1,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1
+        "skill_heal": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_bad_lunchbox": 1,
-        "enemy_skill_dirty_bandage": 3
+        "enemy_skill_bad_lunchbox": 2,
+        "enemy_skill_dirty_bandage": 2
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -2144,8 +2148,8 @@
     "wins": 30,
     "winRate": 1,
     "diagnosisCounts": {
-      "ok": 28,
-      "enemy_too_weak": 2
+      "ok": 26,
+      "enemy_too_weak": 4
     },
     "skillTreeGapCandidates": 0,
     "finalSkillPoints": 25,

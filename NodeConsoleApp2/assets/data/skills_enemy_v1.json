@@ -244,7 +244,7 @@
       "id": "enemy_skill_bad_lunchbox",
       "name": "坏掉的盒饭",
       "rarity": "Uncommon",
-      "description": "造成轻伤并附加中毒，用于支援型哥布林。",
+      "description": "造成轻伤并更稳定地附加中毒，用于支援型哥布林和中段状态敌人制造持续损耗。",
       "prerequisites": [],
       "unlock": {
         "cost": {
@@ -291,7 +291,7 @@
           {
             "buffId": "buff_poison",
             "target": "enemy",
-            "chance": 0.65,
+            "chance": 0.85,
             "duration": 3
           }
         ],
@@ -310,7 +310,7 @@
           "effect": {
             "effectType": "DMG_HP",
             "amountType": "ABS",
-            "amount": 4
+            "amount": 8
           }
         }
       ]
@@ -319,7 +319,7 @@
       "id": "enemy_skill_dirty_bandage",
       "name": "脏绷带",
       "rarity": "Common",
-      "description": "敌人自我治疗。",
+      "description": "敌人自我治疗，但不会长期压过攻击选择。",
       "prerequisites": [],
       "unlock": {
         "cost": {
@@ -381,7 +381,7 @@
           "effect": {
             "effectType": "HEAL",
             "amountType": "ABS",
-            "amount": 14
+            "amount": 10
           }
         }
       ]
@@ -794,7 +794,7 @@
       "id": "enemy_skill_shield_tap",
       "name": "盾牌敲头",
       "rarity": "Uncommon",
-      "description": "骷髅固定打头部护甲，并尝试晕眩。",
+      "description": "骷髅固定打头部护甲，并用盾沿造成少量冲击伤害和晕眩压力。",
       "prerequisites": [],
       "unlock": {
         "cost": {
@@ -859,6 +859,27 @@
             "effectType": "DMG_ARMOR",
             "amountType": "ABS",
             "amount": 12,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        },
+        {
+          "id": "action_shield_rim",
+          "name": "盾沿震击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 8,
             "partOverride": {
               "mode": "fixed",
               "parts": [
@@ -932,7 +953,7 @@
           "effect": {
             "effectType": "ARMOR_ADD",
             "amountType": "ABS",
-            "amount": 12
+            "amount": 8
           }
         }
       ]
@@ -941,7 +962,7 @@
       "id": "enemy_skill_dead_air",
       "name": "阴风刮腿",
       "rarity": "Common",
-      "description": "骷髅固定骚扰腿部并减速。",
+      "description": "骷髅固定骚扰腿部并减速，造成可感知的中段生命损耗。",
       "prerequisites": [],
       "unlock": {
         "cost": {
@@ -986,7 +1007,7 @@
           {
             "buffId": "buff_slow",
             "target": "enemy",
-            "chance": 0.75,
+            "chance": 0.85,
             "duration": 2
           }
         ],
@@ -1005,7 +1026,7 @@
           "effect": {
             "effectType": "DMG_HP",
             "amountType": "ABS",
-            "amount": 5,
+            "amount": 8,
             "partOverride": {
               "mode": "fixed",
               "parts": [
