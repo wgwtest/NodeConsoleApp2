@@ -4,6 +4,10 @@ function asObject(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
+function asArray(value) {
+    return Array.isArray(value) ? value : [];
+}
+
 function splitTextList(value) {
     return String(value || '')
         .split(/[\n,，]/u)
@@ -39,6 +43,41 @@ function createElement(doc, tagName, className = '') {
     return element;
 }
 
+function clearElement(element) {
+    if (!element) return;
+    if (typeof element.replaceChildren === 'function') {
+        element.replaceChildren();
+        return;
+    }
+    element.innerHTML = '';
+    element.textContent = '';
+}
+
+function normalizeEnemyLibraryPath(value) {
+    return String(value || '').trim().replace(/\\/g, '/').replace(/^\/+/u, '');
+}
+
+function isEnemyLibraryPath(filePath) {
+    const normalized = normalizeEnemyLibraryPath(filePath);
+    const fileName = normalized.split('/').pop() || '';
+    return normalized === 'assets/data/enemies.json'
+        || /^enemies(?:_\d{8}_\d{6})?\.json$/u.test(fileName);
+}
+
+function isEnemyAuthoringPath(filePath) {
+    return normalizeEnemyLibraryPath(filePath).startsWith('assets/enemy_packs/authoring/');
+}
+
+function sortEnemyLibraryPaths(left, right) {
+    if (left === 'assets/data/enemies.json') return -1;
+    if (right === 'assets/data/enemies.json') return 1;
+    const leftAuthoring = isEnemyAuthoringPath(left);
+    const rightAuthoring = isEnemyAuthoringPath(right);
+    if (leftAuthoring && !rightAuthoring) return -1;
+    if (!leftAuthoring && rightAuthoring) return 1;
+    return String(right).localeCompare(String(left), 'zh-CN');
+}
+
 export class EnemyEditorPage {
     constructor(options = {}) {
         this.document = options.document || globalThis.document;
@@ -53,11 +92,15 @@ export class EnemyEditorPage {
         this.selectedEnemyId = null;
         this.context = {};
         this.elements = {};
+        this.statusVersion = 0;
     }
 
     bind() {
         [
             'status',
+            'enemyLibrarySelect',
+            'refreshEnemyLibraryBtn',
+            'openSelectedEnemyLibraryBtn',
             'enemyPathInput',
             'loadEnemyBtn',
             'saveDraftBtn',
@@ -65,7 +108,6 @@ export class EnemyEditorPage {
             'createEnemyBtn',
             'duplicateEnemyBtn',
             'deleteEnemyBtn',
-            'saveEnemyBtn',
             'enemyList',
             'issueList',
             'enemyIdInput',
@@ -99,12 +141,13 @@ export class EnemyEditorPage {
         });
 
         this.bindClick('loadEnemyBtn', () => this.loadDefault());
+        this.bindClick('refreshEnemyLibraryBtn', () => this.refreshEnemyLibraryFiles({ quiet: false }));
+        this.bindClick('openSelectedEnemyLibraryBtn', () => this.loadSelectedEnemyLibrary());
         this.bindClick('saveDraftBtn', () => this.saveDraft());
         this.bindClick('publishEnemyBtn', () => this.publishRuntime());
         this.bindClick('createEnemyBtn', () => this.createEnemy());
         this.bindClick('duplicateEnemyBtn', () => this.duplicateEnemy());
         this.bindClick('deleteEnemyBtn', () => this.deleteEnemy());
-        this.bindClick('saveEnemyBtn', () => this.saveCurrentEnemy());
         this.elements.battleSpriteSelect?.addEventListener('change', () => {
             if (this.elements.battleSpriteRefInput) {
                 this.elements.battleSpriteRefInput.value = this.elements.battleSpriteSelect.value || '';
@@ -119,6 +162,12 @@ export class EnemyEditorPage {
                 }
             });
         });
+        this.elements.enemyLibrarySelect?.addEventListener('change', () => {
+            if (this.elements.enemyPathInput) {
+                this.elements.enemyPathInput.value = this.elements.enemyLibrarySelect.value || '';
+            }
+        });
+        this.refreshEnemyLibraryFiles?.({ quiet: true }).catch(() => {});
     }
 
     bindClick(id, handler) {
@@ -135,12 +184,21 @@ export class EnemyEditorPage {
     }
 
     setStatus(message) {
+        this.statusVersion += 1;
         if (this.elements.status) this.elements.status.textContent = message;
     }
 
-    async loadDefault() {
+    setStatusIfUnchanged(message, version) {
+        if (this.statusVersion !== version) return false;
+        this.setStatus(message);
+        return true;
+    }
+
+    async loadDefault(options = {}) {
         if (typeof this.fetchImpl !== 'function') throw new Error('缺少 fetch 实现。');
-        const path = this.elements.enemyPathInput?.value || this.defaultEnemyPath;
+        const path = options.preferRecent
+            ? await this.resolveDefaultEnemyLibraryPath()
+            : (this.elements.enemyPathInput?.value || this.defaultEnemyPath);
         const [enemyBody, skillDoc, levelsDocument, mapPackDocument] = await Promise.all([
             this.readProjectJson(path),
             this.readProjectJson(this.defaultSkillPath).catch(() => null),
@@ -158,10 +216,78 @@ export class EnemyEditorPage {
         this.setStatus(`已加载 ${enemyBody.path || path}`);
     }
 
+    async resolveDefaultEnemyLibraryPath() {
+        const files = await this.refreshEnemyLibraryFiles({ quiet: true });
+        const recentAuthoring = files.find(isEnemyAuthoringPath);
+        const selectedPath = recentAuthoring || files[0] || this.defaultEnemyPath;
+        if (this.elements.enemyPathInput) this.elements.enemyPathInput.value = selectedPath;
+        if (this.elements.enemyLibrarySelect) this.elements.enemyLibrarySelect.value = selectedPath;
+        return selectedPath;
+    }
+
     async readProjectJson(path) {
         const response = await this.fetchImpl(`/__skill_editor_file?path=${encodeURIComponent(path)}`, { cache: 'no-store' });
         if (!response?.ok) throw new Error(`加载失败：${response?.status || 'unknown'}`);
         return response.json();
+    }
+
+    async listProjectJsonSiblings(path) {
+        if (typeof this.fetchImpl !== 'function') throw new Error('缺少 fetch 实现。');
+        const response = await this.fetchImpl(`/__skill_editor_file?path=${encodeURIComponent(path)}&list=1`, { cache: 'no-store' });
+        if (!response?.ok) throw new Error(`列表加载失败：${response?.status || 'unknown'}`);
+        return response.json();
+    }
+
+    async refreshEnemyLibraryFiles(options = {}) {
+        const quiet = Boolean(options.quiet);
+        const statusVersion = this.statusVersion;
+        const currentPath = normalizeEnemyLibraryPath(this.elements.enemyPathInput?.value || this.defaultEnemyPath);
+        const found = new Set([this.defaultEnemyPath, currentPath].filter(Boolean));
+        const listTargets = [
+            this.defaultEnemyPath,
+            'assets/enemy_packs/authoring/enemies.json'
+        ];
+
+        for (const target of listTargets) {
+            try {
+                const body = await this.listProjectJsonSiblings(target);
+                asArray(body.files)
+                    .map(normalizeEnemyLibraryPath)
+                    .filter(isEnemyLibraryPath)
+                    .forEach(filePath => found.add(filePath));
+            } catch (error) {
+                // Keep the explicitly known enemy paths usable even if a directory is absent.
+            }
+        }
+
+        const files = [...found].filter(isEnemyLibraryPath).sort(sortEnemyLibraryPaths);
+        this.renderEnemyLibraryOptions(files, currentPath);
+        if (!quiet) {
+            this.setStatusIfUnchanged(files.length ? `已刷新敌人库列表：${files.length} 个` : '未找到可打开的敌人库。', statusVersion);
+        }
+        return files;
+    }
+
+    renderEnemyLibraryOptions(files, selectedPath = '') {
+        const select = this.elements.enemyLibrarySelect;
+        if (!select) return;
+        clearElement(select);
+        files.forEach((filePath) => {
+            const option = createElement(this.document, 'option');
+            option.value = filePath;
+            option.textContent = filePath;
+            select.appendChild(option);
+        });
+        select.value = files.includes(selectedPath) ? selectedPath : (files[0] || '');
+        if (this.elements.enemyPathInput && select.value) {
+            this.elements.enemyPathInput.value = select.value;
+        }
+    }
+
+    async loadSelectedEnemyLibrary() {
+        const selectedPath = this.elements.enemyLibrarySelect?.value || this.elements.enemyPathInput?.value || this.defaultEnemyPath;
+        if (this.elements.enemyPathInput) this.elements.enemyPathInput.value = selectedPath;
+        return this.loadDefault();
     }
 
     loadDocument(rawDocument, context = {}) {
@@ -187,8 +313,7 @@ export class EnemyEditorPage {
     renderEnemyList() {
         const host = this.elements.enemyList;
         if (!host) return;
-        host.innerHTML = '';
-        host.textContent = '';
+        clearElement(host);
         if (!this.workspace) {
             host.textContent = '尚未加载敌人库。';
             return;
@@ -200,6 +325,7 @@ export class EnemyEditorPage {
             button.dataset.enemyId = enemy.id;
             if (enemy.id === this.selectedEnemyId) button.setAttribute('aria-current', 'true');
             button.addEventListener('click', () => {
+                this.syncCurrentEnemyFromForm();
                 this.selectedEnemyId = enemy.id;
                 this.renderAll();
             });
@@ -235,8 +361,7 @@ export class EnemyEditorPage {
     renderBattleSpriteOptions(selectedRef = '') {
         const select = this.elements.battleSpriteSelect;
         if (!select) return;
-        select.innerHTML = '';
-        select.textContent = '';
+        clearElement(select);
 
         const emptyOption = createElement(this.document, 'option');
         emptyOption.value = '';
@@ -312,10 +437,8 @@ export class EnemyEditorPage {
         }
     }
 
-    saveCurrentEnemy() {
-        const enemy = this.getCurrentEnemy();
-        if (!enemy) return null;
-        const nextEnemy = {
+    buildCurrentEnemyFromForm(enemy) {
+        return {
             ...enemy,
             name: this.elements.enemyNameInput?.value || enemy.name,
             race: this.elements.enemyRaceInput?.value || '',
@@ -337,20 +460,34 @@ export class EnemyEditorPage {
             },
             skills: splitTextList(this.elements.skillListInput?.value || '')
         };
+    }
+
+    syncCurrentEnemyFromForm() {
+        const enemy = this.getCurrentEnemy();
+        if (!enemy) return null;
+        const nextEnemy = this.buildCurrentEnemyFromForm(enemy);
         this.workspace.updateEnemy(enemy.id, nextEnemy);
+        return this.workspace.getEnemy(enemy.id);
+    }
+
+    saveCurrentEnemy() {
+        const nextEnemy = this.syncCurrentEnemyFromForm();
+        if (!nextEnemy) return null;
         this.renderAll();
         this.setStatus(`已保存当前敌人：${nextEnemy.name}`);
-        return this.workspace.getEnemy(enemy.id);
+        return nextEnemy;
     }
 
     createEnemy() {
         if (!this.workspace) return null;
+        this.syncCurrentEnemyFromForm();
         this.selectedEnemyId = this.workspace.createEnemy({ id: 'enemy_new', name: '新敌人' });
         this.renderAll();
         return this.selectedEnemyId;
     }
 
     duplicateEnemy() {
+        this.syncCurrentEnemyFromForm();
         const enemy = this.getCurrentEnemy();
         if (!enemy) return null;
         const newId = this.workspace.createEnemy({ id: enemy.id, name: `${enemy.name} 副本`, race: enemy.race, class: enemy.class });
@@ -367,6 +504,7 @@ export class EnemyEditorPage {
 
     deleteEnemy() {
         if (!this.workspace || !this.selectedEnemyId) return false;
+        this.syncCurrentEnemyFromForm();
         this.workspace.removeEnemy(this.selectedEnemyId);
         this.selectedEnemyId = this.workspace.listEnemies()[0]?.id || null;
         this.renderAll();
@@ -395,6 +533,7 @@ export class EnemyEditorPage {
 
     buildExportContent() {
         if (!this.workspace) throw new Error('尚未加载敌人库。');
+        this.syncCurrentEnemyFromForm();
         return JSON.stringify(this.workspace.exportDocument(), null, 2);
     }
 

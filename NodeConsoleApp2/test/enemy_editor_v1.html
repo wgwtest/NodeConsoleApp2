@@ -508,13 +508,20 @@
                     <div class="tool-title">打开敌人库</div>
                     <div class="tool-row">
                         <label class="inline-field">
+                            <span>敌人库</span>
+                            <select id="enemyLibrarySelect"></select>
+                        </label>
+                        <button id="openSelectedEnemyLibraryBtn" type="button">打开版本</button>
+                    </div>
+                    <div class="tool-row">
+                        <label class="inline-field">
                             <span>指定路径</span>
                             <input id="enemyPathInput" value="assets/data/enemies.json">
                         </label>
                         <button id="loadEnemyBtn" type="button">打开路径</button>
                     </div>
                     <div class="tool-row">
-                        <button class="secondary" type="button">最近版本</button>
+                        <button id="refreshEnemyLibraryBtn" class="secondary" type="button">刷新</button>
                         <button class="secondary" type="button">从本地导入</button>
                     </div>
                 </div>
@@ -633,7 +640,7 @@
                             <label class="field"><span>stats.ap</span><input id="enemyApInput" type="number"></label>
                             <label class="field"><span>stats.speed</span><input id="enemySpeedInput" type="number"></label>
                         </div>
-                        <div class="note">数字字段保存当前敌人后写回工作区。</div>
+                        <div class="note">切换敌人、保存工作稿或发布主流程前会自动写回当前表单。</div>
                     </section>
 
                         <section class="section">
@@ -663,9 +670,6 @@
                             <span>skills[] 每行一个 skillId</span>
                             <textarea id="skillListInput"></textarea>
                         </label>
-                        <div class="tool-row" style="margin-top: 10px;">
-                            <button id="saveEnemyBtn" class="green" type="button">保存当前敌人</button>
-                        </div>
                     </section>
                 </div>
             </section>
@@ -721,7 +725,7 @@
         });
         page.bind();
         window.enemyEditor = page;
-        page.loadDefault().catch(error => page.setStatus(`自动加载失败：${error.message}`));
+        page.loadDefault({ preferRecent: true }).catch(error => page.setStatus(`自动加载失败：${error.message}`));
     </script>
 </body>
 </html>

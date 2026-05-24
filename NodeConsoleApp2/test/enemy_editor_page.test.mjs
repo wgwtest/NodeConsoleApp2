@@ -201,6 +201,9 @@ test('enemy editor page fixture contains required authoring controls', async () 
     assert.equal(fs.existsSync(pageHtmlPath), true, '缺少敌人编辑器页面');
     const html = await fsp.readFile(pageHtmlPath, 'utf8');
     for (const id of [
+        'enemyLibrarySelect',
+        'refreshEnemyLibraryBtn',
+        'openSelectedEnemyLibraryBtn',
         'loadEnemyBtn',
         'saveDraftBtn',
         'publishEnemyBtn',
@@ -213,9 +216,10 @@ test('enemy editor page fixture contains required authoring controls', async () 
     ]) {
         assert.match(html, new RegExp(`id=["']${id}["']`), `页面缺少 #${id}`);
     }
+    assert.doesNotMatch(html, /id=["']saveEnemyBtn["']/u, '页面不应再暴露“保存当前敌人”按钮');
 });
 
-test('EnemyEditorPage renders enemies, edits current enemy, and updates preview', async () => {
+test('EnemyEditorPage renders enemies and keeps current form changes in workspace before switching', async () => {
     const { page, dom } = await createPageContext();
     page.loadDocument(buildEnemies(), {
         skillCatalog: { skill_throw_stone: { id: 'skill_throw_stone', name: 'Throw Stone', costs: { ap: 2 } } },
@@ -234,13 +238,13 @@ test('EnemyEditorPage renders enemies, edits current enemy, and updates preview'
     dom.window.document.getElementById('enemyNameInput').value = '哥布林追猎手·编辑后';
     dom.window.document.getElementById('enemyApInput').value = '5';
     dom.window.document.getElementById('portraitRefInput').value = 'enemy_goblin_hunter_alt';
-    page.saveCurrentEnemy();
+    dom.window.document.getElementById('enemyList').children[1].dispatchEvent(new Event('click'));
 
     const exported = page.workspace.exportDocument();
     assert.equal(exported.goblin_story_headhunter.name, '哥布林追猎手·编辑后');
     assert.equal(exported.goblin_story_headhunter.stats.ap, 5);
     assert.equal(exported.goblin_story_headhunter.presentation.portraitRef, 'enemy_goblin_hunter_alt');
-    assert.match(dom.window.document.getElementById('status').textContent, /已保存当前敌人/);
+    assert.equal(page.selectedEnemyId, 'goblin_story_medic');
 });
 
 test('EnemyEditorPage uses battle sprite dropdown as the primary art selector', async () => {
@@ -277,7 +281,7 @@ test('EnemyEditorPage uses battle sprite dropdown as the primary art selector', 
     select.dispatchEvent(new Event('change'));
     assert.equal(dom.window.document.getElementById('artPreviewPortrait').getAttribute('src'), alternateSpriteRef);
 
-    page.saveCurrentEnemy();
+    await page.saveDraft();
 
     const exported = page.workspace.exportDocument();
     assert.equal(exported.goblin_story_headhunter.presentation.battleSpriteRef, alternateSpriteRef);
@@ -294,8 +298,10 @@ test('EnemyEditorPage saves draft and publishes runtime enemy JSON through proje
         }
         throw new Error(`unexpected fetch ${url}`);
     };
-    const { page } = await createPageContext(fetchImpl);
+    const { page, dom } = await createPageContext(fetchImpl);
     page.loadDocument(buildEnemies());
+    dom.window.document.getElementById('enemyNameInput').value = '保存工作稿自动写入';
+    dom.window.document.getElementById('battleSpriteSelect').value = '../source/character/敌人-005-状态001-正常状态.png';
 
     await page.saveDraft();
     await page.publishRuntime();
@@ -303,7 +309,154 @@ test('EnemyEditorPage saves draft and publishes runtime enemy JSON through proje
     assert.equal(writes.length, 2);
     assert.match(writes[0].path, /^assets\/enemy_packs\/authoring\/enemies_\d{8}_\d{6}\.json$/);
     assert.equal(writes[1].path, 'assets/data/enemies.json');
-    assert.equal(JSON.parse(writes[1].content).goblin_story_headhunter.id, 'goblin_story_headhunter');
+    assert.equal(JSON.parse(writes[0].content).goblin_story_headhunter.name, '保存工作稿自动写入');
+    assert.equal(
+        JSON.parse(writes[1].content).goblin_story_headhunter.presentation.battleSpriteRef,
+        '../source/character/敌人-005-状态001-正常状态.png'
+    );
+});
+
+test('EnemyEditorPage refreshes and loads enemy libraries from the toolbar dropdown', async () => {
+    const reads = new Map([
+        ['assets/data/enemies.json', {
+            runtime_enemy: {
+                id: 'runtime_enemy',
+                name: '运行时敌人',
+                stats: { hp: 10, maxHp: 10, ap: 1, speed: 1 },
+                bodyParts: {},
+                skills: []
+            }
+        }],
+        ['assets/enemy_packs/authoring/enemies_20260524_210829.json', {
+            draft_enemy: {
+                id: 'draft_enemy',
+                name: '工作稿敌人',
+                stats: { hp: 20, maxHp: 20, ap: 2, speed: 2 },
+                bodyParts: {},
+                skills: []
+            }
+        }],
+        ['assets/data/skills_melee_v4_5.json', { skills: [] }],
+        ['assets/data/levels.json', { enemyPools: {} }],
+        ['assets/data/level_map_pack_v1.json', { assetLibrary: {} }]
+    ]);
+    const fetchImpl = async (url) => {
+        const parsed = new URL(String(url), 'http://127.0.0.1:3101');
+        const filePath = parsed.searchParams.get('path');
+        if (parsed.searchParams.get('list') === '1') {
+            return {
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    ok: true,
+                    path: filePath,
+                    files: filePath.startsWith('assets/data/')
+                        ? ['assets/data/enemies.json', 'assets/data/levels.json']
+                        : ['assets/enemy_packs/authoring/enemies_20260524_210829.json']
+                })
+            };
+        }
+        assert(reads.has(filePath), `unexpected read ${filePath}`);
+        return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+                ok: true,
+                path: filePath,
+                content: JSON.stringify(reads.get(filePath), null, 2)
+            })
+        };
+    };
+    const { page, dom } = await createPageContext(fetchImpl);
+
+    const files = await page.refreshEnemyLibraryFiles();
+    const select = dom.window.document.getElementById('enemyLibrarySelect');
+    assert.deepEqual(files, [
+        'assets/data/enemies.json',
+        'assets/enemy_packs/authoring/enemies_20260524_210829.json'
+    ]);
+    assert.deepEqual(select.children.map(option => option.value), files);
+
+    select.value = 'assets/enemy_packs/authoring/enemies_20260524_210829.json';
+    await page.loadSelectedEnemyLibrary();
+
+    assert.equal(dom.window.document.getElementById('enemyPathInput').value, 'assets/enemy_packs/authoring/enemies_20260524_210829.json');
+    assert.equal(page.workspace.getEnemy('draft_enemy').name, '工作稿敌人');
+});
+
+test('EnemyEditorPage default startup loads the newest enemy authoring draft when available', async () => {
+    const reads = new Map([
+        ['assets/data/enemies.json', {
+            runtime_enemy: {
+                id: 'runtime_enemy',
+                name: '运行时敌人',
+                stats: { hp: 10, maxHp: 10, ap: 1, speed: 1 },
+                bodyParts: {},
+                skills: []
+            }
+        }],
+        ['assets/enemy_packs/authoring/enemies_20260524_210829.json', {
+            old_draft_enemy: {
+                id: 'old_draft_enemy',
+                name: '旧工作稿敌人',
+                stats: { hp: 20, maxHp: 20, ap: 2, speed: 2 },
+                bodyParts: {},
+                skills: []
+            }
+        }],
+        ['assets/enemy_packs/authoring/enemies_20260524_222540.json', {
+            newest_draft_enemy: {
+                id: 'newest_draft_enemy',
+                name: '最近工作稿敌人',
+                stats: { hp: 30, maxHp: 30, ap: 3, speed: 3 },
+                bodyParts: {},
+                skills: []
+            }
+        }],
+        ['assets/data/skills_melee_v4_5.json', { skills: [] }],
+        ['assets/data/levels.json', { enemyPools: {} }],
+        ['assets/data/level_map_pack_v1.json', { assetLibrary: {} }]
+    ]);
+    const requestedPaths = [];
+    const fetchImpl = async (url) => {
+        const parsed = new URL(String(url), 'http://127.0.0.1:3101');
+        const filePath = parsed.searchParams.get('path');
+        if (parsed.searchParams.get('list') === '1') {
+            return {
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    ok: true,
+                    path: filePath,
+                    files: filePath.startsWith('assets/data/')
+                        ? ['assets/data/enemies.json']
+                        : [
+                            'assets/enemy_packs/authoring/enemies_20260524_210829.json',
+                            'assets/enemy_packs/authoring/enemies_20260524_222540.json'
+                        ]
+                })
+            };
+        }
+        requestedPaths.push(filePath);
+        assert(reads.has(filePath), `unexpected read ${filePath}`);
+        return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+                ok: true,
+                path: filePath,
+                content: JSON.stringify(reads.get(filePath), null, 2)
+            })
+        };
+    };
+    const { page, dom } = await createPageContext(fetchImpl);
+
+    await page.loadDefault({ preferRecent: true });
+
+    assert.equal(requestedPaths[0], 'assets/enemy_packs/authoring/enemies_20260524_222540.json');
+    assert.equal(dom.window.document.getElementById('enemyPathInput').value, 'assets/enemy_packs/authoring/enemies_20260524_222540.json');
+    assert.equal(dom.window.document.getElementById('status').textContent, '已加载 assets/enemy_packs/authoring/enemies_20260524_222540.json');
+    assert.equal(page.workspace.getEnemy('newest_draft_enemy').name, '最近工作稿敌人');
 });
 
 test('EnemyEditorPage loads enemy, skill, and level reference sources together', async () => {
