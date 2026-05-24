@@ -244,6 +244,18 @@ function buildAssetManifest(assetLibrary) {
     };
 }
 
+function normalizeLevelsDocument(levelsDocument) {
+    const source = asObject(levelsDocument);
+    return {
+        $schemaVersion: typeof source.$schemaVersion === 'string' && source.$schemaVersion.trim()
+            ? source.$schemaVersion.trim()
+            : 'levels_v1_wrapped',
+        meta: clone(asObject(source.meta)),
+        enemyPools: clone(asObject(source.enemyPools)),
+        levels: clone(asObject(source.levels))
+    };
+}
+
 export class LevelMapWorkspace {
     static createNewPackageDocument(options = {}) {
         const packageId = typeof options.packageId === 'string' && options.packageId.trim()
@@ -341,6 +353,7 @@ export class LevelMapWorkspace {
     constructor(rawDocument, options = {}) {
         const source = asObject(rawDocument);
         const levelsDocument = asObject(options.levelsDocument);
+        this.levelsDocument = normalizeLevelsDocument(levelsDocument);
         this.availableLevelIds = uniqueStringList(options.levelIds || Object.keys(asObject(levelsDocument.levels)));
         this.schemaVersion = typeof source.$schemaVersion === 'string' && source.$schemaVersion.trim()
             ? source.$schemaVersion.trim()
@@ -395,7 +408,8 @@ export class LevelMapWorkspace {
                 entryStoryId: entryStory?.id || '',
                 entryChapterId: entryStory?.entryChapterId || chapters[0]?.id || '',
                 files: {
-                    maps: 'maps.json'
+                    maps: 'maps.json',
+                    levels: 'levels.json'
                 },
                 assets: {
                     basePath: 'assets/',
@@ -409,6 +423,7 @@ export class LevelMapWorkspace {
                 }))
             },
             mapsJson,
+            levelsJson: clone(this.levelsDocument),
             assetManifest: buildAssetManifest(mapsJson.assetLibrary)
         };
     }

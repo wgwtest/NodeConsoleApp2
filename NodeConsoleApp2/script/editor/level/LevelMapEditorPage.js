@@ -898,6 +898,10 @@ export class LevelMapEditorPage {
                 content: JSON.stringify(packageBundle.mapsJson, null, 2)
             },
             {
+                fileName: 'levels.json',
+                content: JSON.stringify(packageBundle.levelsJson || this.levelsDocument || {}, null, 2)
+            },
+            {
                 fileName: 'asset-manifest.json',
                 content: JSON.stringify(packageBundle.assetManifest, null, 2)
             }
@@ -921,7 +925,7 @@ export class LevelMapEditorPage {
     downloadPackageFiles() {
         const files = this.buildPackageExportFiles();
         files.forEach(file => this.downloadTextFile(file.fileName, file.content));
-        this.setStatus(`已生成 ${files.length} 个包文件下载：package.json / maps.json / asset-manifest.json。`);
+        this.setStatus(`已生成 ${files.length} 个包文件下载：package.json / maps.json / levels.json / asset-manifest.json。`);
     }
 
     async writePackageViaApi(endpoint, targetDirectory, statusPrefix) {
@@ -959,48 +963,13 @@ export class LevelMapEditorPage {
         this.setStatus(`${statusPrefix}：${this.normalizePackageDirectory(targetDirectory)}package.json`);
     }
 
-    async writeLevelsDocumentViaApi() {
-        if (!this.levelsDocument) return;
-        if (typeof this.fetchImpl !== 'function') {
-            throw new Error('缺少 fetch 实现，无法写入关卡定义。');
-        }
-        let response = null;
-        try {
-            response = await this.fetchImpl('/__skill_editor_file', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    path: 'assets/data/levels.json',
-                    content: JSON.stringify(this.levelsDocument, null, 2)
-                })
-            });
-        } catch (error) {
-            throw new Error(`关卡定义保存接口不可用：请确认后端服务已启动。原始错误：${error.message}`);
-        }
-        if (!response?.ok) {
-            let message = response?.status ? `HTTP ${response.status}` : 'unknown';
-            try {
-                const payload = await response.json();
-                if (payload?.error) {
-                    message = payload.error;
-                }
-            } catch (error) {
-                // Keep the HTTP status when response body is not JSON.
-            }
-            throw new Error(message);
-        }
-    }
-
     async saveAuthoringPackage() {
         await this.writePackageViaApi(
             '/api/level-map-packs/save',
             this.getAuthoringPackageDirectoryFromForm(),
             '已保存工作稿'
         );
-        await this.writeLevelsDocumentViaApi();
-        this.setStatus(`已保存工作稿，并写回关卡定义：${this.getAuthoringPackageDirectoryFromForm()}package.json / assets/data/levels.json`);
+        this.setStatus(`已保存工作稿：${this.getAuthoringPackageDirectoryFromForm()}package.json / maps.json / levels.json / asset-manifest.json`);
     }
 
     async publishRuntimePackage() {
@@ -1009,8 +978,7 @@ export class LevelMapEditorPage {
             this.getRuntimePackageDirectoryFromForm(),
             '已发布到主流程'
         );
-        await this.writeLevelsDocumentViaApi();
-        this.setStatus(`已发布到主流程，并写回关卡定义：${this.getRuntimePackageDirectoryFromForm()}package.json / assets/data/levels.json`);
+        this.setStatus(`已发布到主流程：${this.getRuntimePackageDirectoryFromForm()}package.json / maps.json / levels.json / asset-manifest.json`);
     }
 
     async selectPackageDirectory() {

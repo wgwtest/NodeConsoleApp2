@@ -29,6 +29,18 @@
             box-sizing: border-box;
         }
 
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
         body {
             margin: 0;
             color: var(--ink);
@@ -617,6 +629,13 @@
         .drawer--right {
             right: 8px;
             width: var(--drawer-right-width);
+            overflow-y: hidden;
+        }
+
+        .drawer--right .drawer-shell {
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .stage-shell[data-left-open="false"] .drawer--left {
@@ -646,6 +665,25 @@
             align-items: flex-start;
         }
 
+        .inspector-head {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: 10px;
+            align-items: center;
+        }
+
+        .inspector-head .inspector-tabs {
+            justify-content: end;
+            flex-wrap: nowrap;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .inspector-head .ghost-btn {
+            min-height: 32px;
+            padding: 6px 10px;
+        }
+
         .drawer-title h2 {
             font-size: 22px;
             line-height: 1.08;
@@ -666,6 +704,14 @@
             border: 1px solid var(--line);
             background: var(--paper-strong);
             min-width: 0;
+        }
+
+        .inspector-list-block {
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .section-kicker {
@@ -695,9 +741,30 @@
             overflow-y: auto;
         }
 
-        .node-list-box,
+        .inspector-scroll-list {
+            flex: 1 1 auto;
+            gap: 8px;
+            min-height: clamp(180px, 24vh, 280px);
+            max-height: none;
+            overflow-y: auto;
+        }
+
+        .inspector-scroll-list button {
+            min-height: 32px;
+            line-height: 1.25;
+            padding-block: 8px;
+        }
+
+        .node-list-box {
+            max-height: none;
+        }
+
         .edge-list-box {
-            max-height: 360px;
+            flex: 1 1 auto;
+            gap: 8px;
+            min-height: 0;
+            max-height: none;
+            overflow-y: auto;
         }
 
         .map-action-row {
@@ -741,6 +808,18 @@
             background: rgba(255, 252, 246, 0.98);
         }
 
+        .node-detail-block {
+            max-height: clamp(320px, 46vh, 520px);
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .edge-detail-block {
+            max-height: clamp(260px, 38vh, 420px);
+            min-height: 0;
+            overflow-y: auto;
+        }
+
         .list-box button {
             width: 100%;
             max-width: 100%;
@@ -771,24 +850,28 @@
             word-break: break-word;
         }
 
-        .fact-grid,
-        .inspector-summary {
+        .fact-grid {
             display: grid;
             gap: 8px;
-        }
-
-        .fact-grid {
             grid-template-columns: 1fr;
         }
 
         .inspector-summary {
+            display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
+            min-height: 30px;
+            gap: 6px;
+        }
+
+        .inspector-summary .summary-card {
+            min-height: 30px;
+            padding: 6px 8px;
         }
 
         .summary-card strong,
         .fact-grid strong {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 3px;
             color: var(--ink-soft);
             font-size: 11px;
             letter-spacing: 0.06em;
@@ -1123,21 +1206,24 @@
         }
 
         .inspector-panel {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-rows: minmax(300px, 0.85fr) minmax(0, 1fr);
             gap: 12px;
+            min-height: 0;
+            flex: 1 1 auto;
         }
 
         .inspector-action-row {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 6px;
             margin-bottom: 9px;
         }
 
         .inspector-action-row .toolbar-btn {
-            flex: 1 1 112px;
             min-width: 0;
+            padding-inline: 6px;
+            font-size: 13px;
         }
 
         .inspector-panel[hidden] {
@@ -1411,7 +1497,7 @@
                             <div class="fact-grid">
                                 <div><strong>作者目录</strong><span>assets/map_packs/authoring/story_pack_v1/</span></div>
                                 <div><strong>发布目录</strong><span>assets/map_packs/current/story_pack_v1/</span></div>
-                                <div><strong>包入口</strong><span>package.json / maps.json / asset-manifest.json</span></div>
+                                <div><strong>包入口</strong><span>package.json / maps.json / levels.json / asset-manifest.json</span></div>
                                 <div><strong>包结构</strong><span>目录式地图包保存资源 ID / 路径引用，不把图片二进制塞进 JSON。</span></div>
                             </div>
                         </div>
@@ -1498,16 +1584,15 @@
 
                 <aside id="rightDrawer" class="drawer drawer--right">
                     <div class="drawer-shell">
-                        <div class="drawer-title">
+                        <div class="drawer-title inspector-head">
                             <div>
                                 <h2>节点与边</h2>
                             </div>
-                            <span id="inspectorModeLabel" class="badge badge--blue" aria-live="polite">node</span>
-                        </div>
-
-                        <div class="inspector-tabs">
-                            <button id="nodeInspectorBtn" class="ghost-btn" type="button" aria-pressed="true">节点检查器</button>
-                            <button id="edgeInspectorBtn" class="ghost-btn" type="button" aria-pressed="false">边检查器</button>
+                            <div class="inspector-tabs">
+                                <button id="nodeInspectorBtn" class="ghost-btn" type="button" aria-pressed="true">节点检查器</button>
+                                <button id="edgeInspectorBtn" class="ghost-btn" type="button" aria-pressed="false">边检查器</button>
+                            </div>
+                            <span id="inspectorModeLabel" class="sr-only" aria-live="polite">node</span>
                         </div>
 
                         <div class="inspector-summary">
@@ -1522,7 +1607,7 @@
                         </div>
 
                         <section id="nodeInspectorPanel" class="inspector-panel">
-                            <div class="section-block">
+                            <div class="section-block inspector-list-block node-list-block">
                                 <h3>节点列表</h3>
                                 <div class="inspector-action-row" aria-label="节点操作">
                                     <button id="addNodeBtn" class="toolbar-btn toolbar-btn--primary" type="button">新增节点</button>
@@ -1530,10 +1615,10 @@
                                     <button id="editLevelDetailBtn" class="toolbar-btn toolbar-btn--secondary" type="button">编辑关卡详情</button>
                                     <button id="removeNodeBtn" class="toolbar-btn toolbar-btn--danger" type="button">删除节点</button>
                                 </div>
-                                <div id="nodeList" class="list-box node-list-box"></div>
+                                <div id="nodeList" class="list-box inspector-scroll-list node-list-box"></div>
                             </div>
 
-                            <div class="section-block selected-detail">
+                            <div class="section-block selected-detail node-detail-block">
                                 <h3>已选节点详情</h3>
                                 <div class="field-grid">
                                     <label class="field">
@@ -1607,17 +1692,17 @@
                         </section>
 
                         <section id="edgeInspectorPanel" class="inspector-panel" hidden>
-                            <div class="section-block">
+                            <div class="section-block inspector-list-block edge-list-block">
                                 <h3>边列表</h3>
                                 <div class="inspector-action-row" aria-label="边操作">
                                     <button id="addEdgeBtn" class="toolbar-btn toolbar-btn--primary" type="button">新增边</button>
                                     <button id="saveEdgeBtn" class="toolbar-btn toolbar-btn--secondary" type="button">保存边</button>
                                     <button id="removeEdgeBtn" class="toolbar-btn toolbar-btn--danger" type="button">删除边</button>
                                 </div>
-                                <div id="edgeList" class="list-box edge-list-box"></div>
+                                <div id="edgeList" class="list-box inspector-scroll-list edge-list-box"></div>
                             </div>
 
-                            <div class="section-block selected-detail">
+                            <div class="section-block selected-detail edge-detail-block">
                                 <h3>已选边详情</h3>
                                 <div class="field-grid">
                                     <label class="field">
@@ -1687,7 +1772,7 @@
         <div class="dialog-body">
             <div class="dialog-box">
                 <h3>这个地图包是什么？</h3>
-                <p class="section-note">当前导出的是完整目录式地图包：package.json 是包入口，maps.json 保存故事、章节、地图、节点、边和显示配置，asset-manifest.json 列出背景图、节点素材图和立绘图的资源 ID / 路径引用。图片文件不会被嵌入 JSON。导出只负责下载备份；保存工作稿和发布到主流程使用顶部按钮。</p>
+                <p class="section-note">当前导出的是完整目录式地图包：package.json 是包入口，maps.json 保存故事、章节、地图、节点、边和显示配置，levels.json 保存节点绑定的关卡详情，asset-manifest.json 列出背景图、节点素材图和立绘图的资源 ID / 路径引用。图片文件不会被嵌入 JSON。导出只负责下载备份；保存工作稿和发布到主流程使用顶部按钮。</p>
             </div>
             <div class="dialog-box">
                 <label class="field">
@@ -1707,6 +1792,7 @@
                 <div class="dialog-path"><b>导出入口</b><code id="packagePathPreview">assets/map_packs/current/story_pack_v1/package.json</code></div>
                 <div class="dialog-path"><b>入口文件</b><code>package.json</code></div>
                 <div class="dialog-path"><b>地图数据</b><code>maps.json</code></div>
+                <div class="dialog-path"><b>关卡详情</b><code>levels.json</code></div>
                 <div class="dialog-path"><b>资源清单</b><code>asset-manifest.json</code></div>
                 <div class="dialog-path"><b>影响</b><span>更换背景或节点素材时，JSON 只改引用。只要资源库中对应文件还存在，显示不会丢；若资源文件被删或移动，校验会报错。</span></div>
             </div>

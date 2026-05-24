@@ -250,10 +250,10 @@
           "title": "森林外缘",
           "kind": "main",
           "nodeSkinRef": "skin_story_main",
-          "iconLabel": "主线",
+          "iconLabel": "",
           "position": {
-            "x": 385,
-            "y": 827
+            "x": 635,
+            "y": 819
           },
           "objectiveText": "边境失联，玩家从森林外缘进入幽暗森林。",
           "difficultyLabel": "标准",

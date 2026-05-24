@@ -39,56 +39,80 @@
       "id": "pool_story_goblin_edge",
       "name": "幽暗森林边缘敌人池",
       "members": [
-        { "templateId": "goblin_story_headhunter", "position": 1 }
+        {
+          "templateId": "goblin_story_headhunter",
+          "position": 1
+        }
       ]
     },
     "pool_story_goblin_outpost": {
       "id": "pool_story_goblin_outpost",
       "name": "密林前哨敌人池",
       "members": [
-        { "templateId": "goblin_story_medic", "position": 1 }
+        {
+          "templateId": "goblin_story_medic",
+          "position": 1
+        }
       ]
     },
     "pool_story_ruins_gate": {
       "id": "pool_story_ruins_gate",
       "name": "废墟关隘敌人池",
       "members": [
-        { "templateId": "skeleton_story_repair_guard", "position": 1 }
+        {
+          "templateId": "skeleton_story_repair_guard",
+          "position": 1
+        }
       ]
     },
     "pool_acceptance_guard": {
       "id": "pool_acceptance_guard",
       "name": "人工验收守卫池",
       "members": [
-        { "templateId": "enemy_acceptance_guard", "position": 1 }
+        {
+          "templateId": "enemy_acceptance_guard",
+          "position": 1
+        }
       ]
     },
     "pool_acceptance_head_tapper": {
       "id": "pool_acceptance_head_tapper",
       "name": "固定头部攻击敌人池",
       "members": [
-        { "templateId": "enemy_acceptance_head_tapper", "position": 1 }
+        {
+          "templateId": "enemy_acceptance_head_tapper",
+          "position": 1
+        }
       ]
     },
     "pool_acceptance_repair": {
       "id": "pool_acceptance_repair",
       "name": "敌人修甲样本池",
       "members": [
-        { "templateId": "enemy_acceptance_repair", "position": 1 }
+        {
+          "templateId": "enemy_acceptance_repair",
+          "position": 1
+        }
       ]
     },
     "pool_acceptance_heal": {
       "id": "pool_acceptance_heal",
       "name": "敌人回血样本池",
       "members": [
-        { "templateId": "enemy_acceptance_heal", "position": 1 }
+        {
+          "templateId": "enemy_acceptance_heal",
+          "position": 1
+        }
       ]
     },
     "pool_acceptance_pursuit": {
       "id": "pool_acceptance_pursuit",
       "name": "敌人弱点追击样本池",
       "members": [
-        { "templateId": "enemy_acceptance_pursuit", "position": 1 }
+        {
+          "templateId": "enemy_acceptance_pursuit",
+          "position": 1
+        }
       ]
     }
   },
@@ -109,7 +133,10 @@
       },
       "selectionMeta": {
         "difficultyLabel": "标准",
-        "enemyStyleTags": ["弱点追击", "快攻"],
+        "enemyStyleTags": [
+          "弱点追击",
+          "快攻"
+        ],
         "buildHint": "优先补头部防御，再用低耗技能稳定换血。"
       },
       "background": "bg_forest_01",
@@ -118,11 +145,31 @@
       },
       "battlePlayerState": {
         "bodyParts": {
-          "head": { "current": 20, "max": 20, "weakness": 1.5 },
-          "chest": { "current": 10, "max": 20, "weakness": 1.0 },
-          "abdomen": { "current": 6, "max": 20, "weakness": 1.1 },
-          "arm": { "current": 6, "max": 20, "weakness": 1.0 },
-          "leg": { "current": 12, "max": 20, "weakness": 1.0 }
+          "head": {
+            "current": 20,
+            "max": 20,
+            "weakness": 1.5
+          },
+          "chest": {
+            "current": 10,
+            "max": 20,
+            "weakness": 1
+          },
+          "abdomen": {
+            "current": 6,
+            "max": 20,
+            "weakness": 1.1
+          },
+          "arm": {
+            "current": 6,
+            "max": 20,
+            "weakness": 1
+          },
+          "leg": {
+            "current": 12,
+            "max": 20,
+            "weakness": 1
+          }
         }
       },
       "waves": [
@@ -154,7 +201,10 @@
       },
       "selectionMeta": {
         "difficultyLabel": "进阶",
-        "enemyStyleTags": ["低血自疗", "节奏拉扯"],
+        "enemyStyleTags": [
+          "低血自疗",
+          "节奏拉扯"
+        ],
         "buildHint": "保留一张斩杀或打断节奏的技能，避免被敌人续航拖长回合。"
       },
       "background": "bg_forest_01",
@@ -190,7 +240,10 @@
       },
       "selectionMeta": {
         "difficultyLabel": "高压",
-        "enemyStyleTags": ["残甲修补", "重击压迫"],
+        "enemyStyleTags": [
+          "残甲修补",
+          "重击压迫"
+        ],
         "buildHint": "优先准备破甲或高爆发节奏，不要让敌人反复补甲进入长线。"
       },
       "background": "bg_forest_01",
@@ -231,11 +284,31 @@
       },
       "battlePlayerState": {
         "bodyParts": {
-          "head": { "current": 20, "max": 20, "weakness": 1.5 },
-          "chest": { "current": 10, "max": 20, "weakness": 1.0 },
-          "abdomen": { "current": 6, "max": 20, "weakness": 1.1 },
-          "arm": { "current": 6, "max": 20, "weakness": 1.0 },
-          "leg": { "current": 12, "max": 20, "weakness": 1.0 }
+          "head": {
+            "current": 20,
+            "max": 20,
+            "weakness": 1.5
+          },
+          "chest": {
+            "current": 10,
+            "max": 20,
+            "weakness": 1
+          },
+          "abdomen": {
+            "current": 6,
+            "max": 20,
+            "weakness": 1.1
+          },
+          "arm": {
+            "current": 6,
+            "max": 20,
+            "weakness": 1
+          },
+          "leg": {
+            "current": 12,
+            "max": 20,
+            "weakness": 1
+          }
         }
       },
       "waves": [
@@ -270,7 +343,11 @@
       },
       "battlePlayerState": {
         "bodyParts": {
-          "head": { "current": 0, "max": 20, "weakness": 1.5 }
+          "head": {
+            "current": 0,
+            "max": 20,
+            "weakness": 1.5
+          }
         }
       },
       "waves": [
@@ -365,11 +442,31 @@
       },
       "battlePlayerState": {
         "bodyParts": {
-          "head": { "current": 20, "max": 20, "weakness": 1.5 },
-          "chest": { "current": 10, "max": 20, "weakness": 1.0 },
-          "abdomen": { "current": 6, "max": 20, "weakness": 1.1 },
-          "arm": { "current": 6, "max": 20, "weakness": 1.0 },
-          "leg": { "current": 12, "max": 20, "weakness": 1.0 }
+          "head": {
+            "current": 20,
+            "max": 20,
+            "weakness": 1.5
+          },
+          "chest": {
+            "current": 10,
+            "max": 20,
+            "weakness": 1
+          },
+          "abdomen": {
+            "current": 6,
+            "max": 20,
+            "weakness": 1.1
+          },
+          "arm": {
+            "current": 6,
+            "max": 20,
+            "weakness": 1
+          },
+          "leg": {
+            "current": 12,
+            "max": 20,
+            "weakness": 1
+          }
         }
       },
       "waves": [
@@ -404,11 +501,31 @@
       },
       "battlePlayerState": {
         "bodyParts": {
-          "head": { "current": 20, "max": 20, "weakness": 1.5 },
-          "chest": { "current": 10, "max": 20, "weakness": 1.0 },
-          "abdomen": { "current": 6, "max": 20, "weakness": 1.1 },
-          "arm": { "current": 6, "max": 20, "weakness": 1.0 },
-          "leg": { "current": 12, "max": 20, "weakness": 1.0 }
+          "head": {
+            "current": 20,
+            "max": 20,
+            "weakness": 1.5
+          },
+          "chest": {
+            "current": 10,
+            "max": 20,
+            "weakness": 1
+          },
+          "abdomen": {
+            "current": 6,
+            "max": 20,
+            "weakness": 1.1
+          },
+          "arm": {
+            "current": 6,
+            "max": 20,
+            "weakness": 1
+          },
+          "leg": {
+            "current": 12,
+            "max": 20,
+            "weakness": 1
+          }
         }
       },
       "waves": [
