@@ -791,6 +791,106 @@
       ]
     },
     {
+      "id": "enemy_skill_iceplate_head_crush",
+      "name": "冰盾压颅",
+      "rarity": "Uncommon",
+      "description": "冰甲守卫专用盾击，固定压制头部护甲并附带减速寒意，避免中段护甲检查点被满血碾过。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 1414,
+        "y": 614,
+        "group": "enemy_undead",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -2,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 3,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_slow",
+            "target": "enemy",
+            "chance": 0.75,
+            "duration": 1
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_iceplate_head_crush_armor",
+          "name": "冰盾破甲",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 18,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        },
+        {
+          "id": "action_iceplate_head_crush_hp",
+          "name": "冰盾震击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 18,
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "id": "enemy_skill_shield_tap",
       "name": "盾牌敲头",
       "rarity": "Uncommon",

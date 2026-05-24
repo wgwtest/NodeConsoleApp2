@@ -862,9 +862,10 @@
     "tags": [
       "chapter_2",
       "role_armor",
-      "pressure_armor"
+      "pressure_armor",
+      "pressure_slow"
     ],
-    "description": "第二章护甲敌人，低速高甲，要求玩家使用破甲或持续输出处理。",
+    "description": "第二章护甲敌人，低速高甲并用冰盾压制头部，要求玩家使用破甲、补甲或持续输出处理。",
     "stats": {
       "hp": 145,
       "maxHp": 145,
@@ -872,7 +873,7 @@
       "speed": 5
     },
     "skills": [
-      "enemy_skill_shield_tap",
+      "enemy_skill_iceplate_head_crush",
       "enemy_skill_bone_patch",
       "enemy_skill_dead_air"
     ],

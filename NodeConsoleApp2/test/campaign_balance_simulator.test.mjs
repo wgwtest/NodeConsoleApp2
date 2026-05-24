@@ -325,6 +325,29 @@ test('progressive campaign chapter two boss is passable but still dangerous', as
   );
 });
 
+test('progressive campaign chapter two armor checkpoints create attrition', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const report = await simulator.runProgressiveCampaignSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.18-chapter-two-armor-checkpoints'
+  });
+
+  const targetRows = report.results.filter(row => ['level_2_3', 'level_2_8'].includes(row.levelId));
+  assert.equal(targetRows.length, 2, '应覆盖第二章两个冰甲守卫检查点');
+
+  assert.deepEqual(
+    targetRows.map(row => `${row.levelId}:${row.diagnosis}`),
+    targetRows.map(row => `${row.levelId}:ok`),
+    `第二章护甲检查点不应继续被诊断为敌人过弱：${targetRows.map(row => `${row.levelId}:${row.diagnosis}:${row.playerRemainingHp}/${row.playerMaxHp}`).join(', ')}`
+  );
+  assert.equal(
+    targetRows.every(row => row.victory && row.playerRemainingHp < row.playerMaxHp),
+    true,
+    `第二章护甲检查点应通关但产生实际损耗：${targetRows.map(row => `${row.levelId}:${row.playerRemainingHp}/${row.playerMaxHp}`).join(', ')}`
+  );
+});
+
 test('campaign balance first tuning pass keeps recommended build viable without letting specialist outperform it', async () => {
   const simulator = await import(pathToFileURL(simulatorPath));
   const report = await simulator.runCampaignBalanceSimulation({
