@@ -1,14 +1,14 @@
 # Campaign Balance Summary
 
-Generated: 2026-05-24T21:57:46.752Z
+Generated: 2026-05-24T22:05:28.556Z
 Mode: progressive
 Levels: 30
 
 ## Progressive Learning Summary
 
-Wins: 29/30 (96.7%)
+Wins: 30/30 (100.0%)
 Skill tree gap candidates: 0
-Final skill points: 23
+Final skill points: 25
 Final learned skills: skill_heal, skill_heavy_swing, skill_savage_charge, skill_block, skill_1771769351059, skill_skull_cracker, skill_shockwave_copy_1770042951717, skill_leftover_lunchbox, skill_execute, skill_execute_copy_1770043820577, skill_regroup, skill_execute_copy_1770044052832
 
 ## Level Results
@@ -34,9 +34,9 @@ Final learned skills: skill_heal, skill_heavy_swing, skill_savage_charge, skill_
 | level_2_7 | Y | 4 | 100 | 0 | - | 0 | ok |
 | level_2_8 | Y | 4 | 100 | 0 | - | 1 | ok |
 | level_2_9 | Y | 2 | 65 | 0 | - | 1 | ok |
-| level_2_10 | N | 3 | 0 | 78 | - | 0 | enemy_skill_pressure_high |
-| level_3_1 | Y | 1 | 77 | 0 | - | 1 | ok |
-| level_3_2 | Y | 3 | 98 | 0 | - | 0 | enemy_too_weak |
+| level_2_10 | Y | 6 | 29 | 0 | - | 2 | ok |
+| level_3_1 | Y | 1 | 82 | 0 | - | 1 | ok |
+| level_3_2 | Y | 3 | 83 | 0 | - | 0 | ok |
 | level_3_3 | Y | 3 | 76 | 0 | - | 1 | ok |
 | level_3_4 | Y | 4 | 100 | 0 | - | 1 | ok |
 | level_3_5 | Y | 4 | 100 | 0 | - | 1 | ok |

@@ -1,6 +1,6 @@
 # Campaign Balance Summary
 
-Generated: 2026-05-24T21:57:46.978Z
+Generated: 2026-05-24T22:05:28.760Z
 Levels: 30
 Builds: basic, recommended, specialist
 
@@ -73,9 +73,9 @@ Builds: basic, recommended, specialist
 | level_2_9 | basic | Y | 2 | 56 | 0 | ok |
 | level_2_9 | recommended | Y | 3 | 79 | 0 | ok |
 | level_2_9 | specialist | Y | 1 | 42 | 0 | ok |
-| level_2_10 | basic | N | 3 | 0 | 129 | expected_basic_build_limit |
-| level_2_10 | recommended | N | 4 | 0 | 120 | enemy_skill_pressure_high |
-| level_2_10 | specialist | N | 1 | 0 | 84 | player_build_mismatch |
+| level_2_10 | basic | N | 4 | 0 | 34 | expected_basic_build_limit |
+| level_2_10 | recommended | N | 5 | 0 | 17 | enemy_skill_pressure_high |
+| level_2_10 | specialist | N | 2 | 0 | 12 | player_build_mismatch |
 | level_3_1 | basic | Y | 1 | 85 | 0 | ok |
 | level_3_1 | recommended | Y | 1 | 100 | 0 | enemy_too_weak |
 | level_3_1 | specialist | Y | 1 | 78 | 0 | ok |

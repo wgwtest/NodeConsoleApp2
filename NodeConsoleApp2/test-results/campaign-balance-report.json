@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-05-24T21:57:46.978Z",
+    "generatedAt": "2026-05-24T22:05:28.760Z",
     "levelCount": 30,
     "buildIds": [
       "basic",
@@ -1688,18 +1688,18 @@
       "buildId": "basic",
       "buildLabel": "基础构筑",
       "victory": false,
-      "turns": 3,
+      "turns": 4,
       "playerMaxHp": 100,
       "playerRemainingHp": 0,
-      "enemyRemainingHp": 129,
+      "enemyRemainingHp": 34,
       "playerSkillUsage": {
-        "skill_block": 4,
-        "skill_double_thrust": 4,
-        "skill_heavy_swing": 3,
-        "skill_heal": 2
+        "skill_block": 5,
+        "skill_double_thrust": 5,
+        "skill_heavy_swing": 4,
+        "skill_heal": 3
       },
       "enemySkillUsage": {
-        "enemy_skill_centurion_wrecking_swing": 4
+        "enemy_skill_centurion_wrecking_swing": 5
       },
       "failureReason": "player_hp_zero",
       "diagnosis": "expected_basic_build_limit",
@@ -1716,22 +1716,22 @@
       "buildId": "recommended",
       "buildLabel": "推荐构筑",
       "victory": false,
-      "turns": 4,
+      "turns": 5,
       "playerMaxHp": 120,
       "playerRemainingHp": 0,
-      "enemyRemainingHp": 120,
+      "enemyRemainingHp": 17,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_block": 5,
-        "skill_1771769351059": 3,
+        "skill_1771769351059": 4,
         "skill_skull_cracker": 1,
-        "skill_heavy_swing": 3,
-        "skill_leftover_lunchbox": 2,
-        "skill_heal": 3,
-        "skill_execute_copy_1770043820577": 1
+        "skill_heavy_swing": 4,
+        "skill_leftover_lunchbox": 3,
+        "skill_heal": 4,
+        "skill_execute_copy_1770043820577": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_centurion_wrecking_swing": 5
+        "enemy_skill_centurion_wrecking_swing": 6
       },
       "failureReason": "player_hp_zero",
       "diagnosis": "enemy_skill_pressure_high",
@@ -1748,17 +1748,17 @@
       "buildId": "specialist",
       "buildLabel": "偏科构筑",
       "victory": false,
-      "turns": 1,
+      "turns": 2,
       "playerMaxHp": 100,
       "playerRemainingHp": 0,
-      "enemyRemainingHp": 84,
+      "enemyRemainingHp": 12,
       "playerSkillUsage": {
-        "skill_1770474698976": 2,
-        "skill_execute": 2,
-        "skill_heavy_swing": 1
+        "skill_1770474698976": 3,
+        "skill_execute": 3,
+        "skill_heavy_swing": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_centurion_wrecking_swing": 2
+        "enemy_skill_centurion_wrecking_swing": 3
       },
       "failureReason": "player_hp_zero",
       "diagnosis": "player_build_mismatch",
@@ -2643,7 +2643,7 @@
         "attempts": 30,
         "wins": 27,
         "winRate": 0.9,
-        "averageTurns": 2.4,
+        "averageTurns": 2.433333333333333,
         "averagePlayerRemainingHp": 74.23333333333333
       },
       {
@@ -2652,7 +2652,7 @@
         "attempts": 30,
         "wins": 27,
         "winRate": 0.9,
-        "averageTurns": 2.6,
+        "averageTurns": 2.6333333333333333,
         "averagePlayerRemainingHp": 87.4
       },
       {
@@ -2661,7 +2661,7 @@
         "attempts": 30,
         "wins": 27,
         "winRate": 0.9,
-        "averageTurns": 1.3666666666666667,
+        "averageTurns": 1.4,
         "averagePlayerRemainingHp": 64.3
       }
     ],

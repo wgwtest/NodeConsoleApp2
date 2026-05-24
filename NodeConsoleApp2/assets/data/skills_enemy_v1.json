@@ -717,7 +717,7 @@
           "effect": {
             "effectType": "DMG_HP",
             "amountType": "ABS",
-            "amount": 32
+            "amount": 28
           }
         }
       ]

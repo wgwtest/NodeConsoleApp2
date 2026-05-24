@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-05-24T21:57:46.752Z",
+    "generatedAt": "2026-05-24T22:05:28.556Z",
     "mode": "progressive",
     "levelCount": 30,
     "maxTurns": 12,
@@ -1360,24 +1360,26 @@
       "chapter": 2,
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
-      "victory": false,
-      "turns": 3,
+      "victory": true,
+      "turns": 6,
       "playerMaxHp": 100,
-      "playerRemainingHp": 0,
-      "enemyRemainingHp": 78,
+      "playerRemainingHp": 29,
+      "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_regroup": 3,
+        "skill_regroup": 4,
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 1,
+        "skill_block": 2,
         "skill_execute": 3,
+        "skill_heal": 4,
         "skill_execute_copy_1770044052832": 2,
-        "skill_heal": 1
+        "skill_heavy_swing": 2,
+        "skill_1771769351059": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_centurion_wrecking_swing": 4
+        "enemy_skill_centurion_wrecking_swing": 6
       },
-      "failureReason": "player_hp_zero",
-      "diagnosis": "enemy_skill_pressure_high",
+      "failureReason": "victory",
+      "diagnosis": "ok",
       "levelClass": {
         "order": 10,
         "isBoss": true,
@@ -1401,7 +1403,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 14,
+        "skillPoints": 16,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1419,9 +1421,9 @@
       },
       "learnedThisLevel": [],
       "rewards": {
-        "exp": 0,
-        "gold": 0,
-        "kp": 0
+        "exp": 450,
+        "gold": 250,
+        "kp": 2
       }
     },
     {
@@ -1433,7 +1435,7 @@
       "victory": true,
       "turns": 1,
       "playerMaxHp": 100,
-      "playerRemainingHp": 77,
+      "playerRemainingHp": 82,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
@@ -1453,7 +1455,7 @@
         "isElite": false
       },
       "skillTreeBefore": {
-        "skillPoints": 14,
+        "skillPoints": 16,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1470,7 +1472,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 15,
+        "skillPoints": 17,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1502,7 +1504,7 @@
       "victory": true,
       "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 98,
+      "playerRemainingHp": 83,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
@@ -1518,14 +1520,14 @@
         "enemy_skill_dirty_bandage": 3
       },
       "failureReason": "victory",
-      "diagnosis": "enemy_too_weak",
+      "diagnosis": "ok",
       "levelClass": {
         "order": 2,
         "isBoss": false,
         "isElite": false
       },
       "skillTreeBefore": {
-        "skillPoints": 15,
+        "skillPoints": 17,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1542,7 +1544,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 15,
+        "skillPoints": 17,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1596,7 +1598,7 @@
         "isElite": false
       },
       "skillTreeBefore": {
-        "skillPoints": 15,
+        "skillPoints": 17,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1613,7 +1615,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 16,
+        "skillPoints": 18,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1668,7 +1670,7 @@
         "isElite": true
       },
       "skillTreeBefore": {
-        "skillPoints": 16,
+        "skillPoints": 18,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1685,7 +1687,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 17,
+        "skillPoints": 19,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1741,7 +1743,7 @@
         "isElite": false
       },
       "skillTreeBefore": {
-        "skillPoints": 17,
+        "skillPoints": 19,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1758,7 +1760,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 18,
+        "skillPoints": 20,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1810,7 +1812,7 @@
         "isElite": false
       },
       "skillTreeBefore": {
-        "skillPoints": 18,
+        "skillPoints": 20,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1827,7 +1829,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 19,
+        "skillPoints": 21,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1880,7 +1882,7 @@
         "isElite": false
       },
       "skillTreeBefore": {
-        "skillPoints": 19,
+        "skillPoints": 21,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1897,7 +1899,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 19,
+        "skillPoints": 21,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1952,7 +1954,7 @@
         "isElite": false
       },
       "skillTreeBefore": {
-        "skillPoints": 19,
+        "skillPoints": 21,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1969,7 +1971,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 20,
+        "skillPoints": 22,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -2024,7 +2026,7 @@
         "isElite": true
       },
       "skillTreeBefore": {
-        "skillPoints": 20,
+        "skillPoints": 22,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -2041,7 +2043,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 21,
+        "skillPoints": 23,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -2096,7 +2098,7 @@
         "isElite": false
       },
       "skillTreeBefore": {
-        "skillPoints": 21,
+        "skillPoints": 23,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -2113,7 +2115,7 @@
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 23,
+        "skillPoints": 25,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -2139,15 +2141,14 @@
   ],
   "summary": {
     "attempts": 30,
-    "wins": 29,
-    "winRate": 0.9666666666666667,
+    "wins": 30,
+    "winRate": 1,
     "diagnosisCounts": {
-      "ok": 26,
-      "enemy_too_weak": 3,
-      "enemy_skill_pressure_high": 1
+      "ok": 28,
+      "enemy_too_weak": 2
     },
     "skillTreeGapCandidates": 0,
-    "finalSkillPoints": 23,
+    "finalSkillPoints": 25,
     "finalLearned": [
       "skill_heal",
       "skill_heavy_swing",

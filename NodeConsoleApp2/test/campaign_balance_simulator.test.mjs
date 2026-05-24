@@ -185,11 +185,6 @@ test('progressive campaign diagnoses boss and elite lethal failures as enemy pre
     && row.playerRemainingHp < 60
     && (row.levelClass?.isBoss || row.levelClass?.isElite)
   ));
-  assert.equal(
-    lethalBossOrEliteFailures.length > 0,
-    true,
-    '当前平衡报告应至少包含一个 Boss/精英生命压力失败样本'
-  );
   assert.deepEqual(
     lethalBossOrEliteFailures.map(row => `${row.levelId}:${row.diagnosis}`),
     lethalBossOrEliteFailures.map(row => `${row.levelId}:enemy_skill_pressure_high`)
@@ -276,6 +271,29 @@ test('progressive campaign final boss remains a pressure fight after late sustai
     (finalBoss.playerSkillUsage.skill_execute_copy_1770044052832 || 0) > 0,
     true,
     `第三章 Boss 应促使玩家实际使用后期吸血：${JSON.stringify(finalBoss.playerSkillUsage)}`
+  );
+});
+
+test('progressive campaign chapter two boss is passable but still dangerous', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const report = await simulator.runProgressiveCampaignSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.9-chapter-two-boss-pressure'
+  });
+
+  const chapterTwoBoss = report.results.find(row => row.levelId === 'level_2_10');
+  assert(chapterTwoBoss, '缺少第二章 Boss 结果');
+  assert.equal(chapterTwoBoss.victory, true, '进度式构筑应能通过第二章 Boss，避免主线卡死');
+  assert.equal(
+    chapterTwoBoss.playerRemainingHp > 0 && chapterTwoBoss.playerRemainingHp < chapterTwoBoss.playerMaxHp * 0.55,
+    true,
+    `第二章 Boss 应低血量通过而不是满血或失败：${chapterTwoBoss.playerRemainingHp}/${chapterTwoBoss.playerMaxHp}`
+  );
+  assert.equal(
+    (chapterTwoBoss.playerSkillUsage.skill_execute_copy_1770044052832 || 0) > 0,
+    true,
+    `第二章 Boss 应触发后期吸血作为反制：${JSON.stringify(chapterTwoBoss.playerSkillUsage)}`
   );
 });
 
