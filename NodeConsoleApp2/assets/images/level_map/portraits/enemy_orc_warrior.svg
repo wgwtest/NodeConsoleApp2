@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="兽人战士头像">
+  <defs>
+    <linearGradient id="bg" x1="18" x2="142" y1="12" y2="148" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3a3230"/>
+      <stop offset=".52" stop-color="#2e2d29"/>
+      <stop offset="1" stop-color="#634b34"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="42" x2="118" y1="38" y2="125" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#88a365"/>
+      <stop offset=".55" stop-color="#597846"/>
+      <stop offset="1" stop-color="#344f35"/>
+    </linearGradient>
+  </defs>
+  <rect x="7" y="7" width="146" height="146" rx="42" fill="url(#bg)"/>
+  <path d="M45 47c9-19 24-27 35-27s26 8 35 27l-9 22H54z" fill="#6d6a63" stroke="#201a17" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M50 56c-7 21-2 62 30 62s37-41 30-62c-7-21-23-27-30-27s-23 6-30 27z" fill="url(#skin)" stroke="#201a17" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M44 51L30 31l24 5M116 51l14-20-24 5" fill="#d4c098" stroke="#201a17" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M60 49h40" stroke="#c2b9a7" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="65" cy="76" r="6" fill="#e76f36" stroke="#201a17" stroke-width="3"/>
+  <circle cx="95" cy="76" r="6" fill="#e76f36" stroke="#201a17" stroke-width="3"/>
+  <path d="M57 69c9-7 17-7 25-1M103 69c-9-7-17-7-25-1" fill="none" stroke="#201a17" stroke-width="5" stroke-linecap="round"/>
+  <path d="M63 100c10 7 24 7 34 0" fill="none" stroke="#201a17" stroke-width="5" stroke-linecap="round"/>
+  <path d="M56 94l8 22 10-17M104 94l-8 22-10-17" fill="#f1ddb1" stroke="#201a17" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M38 138c8-27 25-40 42-40s34 13 42 40z" fill="#826347" stroke="#201a17" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M49 126c20 7 42 7 62 0" fill="none" stroke="#b9b0a2" stroke-width="6" stroke-linecap="round"/>
+</svg>

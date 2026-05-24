@@ -11,7 +11,7 @@
 本轮参考 `CodeFactoryV2` 的正式设计说明组织方式，将原先扁平的 `NN-主题-设计说明.md` 文档池改为：
 
 1. `00_总纲/`：跨子系统总设计、文档治理和粒度规则。
-2. `S1-S7` 子系统目录：按游戏功能边界组织主设计与专题设计。
+2. `S1-S8` 子系统目录：按游戏功能边界组织主设计与专题设计。
 3. 子系统 README：作为每个子系统的稳定入口，说明范围、当前文档和排除边界。
 
 ## 2. 阅读顺序
@@ -23,8 +23,9 @@
 5. [S3_关卡地图与编辑器/README](./S3_关卡地图与编辑器/README.md)
 6. [S4_技能系统与编辑器/README](./S4_技能系统与编辑器/README.md)
 7. [S5_Buff系统与编辑器/README](./S5_Buff系统与编辑器/README.md)
-8. [S6_数据存档与内容契约/README](./S6_数据存档与内容契约/README.md)
-9. [S7_UI与交互基线/README](./S7_UI与交互基线/README.md)
+8. [S6_敌人系统与编辑器/README](./S6_敌人系统与编辑器/README.md)
+9. [S7_数据存档与内容契约/README](./S7_数据存档与内容契约/README.md)
+10. [S8_UI与交互基线/README](./S8_UI与交互基线/README.md)
 
 ## 3. 子系统目录
 
@@ -32,12 +33,13 @@
 | --- | --- | --- |
 | `00` | `00_总纲/` | 游戏总体架构、设计说明治理、跨子系统边界 |
 | `S1` | `S1_主游戏流程/` | 主菜单、关卡选择、进入确认、结算流转、主流程信息优先级 |
-| `S2` | `S2_战斗运行时/` | 核心引擎、敌人、道具、时间线、战斗展示层 |
+| `S2` | `S2_战斗运行时/` | 核心引擎、战斗对象、道具、时间线、战斗展示层 |
 | `S3` | `S3_关卡地图与编辑器/` | 关卡系统、地图选择、地图包、关卡编辑器、地图编辑器 |
 | `S4` | `S4_技能系统与编辑器/` | 技能系统、技能树、技能编辑器、技能规划、技能平衡、技能测试 |
 | `S5` | `S5_Buff系统与编辑器/` | Buff 运行时、Buff 数据契约、Buff 编辑器 |
-| `S6` | `S6_数据存档与内容契约/` | 数据结构、本地存档、内容装载、跨模块配置契约 |
-| `S7` | `S7_UI与交互基线/` | UI 基线、时间线界面、战斗场景、Spine 素材与展示协作 |
+| `S6` | `S6_敌人系统与编辑器/` | 敌人系统、敌人模板、敌人 AI 语义、敌人编辑器 |
+| `S7` | `S7_数据存档与内容契约/` | 数据结构、本地存档、内容装载、跨模块配置契约 |
+| `S8` | `S8_UI与交互基线/` | UI 基线、时间线界面、战斗场景、Spine 素材与展示协作 |
 
 ## 4. 现有设计文档索引
 
@@ -59,7 +61,6 @@
 | 文件 | 主题 |
 | --- | --- |
 | [01-核心引擎(core_engine)-设计说明](./S2_战斗运行时/01-核心引擎(core_engine)-设计说明.md) | 核心引擎设计 |
-| [11-敌人系统(enemy_design)-设计说明](./S2_战斗运行时/11-敌人系统(enemy_design)-设计说明.md) | 敌人系统设计 |
 | [13-道具系统(item_design)-设计说明](./S2_战斗运行时/13-道具系统(item_design)-设计说明.md) | 道具系统设计 |
 | [14-时间线机制(timeline_design)-设计说明](./S2_战斗运行时/14-时间线机制(timeline_design)-设计说明.md) | 时间线机制设计 |
 | [20-对战演出与动画展示层(battle_presentation)-设计说明](./S2_战斗运行时/20-对战演出与动画展示层(battle_presentation)-设计说明.md) | 战斗展示层和动画展示设计 |
@@ -91,23 +92,30 @@
 | [09-Buff系统(buff_design)-设计说明](./S5_Buff系统与编辑器/09-Buff系统(buff_design)-设计说明.md) | Buff 体系设计 |
 | [10-Buff编辑器(buff_editor_design)-设计说明](./S5_Buff系统与编辑器/10-Buff编辑器(buff_editor_design)-设计说明.md) | Buff 编辑器设计 |
 
-### 4.7 S6 数据存档与内容契约
+### 4.7 S6 敌人系统与编辑器
 
 | 文件 | 主题 |
 | --- | --- |
-| [02-数据结构(data_design)-设计说明](./S6_数据存档与内容契约/02-数据结构(data_design)-设计说明.md) | 数据结构与配置设计 |
-| [18-本地存档(local_save_design)-设计说明](./S6_数据存档与内容契约/18-本地存档(local_save_design)-设计说明.md) | 本地存档生命周期与触发机制设计 |
+| [11-敌人系统(enemy_design)-设计说明](./S6_敌人系统与编辑器/11-敌人系统(enemy_design)-设计说明.md) | 敌人系统设计 |
+| [28-敌人编辑器(enemy_editor)-设计说明](./S6_敌人系统与编辑器/28-敌人编辑器(enemy_editor)-设计说明.md) | 敌人模板作者工具与地图编辑器服务边界设计 |
 
-### 4.8 S7 UI 与交互基线
+### 4.8 S7 数据存档与内容契约
 
 | 文件 | 主题 |
 | --- | --- |
-| [15-时间线界面(timeline_UI_design)-设计说明](./S7_UI与交互基线/15-时间线界面(timeline_UI_design)-设计说明.md) | 时间线 UI 设计 |
-| [16-战斗界面(UI_design)-设计说明](./S7_UI与交互基线/16-战斗界面(UI_design)-设计说明.md) | 战斗 UI 总体设计 |
-| [17-战斗场景提案(battle_scene_proposal)-设计说明](./S7_UI与交互基线/17-战斗场景提案(battle_scene_proposal)-设计说明.md) | 战斗场景方案 |
-| [21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明](./S7_UI与交互基线/21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明.md) | Spine 素材制作工程与导入边界 |
-| [22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明](./S7_UI与交互基线/22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md) | 主工程与 SpineAssets 协作规则 |
-| [23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明](./S7_UI与交互基线/23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明.md) | Spine bundle 导入 probe 与降级壳 |
+| [02-数据结构(data_design)-设计说明](./S7_数据存档与内容契约/02-数据结构(data_design)-设计说明.md) | 数据结构与配置设计 |
+| [18-本地存档(local_save_design)-设计说明](./S7_数据存档与内容契约/18-本地存档(local_save_design)-设计说明.md) | 本地存档生命周期与触发机制设计 |
+
+### 4.9 S8 UI 与交互基线
+
+| 文件 | 主题 |
+| --- | --- |
+| [15-时间线界面(timeline_UI_design)-设计说明](./S8_UI与交互基线/15-时间线界面(timeline_UI_design)-设计说明.md) | 时间线 UI 设计 |
+| [16-战斗界面(UI_design)-设计说明](./S8_UI与交互基线/16-战斗界面(UI_design)-设计说明.md) | 战斗 UI 总体设计 |
+| [17-战斗场景提案(battle_scene_proposal)-设计说明](./S8_UI与交互基线/17-战斗场景提案(battle_scene_proposal)-设计说明.md) | 战斗场景方案 |
+| [21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明](./S8_UI与交互基线/21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明.md) | Spine 素材制作工程与导入边界 |
+| [22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明](./S8_UI与交互基线/22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md) | 主工程与 SpineAssets 协作规则 |
+| [23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明](./S8_UI与交互基线/23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明.md) | Spine bundle 导入 probe 与降级壳 |
 
 ## 5. 使用规则
 

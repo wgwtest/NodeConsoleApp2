@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>敌人编辑器工作区原型 v1</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page: #edf1ef;
+            --panel: #fbfcfa;
+            --panel-2: #f4f7f4;
+            --panel-3: #eef3ef;
+            --ink: #1c211e;
+            --muted: #65716b;
+            --soft: #8b9690;
+            --line: #d8dfda;
+            --line-strong: #b8c3bd;
+            --red: #a13a2b;
+            --red-soft: #f3ded9;
+            --green: #1f7b58;
+            --green-soft: #dcefe6;
+            --amber: #b16f16;
+            --amber-soft: #f5ead7;
+            --teal: #1f6f75;
+            --teal-soft: #dbecee;
+            --violet: #6e588f;
+            --violet-soft: #e8e2f2;
+            --shadow: 0 18px 48px rgba(27, 36, 31, 0.12);
+            --radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            min-height: 100%;
+            color: var(--ink);
+            background:
+                linear-gradient(90deg, rgba(28, 33, 30, 0.035) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(28, 33, 30, 0.035) 1px, transparent 1px),
+                var(--page);
+            background-size: 28px 28px;
+            font-family: "Aptos", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            overflow: hidden;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            border: 1px solid transparent;
+            border-radius: 7px;
+            min-height: 30px;
+            padding: 6px 10px;
+            color: #fff;
+            background: var(--ink);
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        button.secondary {
+            color: var(--ink);
+            background: #fff;
+            border-color: var(--line);
+        }
+
+        button.green {
+            background: var(--green);
+        }
+
+        button.red {
+            background: var(--red);
+        }
+
+        button.amber {
+            background: var(--amber);
+        }
+
+        button.ghost {
+            color: var(--muted);
+            background: transparent;
+            border-color: var(--line);
+        }
+
+        button:hover {
+            filter: brightness(0.97);
+        }
+
+        .page {
+            width: min(1920px, 100vw);
+            height: 100vh;
+            margin: 0 auto;
+            padding: 12px;
+            display: grid;
+            grid-template-rows: 102px minmax(0, 1fr) 116px;
+            gap: 10px;
+        }
+
+        .toolbar,
+        .workspace,
+        .issues {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: rgba(251, 252, 250, 0.97);
+            box-shadow: var(--shadow);
+        }
+
+        .toolbar {
+            padding: 10px;
+            display: grid;
+            grid-template-columns: 220px minmax(0, 1fr) 290px;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .brand {
+            padding: 8px 10px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, #202820 0%, #3f2c28 100%);
+            color: #fff;
+        }
+
+        .brand-title {
+            margin: 0 0 8px;
+            font-family: "Georgia", "STSong", serif;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: 0;
+        }
+
+        .brand-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 22px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #eef3ef;
+            color: var(--muted);
+            border: 1px solid var(--line);
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .brand .pill {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .pill.error {
+            color: var(--red);
+            background: var(--red-soft);
+            border-color: rgba(161, 58, 43, 0.24);
+        }
+
+        .pill.warn {
+            color: var(--amber);
+            background: var(--amber-soft);
+            border-color: rgba(177, 111, 22, 0.24);
+        }
+
+        .pill.ok {
+            color: var(--green);
+            background: var(--green-soft);
+            border-color: rgba(31, 123, 88, 0.22);
+        }
+
+        .toolbar-groups {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr 1.1fr 1.05fr;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .tool-group {
+            min-width: 0;
+            padding: 8px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--panel-2);
+        }
+
+        .tool-title {
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+        }
+
+        .tool-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .tool-row + .tool-row {
+            margin-top: 6px;
+        }
+
+        .field-inline {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fff;
+            padding: 3px 7px;
+        }
+
+        .field-inline span {
+            color: var(--soft);
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .field-inline input,
+        .field-inline select {
+            width: 100%;
+            min-width: 0;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: var(--ink);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-block {
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: #fff;
+            display: grid;
+            gap: 6px;
+        }
+
+        .status-path {
+            padding: 7px 8px;
+            border-radius: 7px;
+            background: #202820;
+            color: #dfe8e0;
+            font-family: "Cascadia Mono", "Consolas", monospace;
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .workspace {
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 300px minmax(0, 1fr) 380px;
+            overflow: hidden;
+        }
+
+        .sidebar,
+        .editor,
+        .preview {
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            border-right: 1px solid var(--line);
+            background: #f7f9f7;
+            display: grid;
+            grid-template-rows: auto auto minmax(0, 1fr);
+        }
+
+        .panel-head {
+            padding: 12px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .panel-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 900;
+        }
+
+        .panel-note {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .search-box {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            display: grid;
+            gap: 8px;
+        }
+
+        .search-box input {
+            width: 100%;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 7px;
+            border: 1px solid var(--line);
+            outline: 0;
+            background: #fff;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .enemy-list {
+            min-height: 0;
+            overflow: auto;
+            padding: 8px;
+            display: grid;
+            gap: 8px;
+            align-content: start;
+        }
+
+        .enemy-item {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: #fff;
+            padding: 9px;
+            display: grid;
+            gap: 7px;
+        }
+
+        .enemy-item.active {
+            border-color: rgba(161, 58, 43, 0.5);
+            box-shadow: inset 4px 0 0 var(--red);
+        }
+
+        .enemy-line {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .enemy-name {
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .enemy-id {
+            margin-top: 2px;
+            color: var(--muted);
+            font-family: "Cascadia Mono", "Consolas", monospace;
+            font-size: 11px;
+        }
+
+        .stat-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+
+        .mini-stat {
+            padding: 5px 6px;
+            border-radius: 7px;
+            background: var(--panel-3);
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .mini-stat strong {
+            color: var(--ink);
+            font-size: 13px;
+        }
+
+        .editor {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            background: var(--panel);
+        }
+
+        .editor-top {
+            padding: 12px 14px 10px;
+            border-bottom: 1px solid var(--line);
+            display: grid;
+            gap: 10px;
+        }
+
+        .current-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .current-title h2 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 0;
+        }
+
+        .current-title code {
+            padding: 6px 8px;
+            border-radius: 7px;
+            color: #dfe8e0;
+            background: #202820;
+            font-size: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+        }
+
+        .tab {
+            color: var(--muted);
+            background: #fff;
+            border-color: var(--line);
+        }
+
+        .tab.active {
+            color: #fff;
+            background: var(--red);
+            border-color: var(--red);
+        }
+
+        .editor-body {
+            min-height: 0;
+            overflow: hidden;
+            padding: 12px 14px;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            gap: 12px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .summary-cell {
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--panel-2);
+        }
+
+        .summary-cell span {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .summary-cell strong {
+            font-size: 19px;
+        }
+
+        .form-area {
+            min-height: 0;
+            overflow: auto;
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 12px;
+            align-content: start;
+        }
+
+        .section {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: #fff;
+            padding: 12px;
+        }
+
+        .section h3 {
+            margin: 0 0 10px;
+            font-size: 14px;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .field-grid.single {
+            grid-template-columns: 1fr;
+        }
+
+        label.field {
+            display: grid;
+            gap: 5px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            min-height: 34px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            padding: 7px 8px;
+            outline: 0;
+            background: var(--panel);
+            color: var(--ink);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .field textarea {
+            min-height: 78px;
+            resize: none;
+            line-height: 1.5;
+        }
+
+        .part-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .part-table th,
+        .part-table td {
+            border-bottom: 1px solid var(--line);
+            padding: 7px 5px;
+            text-align: left;
+        }
+
+        .part-table th {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .bar {
+            height: 8px;
+            border-radius: 999px;
+            background: var(--panel-3);
+            overflow: hidden;
+        }
+
+        .bar span {
+            display: block;
+            height: 100%;
+            background: var(--green);
+        }
+
+        .skills {
+            display: grid;
+            gap: 8px;
+        }
+
+        .skill-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: var(--panel-2);
+        }
+
+        .skill-row strong {
+            display: block;
+            font-size: 13px;
+        }
+
+        .skill-row span {
+            display: block;
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .art-panel {
+            display: grid;
+            grid-template-columns: 160px minmax(0, 1fr);
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .art-frame {
+            min-height: 178px;
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius);
+            background:
+                radial-gradient(circle at 50% 16%, rgba(31, 123, 88, 0.24), transparent 40%),
+                linear-gradient(180deg, #25372f 0%, #17211d 100%);
+            display: grid;
+            place-items: center;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        .art-frame img {
+            width: min(128px, 100%);
+            height: auto;
+            filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.28));
+        }
+
+        .asset-list {
+            display: grid;
+            gap: 8px;
+            align-content: start;
+        }
+
+        .asset-row {
+            display: grid;
+            grid-template-columns: 86px minmax(0, 1fr);
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: var(--panel-2);
+            font-size: 12px;
+        }
+
+        .asset-row span:first-child {
+            color: var(--muted);
+            font-weight: 900;
+        }
+
+        .asset-row code {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: "Cascadia Mono", "Consolas", monospace;
+            font-size: 11px;
+        }
+
+        .preview {
+            border-left: 1px solid var(--line);
+            background: #f7f9f7;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+        }
+
+        .preview-body {
+            min-height: 0;
+            overflow: auto;
+            padding: 12px;
+            display: grid;
+            gap: 10px;
+            align-content: start;
+        }
+
+        .map-card {
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius);
+            background:
+                linear-gradient(135deg, rgba(31, 123, 88, 0.12), rgba(161, 58, 43, 0.10)),
+                #fff;
+            padding: 12px;
+        }
+
+        .map-preview-layout {
+            display: grid;
+            grid-template-columns: 92px minmax(0, 1fr);
+            gap: 10px;
+            align-items: start;
+        }
+
+        .map-portrait {
+            width: 92px;
+            height: 116px;
+            border: 1px solid rgba(31, 123, 88, 0.24);
+            border-radius: 8px;
+            background:
+                linear-gradient(180deg, rgba(32, 40, 32, 0.92), rgba(32, 40, 32, 0.72)),
+                #e8efe9;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+        }
+
+        .map-portrait img {
+            width: 82px;
+            height: auto;
+            filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.25));
+        }
+
+        .map-card h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .map-card code {
+            display: inline-block;
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .preview-stats {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .preview-stat {
+            padding: 8px;
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .preview-stat span {
+            display: block;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 900;
+        }
+
+        .preview-stat strong {
+            font-size: 17px;
+        }
+
+        .ref-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .ref-item {
+            padding: 9px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fff;
+        }
+
+        .ref-item strong {
+            display: block;
+            font-size: 13px;
+        }
+
+        .ref-item span {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .body-summary {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .part-chip {
+            min-height: 62px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fff;
+            padding: 7px 5px;
+            text-align: center;
+            font-size: 11px;
+        }
+
+        .part-chip strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .issues {
+            padding: 10px 12px;
+            display: grid;
+            grid-template-columns: 190px minmax(0, 1fr);
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        .issue-summary {
+            border-right: 1px solid var(--line);
+            padding-right: 10px;
+            display: grid;
+            align-content: center;
+            gap: 7px;
+        }
+
+        .issue-summary h2 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .issue-table {
+            min-width: 0;
+            overflow: hidden;
+            display: grid;
+            gap: 6px;
+        }
+
+        .issue-row {
+            display: grid;
+            grid-template-columns: 80px 170px 1fr 170px;
+            gap: 8px;
+            align-items: center;
+            min-height: 28px;
+            padding: 5px 8px;
+            border-radius: 7px;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            font-size: 12px;
+        }
+
+        .issue-row span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .issue-code {
+            font-family: "Cascadia Mono", "Consolas", monospace;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        @media (max-width: 1280px) {
+            body {
+                overflow: auto;
+            }
+
+            .page {
+                width: 1280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="toolbar">
+            <section class="brand" aria-label="敌人编辑器">
+                <h1 class="brand-title">敌人编辑器</h1>
+                <div class="brand-meta">
+                    <span class="pill">S6</span>
+                    <span class="pill">Authoring</span>
+                    <span class="pill">地图服务上游</span>
+                </div>
+            </section>
+
+            <section class="toolbar-groups" aria-label="操作区">
+                <div class="tool-group">
+                    <div class="tool-title">打开敌人库</div>
+                    <div class="tool-row">
+                        <label class="field-inline">
+                            <span>最近版本</span>
+                            <select>
+                                <option>enemies_20260524_working.json</option>
+                            </select>
+                        </label>
+                        <button>打开版本</button>
+                    </div>
+                    <div class="tool-row">
+                        <label class="field-inline">
+                            <span>指定路径</span>
+                            <input value="assets/data/enemies.json">
+                        </label>
+                        <button>打开路径</button>
+                    </div>
+                </div>
+
+                <div class="tool-group">
+                    <div class="tool-title">引用源</div>
+                    <div class="tool-row">
+                        <span class="pill ok">技能包已加载</span>
+                        <span class="pill ok">关卡包已加载</span>
+                    </div>
+                    <div class="tool-row">
+                        <span class="pill warn">地图包可选</span>
+                        <button class="secondary">刷新引用</button>
+                    </div>
+                </div>
+
+                <div class="tool-group">
+                    <div class="tool-title">编辑</div>
+                    <div class="tool-row">
+                        <button class="secondary">敌人库</button>
+                        <button>新建敌人</button>
+                        <button class="secondary">复制为新敌人</button>
+                    </div>
+                    <div class="tool-row">
+                        <button class="amber">标记废弃</button>
+                        <button class="red">删除</button>
+                    </div>
+                </div>
+
+                <div class="tool-group">
+                    <div class="tool-title">保存与发布</div>
+                    <div class="tool-row">
+                        <button class="green">保存工作稿</button>
+                        <button class="red">发布到主流程</button>
+                    </div>
+                    <div class="tool-row">
+                        <button class="secondary">另存到指定路径</button>
+                        <button class="secondary">下载备份</button>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="status-block">
+                <div class="status-path">assets/data/enemies.json</div>
+                <div class="brand-meta">
+                    <span class="pill ok">42 templates</span>
+                    <span class="pill warn">3 warnings</span>
+                    <span class="pill error">1 error</span>
+                    <span class="pill">dirty</span>
+                </div>
+            </aside>
+        </header>
+
+        <main class="workspace">
+            <aside class="sidebar">
+                <div class="panel-head">
+                    <h2 class="panel-title">敌人库</h2>
+                    <div class="panel-note">按模板目录选择对象。关卡和地图只引用 templateId。</div>
+                </div>
+                <div class="search-box">
+                    <input value="goblin skill_throw" aria-label="搜索敌人">
+                    <div class="filter-row">
+                        <span class="pill">goblin</span>
+                        <span class="pill">hunter</span>
+                        <span class="pill ok">被引用</span>
+                        <span class="pill warn">有警告</span>
+                    </div>
+                </div>
+                <div class="enemy-list">
+                    <article class="enemy-item active">
+                        <div class="enemy-line">
+                            <div>
+                                <div class="enemy-name">哥布林追猎手</div>
+                                <div class="enemy-id">goblin_story_headhunter</div>
+                            </div>
+                            <span class="pill warn">2 warn</span>
+                        </div>
+                        <div class="filter-row">
+                            <span class="pill">goblin</span>
+                            <span class="pill">hunter</span>
+                            <span class="pill ok">4 refs</span>
+                        </div>
+                        <div class="stat-strip">
+                            <div class="mini-stat">HP <strong>65</strong></div>
+                            <div class="mini-stat">AP <strong>4</strong></div>
+                            <div class="mini-stat">SPD <strong>11</strong></div>
+                        </div>
+                    </article>
+
+                    <article class="enemy-item">
+                        <div class="enemy-line">
+                            <div>
+                                <div class="enemy-name">哥布林药师</div>
+                                <div class="enemy-id">goblin_story_medic</div>
+                            </div>
+                            <span class="pill ok">ok</span>
+                        </div>
+                        <div class="filter-row">
+                            <span class="pill">goblin</span>
+                            <span class="pill">support</span>
+                            <span class="pill ok">2 refs</span>
+                        </div>
+                        <div class="stat-strip">
+                            <div class="mini-stat">HP <strong>54</strong></div>
+                            <div class="mini-stat">AP <strong>5</strong></div>
+                            <div class="mini-stat">SPD <strong>9</strong></div>
+                        </div>
+                    </article>
+
+                    <article class="enemy-item">
+                        <div class="enemy-line">
+                            <div>
+                                <div class="enemy-name">腐骨守卫</div>
+                                <div class="enemy-id">skeleton_guard_lvl4</div>
+                            </div>
+                            <span class="pill error">error</span>
+                        </div>
+                        <div class="filter-row">
+                            <span class="pill">undead</span>
+                            <span class="pill">defender</span>
+                            <span class="pill">0 refs</span>
+                        </div>
+                        <div class="stat-strip">
+                            <div class="mini-stat">HP <strong>100</strong></div>
+                            <div class="mini-stat">AP <strong>3</strong></div>
+                            <div class="mini-stat">SPD <strong>5</strong></div>
+                        </div>
+                    </article>
+
+                    <article class="enemy-item">
+                        <div class="enemy-line">
+                            <div>
+                                <div class="enemy-name">野狼突袭者</div>
+                                <div class="enemy-id">dire_wolf_raider</div>
+                            </div>
+                            <span class="pill ok">ok</span>
+                        </div>
+                        <div class="filter-row">
+                            <span class="pill">beast</span>
+                            <span class="pill">scout</span>
+                            <span class="pill ok">1 ref</span>
+                        </div>
+                        <div class="stat-strip">
+                            <div class="mini-stat">HP <strong>72</strong></div>
+                            <div class="mini-stat">AP <strong>3</strong></div>
+                            <div class="mini-stat">SPD <strong>16</strong></div>
+                        </div>
+                    </article>
+                </div>
+            </aside>
+
+            <section class="editor">
+                <div class="editor-top">
+                    <div class="current-title">
+                        <div>
+                            <h2>哥布林追猎手</h2>
+                            <div class="panel-note">上游维护敌人模板；地图编辑器只消费摘要和 templateId。</div>
+                        </div>
+                        <code>goblin_story_headhunter</code>
+                    </div>
+                    <div class="tabs">
+                        <button class="tab active">概览</button>
+                        <button class="tab">属性</button>
+                        <button class="tab">部位</button>
+                        <button class="tab">技能组</button>
+                        <button class="tab">原画资产</button>
+                        <button class="tab">地图服务</button>
+                        <button class="tab">高级 JSON</button>
+                    </div>
+                </div>
+
+                <div class="editor-body">
+                    <div class="summary-grid">
+                        <div class="summary-cell"><span>HP / MAX</span><strong>65 / 65</strong></div>
+                        <div class="summary-cell"><span>ACTION POINT</span><strong>4 AP</strong></div>
+                        <div class="summary-cell"><span>SPEED</span><strong>11</strong></div>
+                        <div class="summary-cell"><span>引用</span><strong>4 处</strong></div>
+                    </div>
+
+                    <div class="form-area">
+                        <section class="section">
+                            <h3>基础信息</h3>
+                            <div class="field-grid">
+                                <label class="field">
+                                    <span>ID 创建后只读</span>
+                                    <input value="goblin_story_headhunter" readonly>
+                                </label>
+                                <label class="field">
+                                    <span>名称</span>
+                                    <input value="哥布林追猎手">
+                                </label>
+                                <label class="field">
+                                    <span>种族</span>
+                                    <select><option>goblin</option></select>
+                                </label>
+                                <label class="field">
+                                    <span>职业</span>
+                                    <select><option>hunter</option></select>
+                                </label>
+                                <label class="field">
+                                    <span>标签</span>
+                                    <input value="story, ranged, fragile">
+                                </label>
+                                <label class="field">
+                                    <span>展示状态</span>
+                                    <select><option>active</option></select>
+                                </label>
+                            </div>
+                            <div class="field-grid single" style="margin-top: 10px;">
+                                <label class="field">
+                                    <span>备注</span>
+                                    <textarea>幽暗森林边缘的远程骚扰敌人。适合作为地图节点首个敌人展示。</textarea>
+                                </label>
+                            </div>
+                        </section>
+
+                        <section class="section">
+                            <h3>战斗属性</h3>
+                            <div class="field-grid">
+                                <label class="field">
+                                    <span>stats.hp</span>
+                                    <input value="65">
+                                </label>
+                                <label class="field">
+                                    <span>stats.maxHp</span>
+                                    <input value="65">
+                                </label>
+                                <label class="field">
+                                    <span>stats.ap</span>
+                                    <input value="4">
+                                </label>
+                                <label class="field">
+                                    <span>stats.speed</span>
+                                    <input value="11">
+                                </label>
+                            </div>
+                            <div class="panel-note">原子字段在 blur / Enter / change 时写回工作区。</div>
+                        </section>
+
+                        <section class="section">
+                            <h3>原画资产</h3>
+                            <div class="art-panel">
+                                <div class="art-frame">
+                                    <img src="../../../../../assets/images/level_map/portraits/enemy_goblin_hunter.svg" alt="哥布林追猎手立绘">
+                                </div>
+                                <div class="asset-list">
+                                    <div class="asset-row">
+                                        <span>portraitRef</span>
+                                        <code>enemy_goblin_hunter</code>
+                                    </div>
+                                    <div class="asset-row">
+                                        <span>mapPortrait</span>
+                                        <code>assets/images/level_map/portraits/enemy_goblin_hunter.svg</code>
+                                    </div>
+                                    <div class="asset-row">
+                                        <span>battleSprite</span>
+                                        <code>source/spine/enemy/goblin_hunter.json</code>
+                                    </div>
+                                    <div class="asset-row">
+                                        <span>fallback</span>
+                                        <code>race:goblin / class:hunter</code>
+                                    </div>
+                                    <div class="tool-row">
+                                        <button class="secondary">选择立绘</button>
+                                        <button class="secondary">检查资源</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="section">
+                            <h3>部位护甲</h3>
+                            <table class="part-table">
+                                <thead>
+                                    <tr><th>部位</th><th>current</th><th>max</th><th>weakness</th><th>状态</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>head</td><td>4</td><td>4</td><td>1.2</td><td><div class="bar"><span style="width: 100%;"></span></div></td></tr>
+                                    <tr><td>chest</td><td>8</td><td>8</td><td>1.0</td><td><div class="bar"><span style="width: 100%;"></span></div></td></tr>
+                                    <tr><td>abdomen</td><td>2</td><td>4</td><td>1.1</td><td><div class="bar"><span style="width: 50%;"></span></div></td></tr>
+                                    <tr><td>arm</td><td>0</td><td>0</td><td>1.0</td><td><div class="bar"><span style="width: 0%;"></span></div></td></tr>
+                                    <tr><td>leg</td><td>0</td><td>0</td><td>0.9</td><td><div class="bar"><span style="width: 0%;"></span></div></td></tr>
+                                </tbody>
+                            </table>
+                        </section>
+
+                        <section class="section">
+                            <h3>技能组</h3>
+                            <div class="skills">
+                                <div class="skill-row">
+                                    <div><strong>Throw Stone</strong><span>skill_throw_stone / ranged part attack</span></div>
+                                    <span class="pill ok">2 AP</span>
+                                    <button class="secondary">移除</button>
+                                </div>
+                                <div class="skill-row">
+                                    <div><strong>Ankle Bite</strong><span>skill_ankle_bite / speed pressure</span></div>
+                                    <span class="pill ok">2 AP</span>
+                                    <button class="secondary">移除</button>
+                                </div>
+                                <div class="skill-row">
+                                    <div><strong>Poison Needle</strong><span>skill_poison_needle / missing in current pack</span></div>
+                                    <span class="pill error">missing</span>
+                                    <button class="secondary">修复</button>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="preview">
+                <div class="panel-head">
+                    <h2 class="panel-title">引用与地图服务</h2>
+                    <div class="panel-note">下游预览从敌人模板派生，不写入地图包。</div>
+                </div>
+                <div class="preview-body">
+                    <section class="map-card">
+                        <div class="map-preview-layout">
+                            <div class="map-portrait">
+                                <img src="../../../../../assets/images/level_map/portraits/enemy_goblin_hunter.svg" alt="地图面板敌人立绘">
+                            </div>
+                            <div>
+                                <div class="enemy-line">
+                                    <div>
+                                        <h3>本关敌人面板预览</h3>
+                                        <code>templateId: goblin_story_headhunter</code>
+                                    </div>
+                                    <span class="pill warn">1 error</span>
+                                </div>
+                                <div class="preview-stats">
+                                    <div class="preview-stat"><span>HP</span><strong>65</strong></div>
+                                    <div class="preview-stat"><span>AP</span><strong>4</strong></div>
+                                    <div class="preview-stat"><span>SPD</span><strong>11</strong></div>
+                                </div>
+                                <div class="filter-row" style="margin-top: 10px;">
+                                    <span class="pill">goblin</span>
+                                    <span class="pill">hunter</span>
+                                    <span class="pill">enemy_goblin_hunter</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="section">
+                        <h3>部位摘要</h3>
+                        <div class="body-summary">
+                            <div class="part-chip"><strong>Head</strong>4/4<br>弱点 1.2</div>
+                            <div class="part-chip"><strong>Chest</strong>8/8<br>弱点 1.0</div>
+                            <div class="part-chip"><strong>Abd</strong>2/4<br>弱点 1.1</div>
+                            <div class="part-chip"><strong>Arm</strong>0/0<br>弱点 1.0</div>
+                            <div class="part-chip"><strong>Leg</strong>0/0<br>弱点 0.9</div>
+                        </div>
+                    </section>
+
+                    <section class="section">
+                        <h3>关卡引用</h3>
+                        <div class="ref-list">
+                            <div class="ref-item">
+                                <strong>level_story_goblin_edge</strong>
+                                <span>pool_story_goblin_edge / wave 1 / position 1</span>
+                            </div>
+                            <div class="ref-item">
+                                <strong>level_forest_fork</strong>
+                                <span>pool_forest_ambush / wave 1 / position 2</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="section">
+                        <h3>地图节点间接引用</h3>
+                        <div class="ref-list">
+                            <div class="ref-item">
+                                <strong>幽暗森林边缘</strong>
+                                <span>story_pack_v1 / map_forest / node_forest_01</span>
+                            </div>
+                            <div class="ref-item">
+                                <strong>林中岔路</strong>
+                                <span>story_pack_v1 / map_forest / node_forest_03</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="section">
+                        <h3>运行时静态提示</h3>
+                        <div class="filter-row">
+                            <span class="pill ok">2 可支付技能</span>
+                            <span class="pill error">1 缺失技能</span>
+                            <span class="pill warn">leg weakness 低于常规</span>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </main>
+
+        <footer class="issues">
+            <div class="issue-summary">
+                <h2>问题列表</h2>
+                <div class="brand-meta">
+                    <span class="pill error">1 Error</span>
+                    <span class="pill warn">3 Warning</span>
+                    <span class="pill">点击定位字段</span>
+                </div>
+            </div>
+            <div class="issue-table">
+                <div class="issue-row">
+                    <span class="pill error">Error</span>
+                    <span class="issue-code">enemy.skill.missing</span>
+                    <span>goblin_story_headhunter.skills[2] 引用了当前技能包不存在的 skill_poison_needle</span>
+                    <span>技能组 / 第 3 行</span>
+                </div>
+                <div class="issue-row">
+                    <span class="pill warn">Warning</span>
+                    <span class="issue-code">enemy.part.legacy</span>
+                    <span>检测到旧式 left_arm / right_arm 扩展字段，已保留在高级 JSON</span>
+                    <span>部位 / 高级 JSON</span>
+                </div>
+                <div class="issue-row">
+                    <span class="pill warn">Warning</span>
+                    <span class="issue-code">enemy.map.reference</span>
+                    <span>该敌人被 2 个地图节点间接引用，删除和改名需要迁移清单</span>
+                    <span>引用与地图服务</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
