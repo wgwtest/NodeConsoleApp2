@@ -65,6 +65,19 @@ test('地图包保存接口只允许写入 authoring/current 地图包目录', a
     const packageJson = await fs.readFile(path.join(tempDir, 'assets/map_packs/authoring/story_pack_v1/package.json'), 'utf8');
     assert.equal(JSON.parse(packageJson).packageId, 'story_pack_v1');
 
+    const resultWithLevels = await writeLevelMapPackage({
+      targetDirectory: 'assets/map_packs/authoring/story_pack_with_levels/',
+      files: [
+        { fileName: 'package.json', content: '{"packageId":"story_pack_with_levels","files":{"maps":"maps.json","levels":"levels.json"}}' },
+        { fileName: 'maps.json', content: '{"$schemaVersion":"level_map_pack_v1"}' },
+        { fileName: 'levels.json', content: '{"$schemaVersion":"levels_v1_wrapped","levels":{},"enemyPools":{}}' },
+        { fileName: 'asset-manifest.json', content: '{"backgrounds":[]}' }
+      ]
+    });
+    assert.deepEqual(resultWithLevels.writtenFiles, ['package.json', 'maps.json', 'levels.json', 'asset-manifest.json']);
+    const levelsJson = await fs.readFile(path.join(tempDir, 'assets/map_packs/authoring/story_pack_with_levels/levels.json'), 'utf8');
+    assert.equal(JSON.parse(levelsJson).$schemaVersion, 'levels_v1_wrapped');
+
     await assert.rejects(
       () => writeLevelMapPackage({
         targetDirectory: 'assets/data/',

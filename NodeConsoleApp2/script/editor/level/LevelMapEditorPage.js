@@ -264,6 +264,15 @@ export class LevelMapEditorPage {
         this.mapSourceUrl = options.mapSourceUrl || '../assets/map_packs/authoring/story_pack_v1/package.json';
         this.levelSourceUrl = options.levelSourceUrl || '../assets/data/levels.json';
         this.enemySourceUrl = options.enemySourceUrl || '../assets/data/enemies.json';
+        this.navigateTo = options.navigateTo || ((url) => {
+            if (typeof this.window?.location?.assign === 'function') {
+                this.window.location.assign(url);
+                return;
+            }
+            if (this.window?.location) {
+                this.window.location.href = url;
+            }
+        });
         this.ResizeObserverImpl = options.ResizeObserverImpl
             || this.window?.ResizeObserver
             || globalThis.ResizeObserver;
@@ -297,6 +306,7 @@ export class LevelMapEditorPage {
             'addNodeBtn',
             'removeNodeBtn',
             'saveNodeBtn',
+            'editLevelDetailBtn',
             'addEdgeBtn',
             'removeEdgeBtn',
             'saveEdgeBtn',
@@ -397,6 +407,7 @@ export class LevelMapEditorPage {
         this.bindAction('addNodeBtn', () => this.addNode());
         this.bindAction('removeNodeBtn', () => this.removeSelectedNode());
         this.bindAction('saveNodeBtn', () => this.saveCurrentNode());
+        this.bindAction('editLevelDetailBtn', () => this.openSelectedNodeLevelDetail());
         this.bindAction('addEdgeBtn', () => this.addEdge());
         this.bindAction('removeEdgeBtn', () => this.removeSelectedEdge());
         this.bindAction('saveEdgeBtn', () => this.saveCurrentEdge());
@@ -489,6 +500,23 @@ export class LevelMapEditorPage {
                 this.setStatus(`操作失败：${error.message}`);
             }
         });
+    }
+
+    buildLevelDetailUrl(mapId = this.selectedMapId, nodeId = this.selectedNodeId) {
+        const params = new URLSearchParams();
+        if (mapId) params.set('mapId', mapId);
+        if (nodeId) params.set('nodeId', nodeId);
+        const query = params.toString();
+        return `./level_detail_editor_v1.html${query ? `?${query}` : ''}`;
+    }
+
+    openSelectedNodeLevelDetail() {
+        if (!this.selectedMapId || !this.selectedNodeId) {
+            this.setStatus('请先选择一个地图节点，再进入关卡详情。');
+            return;
+        }
+        const url = this.buildLevelDetailUrl();
+        this.navigateTo(url);
     }
 
     async loadDefaultDocuments() {

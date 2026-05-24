@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>节点派生关卡详情编辑器</title>
+    <style>
+        :root {
+            --ink: #1f261f;
+            --muted: #697267;
+            --paper: #f4f1ea;
+            --panel: rgba(255, 252, 244, 0.92);
+            --border: #d8cdbb;
+            --green: #2f6847;
+            --green-dark: #214c34;
+            --amber: #b86f26;
+            --red: #a64a38;
+            --shadow: 0 14px 36px rgba(54, 42, 27, 0.11);
+        }
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+        body {
+            color: var(--ink);
+            background:
+                linear-gradient(90deg, rgba(76, 91, 58, 0.08) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(76, 91, 58, 0.08) 1px, transparent 1px),
+                var(--paper);
+            background-size: 48px 48px;
+            font-family: "Avenir Next", "Segoe UI", "Microsoft YaHei", sans-serif;
+        }
+
+        button, input, select, textarea { font: inherit; }
+        .app-shell { height: 100vh; padding: 16px; overflow: hidden; }
+        .topbar {
+            display: grid;
+            grid-template-columns: 360px 1fr 500px;
+            gap: 14px;
+            height: 118px;
+            margin-bottom: 14px;
+        }
+        .brand, .path-strip, .top-actions, .drawer, .detail-panel {
+            border: 1px solid var(--border);
+            background: var(--panel);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+        .brand { display: flex; align-items: center; gap: 16px; padding: 16px; }
+        .brand-mark {
+            width: 68px; height: 68px; display: grid; place-items: center;
+            border-radius: 8px; background: var(--green-dark); color: #fff7e8;
+            font-weight: 900; font-size: 24px;
+        }
+        .kicker {
+            color: #6b7d42; font-size: 11px; font-weight: 800;
+            text-transform: uppercase;
+        }
+        h1, h2, h3, p { margin: 0; }
+        h1 { margin-top: 6px; font-size: 26px; line-height: 1.08; }
+        h2 { font-size: 20px; }
+        h3 { font-size: 17px; }
+        .path-strip {
+            display: grid;
+            grid-template-columns: 160px 260px 1fr 1fr;
+            gap: 10px;
+            padding: 12px;
+        }
+        .path-item {
+            min-width: 0; border: 1px solid #e4d9c7; border-radius: 8px;
+            background: rgba(255,255,255,0.62); padding: 10px 12px;
+        }
+        .path-item span, .muted, dt { color: var(--muted); font-size: 12px; }
+        .path-item strong, .path-item code {
+            display: block; margin-top: 6px; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; font-size: 13px;
+        }
+        code, dd { font-family: "SFMono-Regular", Consolas, monospace; color: var(--green-dark); }
+        .top-actions { padding: 14px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-content: center; }
+        .btn {
+            min-height: 42px; border: 1px solid var(--border); border-radius: 8px;
+            background: #fffaf0; font-weight: 800; color: var(--ink);
+        }
+        .btn-primary { background: var(--green); border-color: var(--green); color: #fffaf0; }
+        .btn-publish { background: var(--amber); border-color: var(--amber); color: #fffaf0; }
+        .workspace {
+            display: grid;
+            grid-template-columns: 330px 1fr 420px;
+            gap: 16px;
+            height: calc(100vh - 164px);
+            min-height: 0;
+        }
+        .drawer, .detail-panel { padding: 14px; min-width: 0; min-height: 0; overflow: hidden; }
+        .drawer:not(.right-drawer) { display: flex; flex-direction: column; }
+        .drawer-head, .section-head, .title-line, .context-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+        .drawer-head { flex: 0 0 auto; height: 50px; margin-bottom: 10px; }
+        .package-card, .form-section, .inspector-card, .map-context-card {
+            border: 1px solid var(--border); border-radius: 10px;
+            background: rgba(255,255,255,0.58); padding: 14px;
+        }
+        .package-card { flex: 0 0 auto; margin-bottom: 10px; }
+        .meter { height: 8px; margin: 12px 0; border-radius: 99px; background: #ded3c1; overflow: hidden; }
+        .meter span { display: block; height: 100%; width: 82%; background: linear-gradient(90deg, var(--green), var(--amber)); }
+        .chapter-card { border: 1px solid #e1d6c5; border-radius: 10px; background: rgba(255,252,244,0.76); padding: 10px; margin-bottom: 0; }
+        .drawer:not(.right-drawer) .chapter-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+        .chapter-map-list { flex: 0 0 auto; max-height: 40%; overflow: auto; padding-right: 4px; margin-bottom: 10px; }
+        .chapter-row { display: flex; gap: 10px; align-items: center; margin: 2px 0 8px; }
+        .chapter-index, .node-badge {
+            display: grid; place-items: center; border-radius: 7px;
+            background: #e5d8c4; color: var(--green-dark); font-weight: 900;
+        }
+        .chapter-index { width: 38px; height: 38px; }
+        .map-row {
+            width: 100%; display: grid; grid-template-columns: 38px 1fr; align-items: center; gap: 10px;
+            padding: 9px 10px; border: 1px solid #e1d6c5;
+            border-radius: 8px; background: #f4ead9; margin-bottom: 8px; color: var(--ink);
+            text-align: left;
+        }
+        .map-row.is-selected { border-color: var(--green); background: #e6f0e3; box-shadow: inset 4px 0 0 var(--green); }
+        .map-row > span:last-child { min-width: 0; }
+        .map-row strong, .map-row .muted { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .node-list-head { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+        #nodeTreeList { flex: 1 1 auto; min-height: 0; overflow: auto; padding-right: 4px; }
+        .node-row {
+            width: 100%; min-height: 40px; display: flex; align-items: center; gap: 10px;
+            padding: 0 9px; margin-bottom: 6px; border: 1px solid var(--border);
+            border-radius: 8px; background: #fffaf0; text-align: left;
+        }
+        .node-row.is-selected { border-color: var(--green); background: #e6f0e3; box-shadow: inset 4px 0 0 var(--green); }
+        .node-badge { width: 46px; height: 24px; font-size: 11px; flex: 0 0 auto; }
+        .node-row span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .node-row em { color: var(--muted); font-size: 12px; font-style: normal; }
+        .detail-panel { display: flex; flex-direction: column; }
+        .context-row { flex: 0 0 auto; align-items: stretch; margin-bottom: 10px; }
+        .level-title { flex: 1; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: #fffcf4; }
+        .title-line { justify-content: flex-start; margin: 8px 0; }
+        .title-line h2 { font-size: 30px; }
+        .pill { padding: 5px 10px; border-radius: 99px; background: #dce9d9; color: var(--green-dark); font-weight: 800; font-size: 12px; }
+        .map-context-card { width: 326px; }
+        .tabs { flex: 0 0 auto; display: flex; gap: 8px; margin-bottom: 10px; }
+        .tab { padding: 10px 18px; border: 1px solid var(--border); border-radius: 8px; background: #fffaf0; font-weight: 800; color: var(--muted); }
+        .tab.is-active { background: var(--green-dark); color: #fffaf0; border-color: var(--green-dark); }
+        .editor-grid { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 12px; align-content: start; }
+        .overview-section { grid-row: span 2; }
+        .field-grid { display: grid; grid-template-columns: 1fr 170px 150px; gap: 9px; }
+        label span { display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px; font-weight: 800; }
+        .field-wide { grid-column: span 2; }
+        .field-full { grid-column: 1 / -1; }
+        input, select, textarea {
+            width: 100%; border: 1px solid #d8cdbb; border-radius: 8px;
+            background: #fffdf8; color: var(--ink); padding: 10px 11px;
+        }
+        input, select { height: 40px; }
+        textarea { height: 72px; resize: none; line-height: 1.45; }
+        .small-action { height: 34px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background: #f7ecd9; font-weight: 800; font-size: 12px; }
+        .enemy-summary { margin-top: 10px; padding: 12px; border-radius: 10px; background: #f1e8da; }
+        .enemy-summary strong, .enemy-summary span { display: block; }
+        .stat-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+        .stat-strip b { display: grid; place-items: center; min-height: 32px; border-radius: 7px; background: #fffaf0; font-size: 12px; }
+        .reward-grid, .rule-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .rule-item { min-height: 82px; padding: 14px; border-radius: 10px; background: #f5ecdd; border: 1px solid #e1d6c5; }
+        .right-drawer { display: grid; grid-template-rows: 46px 170px 236px 210px 132px; gap: 9px; }
+        .right-drawer .drawer-head { margin-bottom: 0; }
+        .right-drawer .inspector-card { min-height: 0; overflow: hidden; padding: 12px; }
+        .binding-list { margin: 0; }
+        .binding-list div { display: grid; grid-template-columns: 76px 1fr; min-height: 28px; border-bottom: 1px solid #eadfce; }
+        .binding-list dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+        .issue { min-height: 34px; display: grid; grid-template-columns: 54px 1fr; gap: 10px; align-items: center; padding: 6px 10px; border-radius: 8px; background: #f7ecd9; margin-bottom: 6px; }
+        .issue-error { border-left: 5px solid var(--red); }
+        .issue-warn { border-left: 5px solid var(--amber); }
+        .issue-ok { border-left: 5px solid var(--green); }
+        .projection-box { padding: 10px; border-radius: 8px; background: #eef4ea; margin-bottom: 8px; }
+        .projection-box.muted { background: #f3eadc; }
+        .projection-box code, .projection-box span { display: block; }
+        .projection-arrow { text-align: center; color: var(--muted); font-size: 12px; font-weight: 800; margin-bottom: 8px; }
+        #fileWriteList { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        #fileWriteList li { min-height: 30px; display: grid; place-items: center; border-radius: 8px; background: #f5ecdd; color: var(--green-dark); font-size: 12px; font-weight: 800; }
+    </style>
+</head>
+<body>
+    <main class="app-shell">
+        <header class="topbar">
+            <section class="brand">
+                <div class="brand-mark">LD</div>
+                <div>
+                    <div class="kicker">NodeConsoleApp2 / Level Detail Editor</div>
+                    <h1>节点派生关卡详情编辑器</h1>
+                    <p id="levelDetailStatus" class="muted">等待加载</p>
+                </div>
+            </section>
+            <section class="path-strip" aria-label="当前编辑上下文">
+                <div class="path-item"><span>故事包</span><strong id="packageIdText">story_pack_v1</strong></div>
+                <div class="path-item"><span>节点路径</span><strong id="nodePathText">-</strong></div>
+                <div class="path-item"><span>工作稿</span><code id="authoringPathText">-</code></div>
+                <div class="path-item"><span>发布</span><code id="runtimePathText">-</code></div>
+            </section>
+            <section class="top-actions" aria-label="文件操作">
+                <button id="backToMapEditorBtn" class="btn" type="button">返回地图编辑器</button>
+                <button id="loadAuthoringPackageBtn" class="btn" type="button">加载工作稿</button>
+                <button id="saveAuthoringPackageBtn" class="btn btn-primary" type="button">保存工作稿</button>
+                <button id="publishRuntimePackageBtn" class="btn btn-publish" type="button">发布到主流程</button>
+                <button id="downloadPackageBtn" class="btn" type="button">导出完整包</button>
+            </section>
+        </header>
+        <section class="workspace">
+            <aside class="drawer">
+                <div class="drawer-head">
+                    <div><span class="kicker">故事结构</span><h2>章节 / 地图 / 节点</h2></div>
+                </div>
+                <section class="package-card">
+                    <strong>故事关卡地图 Authoring 工作包</strong>
+                    <p id="packageSummaryText" class="muted">等待加载地图包结构</p>
+                    <div class="meter"><span></span></div>
+                    <p class="muted">关卡详情与地图节点一一绑定</p>
+                </section>
+                <section class="chapter-card">
+                    <div id="chapterMapList" class="chapter-map-list"></div>
+                    <div class="node-list-head">
+                        <span class="kicker">当前地图节点</span>
+                        <span id="currentMapNodeCountText" class="muted">0 个节点</span>
+                    </div>
+                    <nav id="nodeTreeList"></nav>
+                </section>
+            </aside>
+            <section class="detail-panel">
+                <div class="context-row">
+                    <section class="level-title">
+                        <span class="kicker">当前节点关卡</span>
+                        <div class="title-line">
+                            <h2>关卡详情</h2>
+                            <span class="pill" id="levelIdText">-</span>
+                            <span class="pill" id="nodeIdText">-</span>
+                        </div>
+                        <p class="muted">由地图节点派生的战斗详情。地图负责位置和连线；此页只编辑战斗内容。</p>
+                    </section>
+                    <section class="map-context-card">
+                        <strong>地图上下文</strong>
+                        <p class="muted" id="mapContextText">来自当前地图节点</p>
+                    </section>
+                </div>
+                <nav class="tabs">
+                    <button class="tab is-active">概览</button>
+                    <button class="tab">战斗场景</button>
+                    <button class="tab">敌人</button>
+                    <button class="tab">奖励</button>
+                    <button class="tab">条件与规则</button>
+                    <button class="tab">初始状态</button>
+                    <button class="tab">高级</button>
+                </nav>
+                <section class="editor-grid">
+                    <section class="form-section overview-section">
+                        <div class="section-head"><div><span class="kicker">Overview</span><h3>基础信息</h3></div></div>
+                        <div class="field-grid">
+                            <label class="field-wide"><span>关卡名称</span><input id="levelNameInput"></label>
+                            <label><span>难度标签</span><input id="difficultyLabelInput"></label>
+                            <label><span>节点显示短标</span><input id="nodeLabelInput"></label>
+                            <label class="field-full"><span>关卡描述</span><textarea id="levelDescriptionInput"></textarea></label>
+                            <label class="field-wide"><span>构筑提示</span><input id="buildHintInput"></label>
+                        </div>
+                    </section>
+                    <section class="form-section">
+                        <div class="section-head"><div><span class="kicker">Single Enemy</span><h3>本关敌人</h3></div><button class="small-action">打开敌人编辑器</button></div>
+                        <label><span>敌人模板</span><select id="enemyTemplateSelect"></select></label>
+                        <div id="enemySummary" class="enemy-summary"></div>
+                    </section>
+                    <section class="form-section">
+                        <div class="section-head"><div><span class="kicker">Battle Scene</span><h3>战斗场景</h3></div></div>
+                        <label><span>战斗背景</span><select id="battleBackgroundSelect"></select></label>
+                    </section>
+                    <section class="form-section">
+                        <div class="section-head"><div><span class="kicker">Rewards</span><h3>奖励</h3></div></div>
+                        <div class="reward-grid">
+                            <label><span>经验</span><input id="rewardExpInput" type="number"></label>
+                            <label><span>金币</span><input id="rewardGoldInput" type="number"></label>
+                            <label><span>知识点 KP</span><input id="rewardKpInput" type="number"></label>
+                        </div>
+                    </section>
+                    <section class="form-section">
+                        <div class="section-head"><div><span class="kicker">Rules</span><h3>条件与规则</h3></div><button class="small-action">从入边同步</button></div>
+                        <div class="rule-grid">
+                            <div class="rule-item"><span class="muted">解锁</span><strong>从地图入边推导</strong></div>
+                            <div class="rule-item"><span class="muted">胜利</span><strong>击败本关敌人</strong></div>
+                            <div class="rule-item"><span class="muted">失败</span><strong>玩家 HP 归零</strong></div>
+                        </div>
+                    </section>
+                </section>
+            </section>
+            <aside class="drawer right-drawer">
+                <div class="drawer-head"><div><span class="kicker">检查器</span><h2>绑定 / 校验 / 发布</h2></div></div>
+                <section class="inspector-card">
+                    <span class="kicker">Binding</span>
+                    <h3>节点绑定</h3>
+                    <dl id="bindingSummary" class="binding-list"></dl>
+                </section>
+                <section class="inspector-card">
+                    <span class="kicker">Publish Gate</span>
+                    <h3>发布校验</h3>
+                    <div id="issueList"></div>
+                </section>
+                <section class="inspector-card">
+                    <span class="kicker">Runtime Projection</span>
+                    <h3>兼容投影</h3>
+                    <div id="runtimeProjection"></div>
+                </section>
+                <section class="inspector-card">
+                    <span class="kicker">Files</span>
+                    <h3>本次保存会写入</h3>
+                    <ul id="fileWriteList"></ul>
+                </section>
+            </aside>
+        </section>
+    </main>
+    <script type="module">
+        import { bootLevelDetailEditorPage } from '../script/editor/level/index.js';
+        window.levelDetailEditor = bootLevelDetailEditorPage();
+    </script>
+</body>
+</html>

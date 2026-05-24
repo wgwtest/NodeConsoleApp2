@@ -462,6 +462,172 @@ test('DataManagerV2 支持从目录式地图包 package.json 加载 maps.json', 
   }
 });
 
+test('DataManagerV2 优先使用目录式地图包内的 levels.json 作为关卡事实源', async () => {
+  const { default: dm } = await importSourceModule('script/engine/DataManagerV2.js');
+  const originalFetch = globalThis.fetch;
+  const originalWindow = globalThis.window;
+  const fetchedUrls = [];
+  const mapPack = buildFixtureMapPack();
+  mapPack.stories = [
+    {
+      id: 'story_default',
+      title: '默认故事',
+      entryChapterId: 'story_chapter_1',
+      chapterIds: ['story_chapter_1']
+    }
+  ];
+  mapPack.chapters = [
+    {
+      id: 'story_chapter_1',
+      storyId: 'story_default',
+      title: '包内章节',
+      order: 1,
+      entryMapId: 'chapter_1_runtime',
+      mapIds: ['chapter_1_runtime']
+    }
+  ];
+  mapPack.maps[0].nodes = [
+    {
+      id: 'node_package_level',
+      levelId: 'package_level_1',
+      label: '1-1',
+      title: '包内关卡节点',
+      kind: 'battle',
+      position: { x: 120, y: 240 }
+    }
+  ];
+  mapPack.maps[0].edges = [];
+
+  const responseByUrl = new Map([
+    ['/assets/data/config.package-levels-test.json', {
+      version: 'data_sources_test_package_levels',
+      basePath: './assets/data/',
+      contentRegistry: {
+        player: { kind: 'player', path: 'player.json' },
+        items: { kind: 'items', path: 'items.json' },
+        skills: {
+          kind: 'skills',
+          path: 'skills_melee_v4_5.json',
+          schemaVersion: 'skills_melee_v3',
+          rootKey: 'skills',
+          byTree: {
+            melee_v4_5: {
+              path: 'skills_melee_v4_5.json',
+              schemaVersion: 'skills_melee_v3'
+            }
+          }
+        },
+        enemies: { kind: 'enemies', path: 'enemies.json' },
+        levels: {
+          kind: 'levels',
+          path: 'levels.json',
+          schemaVersion: 'levels_v1_wrapped',
+          rootKey: 'levels'
+        },
+        levelMapPack: {
+          kind: 'levelMapPack',
+          packagePath: '../assets/map_packs/current/story_pack_v1/package.json',
+          schemaVersion: 'level_map_pack_v1',
+          rootKey: 'maps'
+        },
+        buffs: {
+          kind: 'buffs',
+          path: 'buffs_v2_7.json',
+          schemaVersion: 'buffs_v2_1_wrapped',
+          rootKey: 'buffs'
+        },
+        slotLayouts: { kind: 'slotLayouts', path: 'slot_layouts.json', required: false }
+      }
+    }],
+    ['http://127.0.0.1:3101/assets/data/player.json', {
+      default: {
+        id: 'player_default',
+        stats: { hp: 100, maxHp: 100, ap: 4, maxAp: 6, speed: 1 },
+        skills: { skillTreeId: 'melee_v4_5', skillPoints: 0, learned: [] },
+        resources: { exp: 0, gold: 0 },
+        equipment: {},
+        inventory: []
+      }
+    }],
+    ['http://127.0.0.1:3101/assets/data/items.json', {}],
+    ['http://127.0.0.1:3101/assets/data/enemies.json', {}],
+    ['http://127.0.0.1:3101/assets/data/levels.json', {
+      $schemaVersion: 'levels_v1_wrapped',
+      enemyPools: {},
+      levels: {
+        global_level: buildStoryLevel('global_level', 1, '全局关卡不应被使用')
+      }
+    }],
+    ['http://127.0.0.1:3101/assets/data/buffs_v2_7.json', {
+      $schemaVersion: 'buffs_v2_1_wrapped',
+      buffs: {}
+    }],
+    ['http://127.0.0.1:3101/assets/data/skills_melee_v4_5.json', {
+      $schemaVersion: 'skills_melee_v3',
+      skills: []
+    }],
+    ['http://127.0.0.1:3101/assets/data/slot_layouts.json', {}],
+    ['../assets/map_packs/current/story_pack_v1/package.json', {
+      $schemaVersion: 'level_map_package_v1',
+      packageId: 'story_pack_v1',
+      title: '故事地图包 v1',
+      entryStoryId: 'story_default',
+      files: { maps: 'maps.json', levels: 'levels.json' },
+      assets: { basePath: 'assets/', manifest: 'asset-manifest.json' },
+      stories: [{ id: 'story_default', title: '默认故事', entryChapterId: 'story_chapter_1', chapterIds: ['story_chapter_1'] }]
+    }],
+    ['../assets/map_packs/current/story_pack_v1/maps.json', mapPack],
+    ['../assets/map_packs/current/story_pack_v1/levels.json', {
+      $schemaVersion: 'levels_v1_wrapped',
+      enemyPools: {},
+      levels: {
+        package_level_1: buildStoryLevel('package_level_1', 1, '包内关卡')
+      }
+    }]
+  ]);
+
+  globalThis.window = {
+    DATA_CONFIG_URL: '/assets/data/config.package-levels-test.json',
+    location: {
+      href: 'http://127.0.0.1:3101/mock_ui_v11.html',
+      origin: 'http://127.0.0.1:3101'
+    }
+  };
+  globalThis.fetch = async (url) => {
+    fetchedUrls.push(String(url));
+    if (!responseByUrl.has(String(url))) {
+      return {
+        ok: false,
+        status: 404,
+        async json() {
+          return {};
+        }
+      };
+    }
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return JSON.parse(JSON.stringify(responseByUrl.get(String(url))));
+      }
+    };
+  };
+
+  try {
+    await dm.loadConfigs();
+
+    assert.equal(fetchedUrls.includes('../assets/map_packs/current/story_pack_v1/levels.json'), true);
+    assert.equal(dm.getLevelDefinitions().package_level_1.name, '包内关卡');
+    assert.equal(dm.getLevelDefinitions().global_level, undefined);
+    assert.equal(dm.getLevelPackMeta().packageId, 'story_pack_v1');
+    assert.equal(dm.getLevelPackMeta().source, 'levelMapPack');
+    assert.equal(dm.getLevelSelectMapModel().map.nodes[0].levelId, 'package_level_1');
+  } finally {
+    globalThis.fetch = originalFetch;
+    globalThis.window = originalWindow;
+  }
+});
+
 test('生产关卡地图包是可解析的运行时 JSON 并开放三张地图', async () => {
   const raw = await fs.readFile(path.join(projectRoot, 'assets/data/level_map_pack_v1.json'), 'utf8');
   const pack = JSON.parse(raw);
@@ -488,17 +654,22 @@ test('生产关卡地图包是可解析的运行时 JSON 并开放三张地图',
   ]);
 });
 
-test('目录式地图包样例提供 package.json、maps.json 与 asset-manifest.json', async () => {
+test('目录式地图包样例提供 package.json、maps.json、levels.json 与 asset-manifest.json', async () => {
   const packageRoot = path.join(projectRoot, 'assets/map_packs/current/story_pack_v1');
   const packageJson = JSON.parse(await fs.readFile(path.join(packageRoot, 'package.json'), 'utf8'));
   const mapsJson = JSON.parse(await fs.readFile(path.join(packageRoot, 'maps.json'), 'utf8'));
+  const levelsJson = JSON.parse(await fs.readFile(path.join(packageRoot, 'levels.json'), 'utf8'));
   const assetManifest = JSON.parse(await fs.readFile(path.join(packageRoot, 'asset-manifest.json'), 'utf8'));
 
   assert.equal(packageJson.$schemaVersion, 'level_map_package_v1');
   assert.equal(packageJson.packageId, 'story_pack_v1');
   assert.equal(packageJson.files.maps, 'maps.json');
+  assert.equal(packageJson.files.levels, 'levels.json');
   assert.equal(packageJson.assets.manifest, 'asset-manifest.json');
   assert.equal(mapsJson.$schemaVersion, 'level_map_pack_v1');
+  assert.equal(levelsJson.$schemaVersion, 'levels_v1_wrapped');
+  assert.equal(typeof levelsJson.levels, 'object');
+  assert.equal(typeof levelsJson.enemyPools, 'object');
   assert.equal(Array.isArray(mapsJson.stories), true);
   assert.equal(Array.isArray(mapsJson.chapters), true);
   assert.equal(mapsJson.maps.length >= 3, true);

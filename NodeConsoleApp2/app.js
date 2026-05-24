@@ -6,7 +6,8 @@ const path = require('path');
 
 const rootDir = process.cwd();
 const port = Number.parseInt(process.env.PORT, 10) || 3000;
-const allowedPackageFiles = new Set(['package.json', 'maps.json', 'asset-manifest.json']);
+const requiredPackageFiles = ['package.json', 'maps.json', 'asset-manifest.json'];
+const allowedPackageFiles = new Set([...requiredPackageFiles, 'levels.json']);
 const skillEditorFileRoute = '/__skill_editor_file';
 const allowedJsonWriteRoots = [
   'assets/data/',
@@ -220,10 +221,17 @@ async function writeLevelMapPackage(payload) {
   }
 
   const files = Array.isArray(payload?.files) ? payload.files : [];
-  const fileNames = files.map(file => file?.fileName).sort();
-  const expectedNames = [...allowedPackageFiles].sort();
-  if (JSON.stringify(fileNames) !== JSON.stringify(expectedNames)) {
+  const fileNames = files.map(file => file?.fileName);
+  const fileNameSet = new Set(fileNames);
+  if (fileNames.length !== fileNameSet.size) {
+    throw new Error('地图包文件名不能重复。');
+  }
+  if (!requiredPackageFiles.every(fileName => fileNameSet.has(fileName))) {
     throw new Error('地图包必须包含 package.json、maps.json、asset-manifest.json。');
+  }
+  const invalidFileName = fileNames.find(fileName => !allowedPackageFiles.has(fileName));
+  if (invalidFileName) {
+    throw new Error(`不允许写入文件：${invalidFileName}`);
   }
 
   const directoryPath = path.resolve(rootDir, targetDirectory);

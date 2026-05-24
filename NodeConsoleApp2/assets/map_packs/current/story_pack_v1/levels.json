@@ -1,0 +1,428 @@
+{
+  "$schemaVersion": "levels_v1_wrapped",
+  "meta": {
+    "title": "Level Pack v1",
+    "notes": [
+      "关卡数据统一封装为 { $schemaVersion, meta, enemyPools, levels }。",
+      "level 只声明 wave -> enemyPoolId 的映射，不再在关卡节点内重复散落敌人模板列表。",
+      "运行时由 DataManagerV2 在装载阶段把 enemyPoolId 展开为 waves[].enemies。"
+    ],
+    "fieldNotes": {
+      "enemyPools": "敌人池字典：key 为 enemyPoolId，value 为可复用的敌人成员列表。",
+      "enemyPools.*.members": "敌人池成员列表。每个成员至少需要 templateId，可选 position。",
+      "levels": "关卡字典：key 为 levelId，value 为关卡定义。",
+      "levels.*.flow": "关卡流转元数据。当前支持 kind=story|acceptance，以及 story 关卡的顺序字段 order。",
+      "levels.*.flow.unlockRules": "关卡解锁规则。当前支持 always 与 after_levels_cleared；后者通过 requiredLevelIds 指定前置关卡。",
+      "levels.*.waves[].enemyPoolId": "关卡波次绑定的敌人池 ID，由 DataManagerV2 负责映射到运行时 enemies 列表。",
+      "levels.*.battleRules.victoryCondition": "战斗胜利条件。当前支持 defeat_all_enemies 与 survive_rounds。",
+      "levels.*.battleRules.failureCondition": "战斗失败条件。当前支持 player_hp_zero 与 body_part_broken。",
+      "levels.*.battlePlayerState": "进入战斗时注入的玩家运行时战斗态覆盖。当前支持 stats / bodyParts。",
+      "levels.*.battlePlayerState.stats": "进入战斗时覆盖玩家运行时 stats，例如 hp / ap / speed。建议用于验收样本或特殊战斗规则。",
+      "levels.*.battlePlayerState.bodyParts": "进入战斗时覆盖玩家运行时 bodyParts，可指定部位护甲当前值、上限和 weakness。",
+      "levels.*.selectionMeta": "关卡选择卡片使用的轻量内容元数据。当前支持 difficultyLabel / enemyStyleTags / buildHint。",
+      "levels.*.rewards": "关卡结算奖励。当前支持 exp / gold / kp，其中 kp 用于技能树知识点。"
+    },
+    "enums": {
+      "waveTypes": [
+        "fixed"
+      ],
+      "slotLayoutIds": [
+        "default_v1"
+      ],
+      "backgrounds": [
+        "bg_forest_01"
+      ]
+    }
+  },
+  "enemyPools": {
+    "pool_story_goblin_edge": {
+      "id": "pool_story_goblin_edge",
+      "name": "幽暗森林边缘敌人池",
+      "members": [
+        { "templateId": "goblin_story_headhunter", "position": 1 }
+      ]
+    },
+    "pool_story_goblin_outpost": {
+      "id": "pool_story_goblin_outpost",
+      "name": "密林前哨敌人池",
+      "members": [
+        { "templateId": "goblin_story_medic", "position": 1 }
+      ]
+    },
+    "pool_story_ruins_gate": {
+      "id": "pool_story_ruins_gate",
+      "name": "废墟关隘敌人池",
+      "members": [
+        { "templateId": "skeleton_story_repair_guard", "position": 1 }
+      ]
+    },
+    "pool_acceptance_guard": {
+      "id": "pool_acceptance_guard",
+      "name": "人工验收守卫池",
+      "members": [
+        { "templateId": "enemy_acceptance_guard", "position": 1 }
+      ]
+    },
+    "pool_acceptance_head_tapper": {
+      "id": "pool_acceptance_head_tapper",
+      "name": "固定头部攻击敌人池",
+      "members": [
+        { "templateId": "enemy_acceptance_head_tapper", "position": 1 }
+      ]
+    },
+    "pool_acceptance_repair": {
+      "id": "pool_acceptance_repair",
+      "name": "敌人修甲样本池",
+      "members": [
+        { "templateId": "enemy_acceptance_repair", "position": 1 }
+      ]
+    },
+    "pool_acceptance_heal": {
+      "id": "pool_acceptance_heal",
+      "name": "敌人回血样本池",
+      "members": [
+        { "templateId": "enemy_acceptance_heal", "position": 1 }
+      ]
+    },
+    "pool_acceptance_pursuit": {
+      "id": "pool_acceptance_pursuit",
+      "name": "敌人弱点追击样本池",
+      "members": [
+        { "templateId": "enemy_acceptance_pursuit", "position": 1 }
+      ]
+    }
+  },
+  "levels": {
+    "level_1_1": {
+      "id": "level_1_1",
+      "name": "幽暗森林边缘",
+      "description": "森林外围的哥布林追猎手会优先压迫玩家最脆弱的部位。",
+      "flow": {
+        "kind": "story",
+        "order": 1,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-1",
+        "objectiveText": "稳住森林边缘的第一波压迫，建立基础防御节奏。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": ["弱点追击", "快攻"],
+        "buildHint": "优先补头部防御，再用低耗技能稳定换血。"
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerState": {
+        "bodyParts": {
+          "head": { "current": 20, "max": 20, "weakness": 1.5 },
+          "chest": { "current": 10, "max": 20, "weakness": 1.0 },
+          "abdomen": { "current": 6, "max": 20, "weakness": 1.1 },
+          "arm": { "current": 6, "max": 20, "weakness": 1.0 },
+          "leg": { "current": 12, "max": 20, "weakness": 1.0 }
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_story_goblin_edge"
+        }
+      ],
+      "rewards": {
+        "exp": 100,
+        "gold": 50,
+        "kp": 1
+      }
+    },
+    "level_1_2_story": {
+      "id": "level_1_2_story",
+      "name": "密林前哨",
+      "description": "前哨内的医护斥候会在低血量时优先自疗，再重新投入战斗。",
+      "flow": {
+        "kind": "story",
+        "order": 2,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-2",
+        "objectiveText": "穿过密林前哨，压制敌方续航并继续推进。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "进阶",
+        "enemyStyleTags": ["低血自疗", "节奏拉扯"],
+        "buildHint": "保留一张斩杀或打断节奏的技能，避免被敌人续航拖长回合。"
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_story_goblin_outpost"
+        }
+      ],
+      "rewards": {
+        "exp": 140,
+        "gold": 80,
+        "kp": 1
+      }
+    },
+    "level_1_3_story": {
+      "id": "level_1_3_story",
+      "name": "废墟关隘",
+      "description": "残甲骷髅卫士会先修补破损胸甲，再用重击继续压迫玩家。",
+      "flow": {
+        "kind": "story",
+        "order": 3,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-3",
+        "objectiveText": "突破废墟关隘，完成第一章收束。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": ["残甲修补", "重击压迫"],
+        "buildHint": "优先准备破甲或高爆发节奏，不要让敌人反复补甲进入长线。"
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_story_ruins_gate"
+        }
+      ],
+      "rewards": {
+        "exp": 220,
+        "gold": 120,
+        "kp": 2
+      }
+    },
+    "level_1_2_acceptance": {
+      "id": "level_1_2_acceptance",
+      "name": "人工验收样本",
+      "description": "用于人工验收 HP免伤与护甲免伤，敌人固定重击头部，便于直接观察掉甲与保血。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 101
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_hp_guard",
+          "skill_demo_armor_guard",
+          "skill_demo_on_hit_armor"
+        ]
+      },
+      "battlePlayerState": {
+        "bodyParts": {
+          "head": { "current": 20, "max": 20, "weakness": 1.5 },
+          "chest": { "current": 10, "max": 20, "weakness": 1.0 },
+          "abdomen": { "current": 6, "max": 20, "weakness": 1.1 },
+          "arm": { "current": 6, "max": 20, "weakness": 1.0 },
+          "leg": { "current": 12, "max": 20, "weakness": 1.0 }
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_guard"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    },
+    "level_1_3_acceptance_on_hit_armor": {
+      "id": "level_1_3_acceptance_on_hit_armor",
+      "name": "受击获甲验收样本",
+      "description": "用于人工验收受击获甲，开战时玩家头部护甲为 0，便于观察先补甲再承伤。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 102
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_on_hit_armor"
+        ]
+      },
+      "battlePlayerState": {
+        "bodyParts": {
+          "head": { "current": 0, "max": 20, "weakness": 1.5 }
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_head_tapper"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    },
+    "level_1_4_acceptance_enemy_repair": {
+      "id": "level_1_4_acceptance_enemy_repair",
+      "name": "敌人修甲验收样本",
+      "description": "先只部署“等待”并执行。若敌人第一回合先修补胸部残甲，再攻击，说明修甲策略成立。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 103
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_wait"
+        ]
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_repair"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    },
+    "level_1_5_acceptance_enemy_heal": {
+      "id": "level_1_5_acceptance_enemy_heal",
+      "name": "敌人回血验收样本",
+      "description": "先只部署“等待”并执行。若敌人第一回合先回复自身 HP，再继续战斗，说明回血策略成立。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 104
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_wait"
+        ]
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_heal"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    },
+    "level_1_7_acceptance_enemy_pursuit": {
+      "id": "level_1_7_acceptance_enemy_pursuit",
+      "name": "敌人弱点追击验收样本",
+      "description": "先只部署“等待”并执行。若敌人第一回合优先压迫玩家头部弱点，说明弱点追击策略成立。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 105
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_wait"
+        ]
+      },
+      "battlePlayerState": {
+        "bodyParts": {
+          "head": { "current": 20, "max": 20, "weakness": 1.5 },
+          "chest": { "current": 10, "max": 20, "weakness": 1.0 },
+          "abdomen": { "current": 6, "max": 20, "weakness": 1.1 },
+          "arm": { "current": 6, "max": 20, "weakness": 1.0 },
+          "leg": { "current": 12, "max": 20, "weakness": 1.0 }
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_pursuit"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    },
+    "level_1_6_acceptance_armor_guard": {
+      "id": "level_1_6_acceptance_armor_guard",
+      "name": "护甲免伤验收样本",
+      "description": "用于独立重放护甲免伤，敌人固定攻击头部护甲，便于只观察护甲是否保持不变。",
+      "flow": {
+        "kind": "acceptance",
+        "order": 106
+      },
+      "background": "bg_forest_01",
+      "battleRules": {
+        "slotLayoutId": "default_v1"
+      },
+      "battlePlayerSkills": {
+        "learnedAdd": [
+          "skill_demo_armor_guard"
+        ]
+      },
+      "battlePlayerState": {
+        "bodyParts": {
+          "head": { "current": 20, "max": 20, "weakness": 1.5 },
+          "chest": { "current": 10, "max": 20, "weakness": 1.0 },
+          "abdomen": { "current": 6, "max": 20, "weakness": 1.1 },
+          "arm": { "current": 6, "max": 20, "weakness": 1.0 },
+          "leg": { "current": 12, "max": 20, "weakness": 1.0 }
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_acceptance_head_tapper"
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "gold": 0,
+        "kp": 0
+      }
+    }
+  }
+}

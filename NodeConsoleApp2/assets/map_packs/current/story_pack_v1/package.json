@@ -3,11 +3,12 @@
   "packageId": "story_pack_v1",
   "packageVersion": "1.0.0",
   "title": "故事地图包 v1",
-  "status": "authoring",
+  "status": "runtime",
   "entryStoryId": "story_default",
   "entryChapterId": "story_chapter_1",
   "files": {
-    "maps": "maps.json"
+    "maps": "maps.json",
+    "levels": "levels.json"
   },
   "assets": {
     "basePath": "assets/",

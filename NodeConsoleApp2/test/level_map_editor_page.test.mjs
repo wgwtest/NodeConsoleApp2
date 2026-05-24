@@ -274,6 +274,7 @@ function createPageFixture() {
             <button id="addNodeBtn" type="button">add node</button>
             <button id="removeNodeBtn" type="button">remove node</button>
             <button id="saveNodeBtn" type="button">save node</button>
+            <button id="editLevelDetailBtn" type="button">edit level detail</button>
             <button id="addEdgeBtn" type="button">add edge</button>
             <button id="removeEdgeBtn" type="button">remove edge</button>
             <button id="saveEdgeBtn" type="button">save edge</button>
@@ -741,6 +742,28 @@ test('LevelMapEditorPage 支持新增节点、编辑边并更新位置', async (
         assert.equal(currentNode.artRefs?.portrait, 'enemy_ruins_boss');
         assert.equal(edge.type, 'merge');
         assert.equal(edge.fromNodeId, 'node_2');
+    } finally {
+        dom.window.close();
+        cleanupDomGlobals();
+    }
+});
+
+test('LevelMapEditorPage 在节点检查器提供当前节点的关卡详情入口', async () => {
+    const dom = createPageFixture();
+    try {
+        const { page } = await createPageContext();
+        await page.loadDefaultDocuments();
+
+        let navigatedUrl = '';
+        page.navigateTo = (url) => {
+            navigatedUrl = url;
+        };
+
+        document.getElementById('editLevelDetailBtn').click();
+
+        assert.match(navigatedUrl, /level_detail_editor_v1\.html/u);
+        assert.match(navigatedUrl, new RegExp(`mapId=${page.selectedMapId}`, 'u'));
+        assert.match(navigatedUrl, new RegExp(`nodeId=${page.selectedNodeId}`, 'u'));
     } finally {
         dom.window.close();
         cleanupDomGlobals();

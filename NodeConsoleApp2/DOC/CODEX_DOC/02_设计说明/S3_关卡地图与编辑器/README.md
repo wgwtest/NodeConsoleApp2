@@ -1,6 +1,6 @@
 # S3 关卡地图与编辑器设计说明
 
-最后整理时间：2026-05-21
+最后整理时间：2026-05-24
 
 状态：`当前有效`
 
@@ -15,6 +15,7 @@
 | [12-关卡系统(level_design)-设计说明](./12-关卡系统(level_design)-设计说明.md) | 关卡系统设计 |
 | [24-关卡管理与关卡编辑器(level_management_editor)-设计说明](./24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md) | 关卡管理与关卡编辑器设计 |
 | [26-关卡地图选择与地图包(level_map_selection)-设计说明](./26-关卡地图选择与地图包(level_map_selection)-设计说明.md) | 地图式关卡选择、地图包和主程序交接设计 |
+| [28-节点派生关卡编辑器(node_derived_level_editor)-设计说明](./28-节点派生关卡编辑器(node_derived_level_editor)-设计说明.md) | 地图节点派生关卡详情编辑器设计 |
 
 ## 3. 归属规则
 

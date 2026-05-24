@@ -947,11 +947,30 @@ class DataManager {
                     }
                     const mapsUrl = resolveRelativeUrl(mapsFile, url);
                     rawPack = await fetchJson(mapsUrl);
+                    const levelsFile = packageJson?.files?.levels;
+                    let packageLevels = null;
+                    let packageLevelsPath = null;
+                    if (typeof levelsFile === 'string' && levelsFile.trim().length > 0) {
+                        packageLevelsPath = resolveRelativeUrl(levelsFile, url);
+                        packageLevels = await fetchJson(packageLevelsPath);
+                        const levelsEntry = this._getContentRegistryEntry('levels') || {
+                            kind: 'levels',
+                            rootKey: 'levels'
+                        };
+                        this._validateContentPack('levels', {
+                            ...levelsEntry,
+                            path: packageLevelsPath,
+                            packagePath: entry.packagePath || entry.packageJsonPath,
+                            packageJson
+                        }, packageLevels);
+                    }
                     loadedEntry = {
                         ...entry,
                         packagePath: entry.packagePath || entry.packageJsonPath,
                         packageJson,
-                        packageMapsPath: mapsUrl
+                        packageMapsPath: mapsUrl,
+                        packageLevels,
+                        packageLevelsPath
                     };
                 } else {
                     rawPack = await fetchJson(url);
@@ -985,9 +1004,30 @@ class DataManager {
 
             const items = itemsPack.raw;
             const enemies = enemiesPack.raw;
-            const levels = levelsPack.raw;
             const buffs = buffsPack.raw;
             const rawLevelMapPack = levelMapPack ? levelMapPack.raw : null;
+            const packageLevels = levelMapPack?.entry?.packageLevels || null;
+            const effectiveLevelsPack = packageLevels
+                ? {
+                    raw: packageLevels,
+                    entry: {
+                        ...levelsPack.entry,
+                        path: levelMapPack.entry.packageLevelsPath,
+                        packagePath: levelMapPack.entry.packagePath,
+                        packageJson: levelMapPack.entry.packageJson
+                    },
+                    meta: {
+                        ...this._buildContentPackMeta('levels', {
+                            ...levelsPack.entry,
+                            path: levelMapPack.entry.packageLevelsPath,
+                            packagePath: levelMapPack.entry.packagePath,
+                            packageJson: levelMapPack.entry.packageJson
+                        }, packageLevels),
+                        source: 'levelMapPack'
+                    }
+                }
+                : levelsPack;
+            const levels = effectiveLevelsPack.raw;
             const slotLayouts = slotLayoutsPack ? slotLayoutsPack.raw : null;
             const expandedLevels = this._expandLevelEnemyPools(levels);
 
@@ -1022,7 +1062,7 @@ class DataManager {
                 enemies,
                 levels: expandedLevels,
                 levelCatalog: this._buildLevelCatalog(expandedLevels, {
-                    packMeta: levelsPack.meta
+                    packMeta: effectiveLevelsPack.meta
                 }),
                 player,
                 buffs: this._unwrapBuffDefinitions(buffs),
@@ -1037,7 +1077,7 @@ class DataManager {
                     player: playerPack.meta,
                     items: itemsPack.meta,
                     enemies: enemiesPack.meta,
-                    levels: levelsPack.meta,
+                    levels: effectiveLevelsPack.meta,
                     skills: skillsPack.meta,
                     buffs: buffsPack.meta,
                     levelMapPack: levelMapPack ? levelMapPack.meta : null,

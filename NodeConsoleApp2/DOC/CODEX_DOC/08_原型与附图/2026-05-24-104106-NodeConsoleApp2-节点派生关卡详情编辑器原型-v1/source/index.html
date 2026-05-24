@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, initial-scale=1">
+  <title>节点派生关卡详情编辑器原型 v1</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="artboard" aria-label="节点派生关卡详情编辑器原型">
+    <header class="topbar">
+      <section class="brand-block">
+        <div class="brand-mark">LD</div>
+        <div>
+          <div class="eyebrow">NodeConsoleApp2 / Level Detail Editor</div>
+          <h1>节点派生关卡详情编辑器</h1>
+        </div>
+      </section>
+      <section class="path-strip" aria-label="当前编辑上下文">
+        <div class="path-item">
+          <span>故事包</span>
+          <strong>story_pack_v1</strong>
+        </div>
+        <div class="path-item">
+          <span>节点路径</span>
+          <strong>幽暗森林 / 林冠伏击线 / N-04</strong>
+        </div>
+        <div class="path-item path-item--wide">
+          <span>工作稿</span>
+          <code>assets/map_packs/authoring/story_pack_v1/package.json</code>
+        </div>
+        <div class="path-item path-item--wide">
+          <span>发布</span>
+          <code>assets/map_packs/current/story_pack_v1/package.json</code>
+        </div>
+      </section>
+      <section class="top-actions" aria-label="文件操作">
+        <button class="btn btn-ghost">返回地图编辑器</button>
+        <button class="btn btn-ghost">加载工作稿</button>
+        <button class="btn btn-primary">保存工作稿</button>
+        <button class="btn btn-primary btn-publish">发布到主流程</button>
+        <button class="btn btn-ghost">导出完整包</button>
+      </section>
+    </header>
+
+    <section class="workspace">
+      <aside class="left-drawer" aria-label="故事包结构">
+        <div class="drawer-head">
+          <div>
+            <span class="panel-kicker">故事结构</span>
+            <h2>章节 / 地图 / 节点</h2>
+          </div>
+          <button class="icon-btn" aria-label="收起左侧抽屉">‹</button>
+        </div>
+
+        <section class="package-card">
+          <div class="package-title">
+            <strong>故事关卡地图 Authoring 工作包</strong>
+            <span>1 个故事 / 3 个章节 / 31 个节点</span>
+          </div>
+          <div class="package-meter">
+            <span style="width: 82%"></span>
+          </div>
+          <div class="package-stats">
+            <span>关卡详情 28/31</span>
+            <span>发布阻断 2</span>
+          </div>
+        </section>
+
+        <nav class="tree-list" aria-label="节点导航">
+          <article class="chapter-block">
+            <div class="chapter-row">
+              <span class="chapter-index">01</span>
+              <div>
+                <strong>幽暗森林</strong>
+                <span>入口教学、补给支线、林冠伏击</span>
+              </div>
+            </div>
+            <div class="map-row is-open">
+              <div class="map-dot"></div>
+              <div>
+                <strong>林冠伏击线</strong>
+                <span>chapter_1_authoring_map</span>
+              </div>
+            </div>
+            <button class="node-row is-done">
+              <span class="node-badge">N-01</span>
+              <span>森林边缘</span>
+              <em>OK</em>
+            </button>
+            <button class="node-row is-done">
+              <span class="node-badge">N-02</span>
+              <span>旧营地补给</span>
+              <em>OK</em>
+            </button>
+            <button class="node-row is-selected">
+              <span class="node-badge">N-04</span>
+              <span>林冠伏击</span>
+              <em>编辑中</em>
+            </button>
+            <button class="node-row is-warning">
+              <span class="node-badge">N-06</span>
+              <span>雾路精英</span>
+              <em>缺背景</em>
+            </button>
+          </article>
+
+          <article class="chapter-block is-muted">
+            <div class="chapter-row">
+              <span class="chapter-index">02</span>
+              <div>
+                <strong>霜雾峡谷</strong>
+                <span>冰面支线、桥梁汇合、峡谷守卫</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="chapter-block is-muted">
+            <div class="chapter-row">
+              <span class="chapter-index">03</span>
+              <div>
+                <strong>暮色古道</strong>
+                <span>遗迹古道、暮色商队、章节 Boss</span>
+              </div>
+            </div>
+          </article>
+        </nav>
+      </aside>
+
+      <section class="detail-panel" aria-label="关卡详情编辑区">
+        <div class="context-row">
+          <section class="level-title">
+            <span class="panel-kicker">当前节点关卡</span>
+            <div class="title-line">
+              <h2>林冠伏击</h2>
+              <span class="status-pill status-pill-ok">level_ch1_n04</span>
+              <span class="status-pill">node_04</span>
+            </div>
+            <p>由地图节点派生的战斗详情。地图负责位置和连线；此页只编辑战斗内容。</p>
+          </section>
+          <section class="mini-map-card" aria-label="地图上下文">
+            <div class="mini-map">
+              <span class="route route-a"></span>
+              <span class="route route-b"></span>
+              <span class="map-node node-a">1</span>
+              <span class="map-node node-b">2</span>
+              <span class="map-node node-c is-current">4</span>
+              <span class="map-node node-d">6</span>
+            </div>
+            <div>
+              <strong>地图上下文</strong>
+              <span>来自 林冠伏击线 / 当前节点 N-04</span>
+            </div>
+          </section>
+        </div>
+
+        <nav class="tabs" aria-label="关卡详情分组">
+          <button class="tab is-active">概览</button>
+          <button class="tab">战斗场景</button>
+          <button class="tab">敌人</button>
+          <button class="tab">奖励</button>
+          <button class="tab">条件与规则</button>
+          <button class="tab">初始状态</button>
+          <button class="tab">高级</button>
+        </nav>
+
+        <section class="editor-grid">
+          <section class="form-section overview-section">
+            <div class="section-head">
+              <div>
+                <span class="panel-kicker">Overview</span>
+                <h3>基础信息</h3>
+              </div>
+              <span class="save-state">原子字段自动写回</span>
+            </div>
+            <div class="field-grid">
+              <label class="field field-wide">
+                <span>关卡名称</span>
+                <input value="林冠伏击">
+              </label>
+              <label class="field">
+                <span>难度标签</span>
+                <select>
+                  <option>进阶</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>节点显示短标</span>
+                <input value="1-4">
+              </label>
+              <label class="field field-wide field-tall">
+                <span>关卡描述</span>
+                <textarea>林冠上方的伏击者会优先攻击玩家头部弱点，逼迫玩家在护甲和爆发之间做选择。</textarea>
+              </label>
+              <label class="field field-wide">
+                <span>构筑提示</span>
+                <input value="准备头部防护或一次性爆发，避免被连续压低弱点部位。">
+              </label>
+            </div>
+          </section>
+
+          <section class="form-section enemy-section">
+            <div class="section-head">
+              <div>
+                <span class="panel-kicker">Single Enemy</span>
+                <h3>本关敌人</h3>
+              </div>
+              <button class="small-action">打开敌人编辑器</button>
+            </div>
+            <label class="field">
+              <span>敌人模板</span>
+              <select>
+                <option>林冠哥布林追猎手 / goblin_story_headhunter</option>
+              </select>
+            </label>
+            <div class="enemy-card">
+              <div class="enemy-portrait">
+                <img src="../../../../../assets/images/level_map/portraits/enemy_goblin_hunter.svg" alt="">
+              </div>
+              <div class="enemy-main">
+                <strong>林冠哥布林追猎手</strong>
+                <span>快攻 / 弱点追击 / 单敌人</span>
+                <div class="stat-strip">
+                  <b>HP 36</b>
+                  <b>AP 3</b>
+                  <b>SPD 14</b>
+                  <b>技能 3</b>
+                </div>
+              </div>
+            </div>
+            <div class="enemy-rule-note">
+              UI 只表达“本关敌人”。运行时需要的 enemyPool / wave 由发布适配层生成。
+            </div>
+          </section>
+
+          <section class="form-section scene-section">
+            <div class="section-head">
+              <div>
+                <span class="panel-kicker">Battle Scene</span>
+                <h3>战斗场景</h3>
+              </div>
+              <button class="small-action">更换背景</button>
+            </div>
+            <div class="scene-preview">
+              <img src="../../../../../assets/images/level_map/backgrounds/bg_forest_canopy.svg" alt="">
+              <div class="scene-overlay">
+                <strong>bg_forest_01</strong>
+                <span>森林林冠 / 战斗背景</span>
+              </div>
+            </div>
+            <div class="resource-row">
+              <span>资源状态</span>
+              <strong>已在 asset-manifest 声明</strong>
+            </div>
+          </section>
+
+          <section class="form-section reward-section">
+            <div class="section-head">
+              <div>
+                <span class="panel-kicker">Rewards</span>
+                <h3>奖励</h3>
+              </div>
+            </div>
+            <div class="reward-grid">
+              <label class="field">
+                <span>经验</span>
+                <input value="140">
+              </label>
+              <label class="field">
+                <span>金币</span>
+                <input value="80">
+              </label>
+              <label class="field">
+                <span>知识点 KP</span>
+                <input value="1">
+              </label>
+            </div>
+            <div class="reward-preview">
+              <span>首通预览</span>
+              <strong>EXP 140 · GOLD 80 · KP 1</strong>
+            </div>
+          </section>
+
+          <section class="form-section rules-section">
+            <div class="section-head">
+              <div>
+                <span class="panel-kicker">Rules</span>
+                <h3>条件与规则</h3>
+              </div>
+              <button class="small-action">从入边同步</button>
+            </div>
+            <div class="rule-list">
+              <div class="rule-item">
+                <span>解锁</span>
+                <strong>完成 N-02 或 N-03</strong>
+              </div>
+              <div class="rule-item">
+                <span>胜利</span>
+                <strong>击败本关敌人</strong>
+              </div>
+              <div class="rule-item">
+                <span>失败</span>
+                <strong>玩家 HP 归零</strong>
+              </div>
+            </div>
+          </section>
+        </section>
+      </section>
+
+      <aside class="right-drawer" aria-label="关卡检查器">
+        <div class="drawer-head">
+          <div>
+            <span class="panel-kicker">检查器</span>
+            <h2>绑定 / 校验 / 发布</h2>
+          </div>
+          <button class="icon-btn" aria-label="收起右侧抽屉">›</button>
+        </div>
+
+        <section class="inspector-card binding-card">
+          <span class="panel-kicker">Binding</span>
+          <h3>节点绑定</h3>
+          <dl class="binding-list">
+            <div><dt>nodeId</dt><dd>node_ch1_04</dd></div>
+            <div><dt>levelId</dt><dd>level_ch1_n04</dd></div>
+            <div><dt>mapId</dt><dd>chapter_1_authoring_map</dd></div>
+            <div><dt>package</dt><dd>story_pack_v1</dd></div>
+          </dl>
+          <button class="wide-action">在地图中定位节点</button>
+        </section>
+
+        <section class="inspector-card">
+          <span class="panel-kicker">Publish Gate</span>
+          <h3>发布校验</h3>
+          <div class="issue-list">
+            <div class="issue issue-error">
+              <strong>阻断</strong>
+              <span>N-06 缺少战斗背景</span>
+            </div>
+            <div class="issue issue-error">
+              <strong>阻断</strong>
+              <span>N-09 敌人模板不存在</span>
+            </div>
+            <div class="issue issue-warn">
+              <strong>警告</strong>
+              <span>N-04 仍有地图节点奖励覆写</span>
+            </div>
+            <div class="issue issue-ok">
+              <strong>通过</strong>
+              <span>当前关卡单敌人引用有效</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="inspector-card">
+          <span class="panel-kicker">Runtime Projection</span>
+          <h3>兼容投影</h3>
+          <div class="projection-box">
+            <code>primaryEnemy.templateId</code>
+            <span>goblin_story_headhunter</span>
+          </div>
+          <div class="projection-arrow">生成</div>
+          <div class="projection-box muted">
+            <code>waves[0].enemyPoolId</code>
+            <span>pool_level_ch1_n04_primary</span>
+          </div>
+        </section>
+
+        <section class="inspector-card path-card">
+          <span class="panel-kicker">Files</span>
+          <h3>本次保存会写入</h3>
+          <ul>
+            <li>package.json</li>
+            <li>maps.json</li>
+            <li>levels.json</li>
+            <li>asset-manifest.json</li>
+          </ul>
+        </section>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

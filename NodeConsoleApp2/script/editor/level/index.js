@@ -2,6 +2,8 @@ import LevelPackWorkspace from './LevelPackWorkspace.js';
 import LevelEditorPage from './LevelEditorPage.js';
 import LevelMapWorkspace from './LevelMapWorkspace.js';
 import LevelMapEditorPage from './LevelMapEditorPage.js';
+import LevelDetailWorkspace from './LevelDetailWorkspace.js';
+import LevelDetailEditorPage from './LevelDetailEditorPage.js';
 import {
     clearContentPackOverride,
     getContentPackOverride,
@@ -50,7 +52,9 @@ export function createLevelMapEditorPage(options = {}) {
         document: options.document || globalThis.document,
         mapSourceUrl: options.mapSourceUrl || '../assets/map_packs/authoring/story_pack_v1/package.json',
         levelSourceUrl: options.levelSourceUrl || '../assets/data/levels.json',
+        enemySourceUrl: options.enemySourceUrl || '../assets/data/enemies.json',
         fetchImpl: options.fetchImpl || globalThis.fetch?.bind(globalThis),
+        navigateTo: options.navigateTo,
         workspaceFactory(rawMapPack, levelsDocument) {
             return new LevelMapWorkspace(rawMapPack, { levelsDocument });
         }
@@ -66,4 +70,25 @@ export function bootLevelMapEditorPage(options = {}) {
     return page;
 }
 
-export { LevelPackWorkspace, LevelEditorPage, LevelMapWorkspace, LevelMapEditorPage };
+export function createLevelDetailEditorPage(options = {}) {
+    return new LevelDetailEditorPage({
+        document: options.document || globalThis.document,
+        window: options.window || globalThis.window,
+        mapSourceUrl: options.mapSourceUrl || '../assets/map_packs/authoring/story_pack_v1/package.json',
+        levelSourceUrl: options.levelSourceUrl || '../assets/data/levels.json',
+        enemySourceUrl: options.enemySourceUrl || '../assets/data/enemies.json',
+        fetchImpl: options.fetchImpl || globalThis.fetch?.bind(globalThis),
+        workspaceFactory: options.workspaceFactory
+    });
+}
+
+export function bootLevelDetailEditorPage(options = {}) {
+    const page = createLevelDetailEditorPage(options);
+    page.bind();
+    page.loadDefaultDocuments().catch((error) => {
+        page.setStatus(`默认关卡详情加载失败：${error.message}`);
+    });
+    return page;
+}
+
+export { LevelPackWorkspace, LevelEditorPage, LevelMapWorkspace, LevelMapEditorPage, LevelDetailWorkspace, LevelDetailEditorPage };
