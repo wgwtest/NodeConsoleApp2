@@ -809,7 +809,38 @@ function summarizeReport(results) {
   return { byBuild, byChapter, diagnosisCounts, diagnosisLegend, recommendations };
 }
 
+function renderRuntimeSmokeSummary(report) {
+  const lines = ['# Campaign Runtime Smoke Summary', ''];
+  lines.push(`Generated: ${report.meta.generatedAt}`);
+  lines.push(`Mode: ${report.meta.mode}`);
+  lines.push(`Levels: ${report.meta.levelCount}`);
+  lines.push(`Covered levels: ${report.summary?.coveredLevels ?? 0}`);
+  lines.push(`Failed levels: ${Array.isArray(report.summary?.failedLevels) ? report.summary.failedLevels.length : 0}`);
+  lines.push('');
+  lines.push('## Level Results');
+  lines.push('');
+  lines.push('| Level | Enemies | Player Plans | Enemy Plans | Timeline Entries | Turn Result | Current Turn | State |');
+  lines.push('| --- | ---: | ---: | ---: | ---: | --- | ---: | --- |');
+  for (const row of report.results || []) {
+    lines.push(`| ${row.levelId} | ${row.instantiatedEnemyCount} | ${row.playerPlanCount} | ${row.enemyPlanCount} | ${row.timelineEntryCount} | ${row.turnResult?.ok ? 'ok' : (row.turnResult?.reason || 'failed')} | ${row.currentTurn} | ${row.fsmState}/${row.battlePhase} |`);
+  }
+  lines.push('');
+  if (Array.isArray(report.summary?.failedLevels) && report.summary.failedLevels.length > 0) {
+    lines.push('## Failed Levels');
+    lines.push('');
+    for (const item of report.summary.failedLevels) {
+      lines.push(`- ${item.levelId}: ${item.reason}`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
 function renderSummary(report) {
+  if (report.meta?.mode === 'runtime_smoke') {
+    return renderRuntimeSmokeSummary(report);
+  }
+
   const lines = ['# Campaign Balance Summary', ''];
   lines.push(`Generated: ${report.meta.generatedAt}`);
   if (report.meta.mode) lines.push(`Mode: ${report.meta.mode}`);
@@ -980,6 +1011,126 @@ async function simulateProgressiveLevel({ CoreEngine, modules, data, levelId, pl
   return row;
 }
 
+async function runRuntimeSmokeLevel({ CoreEngine, modules, data, levelId, build }) {
+  const level = data.levels.levels[levelId];
+  const poolId = level.waves?.[0]?.enemyPoolId;
+  const members = asArray(data.levels.enemyPools?.[poolId]?.members);
+  const enemies = members
+    .map((member, index) => data.enemies[member.templateId] ? normalizeEnemy(data.enemies[member.templateId], index) : null)
+    .filter(Boolean);
+  const player = buildPlayer(data.player.default, build);
+  const runtime = {
+    BuffManager: modules.BuffManager,
+    BuffSystem: modules.BuffSystem,
+    registry: new modules.BuffRegistry(data.buffs.buffs),
+    enemySkillUsage: Object.create(null)
+  };
+  const driver = buildDriver({
+    CoreEngine,
+    modules,
+    runtime,
+    player,
+    enemies,
+    skillMaps: data.skillMaps,
+    slotLayouts: data.slotLayouts,
+    level
+  });
+  const result = {
+    levelId,
+    levelName: level.name || levelId,
+    instantiatedEnemyCount: enemies.length,
+    playerPlanCount: 0,
+    enemyPlanCount: 0,
+    timelineEntryCount: 0,
+    currentTurn: 0,
+    battlePhase: 'IDLE',
+    fsmState: 'INIT',
+    settled: false,
+    turnResult: { ok: false, reason: 'not_started' },
+    playerSkillUsage: {},
+    enemySkillUsage: {}
+  };
+
+  await withQuietConsole(async () => {
+    driver.startBattle();
+    const draft = buildPlayerDraft({
+      driver,
+      build,
+      skillsById: data.skillMaps.playerSkills,
+      chapter: Number(level.flow?.chapterOrder ?? 1) || 1
+    });
+    result.playerPlanCount = Object.keys(draft).length;
+    if (result.playerPlanCount <= 0) {
+      result.turnResult = { ok: false, reason: 'no_player_action_available' };
+      return;
+    }
+
+    const roundId = driver.currentTurn;
+    const failuresBefore = driver.eventBus.eventsByName('PLANNING_COMMIT_FAILED').length;
+    driver.commitPlanning({ planningDraftBySkill: draft });
+    result.enemyPlanCount = Array.isArray(driver.enemySkillQueue) ? driver.enemySkillQueue.length : 0;
+    result.timelineEntryCount = Array.isArray(driver.timeline?.entries) ? driver.timeline.entries.length : 0;
+    if (driver.timeline.phase !== 'READY') {
+      const failure = driver.eventBus.eventsByName('PLANNING_COMMIT_FAILED').slice(failuresBefore).at(-1);
+      result.turnResult = {
+        ok: false,
+        reason: failure?.payload?.reason
+          ? `planning_commit_failed:${failure.payload.reason}`
+          : `timeline_not_ready_${driver.timeline.phase}`
+      };
+      return;
+    }
+
+    driver.commitTurn();
+    const startedAt = Date.now();
+    while (driver.fsm.currentState === 'BATTLE_LOOP' && driver.battlePhase === 'EXECUTION') {
+      if (Date.now() - startedAt > 1500) {
+        result.turnResult = { ok: false, reason: 'turn_timeout' };
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    if (driver.fsm.currentState === 'BATTLE_LOOP' && driver.currentTurn === roundId) {
+      result.turnResult = { ok: false, reason: 'turn_did_not_advance' };
+      return;
+    }
+    result.turnResult = { ok: true };
+  });
+
+  result.currentTurn = Number(driver.currentTurn ?? 0) || 0;
+  result.battlePhase = driver.battlePhase || '';
+  result.fsmState = driver.fsm?.currentState || '';
+  result.settled = driver.fsm?.currentState === 'BATTLE_SETTLEMENT';
+  result.playerSkillUsage = countSkillUsage(driver.eventBus.eventsByName('TIMELINE_ENTRY_END'), 'PLAYER');
+  result.enemySkillUsage = countSkillUsage(driver.eventBus.eventsByName('TIMELINE_ENTRY_END'), 'ENEMY');
+  return result;
+}
+
+function summarizeRuntimeSmoke(results) {
+  const failed = results.filter(row => (
+    row.instantiatedEnemyCount < 1
+    || row.playerPlanCount < 1
+    || row.enemyPlanCount < 1
+    || row.timelineEntryCount < row.playerPlanCount + row.enemyPlanCount
+    || !row.turnResult?.ok
+    || (!(row.currentTurn >= 2) && row.settled !== true)
+  ));
+  return {
+    coveredLevels: results.length,
+    failedLevels: failed.map(row => ({
+      levelId: row.levelId,
+      reason: row.turnResult?.reason || 'runtime_smoke_failed',
+      instantiatedEnemyCount: row.instantiatedEnemyCount,
+      playerPlanCount: row.playerPlanCount,
+      enemyPlanCount: row.enemyPlanCount,
+      timelineEntryCount: row.timelineEntryCount,
+      currentTurn: row.currentTurn,
+      fsmState: row.fsmState,
+      battlePhase: row.battlePhase
+    }))
+  };
+}
+
 function summarizeProgressiveReport(results, player) {
   const wins = results.filter(row => row.victory).length;
   const diagnosisCounts = Object.create(null);
@@ -1098,6 +1249,51 @@ export async function runProgressiveCampaignSimulation(options = {}) {
       learningPriority: [...progressiveLearningPriority],
       results,
       summary: summarizeProgressiveReport(results, player)
+    };
+  });
+}
+
+export async function runCampaignRuntimeSmoke(options = {}) {
+  const projectRoot = path.resolve(options.projectRoot || defaultProjectRoot);
+  const randomSeed = String(options.randomSeed || 'campaign-runtime-smoke-v1');
+
+  return withSeededRandom(randomSeed, async () => {
+    const { CoreEngine } = await importCoreEngineClass(projectRoot);
+    const modules = await importRuntimeModules(projectRoot);
+    const levels = await readJson(projectRoot, 'assets/map_packs/current/story_pack_v1/levels.json');
+    const data = {
+      levels,
+      enemies: await readJson(projectRoot, 'assets/data/enemies.json'),
+      player: await readJson(projectRoot, 'assets/data/player.json'),
+      buffs: await readJson(projectRoot, 'assets/data/buffs_v2_7.json'),
+      slotLayouts: await readJson(projectRoot, 'assets/data/slot_layouts.json')
+    };
+    data.skillMaps = buildRuntimeSkillMaps(
+      await readJson(projectRoot, 'assets/data/skills_melee_v4_5.json'),
+      await readJson(projectRoot, 'assets/data/skills_enemy_v1.json')
+    );
+
+    const results = [];
+    for (const levelId of storyLevelIds) {
+      results.push(await runRuntimeSmokeLevel({
+        CoreEngine,
+        modules,
+        data,
+        levelId,
+        build: playerBuilds[1]
+      }));
+    }
+
+    return {
+      meta: {
+        generatedAt: new Date().toISOString(),
+        mode: 'runtime_smoke',
+        levelCount: storyLevelIds.length,
+        randomSeed,
+        source: 'tools/campaign_balance_simulator.mjs'
+      },
+      results,
+      summary: summarizeRuntimeSmoke(results)
     };
   });
 }

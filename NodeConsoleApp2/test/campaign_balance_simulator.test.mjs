@@ -172,6 +172,34 @@ test('progressive campaign report can be written with learning and reward detail
   assert.match(savedSummary, /Rewards KP/u);
 });
 
+test('campaign runtime smoke enters all 30 story levels and executes the first combat round', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  assert.equal(typeof simulator.runCampaignRuntimeSmoke, 'function');
+
+  const report = await simulator.runCampaignRuntimeSmoke({
+    projectRoot,
+    randomSeed: 'wbs-3.4.13-runtime-smoke'
+  });
+
+  assert.equal(report.meta.mode, 'runtime_smoke');
+  assert.equal(report.meta.levelCount, 30);
+  assert.equal(report.results.length, 30);
+  assert.equal(report.results[0].levelId, 'level_1_1');
+  assert.equal(report.results.at(-1).levelId, 'level_3_10');
+
+  for (const row of report.results) {
+    assert.equal(row.instantiatedEnemyCount >= 1, true, `${row.levelId} 应实例化至少 1 个敌人`);
+    assert.equal(row.playerPlanCount >= 1, true, `${row.levelId} 应能生成首回合玩家规划`);
+    assert.equal(row.enemyPlanCount >= 1, true, `${row.levelId} 应能生成首回合敌方计划`);
+    assert.equal(row.timelineEntryCount >= row.playerPlanCount + row.enemyPlanCount, true, `${row.levelId} 时间轴应包含敌我行动`);
+    assert.equal(row.turnResult.ok, true, `${row.levelId} 首回合执行失败：${row.turnResult.reason || 'unknown'}`);
+    assert.equal(row.currentTurn >= 2 || row.settled === true, true, `${row.levelId} 首回合执行后应推进回合或进入结算`);
+  }
+
+  assert.deepEqual(report.summary.failedLevels, []);
+  assert.equal(report.summary.coveredLevels, 30);
+});
+
 test('progressive campaign diagnoses boss and elite lethal failures as enemy pressure, not skill tree gaps', async () => {
   const simulator = await import(pathToFileURL(simulatorPath));
   const report = await simulator.runProgressiveCampaignSimulation({

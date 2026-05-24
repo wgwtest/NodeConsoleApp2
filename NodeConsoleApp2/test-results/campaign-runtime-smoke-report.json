@@ -1,0 +1,735 @@
+{
+  "meta": {
+    "generatedAt": "2026-05-24T22:52:35.196Z",
+    "mode": "runtime_smoke",
+    "levelCount": 30,
+    "randomSeed": "wbs-3.4.13-runtime-smoke",
+    "source": "tools/campaign_balance_simulator.mjs"
+  },
+  "results": [
+    {
+      "levelId": "level_1_1",
+      "levelName": "森林外缘",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 1
+      }
+    },
+    {
+      "levelId": "level_1_2",
+      "levelName": "失联路标",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_SETTLEMENT",
+      "settled": true,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "skill_throw_stone": 1
+      }
+    },
+    {
+      "levelId": "level_1_3",
+      "levelName": "北侧树冠",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "skill_throw_stone": 1
+      }
+    },
+    {
+      "levelId": "level_1_4",
+      "levelName": "猎手埋伏",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "skill_smash": 1
+      }
+    },
+    {
+      "levelId": "level_1_5",
+      "levelName": "密林前哨",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1
+      }
+    },
+    {
+      "levelId": "level_1_6",
+      "levelName": "雾中岔口",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 1
+      }
+    },
+    {
+      "levelId": "level_1_7",
+      "levelName": "古井回声",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "skill_bite": 1
+      }
+    },
+    {
+      "levelId": "level_1_8",
+      "levelName": "废墟斜坡",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 1
+      }
+    },
+    {
+      "levelId": "level_1_9",
+      "levelName": "关隘守卫",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 1
+      }
+    },
+    {
+      "levelId": "level_1_10",
+      "levelName": "废墟关隘",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_1771769351059": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 1
+      }
+    },
+    {
+      "levelId": "level_2_1",
+      "levelName": "霜雾山口",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 1
+      }
+    },
+    {
+      "levelId": "level_2_2",
+      "levelName": "冻土营火",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "skill_throw_stone": 1
+      }
+    },
+    {
+      "levelId": "level_2_3",
+      "levelName": "哨塔外墙",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_1771769351059": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1
+      }
+    },
+    {
+      "levelId": "level_2_4",
+      "levelName": "寒塔哨站",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 1
+      }
+    },
+    {
+      "levelId": "level_2_5",
+      "levelName": "旧矿洞口",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_bone_splinter_jab": 1
+      }
+    },
+    {
+      "levelId": "level_2_6",
+      "levelName": "冰雾裂谷",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1
+      }
+    },
+    {
+      "levelId": "level_2_7",
+      "levelName": "古代热源",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_1771769351059": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1
+      }
+    },
+    {
+      "levelId": "level_2_8",
+      "levelName": "冰封军械库",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_1771769351059": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1
+      }
+    },
+    {
+      "levelId": "level_2_9",
+      "levelName": "中庭门卫",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 1
+      }
+    },
+    {
+      "levelId": "level_2_10",
+      "levelName": "冰封中庭",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_1771769351059": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_centurion_wrecking_swing": 1
+      }
+    },
+    {
+      "levelId": "level_3_1",
+      "levelName": "暮色关门",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1
+      }
+    },
+    {
+      "levelId": "level_3_2",
+      "levelName": "旧路碑",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_plague_mist_burst": 1
+      }
+    },
+    {
+      "levelId": "level_3_3",
+      "levelName": "断桥伏击",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 1
+      }
+    },
+    {
+      "levelId": "level_3_4",
+      "levelName": "暮鸦林道",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_1771769351059": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1
+      }
+    },
+    {
+      "levelId": "level_3_5",
+      "levelName": "祭坛侧阶",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_1771769351059": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1
+      }
+    },
+    {
+      "levelId": "level_3_6",
+      "levelName": "影卫巡路",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_bone_splinter_jab": 1
+      }
+    },
+    {
+      "levelId": "level_3_7",
+      "levelName": "暮堡暗门",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_1771769351059": 1,
+        "skill_leftover_lunchbox": 1
+      },
+      "enemySkillUsage": {
+        "skill_bite": 1
+      }
+    },
+    {
+      "levelId": "level_3_8",
+      "levelName": "外环营垒",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_heavy_swing": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_plague_mist_burst": 1
+      }
+    },
+    {
+      "levelId": "level_3_9",
+      "levelName": "暮堡守门人",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_1771769351059": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_twilight_gate_crush": 1
+      }
+    },
+    {
+      "levelId": "level_3_10",
+      "levelName": "暮堡外环",
+      "instantiatedEnemyCount": 1,
+      "playerPlanCount": 4,
+      "enemyPlanCount": 1,
+      "timelineEntryCount": 5,
+      "currentTurn": 2,
+      "battlePhase": "PLANNING",
+      "fsmState": "BATTLE_LOOP",
+      "settled": false,
+      "turnResult": {
+        "ok": true
+      },
+      "playerSkillUsage": {
+        "skill_shockwave_copy_1770042951717": 1,
+        "skill_block": 1,
+        "skill_1771769351059": 1,
+        "skill_skull_cracker": 1
+      },
+      "enemySkillUsage": {
+        "enemy_skill_twilight_bastion_swing": 1
+      }
+    }
+  ],
+  "summary": {
+    "coveredLevels": 30,
+    "failedLevels": []
+  }
+}
