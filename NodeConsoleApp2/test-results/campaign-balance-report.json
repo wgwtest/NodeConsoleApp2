@@ -1,0 +1,2128 @@
+{
+  "meta": {
+    "generatedAt": "2026-05-24T19:13:51.596Z",
+    "levelCount": 30,
+    "buildIds": [
+      "basic",
+      "recommended",
+      "specialist"
+    ],
+    "maxTurns": 12,
+    "source": "tools/campaign_balance_simulator.mjs"
+  },
+  "builds": [
+    {
+      "id": "basic",
+      "label": "基础构筑",
+      "learned": [
+        "skill_heal",
+        "skill_heavy_swing",
+        "skill_double_thrust",
+        "skill_block"
+      ],
+      "maxAp": 6
+    },
+    {
+      "id": "recommended",
+      "label": "推荐构筑",
+      "learned": [
+        "skill_heal",
+        "skill_block",
+        "skill_heavy_swing",
+        "skill_skull_cracker",
+        "skill_shockwave_copy_1770042951717",
+        "skill_execute",
+        "skill_execute_copy_1770043820577",
+        "skill_1771769351059",
+        "skill_leftover_lunchbox"
+      ],
+      "maxAp": 8
+    },
+    {
+      "id": "specialist",
+      "label": "偏科构筑",
+      "learned": [
+        "skill_heavy_swing",
+        "skill_double_thrust",
+        "skill_execute",
+        "skill_execute_copy_1770043820577",
+        "skill_1770474698976"
+      ],
+      "maxAp": 7
+    }
+  ],
+  "results": [
+    {
+      "levelId": "level_1_1",
+      "levelName": "森林外缘",
+      "chapter": 1,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_1",
+      "levelName": "森林外缘",
+      "chapter": 1,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 102,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_1",
+      "levelName": "森林外缘",
+      "chapter": 1,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 73,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_2",
+      "levelName": "失联路标",
+      "chapter": 1,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 0,
+      "playerRemainingHp": 85,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_throw_stone": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_2",
+      "levelName": "失联路标",
+      "chapter": 1,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_throw_stone": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_2",
+      "levelName": "失联路标",
+      "chapter": 1,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 0,
+      "playerRemainingHp": 83,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_throw_stone": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_3",
+      "levelName": "北侧树冠",
+      "chapter": 1,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_3",
+      "levelName": "北侧树冠",
+      "chapter": 1,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 96,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_3",
+      "levelName": "北侧树冠",
+      "chapter": 1,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 78,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_4",
+      "levelName": "猎手埋伏",
+      "chapter": 1,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 90,
+      "enemySkillUsage": {
+        "enemy_skill_orc_headbutt": 1,
+        "skill_warcry": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "expected_basic_build_limit",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_1_4",
+      "levelName": "猎手埋伏",
+      "chapter": 1,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 45,
+      "enemySkillUsage": {
+        "enemy_skill_orc_headbutt": 1,
+        "skill_warcry": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_1_4",
+      "levelName": "猎手埋伏",
+      "chapter": 1,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 76,
+      "enemyRemainingHp": 57,
+      "enemySkillUsage": {
+        "enemy_skill_orc_headbutt": 1,
+        "skill_warcry": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "player_build_mismatch",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_1_5",
+      "levelName": "密林前哨",
+      "chapter": 1,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_5",
+      "levelName": "密林前哨",
+      "chapter": 1,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 4,
+      "playerRemainingHp": 99,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 4
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_5",
+      "levelName": "密林前哨",
+      "chapter": 1,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 85,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_6",
+      "levelName": "雾中岔口",
+      "chapter": 1,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "skill_block": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_6",
+      "levelName": "雾中岔口",
+      "chapter": 1,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 4,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "skill_block": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_6",
+      "levelName": "雾中岔口",
+      "chapter": 1,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 96,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "skill_block": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_7",
+      "levelName": "古井回声",
+      "chapter": 1,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_bite": 1,
+        "enemy_skill_dirty_bandage": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_7",
+      "levelName": "古井回声",
+      "chapter": 1,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 3,
+      "playerRemainingHp": 108,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_bite": 1,
+        "enemy_skill_dirty_bandage": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_7",
+      "levelName": "古井回声",
+      "chapter": 1,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 84,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_bite": 1,
+        "enemy_skill_dirty_bandage": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_8",
+      "levelName": "废墟斜坡",
+      "chapter": 1,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 89,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_8",
+      "levelName": "废墟斜坡",
+      "chapter": 1,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 97,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_8",
+      "levelName": "废墟斜坡",
+      "chapter": 1,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 78,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_9",
+      "levelName": "关隘守卫",
+      "chapter": 1,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "skill_block": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_1_9",
+      "levelName": "关隘守卫",
+      "chapter": 1,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 4,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "skill_block": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_1_9",
+      "levelName": "关隘守卫",
+      "chapter": 1,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 96,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "skill_block": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_1_10",
+      "levelName": "废墟关隘",
+      "chapter": 1,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 180,
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 1,
+        "enemy_skill_blood_heat": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "expected_basic_build_limit",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_10",
+      "levelName": "废墟关隘",
+      "chapter": 1,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 139,
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 1,
+        "enemy_skill_blood_heat": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_1_10",
+      "levelName": "废墟关隘",
+      "chapter": 1,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 40,
+      "enemyRemainingHp": 107,
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 1,
+        "enemy_skill_blood_heat": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "player_build_mismatch",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_1",
+      "levelName": "霜雾山口",
+      "chapter": 2,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 89,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_1",
+      "levelName": "霜雾山口",
+      "chapter": 2,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 3,
+      "playerRemainingHp": 91,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_1",
+      "levelName": "霜雾山口",
+      "chapter": 2,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 78,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_2",
+      "levelName": "冻土营火",
+      "chapter": 2,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 89,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_throw_stone": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_2",
+      "levelName": "冻土营火",
+      "chapter": 2,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 105,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_throw_stone": 1,
+        "skill_escape": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_2",
+      "levelName": "冻土营火",
+      "chapter": 2,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 81,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_throw_stone": 1,
+        "skill_escape": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_3",
+      "levelName": "哨塔外墙",
+      "chapter": 2,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 4,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 4
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_3",
+      "levelName": "哨塔外墙",
+      "chapter": 2,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 10,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 9
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_3",
+      "levelName": "哨塔外墙",
+      "chapter": 2,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_4",
+      "levelName": "寒塔哨站",
+      "chapter": 2,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 30,
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 3,
+        "enemy_skill_blood_heat": 9
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "expected_basic_build_limit",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_2_4",
+      "levelName": "寒塔哨站",
+      "chapter": 2,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 25,
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 5,
+        "enemy_skill_blood_heat": 7
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_2_4",
+      "levelName": "寒塔哨站",
+      "chapter": 2,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 42,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_2_5",
+      "levelName": "旧矿洞口",
+      "chapter": 2,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 4,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bone_patch": 5
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_5",
+      "levelName": "旧矿洞口",
+      "chapter": 2,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 5,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bone_patch": 6
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_5",
+      "levelName": "旧矿洞口",
+      "chapter": 2,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bone_patch": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_6",
+      "levelName": "冰雾裂谷",
+      "chapter": 2,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 95,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_6",
+      "levelName": "冰雾裂谷",
+      "chapter": 2,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 6,
+      "playerRemainingHp": 114,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 6
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_6",
+      "levelName": "冰雾裂谷",
+      "chapter": 2,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 90,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_7",
+      "levelName": "古代热源",
+      "chapter": 2,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 3,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_7",
+      "levelName": "古代热源",
+      "chapter": 2,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 7,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 6
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_7",
+      "levelName": "古代热源",
+      "chapter": 2,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_8",
+      "levelName": "冰封军械库",
+      "chapter": 2,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 4,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 4
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_8",
+      "levelName": "冰封军械库",
+      "chapter": 2,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 10,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 9
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_8",
+      "levelName": "冰封军械库",
+      "chapter": 2,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_9",
+      "levelName": "中庭门卫",
+      "chapter": 2,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 30,
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 3,
+        "enemy_skill_blood_heat": 9
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "expected_basic_build_limit",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_2_9",
+      "levelName": "中庭门卫",
+      "chapter": 2,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 25,
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 5,
+        "enemy_skill_blood_heat": 7
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_2_9",
+      "levelName": "中庭门卫",
+      "chapter": 2,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 42,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_2_10",
+      "levelName": "冰封中庭",
+      "chapter": 2,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 8,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 1,
+        "enemy_skill_bone_patch": 8
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_10",
+      "levelName": "冰封中庭",
+      "chapter": 2,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 77,
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 1,
+        "enemy_skill_bone_patch": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_2_10",
+      "levelName": "冰封中庭",
+      "chapter": 2,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 3,
+      "playerRemainingHp": 56,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 1,
+        "enemy_skill_bone_patch": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_1",
+      "levelName": "暮色关门",
+      "chapter": 3,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 77,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 1,
+        "enemy_skill_blood_heat": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "player_skill_tree_gap_candidate",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_1",
+      "levelName": "暮色关门",
+      "chapter": 3,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 106,
+      "enemyRemainingHp": 27,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 1,
+        "enemy_skill_blood_heat": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_1",
+      "levelName": "暮色关门",
+      "chapter": 3,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 67,
+      "enemyRemainingHp": 49,
+      "enemySkillUsage": {
+        "enemy_skill_rusty_shiv": 1,
+        "enemy_skill_blood_heat": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "player_build_mismatch",
+      "levelClass": {
+        "order": 1,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_2",
+      "levelName": "旧路碑",
+      "chapter": 3,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 3,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_2",
+      "levelName": "旧路碑",
+      "chapter": 3,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 8,
+      "playerRemainingHp": 114,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 8
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_2",
+      "levelName": "旧路碑",
+      "chapter": 3,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 78,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 2,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_3",
+      "levelName": "断桥伏击",
+      "chapter": 3,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 30,
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 3,
+        "enemy_skill_blood_heat": 9
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "player_skill_tree_gap_candidate",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_3",
+      "levelName": "断桥伏击",
+      "chapter": 3,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 86,
+      "enemyRemainingHp": 25,
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 8,
+        "enemy_skill_blood_heat": 4
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_3",
+      "levelName": "断桥伏击",
+      "chapter": 3,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 42,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_orc_club": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 3,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_4",
+      "levelName": "暮鸦林道",
+      "chapter": 3,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 5,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 5
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_3_4",
+      "levelName": "暮鸦林道",
+      "chapter": 3,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 12,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 11
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_3_4",
+      "levelName": "暮鸦林道",
+      "chapter": 3,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 4,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_3_5",
+      "levelName": "祭坛侧阶",
+      "chapter": 3,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 3,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_5",
+      "levelName": "祭坛侧阶",
+      "chapter": 3,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 7,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 6
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_5",
+      "levelName": "祭坛侧阶",
+      "chapter": 3,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 5,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_6",
+      "levelName": "影卫巡路",
+      "chapter": 3,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 4,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bone_patch": 5
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_6",
+      "levelName": "影卫巡路",
+      "chapter": 3,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 5,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bone_patch": 6
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_6",
+      "levelName": "影卫巡路",
+      "chapter": 3,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bone_patch": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 6,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_7",
+      "levelName": "暮堡暗门",
+      "chapter": 3,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_bite": 1,
+        "enemy_skill_dirty_bandage": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_7",
+      "levelName": "暮堡暗门",
+      "chapter": 3,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 3,
+      "playerRemainingHp": 108,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_bite": 1,
+        "enemy_skill_dirty_bandage": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_7",
+      "levelName": "暮堡暗门",
+      "chapter": 3,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 1,
+      "playerRemainingHp": 84,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "skill_bite": 1,
+        "enemy_skill_dirty_bandage": 1
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 7,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_8",
+      "levelName": "外环营垒",
+      "chapter": 3,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 3,
+      "playerRemainingHp": 95,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 3
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_8",
+      "levelName": "外环营垒",
+      "chapter": 3,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 8,
+      "playerRemainingHp": 99,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 8
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_8",
+      "levelName": "外环营垒",
+      "chapter": 3,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 78,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_bad_lunchbox": 1,
+        "enemy_skill_dirty_bandage": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 8,
+        "isBoss": false,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_9",
+      "levelName": "暮堡守门人",
+      "chapter": 3,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": true,
+      "turns": 5,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 5
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_3_9",
+      "levelName": "暮堡守门人",
+      "chapter": 3,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": true,
+      "turns": 12,
+      "playerRemainingHp": 120,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 11
+      },
+      "failureReason": "victory",
+      "diagnosis": "ok",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_3_9",
+      "levelName": "暮堡守门人",
+      "chapter": 3,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": true,
+      "turns": 2,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 0,
+      "enemySkillUsage": {
+        "enemy_skill_shield_tap": 1,
+        "enemy_skill_bone_patch": 2
+      },
+      "failureReason": "victory",
+      "diagnosis": "enemy_too_weak",
+      "levelClass": {
+        "order": 9,
+        "isBoss": false,
+        "isElite": true
+      }
+    },
+    {
+      "levelId": "level_3_10",
+      "levelName": "暮堡外环",
+      "chapter": 3,
+      "buildId": "basic",
+      "buildLabel": "基础构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 100,
+      "enemyRemainingHp": 307,
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 1,
+        "enemy_skill_blood_heat": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "expected_basic_build_limit",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_10",
+      "levelName": "暮堡外环",
+      "chapter": 3,
+      "buildId": "recommended",
+      "buildLabel": "推荐构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 94,
+      "enemyRemainingHp": 260,
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 1,
+        "enemy_skill_blood_heat": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "enemy_numbers_too_high",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      }
+    },
+    {
+      "levelId": "level_3_10",
+      "levelName": "暮堡外环",
+      "chapter": 3,
+      "buildId": "specialist",
+      "buildLabel": "偏科构筑",
+      "victory": false,
+      "turns": 12,
+      "playerRemainingHp": 40,
+      "enemyRemainingHp": 196,
+      "enemySkillUsage": {
+        "enemy_skill_wrecking_swing": 1,
+        "enemy_skill_blood_heat": 11
+      },
+      "failureReason": "turn_limit",
+      "diagnosis": "player_build_mismatch",
+      "levelClass": {
+        "order": 10,
+        "isBoss": true,
+        "isElite": false
+      }
+    }
+  ],
+  "summary": {
+    "byBuild": [
+      {
+        "buildId": "basic",
+        "label": "基础构筑",
+        "attempts": 30,
+        "wins": 23,
+        "winRate": 0.7666666666666667,
+        "averageTurns": 4.933333333333334,
+        "averagePlayerRemainingHp": 97.66666666666667
+      },
+      {
+        "buildId": "recommended",
+        "label": "推荐构筑",
+        "attempts": 30,
+        "wins": 22,
+        "winRate": 0.7333333333333333,
+        "averageTurns": 7.2,
+        "averagePlayerRemainingHp": 107.36666666666666
+      },
+      {
+        "buildId": "specialist",
+        "label": "偏科构筑",
+        "attempts": 30,
+        "wins": 26,
+        "winRate": 0.8666666666666667,
+        "averageTurns": 2.8333333333333335,
+        "averagePlayerRemainingHp": 77.3
+      }
+    ],
+    "byChapter": [
+      {
+        "chapter": 1,
+        "buildId": "basic",
+        "attempts": 10,
+        "wins": 8,
+        "winRate": 0.8
+      },
+      {
+        "chapter": 1,
+        "buildId": "recommended",
+        "attempts": 10,
+        "wins": 8,
+        "winRate": 0.8
+      },
+      {
+        "chapter": 1,
+        "buildId": "specialist",
+        "attempts": 10,
+        "wins": 8,
+        "winRate": 0.8
+      },
+      {
+        "chapter": 2,
+        "buildId": "basic",
+        "attempts": 10,
+        "wins": 8,
+        "winRate": 0.8
+      },
+      {
+        "chapter": 2,
+        "buildId": "recommended",
+        "attempts": 10,
+        "wins": 7,
+        "winRate": 0.7
+      },
+      {
+        "chapter": 2,
+        "buildId": "specialist",
+        "attempts": 10,
+        "wins": 10,
+        "winRate": 1
+      },
+      {
+        "chapter": 3,
+        "buildId": "basic",
+        "attempts": 10,
+        "wins": 7,
+        "winRate": 0.7
+      },
+      {
+        "chapter": 3,
+        "buildId": "recommended",
+        "attempts": 10,
+        "wins": 7,
+        "winRate": 0.7
+      },
+      {
+        "chapter": 3,
+        "buildId": "specialist",
+        "attempts": 10,
+        "wins": 8,
+        "winRate": 0.8
+      }
+    ],
+    "diagnosisCounts": {
+      "enemy_too_weak": 31,
+      "ok": 40,
+      "expected_basic_build_limit": 5,
+      "enemy_numbers_too_high": 8,
+      "player_build_mismatch": 4,
+      "player_skill_tree_gap_candidate": 2
+    },
+    "diagnosisLegend": {
+      "ok": "结果处在当前粗调可接受范围内。",
+      "enemy_too_weak": "胜利过快或剩余血量过高，敌人压力偏弱。",
+      "boss_too_easy": "Boss 在推荐构筑下被高血量稳定通过。",
+      "expected_basic_build_limit": "基础构筑在精英或 Boss 关达到预期上限。",
+      "enemy_numbers_too_high": "推荐构筑无法击杀但玩家仍安全，优先检查敌人 HP/护甲/修复数值。",
+      "enemy_skill_pressure_high": "推荐构筑失败且玩家受到明显生命压力，优先检查敌人技能压力。",
+      "player_build_mismatch": "偏科构筑因缺少对应反制而失败，属于构筑错误或章节压力有效。",
+      "player_skill_tree_gap_candidate": "基础构筑普通关失败的候选信号，需结合推荐构筑结果再判断是否补玩家技能。"
+    },
+    "recommendations": [
+      "偏科构筑没有明显吃亏：需要增强章节压力的针对性或削弱纯输出泛用性。"
+    ]
+  }
+}
