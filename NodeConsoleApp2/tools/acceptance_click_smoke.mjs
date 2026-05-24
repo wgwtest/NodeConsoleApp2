@@ -423,6 +423,106 @@ async function runLevelSelectMultiMapSmoke(cdpEndpoint, mainUrl) {
     }
 }
 
+async function runSettlementRewardSmoke(cdpEndpoint, mainUrl) {
+    let client = null;
+    try {
+        client = await attach(cdpEndpoint, mainUrl);
+        await waitFor(
+            client,
+            `(() => document.getElementById("modalTitle")?.textContent.trim() === "欢迎"
+                && [...document.querySelectorAll("button")].some(btn => btn.textContent.trim() === "新游戏"))()`,
+            "mock_ui_v11.html 欢迎页和新游戏按钮"
+        );
+
+        const report = await evaluate(client, `(async () => {
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+            const clickButtonByText = text => {
+                const btn = [...document.querySelectorAll("button")]
+                    .find(item => item.textContent.trim() === text);
+                if (!btn) throw new Error("找不到按钮：" + text);
+                btn.click();
+                return btn.textContent.trim();
+            };
+            const waitForPredicate = async (predicate, label, timeoutMs = 12000) => {
+                const started = Date.now();
+                while (Date.now() - started < timeoutMs) {
+                    if (predicate()) return true;
+                    await sleep(100);
+                }
+                throw new Error("等待超时：" + label);
+            };
+
+            clickButtonByText("新游戏");
+            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "游戏菜单");
+            const beforeSkillPoints = Number(window.GameEngine?.data?.playerData?.skills?.skillPoints ?? 0) || 0;
+            const beforeCompleted = [...(window.GameEngine?.data?.dataConfig?.global?.progress?.completedLevels || [])];
+            const beforeUnlocked = [...(window.GameEngine?.data?.dataConfig?.global?.progress?.unlockedLevels || [])];
+
+            clickButtonByText("关卡选择");
+            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
+            await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="level_1_1"]'), "level_1_1 节点");
+            const levelNode = document.querySelector('.level-map-node[data-level-id="level_1_1"]');
+            levelNode.click();
+            await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="level_1_1"][data-selected="true"]'), "选中 level_1_1");
+            document.querySelector("[data-action='enter-level']").click();
+
+            await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP", "BATTLE_LOOP");
+            await sleep(200);
+            window.GameEngine.endBattle(true);
+            await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_SETTLEMENT"
+                && document.getElementById("modalTitle")?.textContent.trim() === "战斗胜利", "战斗胜利结算");
+
+            const settlement = window.GameEngine?.data?.dataConfig?.global?.progress?.lastSettlement || {};
+            const modalText = document.getElementById("modalBody")?.textContent.replace(/\\s+/g, " ").trim() || "";
+            const afterSkillPoints = Number(window.GameEngine?.data?.playerData?.skills?.skillPoints ?? 0) || 0;
+            const afterCompleted = [...(window.GameEngine?.data?.dataConfig?.global?.progress?.completedLevels || [])];
+            const afterUnlocked = [...(window.GameEngine?.data?.dataConfig?.global?.progress?.unlockedLevels || [])];
+
+            clickButtonByText("返回主菜单");
+            await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "MAIN_MENU"
+                && document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "返回主菜单");
+            const mainMenuText = document.getElementById("modalBody")?.textContent.replace(/\\s+/g, " ").trim() || "";
+
+            return {
+                path: "mock_ui_v11.html",
+                levelId: settlement.levelId || "",
+                victory: settlement.victory === true,
+                rewardKp: Number(settlement.rewards?.kp ?? 0) || 0,
+                firstClear: settlement.firstClear === true,
+                nextLevelId: settlement.nextLevelId || "",
+                beforeSkillPoints,
+                afterSkillPoints,
+                beforeCompleted,
+                afterCompleted,
+                beforeUnlocked,
+                afterUnlocked,
+                modalTitle: "战斗胜利",
+                modalText,
+                mainMenuTitle: document.getElementById("modalTitle")?.textContent.trim() || "",
+                mainMenuText,
+                currentState: window.GameEngine?.fsm?.currentState || ""
+            };
+        })()`);
+
+        assertCondition(report.levelId === "level_1_1", `结算关卡异常：${report.levelId}`);
+        assertCondition(report.victory === true, "结算没有记录胜利");
+        assertCondition(report.rewardKp > 0, "胜利结算没有发放 KP");
+        assertCondition(report.afterSkillPoints === report.beforeSkillPoints + report.rewardKp, "胜利结算没有把 KP 写入玩家技能点");
+        assertCondition(report.firstClear === true, "首次通关结算没有标记 firstClear");
+        assertCondition(report.afterCompleted.includes("level_1_1"), "胜利结算没有写入 completedLevels");
+        assertCondition(report.afterUnlocked.includes(report.nextLevelId), "胜利结算没有写入下一关解锁");
+        assertCondition(report.modalText.includes("本局奖励"), "结算 UI 缺少本局奖励");
+        assertCondition(report.modalText.includes("首次通关"), "结算 UI 缺少首次通关反馈");
+        assertCondition(report.currentState === "MAIN_MENU", `返回主菜单后状态异常：${report.currentState}`);
+        assertCondition(report.mainMenuText.includes("最近成长来源"), "主菜单没有展示最近成长来源");
+        assertCondition(report.mainMenuText.includes("level_1_1") || report.mainMenuText.includes("森林"), "主菜单成长摘要没有体现最近结算关卡");
+        assertCondition(client.runtimeExceptions.length === 0, "结算奖励 smoke 页面出现 Runtime exception");
+        return report;
+    } finally {
+        await closeClient(client);
+    }
+}
+
 async function runPresentationProbe(cdpEndpoint, probeUrl) {
     let client = null;
     try {
@@ -563,6 +663,7 @@ async function main() {
         urls,
         mainFlow: await runMainFlow(cdpEndpoint, urls.main),
         levelSelectMultiMap: await runLevelSelectMultiMapSmoke(cdpEndpoint, urls.main),
+        settlementReward: await runSettlementRewardSmoke(cdpEndpoint, urls.main),
         presentationProbe: await runPresentationProbe(cdpEndpoint, urls.probe),
         presentationConfigurator: await runPresentationConfigurator(cdpEndpoint, urls.configurator)
     };
