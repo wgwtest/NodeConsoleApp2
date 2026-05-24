@@ -172,6 +172,35 @@ test('progressive campaign report can be written with learning and reward detail
   assert.match(savedSummary, /Rewards KP/u);
 });
 
+test('progressive campaign diagnoses boss and elite lethal failures as enemy pressure, not skill tree gaps', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const report = await simulator.runProgressiveCampaignSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.5-progressive-pressure-diagnosis'
+  });
+
+  const lethalBossOrEliteFailures = report.results.filter(row => (
+    !row.victory
+    && row.playerRemainingHp < 60
+    && (row.levelClass?.isBoss || row.levelClass?.isElite)
+  ));
+  assert.equal(
+    lethalBossOrEliteFailures.length > 0,
+    true,
+    '当前平衡报告应至少包含一个 Boss/精英生命压力失败样本'
+  );
+  assert.deepEqual(
+    lethalBossOrEliteFailures.map(row => `${row.levelId}:${row.diagnosis}`),
+    lethalBossOrEliteFailures.map(row => `${row.levelId}:enemy_skill_pressure_high`)
+  );
+  assert.equal(
+    report.summary.skillTreeGapCandidates,
+    report.results.filter(row => row.diagnosis === 'player_skill_tree_gap_candidate').length,
+    '技能树缺口候选数量应只统计被逐关诊断为玩家技能树缺口的失败'
+  );
+});
+
 test('campaign balance first tuning pass keeps recommended build viable without letting specialist outperform it', async () => {
   const simulator = await import(pathToFileURL(simulatorPath));
   const report = await simulator.runCampaignBalanceSimulation({
@@ -212,4 +241,47 @@ test('campaign balance first tuning pass keeps recommended build viable without 
   assert.equal(recommendedBossWins.length >= 1, true, 'recommended 至少应能打过 1 个 Boss');
   assert.equal(recommendedBossWins.length <= 2, true, 'recommended 不应稳定打过全部 Boss');
   assert.equal(recommendedBossTooEasy.length, 0, `Boss 过弱数量过多：${recommendedBossTooEasy.map(row => row.levelId).join(', ')}`);
+});
+
+test('campaign balance second tuning pass removes safe timeout failures from non-boss story levels', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const fixedReport = await simulator.runCampaignBalanceSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.5-safe-timeout-gate'
+  });
+  const progressiveReport = await simulator.runProgressiveCampaignSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.5-safe-timeout-gate'
+  });
+
+  const recommendedSafeTimeouts = fixedReport.results.filter(row => (
+    row.buildId === 'recommended'
+    && !row.levelClass?.isBoss
+    && !row.victory
+    && row.failureReason === 'turn_limit'
+    && row.playerRemainingHp >= 60
+  ));
+  const progressiveSafeTimeouts = progressiveReport.results.filter(row => (
+    !row.levelClass?.isBoss
+    && !row.victory
+    && row.failureReason === 'turn_limit'
+    && row.playerRemainingHp >= 60
+  ));
+  const recommendedBossRows = fixedReport.results.filter(row => row.buildId === 'recommended' && row.levelClass?.isBoss);
+  const recommendedBossWins = recommendedBossRows.filter(row => row.victory);
+
+  assert.deepEqual(
+    recommendedSafeTimeouts.map(row => row.levelId),
+    [],
+    `recommended 非 Boss 关不应安全超时：${recommendedSafeTimeouts.map(row => `${row.levelId}:${row.enemyRemainingHp}`).join(', ')}`
+  );
+  assert.deepEqual(
+    progressiveSafeTimeouts.map(row => row.levelId),
+    [],
+    `progressive 非 Boss 关不应安全超时：${progressiveSafeTimeouts.map(row => `${row.levelId}:${row.enemyRemainingHp}`).join(', ')}`
+  );
+  assert.equal(recommendedBossWins.length >= 1, true, 'recommended 至少应能打过 1 个 Boss');
+  assert.equal(recommendedBossWins.length <= 2, true, 'recommended 不应稳定打过全部 Boss');
 });

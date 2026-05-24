@@ -321,7 +321,7 @@
       "name": "暮色古道 9 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_graveplate_guard",
+          "templateId": "enemy_c3_twilight_gate_elite",
           "position": 1
         }
       ]

@@ -60,40 +60,40 @@
     "id": "orc_warrior",
     "name": "兽人战士",
     "stats": {
-      "hp": 84,
-      "maxHp": 84,
+      "hp": 74,
+      "maxHp": 74,
       "ap": 4,
       "speed": 8
     },
     "skills": [
       "skill_smash",
-      "skill_warcry",
-      "enemy_skill_orc_headbutt"
+      "enemy_skill_orc_club",
+      "skill_cleave"
     ],
     "bodyParts": {
       "head": {
-        "current": 10,
-        "max": 10,
+        "current": 8,
+        "max": 8,
         "weakness": 1
       },
       "chest": {
-        "current": 18,
-        "max": 18,
+        "current": 14,
+        "max": 14,
         "weakness": 1
       },
       "abdomen": {
-        "current": 10,
-        "max": 10,
+        "current": 8,
+        "max": 8,
         "weakness": 1
       },
       "arm": {
-        "current": 10,
-        "max": 10,
+        "current": 8,
+        "max": 8,
         "weakness": 1
       },
       "leg": {
-        "current": 10,
-        "max": 10,
+        "current": 8,
+        "max": 8,
         "weakness": 1
       }
     },
@@ -546,7 +546,8 @@
     },
     "skills": [
       "enemy_skill_shield_tap",
-      "enemy_skill_bone_patch"
+      "enemy_skill_bone_patch",
+      "enemy_skill_dead_air"
     ],
     "tags": [
       "chapter_2",
@@ -640,6 +641,7 @@
     },
     "skills": [
       "enemy_skill_shield_tap",
+      "enemy_skill_orc_club",
       "skill_block"
     ],
     "bodyParts": {
@@ -1041,15 +1043,15 @@
     ],
     "description": "第三章快攻敌人，速度更高且会叠加流血，用来压迫偏科输出构筑。",
     "stats": {
-      "hp": 60,
-      "maxHp": 60,
+      "hp": 52,
+      "maxHp": 52,
       "ap": 4,
       "speed": 16
     },
     "skills": [
       "enemy_skill_rusty_shiv",
       "enemy_skill_ankle_pebble",
-      "enemy_skill_blood_heat"
+      "enemy_skill_bad_lunchbox"
     ],
     "bodyParts": {
       "head": {
@@ -1058,18 +1060,18 @@
         "weakness": 1.2
       },
       "chest": {
-        "current": 18,
-        "max": 18,
+        "current": 12,
+        "max": 12,
         "weakness": 1
       },
       "abdomen": {
-        "current": 10,
-        "max": 10,
+        "current": 8,
+        "max": 8,
         "weakness": 1.1
       },
       "arm": {
-        "current": 6,
-        "max": 6,
+        "current": 4,
+        "max": 4,
         "weakness": 1
       },
       "leg": {
@@ -1200,6 +1202,66 @@
       "portraitRef": "",
       "mapPortraitRef": "",
       "battleSpriteRef": "../source/character/敌人-003-状态001-正常状态.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_c3_twilight_gate_elite": {
+    "id": "enemy_c3_twilight_gate_elite",
+    "name": "暮色门卫精英",
+    "race": "undead",
+    "class": "elite_gate_guard",
+    "tags": [
+      "chapter_3",
+      "role_elite",
+      "role_armor",
+      "role_repair",
+      "pressure_armor",
+      "pressure_slow"
+    ],
+    "description": "第三章 Boss 前门卫，拥有更厚护甲与修复能力，用来检查玩家是否能在护甲压力下维持输出节奏。",
+    "stats": {
+      "hp": 210,
+      "maxHp": 210,
+      "ap": 4,
+      "speed": 6
+    },
+    "skills": [
+      "enemy_skill_shield_tap",
+      "enemy_skill_bone_patch",
+      "enemy_skill_twilight_gate_crush"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 30,
+        "max": 30,
+        "weakness": 1.1
+      },
+      "chest": {
+        "current": 82,
+        "max": 82,
+        "weakness": 0.78
+      },
+      "abdomen": {
+        "current": 48,
+        "max": 48,
+        "weakness": 1.02
+      },
+      "arm": {
+        "current": 54,
+        "max": 54,
+        "weakness": 0.78
+      },
+      "leg": {
+        "current": 40,
+        "max": 40,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_twilight_armor",
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/敌人-011-状态001-正常状态.png",
       "iconRef": ""
     }
   },

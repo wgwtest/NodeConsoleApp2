@@ -94,6 +94,16 @@ export default class EnemyActionPlanner {
                 const armorCurrent = Number(part.current ?? 0) || 0;
                 score += weakness * 10;
                 if (armorCurrent <= 0) score += 14;
+                if (summary.damageHp > 0 && summary.damageHp > armorCurrent) {
+                    const piercingDamage = Math.max(0, Math.floor(summary.damageHp * weakness) - armorCurrent);
+                    score += piercingDamage * 3.0;
+                    if ((player?.stats?.hp ?? player?.hp ?? 0) > 0 && piercingDamage > 0) {
+                        score += 18;
+                    }
+                }
+                if (summary.damageArmor > 0 && summary.damageHp <= 0 && armorCurrent <= summary.damageArmor) {
+                    score -= 18;
+                }
                 score += this._scoreFocusedPartPressure(skill, summary, {
                     chosenPart,
                     part,

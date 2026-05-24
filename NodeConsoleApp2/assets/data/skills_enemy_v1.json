@@ -1978,6 +1978,74 @@
           }
         }
       ]
+    },
+    {
+      "id": "enemy_skill_twilight_gate_crush",
+      "name": "暮门重压",
+      "rarity": "Rare",
+      "description": "暮色门卫精英专用重击，用来在 Boss 前精英关提供明确生命压力。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 3214,
+        "y": 614,
+        "group": "enemy_undead",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": -3,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 3,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_twilight_gate_crush",
+          "name": "暮门重压",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 30
+          }
+        }
+      ]
     }
   ]
 }

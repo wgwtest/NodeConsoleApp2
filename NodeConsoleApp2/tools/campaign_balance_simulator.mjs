@@ -699,6 +699,9 @@ function diagnose(row, level) {
     return row.playerRemainingHp >= 60 ? 'enemy_numbers_too_high' : 'enemy_skill_pressure_high';
   }
   if (row.buildId === 'progressive') {
+    if (level.isBoss || level.isElite) {
+      return row.playerRemainingHp >= 60 ? 'enemy_numbers_too_high' : 'enemy_skill_pressure_high';
+    }
     return row.playerRemainingHp >= 60 ? 'enemy_numbers_too_high' : 'player_skill_tree_gap_candidate';
   }
   if (row.buildId === 'specialist') return 'player_build_mismatch';
@@ -942,7 +945,7 @@ function summarizeProgressiveReport(results, player) {
   const failedWithAllPrioritySkills = results.filter(row => (
     !row.victory
     && progressiveLearningPriority.every(skillId => row.skillTreeBefore.learned.includes(skillId))
-    && row.playerRemainingHp < 60
+    && row.diagnosis === 'player_skill_tree_gap_candidate'
   ));
   return {
     attempts: results.length,

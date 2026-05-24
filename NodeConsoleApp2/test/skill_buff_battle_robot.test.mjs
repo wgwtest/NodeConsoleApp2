@@ -567,3 +567,73 @@ test('高血量敌人不会因护甲重损而连续修甲放弃攻击', async ()
 
   assert.equal(action?.skillId, 'enemy_skill_wrecking_swing');
 });
+
+test('敌人规划在弱点护甲可被击穿时优先造成生命压力', async () => {
+  const { EnemyActionPlanner } = await importTurnRuntime();
+  const player = createActor('player_1', {
+    hp: 100,
+    maxHp: 100,
+    bodyParts: createBodyParts({
+      head: { current: 8, max: 20, weakness: 1.5 },
+      chest: { current: 18, max: 24, weakness: 1 }
+    })
+  });
+  const enemy = createActor('enemy_1', {
+    hp: 210,
+    maxHp: 210,
+    ap: 4,
+    maxAp: 4,
+    bodyParts: createBodyParts({
+      chest: { current: 18, max: 82, weakness: 0.78 },
+      head: { current: 30, max: 30, weakness: 1.1 }
+    }),
+    skills: ['enemy_skill_shield_tap', 'enemy_skill_bone_patch', 'enemy_skill_orc_club']
+  });
+
+  const skills = {
+    enemy_skill_shield_tap: {
+      id: 'enemy_skill_shield_tap',
+      name: '盾牌敲头',
+      speed: -1,
+      costs: { ap: 2 },
+      target: {
+        subject: 'SUBJECT_ENEMY',
+        scope: 'SCOPE_PART',
+        selection: { mode: 'single', candidateParts: ['head'], selectedParts: ['head'], selectCount: 1 }
+      },
+      actions: [{ effect: { effectType: 'DMG_ARMOR', amountType: 'ABS', amount: 16 } }],
+      buffRefs: { apply: [{ target: 'enemy', buffId: 'buff_stun', duration: 1 }], remove: [] }
+    },
+    enemy_skill_bone_patch: {
+      id: 'enemy_skill_bone_patch',
+      name: '补骨',
+      speed: 3,
+      costs: { ap: 1 },
+      target: {
+        subject: 'SUBJECT_SELF',
+        scope: 'SCOPE_PART',
+        selection: { mode: 'single', candidateParts: ['head', 'chest'], selectedParts: [], selectCount: 1 }
+      },
+      actions: [{ effect: { effectType: 'ARMOR_ADD', amountType: 'ABS', amount: 12 } }],
+      buffRefs: { apply: [], remove: [] }
+    },
+    enemy_skill_orc_club: {
+      id: 'enemy_skill_orc_club',
+      name: '大棒糊脸',
+      speed: -1,
+      costs: { ap: 2 },
+      target: {
+        subject: 'SUBJECT_ENEMY',
+        scope: 'SCOPE_PART',
+        selection: { mode: 'single', candidateParts: ['head', 'chest'], selectedParts: [], selectCount: 1 }
+      },
+      actions: [{ effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 18 } }],
+      buffRefs: { apply: [], remove: [] }
+    }
+  };
+
+  const planner = new EnemyActionPlanner({ getSkillConfig: skillId => skills[skillId] || null });
+  const action = planner.planTurn({ enemy, player, playerBodyParts: player.bodyParts });
+
+  assert.equal(action?.skillId, 'enemy_skill_orc_club');
+});
