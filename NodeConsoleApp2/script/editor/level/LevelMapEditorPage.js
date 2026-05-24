@@ -243,11 +243,9 @@ function getBodyPartLabel(partId) {
 }
 
 function buildEdgePalette(edge) {
-    const isElite = edge?.type === 'elite';
-    const isMerge = edge?.type === 'merge';
     return {
-        line: isElite ? 'rgba(54, 42, 30, 0.94)' : 'rgba(70, 55, 34, 0.86)',
-        halo: isMerge ? 'rgba(246, 224, 173, 0.24)' : 'rgba(246, 224, 173, 0.32)',
+        line: 'rgba(70, 55, 34, 0.86)',
+        halo: 'rgba(246, 224, 173, 0.32)',
         labelFill: 'rgba(245, 233, 205, 0.92)',
         labelStroke: 'rgba(79, 61, 35, 0.24)',
         labelText: 'rgb(62, 45, 25)',
@@ -372,7 +370,6 @@ export class LevelMapEditorPage {
             'edgeIdInput',
             'edgeFromSelect',
             'edgeToSelect',
-            'edgeTypeSelect',
             'edgeBranchLabelInput',
             'exportPreview',
             'packageIdInput',
@@ -1618,7 +1615,6 @@ export class LevelMapEditorPage {
         if (!edge) return;
         this.elements.selectedEdgeId.textContent = edge.id;
         this.elements.edgeIdInput.value = edge.id;
-        this.elements.edgeTypeSelect.value = edge.type;
         this.elements.edgeBranchLabelInput.value = edge.branchLabel || '';
     }
 
@@ -1774,7 +1770,6 @@ export class LevelMapEditorPage {
             const edgePalette = buildEdgePalette(edge);
             const edgeGroup = createSvgElement(this.document, 'g', 'map-edge-group');
             edgeGroup.setAttribute('data-edge-id', edge.id);
-            edgeGroup.setAttribute('data-edge-type', edge.type || 'branch');
             edgeGroup.style.setProperty('--edge-route', edgePalette.line);
             edgeGroup.style.setProperty('--edge-halo', edgePalette.halo);
             edgeGroup.style.setProperty('--edge-label-fill', edgePalette.labelFill);
@@ -2059,7 +2054,6 @@ export class LevelMapEditorPage {
         this.selectedEdgeId = this.workspace.createEdge(this.selectedMapId, {
             fromNodeId: fallbackFrom,
             toNodeId: fallbackTo,
-            type: 'branch',
             branchLabel: ''
         });
         this.setInspectorMode('edge', { render: false });
@@ -2082,7 +2076,6 @@ export class LevelMapEditorPage {
             id: this.elements.edgeIdInput.value.trim() || edgeId,
             fromNodeId: this.elements.edgeFromSelect.value.trim(),
             toNodeId: this.elements.edgeToSelect.value.trim(),
-            type: this.elements.edgeTypeSelect.value.trim(),
             branchLabel: this.elements.edgeBranchLabelInput.value.trim()
         }));
         const currentMap = this.getCurrentMap();

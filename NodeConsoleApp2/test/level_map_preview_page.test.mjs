@@ -203,6 +203,8 @@ test('LevelMapPreviewPage 会消费地图显示配置并同步到预览舞台', 
         assert.equal(node2?.style.left, '365px');
         assert.equal(edgeLabel, null, '预览页应在 edgeLabelMode=none 时隐藏边标签');
         assert.ok(edgePath?.getAttribute('d'), '预览页缺少边路径');
+        assert.equal(edgePath?.getAttribute('class'), 'map-edge', '预览页连线不应继续携带 branch/merge 类型类名');
+        assert.equal(edgePath?.hasAttribute('data-active'), false, '预览页连线不应再用 active 表示路线状态');
     } finally {
         dom.window.close();
         cleanupDomGlobals();

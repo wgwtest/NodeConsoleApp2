@@ -511,10 +511,10 @@ export class LevelSelectMapView {
             const toPoint = resolveEdgeAnchorPoint(toFrame, display);
             const midX = Math.round((fromPoint.x + toPoint.x) / 2);
             const midY = Math.round((fromPoint.y + toPoint.y) / 2);
-            const path = createSvgElement(this.document, 'path', `level-map-edge is-${edge.type || 'main'}`);
+            const path = createSvgElement(this.document, 'path', 'level-map-edge');
             path.setAttribute('d', `M ${fromPoint.x} ${fromPoint.y} C ${midX} ${fromPoint.y}, ${midX} ${toPoint.y}, ${toPoint.x} ${toPoint.y}`);
-            if (fromNode.status !== 'locked' && toNode.status !== 'locked') {
-                path.setAttribute('data-active', 'true');
+            if (edge.isWalked) {
+                path.setAttribute('data-walked', 'true');
             }
             svg.appendChild(path);
 

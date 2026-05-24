@@ -172,8 +172,7 @@ function normalizeMapPack(source) {
             id: String(edge.id || '').trim(),
             fromNodeId: String(edge.fromNodeId || '').trim(),
             toNodeId: String(edge.toNodeId || '').trim(),
-            branchLabel: String(edge.branchLabel || '').trim(),
-            type: String(edge.type || 'branch').trim()
+            branchLabel: String(edge.branchLabel || '').trim()
         })),
         previewModes: asArray(map.previewModes).map((mode) => ({
             id: String(mode.id || '').trim(),
@@ -378,12 +377,12 @@ export class LevelMapPreviewPage {
 
             const fromStatus = getNodeStatus(fromNode.id, mode);
             const toStatus = getNodeStatus(toNode.id, mode);
-            const line = createElement(this.document, 'path', `map-edge is-${edge.type}`);
+            const line = createElement(this.document, 'path', 'map-edge');
             const midX = Math.round((fromPoint.x + toPoint.x) / 2);
             const pathValue = `M ${fromPoint.x} ${fromPoint.y} C ${midX} ${fromPoint.y}, ${midX} ${toPoint.y}, ${toPoint.x} ${toPoint.y}`;
             line.setAttribute('d', pathValue);
-            if (fromStatus !== 'locked' && toStatus !== 'locked') {
-                line.setAttribute('data-active', 'true');
+            if (fromStatus === 'completed' && toStatus === 'completed') {
+                line.setAttribute('data-walked', 'true');
             }
             svg.appendChild(line);
 

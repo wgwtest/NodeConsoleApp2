@@ -2138,11 +2138,10 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   stroke: rgba(112, 82, 42, 0.42);
   stroke-width: 4;
   stroke-linecap: round;
-  stroke-dasharray: 12 8;
   filter: drop-shadow(0 1px 1px rgba(255, 239, 190, 0.34));
 }
 
-.level-map-edge[data-active="true"] {
+.level-map-edge[data-walked="true"] {
   stroke: rgba(112, 82, 42, 0.84);
 }
 

@@ -219,22 +219,19 @@
           "id": "edge_entry_to_scout",
           "fromNodeId": "node_edge",
           "toNodeId": "node_scout_route",
-          "branchLabel": "侦察路线",
-          "type": "branch"
+          "branchLabel": "侦察路线"
         },
         {
           "id": "edge_entry_to_camp",
           "fromNodeId": "node_edge",
           "toNodeId": "node_gate_boss",
-          "branchLabel": "废墟路线",
-          "type": "branch"
+          "branchLabel": "废墟路线"
         },
         {
           "id": "edge_scout_to_gate",
           "fromNodeId": "node_scout_route",
           "toNodeId": "node_gate_boss",
-          "branchLabel": "提前切入",
-          "type": "merge"
+          "branchLabel": "提前切入"
         }
       ]
     },
@@ -334,15 +331,13 @@
           "id": "edge_frost_pass_to_watch",
           "fromNodeId": "node_frost_pass",
           "toNodeId": "node_ice_watch",
-          "branchLabel": "峡谷上行",
-          "type": "main"
+          "branchLabel": "峡谷上行"
         },
         {
           "id": "edge_watch_to_core",
           "fromNodeId": "node_ice_watch",
           "toNodeId": "node_frost_core",
-          "branchLabel": "中庭入口",
-          "type": "main"
+          "branchLabel": "中庭入口"
         }
       ]
     },
@@ -442,15 +437,13 @@
           "id": "edge_dusk_gate_to_bridge",
           "fromNodeId": "node_dusk_gate",
           "toNodeId": "node_dusk_bridge",
-          "branchLabel": "古道下行",
-          "type": "main"
+          "branchLabel": "古道下行"
         },
         {
           "id": "edge_bridge_to_citadel",
           "fromNodeId": "node_dusk_bridge",
           "toNodeId": "node_dusk_citadel",
-          "branchLabel": "暮堡外环",
-          "type": "main"
+          "branchLabel": "暮堡外环"
         }
       ]
     }

@@ -248,29 +248,25 @@
           "id": "edge_entry_to_scout",
           "fromNodeId": "node_edge",
           "toNodeId": "node_scout_route",
-          "branchLabel": "侦察路线",
-          "type": "branch"
+          "branchLabel": "侦察路线"
         },
         {
           "id": "edge_entry_to_camp",
           "fromNodeId": "node_edge",
           "toNodeId": "node_camp_route",
-          "branchLabel": "营地路线",
-          "type": "branch"
+          "branchLabel": "营地路线"
         },
         {
           "id": "edge_scout_to_gate",
           "fromNodeId": "node_scout_route",
           "toNodeId": "node_gate_boss",
-          "branchLabel": "提前切入",
-          "type": "merge"
+          "branchLabel": "提前切入"
         },
         {
           "id": "edge_camp_to_gate",
           "fromNodeId": "node_camp_route",
           "toNodeId": "node_gate_boss",
-          "branchLabel": "补给后收束",
-          "type": "merge"
+          "branchLabel": "补给后收束"
         }
       ],
       "previewModes": [
