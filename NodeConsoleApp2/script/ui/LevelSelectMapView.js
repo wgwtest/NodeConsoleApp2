@@ -511,10 +511,10 @@ export class LevelSelectMapView {
             const toPoint = resolveEdgeAnchorPoint(toFrame, display);
             const midX = Math.round((fromPoint.x + toPoint.x) / 2);
             const midY = Math.round((fromPoint.y + toPoint.y) / 2);
-            const path = createSvgElement(this.document, 'path', `level-map-edge is-${edge.type || 'main'}`);
+            const path = createSvgElement(this.document, 'path', 'level-map-edge');
             path.setAttribute('d', `M ${fromPoint.x} ${fromPoint.y} C ${midX} ${fromPoint.y}, ${midX} ${toPoint.y}, ${toPoint.x} ${toPoint.y}`);
-            if (fromNode.status !== 'locked' && toNode.status !== 'locked') {
-                path.setAttribute('data-active', 'true');
+            if (edge.isWalked) {
+                path.setAttribute('data-walked', 'true');
             }
             svg.appendChild(path);
 
@@ -574,7 +574,7 @@ export class LevelSelectMapView {
             if (artImage) {
                 const art = button.querySelector('.level-map-node__art');
                 if (art) {
-                    art.style.backgroundImage = `linear-gradient(180deg, rgba(255, 238, 180, 0.05), rgba(22, 13, 6, 0.28)), url("${artImage}")`;
+                    art.style.backgroundImage = `linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(10, 12, 16, 0.08)), url("${artImage}")`;
                     art.style.backgroundSize = 'cover';
                     art.style.backgroundPosition = 'center';
                 }

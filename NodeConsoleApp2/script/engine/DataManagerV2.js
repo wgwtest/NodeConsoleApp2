@@ -567,8 +567,7 @@ class DataManager {
                             id: typeof nextEdge.id === 'string' && nextEdge.id.trim() ? nextEdge.id.trim() : `edge_${edgeIndex + 1}`,
                             fromNodeId: typeof nextEdge.fromNodeId === 'string' ? nextEdge.fromNodeId.trim() : '',
                             toNodeId: typeof nextEdge.toNodeId === 'string' ? nextEdge.toNodeId.trim() : '',
-                            branchLabel: typeof nextEdge.branchLabel === 'string' ? nextEdge.branchLabel.trim() : '',
-                            type: typeof nextEdge.type === 'string' && nextEdge.type.trim() ? nextEdge.type.trim() : 'main'
+                            branchLabel: typeof nextEdge.branchLabel === 'string' ? nextEdge.branchLabel.trim() : ''
                         };
                     }).filter(edge => edge.id && edge.fromNodeId && edge.toNodeId)
                 };
@@ -1483,10 +1482,20 @@ class DataManager {
                 isRecommended: status === 'recommended'
             };
         });
+        const nodeById = new Map(nodes.map(node => [node.id, node]));
+        const edges = this._asArray(map?.edges).map(edge => {
+            const fromNode = nodeById.get(edge.fromNodeId);
+            const toNode = nodeById.get(edge.toNodeId);
+            return {
+                ...this._clonePlain(edge),
+                isWalked: Boolean(edge.isWalked || (fromNode?.isCompleted && toNode?.isCompleted))
+            };
+        });
 
         return {
             ...this._clonePlain(map),
-            nodes
+            nodes,
+            edges
         };
     }
 

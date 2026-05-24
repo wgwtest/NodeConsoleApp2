@@ -172,8 +172,8 @@ function buildMapModel() {
         }
       ],
       edges: [
-        { id: 'edge_1', fromNodeId: 'node_edge', toNodeId: 'node_scout', type: 'main', branchLabel: '林间路线' },
-        { id: 'edge_2', fromNodeId: 'node_scout', toNodeId: 'node_gate', type: 'main', branchLabel: '废墟入口' }
+        { id: 'edge_1', fromNodeId: 'node_edge', toNodeId: 'node_scout', isWalked: true, branchLabel: '林间路线' },
+        { id: 'edge_2', fromNodeId: 'node_scout', toNodeId: 'node_gate', isWalked: false, branchLabel: '废墟入口' }
       ]
     }
   };
@@ -207,6 +207,7 @@ test('LevelSelectMapView 会把节点选择、进入确认和视图缩放拆开'
     const selectedNode = document.querySelector('.level-map-node[data-selected="true"]');
     const nodes = [...document.querySelectorAll('.level-map-node')];
     const lockedNode = document.querySelector('.level-map-node.is-locked');
+    const edgePaths = [...document.querySelectorAll('.level-map-edge')];
     const edgeLabels = [...document.querySelectorAll('.level-map-edge-label')].map(node => node.textContent);
     const detail = document.querySelector('.level-select-runtime-map__drawer');
     const enterBtn = document.querySelector('[data-action="enter-level"]');
@@ -234,6 +235,10 @@ test('LevelSelectMapView 会把节点选择、进入确认和视图缩放拆开'
     assert.equal(nodes.length, 3);
     assert.equal(selectedNode?.dataset.nodeId, 'node_scout');
     assert.equal(lockedNode?.getAttribute('aria-disabled'), null);
+    assert.equal(edgePaths.length, 2);
+    assert.equal(edgePaths.every(edge => edge.getAttribute('class') === 'level-map-edge'), true, '运行时连线不应继续携带 is-main/is-branch 类型类名');
+    assert.deepEqual(edgePaths.map(edge => edge.getAttribute('data-walked') || 'false'), ['true', 'false']);
+    assert.equal(edgePaths.some(edge => edge.hasAttribute('data-active')), false, '运行时连线不应再用解锁态 data-active 冒充走过');
     assert.deepEqual(edgeLabels, ['林间路线', '废墟入口']);
     assert.match(root?.dataset.zoom || '', /^1(?:\.0+)?$/);
     assert.match(detail?.textContent || '', /密林前哨/);

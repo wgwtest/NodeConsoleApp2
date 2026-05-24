@@ -341,20 +341,20 @@
         }
       ],
       "edges": [
-        { "id": "c1_edge_01", "fromNodeId": "c1_node_01", "toNodeId": "c1_node_02", "type": "main", "branchLabel": "主线" },
-        { "id": "c1_edge_02", "fromNodeId": "c1_node_02", "toNodeId": "c1_node_03a", "type": "branch", "branchLabel": "侦察线" },
-        { "id": "c1_edge_03", "fromNodeId": "c1_node_03a", "toNodeId": "c1_node_04a", "type": "elite", "branchLabel": "高风险" },
-        { "id": "c1_edge_04", "fromNodeId": "c1_node_04a", "toNodeId": "c1_node_05", "type": "merge", "branchLabel": "回流" },
-        { "id": "c1_edge_05", "fromNodeId": "c1_node_02", "toNodeId": "c1_node_03b", "type": "branch", "branchLabel": "补给线" },
-        { "id": "c1_edge_06", "fromNodeId": "c1_node_03b", "toNodeId": "c1_node_04b", "type": "branch", "branchLabel": "补给" },
-        { "id": "c1_edge_07", "fromNodeId": "c1_node_04b", "toNodeId": "c1_node_05", "type": "merge", "branchLabel": "回流" },
-        { "id": "c1_edge_08", "fromNodeId": "c1_node_05", "toNodeId": "c1_node_06", "type": "main", "branchLabel": "推进" },
-        { "id": "c1_edge_09", "fromNodeId": "c1_node_06", "toNodeId": "c1_node_07", "type": "branch", "branchLabel": "补给绕行" },
-        { "id": "c1_edge_10", "fromNodeId": "c1_node_07", "toNodeId": "c1_node_08", "type": "merge", "branchLabel": "回主路" },
-        { "id": "c1_edge_11", "fromNodeId": "c1_node_06", "toNodeId": "c1_node_08", "type": "main", "branchLabel": "直行" },
-        { "id": "c1_edge_12", "fromNodeId": "c1_node_08", "toNodeId": "c1_node_09", "type": "elite", "branchLabel": "挑战" },
-        { "id": "c1_edge_13", "fromNodeId": "c1_node_09", "toNodeId": "c1_node_10", "type": "main", "branchLabel": "Boss" },
-        { "id": "c1_edge_14", "fromNodeId": "c1_node_08", "toNodeId": "c1_node_10", "type": "main", "branchLabel": "绕开精英" }
+        { "id": "c1_edge_01", "fromNodeId": "c1_node_01", "toNodeId": "c1_node_02", "branchLabel": "主线" },
+        { "id": "c1_edge_02", "fromNodeId": "c1_node_02", "toNodeId": "c1_node_03a", "branchLabel": "侦察线" },
+        { "id": "c1_edge_03", "fromNodeId": "c1_node_03a", "toNodeId": "c1_node_04a", "branchLabel": "高风险" },
+        { "id": "c1_edge_04", "fromNodeId": "c1_node_04a", "toNodeId": "c1_node_05", "branchLabel": "回流" },
+        { "id": "c1_edge_05", "fromNodeId": "c1_node_02", "toNodeId": "c1_node_03b", "branchLabel": "补给线" },
+        { "id": "c1_edge_06", "fromNodeId": "c1_node_03b", "toNodeId": "c1_node_04b", "branchLabel": "补给" },
+        { "id": "c1_edge_07", "fromNodeId": "c1_node_04b", "toNodeId": "c1_node_05", "branchLabel": "回流" },
+        { "id": "c1_edge_08", "fromNodeId": "c1_node_05", "toNodeId": "c1_node_06", "branchLabel": "推进" },
+        { "id": "c1_edge_09", "fromNodeId": "c1_node_06", "toNodeId": "c1_node_07", "branchLabel": "补给绕行" },
+        { "id": "c1_edge_10", "fromNodeId": "c1_node_07", "toNodeId": "c1_node_08", "branchLabel": "回主路" },
+        { "id": "c1_edge_11", "fromNodeId": "c1_node_06", "toNodeId": "c1_node_08", "branchLabel": "直行" },
+        { "id": "c1_edge_12", "fromNodeId": "c1_node_08", "toNodeId": "c1_node_09", "branchLabel": "挑战" },
+        { "id": "c1_edge_13", "fromNodeId": "c1_node_09", "toNodeId": "c1_node_10", "branchLabel": "Boss" },
+        { "id": "c1_edge_14", "fromNodeId": "c1_node_08", "toNodeId": "c1_node_10", "branchLabel": "绕开精英" }
       ]
     },
     {
@@ -392,20 +392,20 @@
         { "id": "c2_node_10", "levelId": "level_1_3_story", "label": "2-10", "title": "冰封中庭", "kind": "boss", "nodeSkinRef": "skin_story_boss", "iconLabel": "Boss", "position": { "x": 1445, "y": 590 }, "objectiveText": "第二章 Boss，检验持续作战能力。", "difficultyLabel": "Boss", "rewardPreview": ["KP +2", "章节奖励"], "artRefs": { "nodeArt": "node_icon_owlbear", "portrait": "enemy_ruins_boss" } }
       ],
       "edges": [
-        { "id": "c2_edge_01", "fromNodeId": "c2_node_01", "toNodeId": "c2_node_02", "type": "main", "branchLabel": "主线" },
-        { "id": "c2_edge_02", "fromNodeId": "c2_node_02", "toNodeId": "c2_node_03a", "type": "branch", "branchLabel": "冰桥近路" },
-        { "id": "c2_edge_03", "fromNodeId": "c2_node_03a", "toNodeId": "c2_node_04a", "type": "elite", "branchLabel": "伏击" },
-        { "id": "c2_edge_04", "fromNodeId": "c2_node_04a", "toNodeId": "c2_node_06", "type": "merge", "branchLabel": "回流" },
-        { "id": "c2_edge_05", "fromNodeId": "c2_node_02", "toNodeId": "c2_node_03b", "type": "main", "branchLabel": "哨塔线" },
-        { "id": "c2_edge_06", "fromNodeId": "c2_node_03b", "toNodeId": "c2_node_04b", "type": "main", "branchLabel": "推进" },
-        { "id": "c2_edge_07", "fromNodeId": "c2_node_04b", "toNodeId": "c2_node_06", "type": "main", "branchLabel": "推进" },
-        { "id": "c2_edge_08", "fromNodeId": "c2_node_04b", "toNodeId": "c2_node_05", "type": "branch", "branchLabel": "洞窟避风" },
-        { "id": "c2_edge_09", "fromNodeId": "c2_node_05", "toNodeId": "c2_node_08", "type": "branch", "branchLabel": "军械库" },
-        { "id": "c2_edge_10", "fromNodeId": "c2_node_06", "toNodeId": "c2_node_07", "type": "branch", "branchLabel": "热源" },
-        { "id": "c2_edge_11", "fromNodeId": "c2_node_07", "toNodeId": "c2_node_09", "type": "merge", "branchLabel": "削弱后推进" },
-        { "id": "c2_edge_12", "fromNodeId": "c2_node_06", "toNodeId": "c2_node_09", "type": "main", "branchLabel": "直行" },
-        { "id": "c2_edge_13", "fromNodeId": "c2_node_08", "toNodeId": "c2_node_10", "type": "branch", "branchLabel": "补给后挑战" },
-        { "id": "c2_edge_14", "fromNodeId": "c2_node_09", "toNodeId": "c2_node_10", "type": "main", "branchLabel": "Boss" }
+        { "id": "c2_edge_01", "fromNodeId": "c2_node_01", "toNodeId": "c2_node_02", "branchLabel": "主线" },
+        { "id": "c2_edge_02", "fromNodeId": "c2_node_02", "toNodeId": "c2_node_03a", "branchLabel": "冰桥近路" },
+        { "id": "c2_edge_03", "fromNodeId": "c2_node_03a", "toNodeId": "c2_node_04a", "branchLabel": "伏击" },
+        { "id": "c2_edge_04", "fromNodeId": "c2_node_04a", "toNodeId": "c2_node_06", "branchLabel": "回流" },
+        { "id": "c2_edge_05", "fromNodeId": "c2_node_02", "toNodeId": "c2_node_03b", "branchLabel": "哨塔线" },
+        { "id": "c2_edge_06", "fromNodeId": "c2_node_03b", "toNodeId": "c2_node_04b", "branchLabel": "推进" },
+        { "id": "c2_edge_07", "fromNodeId": "c2_node_04b", "toNodeId": "c2_node_06", "branchLabel": "推进" },
+        { "id": "c2_edge_08", "fromNodeId": "c2_node_04b", "toNodeId": "c2_node_05", "branchLabel": "洞窟避风" },
+        { "id": "c2_edge_09", "fromNodeId": "c2_node_05", "toNodeId": "c2_node_08", "branchLabel": "军械库" },
+        { "id": "c2_edge_10", "fromNodeId": "c2_node_06", "toNodeId": "c2_node_07", "branchLabel": "热源" },
+        { "id": "c2_edge_11", "fromNodeId": "c2_node_07", "toNodeId": "c2_node_09", "branchLabel": "削弱后推进" },
+        { "id": "c2_edge_12", "fromNodeId": "c2_node_06", "toNodeId": "c2_node_09", "branchLabel": "直行" },
+        { "id": "c2_edge_13", "fromNodeId": "c2_node_08", "toNodeId": "c2_node_10", "branchLabel": "补给后挑战" },
+        { "id": "c2_edge_14", "fromNodeId": "c2_node_09", "toNodeId": "c2_node_10", "branchLabel": "Boss" }
       ]
     },
     {
@@ -443,20 +443,20 @@
         { "id": "c3_node_10", "levelId": "level_1_3_story", "label": "3-10", "title": "暮堡外环", "kind": "boss", "nodeSkinRef": "skin_story_boss", "iconLabel": "Boss", "position": { "x": 1450, "y": 565 }, "objectiveText": "第三章 Boss，打开后续主城线。", "difficultyLabel": "Boss", "rewardPreview": ["KP +2", "章节奖励"], "artRefs": { "nodeArt": "node_icon_owlbear", "portrait": "enemy_ruins_boss" } }
       ],
       "edges": [
-        { "id": "c3_edge_01", "fromNodeId": "c3_node_01", "toNodeId": "c3_node_02", "type": "main", "branchLabel": "主线" },
-        { "id": "c3_edge_02", "fromNodeId": "c3_node_02", "toNodeId": "c3_node_03a", "type": "elite", "branchLabel": "断桥" },
-        { "id": "c3_edge_03", "fromNodeId": "c3_node_02", "toNodeId": "c3_node_03b", "type": "branch", "branchLabel": "商队" },
-        { "id": "c3_edge_04", "fromNodeId": "c3_node_03a", "toNodeId": "c3_node_04", "type": "merge", "branchLabel": "回流" },
-        { "id": "c3_edge_05", "fromNodeId": "c3_node_03b", "toNodeId": "c3_node_04", "type": "merge", "branchLabel": "回流" },
-        { "id": "c3_edge_06", "fromNodeId": "c3_node_04", "toNodeId": "c3_node_05a", "type": "branch", "branchLabel": "祭坛" },
-        { "id": "c3_edge_07", "fromNodeId": "c3_node_04", "toNodeId": "c3_node_05b", "type": "branch", "branchLabel": "古井" },
-        { "id": "c3_edge_08", "fromNodeId": "c3_node_05a", "toNodeId": "c3_node_06", "type": "merge", "branchLabel": "回流" },
-        { "id": "c3_edge_09", "fromNodeId": "c3_node_05b", "toNodeId": "c3_node_06", "type": "merge", "branchLabel": "回流" },
-        { "id": "c3_edge_10", "fromNodeId": "c3_node_06", "toNodeId": "c3_node_07", "type": "branch", "branchLabel": "暗门" },
-        { "id": "c3_edge_11", "fromNodeId": "c3_node_06", "toNodeId": "c3_node_08", "type": "main", "branchLabel": "营垒" },
-        { "id": "c3_edge_12", "fromNodeId": "c3_node_07", "toNodeId": "c3_node_09", "type": "merge", "branchLabel": "机关线" },
-        { "id": "c3_edge_13", "fromNodeId": "c3_node_08", "toNodeId": "c3_node_09", "type": "main", "branchLabel": "正面线" },
-        { "id": "c3_edge_14", "fromNodeId": "c3_node_09", "toNodeId": "c3_node_10", "type": "main", "branchLabel": "Boss" }
+        { "id": "c3_edge_01", "fromNodeId": "c3_node_01", "toNodeId": "c3_node_02", "branchLabel": "主线" },
+        { "id": "c3_edge_02", "fromNodeId": "c3_node_02", "toNodeId": "c3_node_03a", "branchLabel": "断桥" },
+        { "id": "c3_edge_03", "fromNodeId": "c3_node_02", "toNodeId": "c3_node_03b", "branchLabel": "商队" },
+        { "id": "c3_edge_04", "fromNodeId": "c3_node_03a", "toNodeId": "c3_node_04", "branchLabel": "回流" },
+        { "id": "c3_edge_05", "fromNodeId": "c3_node_03b", "toNodeId": "c3_node_04", "branchLabel": "回流" },
+        { "id": "c3_edge_06", "fromNodeId": "c3_node_04", "toNodeId": "c3_node_05a", "branchLabel": "祭坛" },
+        { "id": "c3_edge_07", "fromNodeId": "c3_node_04", "toNodeId": "c3_node_05b", "branchLabel": "古井" },
+        { "id": "c3_edge_08", "fromNodeId": "c3_node_05a", "toNodeId": "c3_node_06", "branchLabel": "回流" },
+        { "id": "c3_edge_09", "fromNodeId": "c3_node_05b", "toNodeId": "c3_node_06", "branchLabel": "回流" },
+        { "id": "c3_edge_10", "fromNodeId": "c3_node_06", "toNodeId": "c3_node_07", "branchLabel": "暗门" },
+        { "id": "c3_edge_11", "fromNodeId": "c3_node_06", "toNodeId": "c3_node_08", "branchLabel": "营垒" },
+        { "id": "c3_edge_12", "fromNodeId": "c3_node_07", "toNodeId": "c3_node_09", "branchLabel": "机关线" },
+        { "id": "c3_edge_13", "fromNodeId": "c3_node_08", "toNodeId": "c3_node_09", "branchLabel": "正面线" },
+        { "id": "c3_edge_14", "fromNodeId": "c3_node_09", "toNodeId": "c3_node_10", "branchLabel": "Boss" }
       ]
     }
   ]

@@ -97,7 +97,6 @@ function normalizeEdge(index, edge) {
         id: typeof source.id === 'string' && source.id.trim() ? source.id.trim() : `edge_${index + 1}`,
         fromNodeId: typeof source.fromNodeId === 'string' ? source.fromNodeId.trim() : '',
         toNodeId: typeof source.toNodeId === 'string' ? source.toNodeId.trim() : '',
-        type: typeof source.type === 'string' && source.type.trim() ? source.type.trim() : 'branch',
         branchLabel: typeof source.branchLabel === 'string' ? source.branchLabel.trim() : ''
     };
 }

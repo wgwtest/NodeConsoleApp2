@@ -46,8 +46,7 @@
   "edgeRequiredFields": [
     "id",
     "fromNodeId",
-    "toNodeId",
-    "type"
+    "toNodeId"
   ],
   "graphAuthorityFields": [
     "maps[].backgroundRef",
@@ -77,7 +76,7 @@
     "地图包只负责组织与展示，不直接决定战斗运行规则。",
     "地图包采用 JSON + image assets 组合：maps 中只保存 backgroundRef / artRefs.* 等短引用，真实图片路径集中维护在 assetLibrary.*.src。",
     "节点位置的真值应表达逻辑地图坐标，不应直接表达当前 DOM 像素坐标。",
-    "边数据只表达 fromNodeId / toNodeId 等关系字段，连线端点与标签位置应由显示层根据节点位置反推。",
+    "边数据只表达 fromNodeId / toNodeId / branchLabel 等关系字段，走过/未走过由主流程运行时进度派生，地图编辑器不管理。",
     "抽屉开关、滚动位置、窗口尺寸等编辑器临时状态不属于地图包导出字段。"
   ]
 }

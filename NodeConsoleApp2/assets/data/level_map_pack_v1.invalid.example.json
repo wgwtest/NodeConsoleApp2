@@ -95,7 +95,6 @@
           "id": "edge_invalid_to_node",
           "fromNodeId": "node_valid",
           "toNodeId": "node_missing_target",
-          "type": "branch",
           "branchLabel": "断裂路线"
         }
       ],

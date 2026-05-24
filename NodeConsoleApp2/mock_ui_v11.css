@@ -2138,11 +2138,10 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   stroke: rgba(112, 82, 42, 0.42);
   stroke-width: 4;
   stroke-linecap: round;
-  stroke-dasharray: 12 8;
   filter: drop-shadow(0 1px 1px rgba(255, 239, 190, 0.34));
 }
 
-.level-map-edge[data-active="true"] {
+.level-map-edge[data-walked="true"] {
   stroke: rgba(112, 82, 42, 0.84);
 }
 
@@ -2164,7 +2163,7 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   border: 0;
   border-radius: 0;
   padding: 0;
-  color: #fff2ca;
+  color: #f7f2e8;
   font: inherit;
   text-align: center;
   cursor: pointer;
@@ -2178,8 +2177,8 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
 .level-map-node[data-selected="true"] {
   z-index: 6;
   filter:
-    drop-shadow(0 14px 20px rgba(45, 28, 11, 0.5))
-    drop-shadow(0 0 18px rgba(255, 218, 107, 0.58));
+    drop-shadow(0 14px 20px rgba(18, 14, 9, 0.46))
+    drop-shadow(0 0 18px rgba(255, 218, 107, 0.5));
 }
 
 .level-map-node:hover {
@@ -2197,16 +2196,15 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   display: block;
   width: 100%;
   height: 100%;
-  border-radius: 18px;
-  border: 2px solid rgba(80, 59, 32, 0.48);
+  border-radius: 16px;
+  border: 2px solid #16120c;
   background:
-    linear-gradient(180deg, rgba(255, 249, 224, 0.2), rgba(44, 31, 18, 0.18)),
-    radial-gradient(circle at 50% 45%, rgba(239, 211, 146, 0.86), rgba(121, 87, 45, 0.92));
+    linear-gradient(180deg, #fffaf0 0%, #f0e5d0 100%);
   box-shadow:
-    0 16px 26px rgba(32, 22, 12, 0.28),
-    0 0 0 7px rgba(44, 30, 16, 0.12),
-    inset 0 1px 0 rgba(255, 246, 213, 0.46),
-    inset 0 -1px 0 rgba(54, 35, 18, 0.36);
+    0 14px 22px rgba(20, 15, 10, 0.28),
+    0 0 0 5px rgba(255, 250, 240, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(22, 18, 12, 0.18);
 }
 
 .level-map-node__marker::before {
@@ -2214,7 +2212,7 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   position: absolute;
   inset: 4px;
   border-radius: inherit;
-  border: 1px solid rgba(255, 246, 218, 0.28);
+  border: 1px solid rgba(22, 18, 12, 0.12);
   pointer-events: none;
 }
 
@@ -2227,24 +2225,24 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   height: 8px;
   transform: translateX(-50%);
   border-radius: 50%;
-  background: rgba(34, 24, 14, 0.22);
+  background: rgba(18, 14, 9, 0.24);
   filter: blur(3px);
 }
 
 .level-map-node__art {
   position: absolute;
   inset: 6px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 241, 196, 0.62);
+  border-radius: 11px;
+  border: 1px solid rgba(22, 18, 12, 0.32);
   background:
-    linear-gradient(180deg, rgba(255, 244, 209, 0.14), rgba(33, 22, 12, 0.24)),
-    radial-gradient(circle at 42% 36%, rgba(255, 232, 169, 0.88), rgba(106, 72, 33, 0.92));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(24, 26, 32, 0.06)),
+    radial-gradient(circle at 42% 36%, #ffffff, #ded7c9);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   box-shadow:
-    inset 0 0 0 1px rgba(60, 38, 18, 0.45),
-    inset 0 -12px 16px rgba(36, 24, 12, 0.22);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.44),
+    inset 0 -8px 12px rgba(20, 18, 14, 0.08);
 }
 
 .level-map-node.is-recommended {
@@ -2255,10 +2253,10 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   border-color: rgba(255, 218, 107, 0.9);
   box-shadow:
     0 0 0 3px rgba(255, 218, 107, 0.26),
-    0 16px 26px rgba(32, 22, 12, 0.28),
+    0 14px 22px rgba(20, 15, 10, 0.28),
     0 0 18px rgba(255, 204, 94, 0.24),
-    inset 0 1px 0 rgba(255, 246, 213, 0.5),
-    inset 0 -1px 0 rgba(54, 35, 18, 0.36);
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(22, 18, 12, 0.18);
 }
 
 .level-map-node[data-selected="true"] .level-map-node__marker {
@@ -2266,13 +2264,12 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   box-shadow:
     0 0 0 3px rgba(255, 218, 107, 0.5),
     0 0 0 9px rgba(97, 54, 13, 0.18),
-    0 18px 30px rgba(51, 31, 11, 0.34),
+    0 18px 30px rgba(18, 14, 9, 0.34),
     0 0 26px rgba(255, 204, 94, 0.38),
-    inset 0 1px 0 rgba(255, 255, 235, 0.62),
-    inset 0 -1px 0 rgba(98, 56, 13, 0.24);
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(22, 18, 12, 0.18);
   background:
-    linear-gradient(180deg, rgba(255, 248, 210, 0.32), rgba(63, 39, 15, 0.16)),
-    radial-gradient(circle at 50% 45%, rgba(255, 226, 143, 0.96), rgba(157, 92, 31, 0.94));
+    linear-gradient(180deg, #fffdf5 0%, #f2e4c6 100%);
 }
 
 .level-map-node[data-selected="true"] .level-map-node__marker::after {
@@ -2284,22 +2281,7 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
 
 .level-map-node.is-completed .level-map-node__marker {
   background:
-    linear-gradient(180deg, rgba(247, 239, 201, 0.18), rgba(40, 42, 22, 0.16)),
-    radial-gradient(circle at 50% 45%, rgba(211, 202, 135, 0.88), rgba(92, 93, 48, 0.9));
-}
-
-.level-map-node.kind-elite .level-map-node__marker {
-  border-radius: 14px;
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-}
-
-.level-map-node.kind-boss .level-map-node__marker {
-  border-radius: 0;
-  clip-path: polygon(14% 0, 86% 0, 100% 50%, 86% 100%, 14% 100%, 0 50%);
-  border-color: rgba(90, 43, 20, 0.7);
-  background:
-    linear-gradient(180deg, rgba(255, 237, 194, 0.22), rgba(58, 26, 17, 0.18)),
-    radial-gradient(circle at 50% 45%, rgba(224, 167, 91, 0.94), rgba(114, 54, 31, 0.94));
+    linear-gradient(180deg, #f8f7ef 0%, #dde5d4 100%);
 }
 
 .level-map-node.is-locked {

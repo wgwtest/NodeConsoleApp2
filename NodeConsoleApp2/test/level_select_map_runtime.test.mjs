@@ -167,6 +167,11 @@ test('DataManagerV2 会把地图包转换为运行时关卡选择地图模型', 
   assert.equal(model.map.display.viewportAspect, '16:9');
   assert.equal(model.assetLibrary.backgrounds[0].src, '../source/map/image_w2752_h1536_map-bg-01.jpeg');
   assert.deepEqual(model.map.edges.map(edge => edge.id), ['edge_1', 'edge_2']);
+  assert.equal(model.map.edges.every(edge => Object.hasOwn(edge, 'type') === false), true, '运行时地图模型不应继续消费地图包边类型');
+  assert.deepEqual(model.map.edges.map(edge => [edge.id, edge.isWalked]), [
+    ['edge_1', false],
+    ['edge_2', false]
+  ]);
   assert.equal(model.recommendedNodeId, 'node_scout');
   assert.equal(model.selectedNodeId, 'node_scout');
   assert.deepEqual(model.map.nodes.map(node => [node.id, node.levelId, node.status]), [
@@ -179,6 +184,31 @@ test('DataManagerV2 会把地图包转换为运行时关卡选择地图模型', 
   assert.equal(model.map.nodes[1].levelDescription, '密林前哨 runtime description');
   assert.equal(model.map.nodes[2].isUnlocked, true);
   assert.equal(model.map.nodes[2].selectLevelId, 'level_1_3_story');
+});
+
+test('DataManagerV2 只在主流程运行时派生连线走过状态', async () => {
+  const { default: dm } = await importSourceModule('script/engine/DataManagerV2.js');
+  dm.gameConfig = {
+    levels: {
+      level_1_1: buildStoryLevel('level_1_1', 1, '幽暗森林边缘'),
+      level_1_2_story: buildStoryLevel('level_1_2_story', 2, '密林前哨'),
+      level_1_3_story: buildStoryLevel('level_1_3_story', 3, '废墟关隘')
+    },
+    levelMapPack: buildFixtureMapPack()
+  };
+  dm.dataConfig.global = {
+    progress: {
+      unlockedLevels: ['level_1_1', 'level_1_2_story', 'level_1_3_story'],
+      completedLevels: ['level_1_1', 'level_1_2_story']
+    }
+  };
+
+  const model = dm.getLevelSelectMapModel();
+
+  assert.deepEqual(model.map.edges.map(edge => [edge.id, edge.isWalked]), [
+    ['edge_1', true],
+    ['edge_2', false]
+  ]);
 });
 
 test('DataManagerV2 会临时开放全部故事关卡入口并保留原始进度标记', async () => {
