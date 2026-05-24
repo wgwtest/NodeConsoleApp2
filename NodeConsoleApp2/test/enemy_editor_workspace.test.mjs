@@ -188,7 +188,14 @@ test('EnemyWorkspace resolves built-in full-body character PNG refs as sprite as
         '../source/character/敌人-002-状态001-正常状态.png',
         '../source/character/敌人-003-状态001-正常状态.png',
         '../source/character/敌人-004-状态001-正常状态.png',
-        '../source/character/敌人-005-状态001-正常状态.png'
+        '../source/character/敌人-005-状态001-正常状态.png',
+        '../source/character/敌人-006-状态001-正常状态.png',
+        '../source/character/敌人-007-状态001-正常状态.png',
+        '../source/character/敌人-008-状态001-正常状态.png',
+        '../source/character/敌人-009-状态001-正常状态.png',
+        '../source/character/敌人-010-状态001-正常状态.png',
+        '../source/character/敌人-011-状态001-正常状态.png',
+        '../source/character/敌人-012-状态001-正常状态.png'
     ]);
     assert.equal(workspace.resolveAsset(spriteRef).src, spriteRef);
     assert.equal(

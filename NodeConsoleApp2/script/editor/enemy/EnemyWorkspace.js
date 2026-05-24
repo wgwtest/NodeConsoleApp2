@@ -34,6 +34,41 @@ const BUILT_IN_CHARACTER_SPRITES = [
         id: '../source/character/敌人-005-状态001-正常状态.png',
         label: '敌人-005 破盾老兵',
         src: '../source/character/敌人-005-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-006-状态001-正常状态.png',
+        label: '敌人-006 兽人战士',
+        src: '../source/character/敌人-006-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-007-状态001-正常状态.png',
+        label: '敌人-007 哥布林医护斥候',
+        src: '../source/character/敌人-007-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-008-状态001-正常状态.png',
+        label: '敌人-008 哥布林追猎手',
+        src: '../source/character/敌人-008-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-009-状态001-正常状态.png',
+        label: '敌人-009 嗜血兽人狂战士',
+        src: '../source/character/敌人-009-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-010-状态001-正常状态.png',
+        label: '敌人-010 狂暴哥布林战士',
+        src: '../source/character/敌人-010-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-011-状态001-正常状态.png',
+        label: '敌人-011 骷髅卫士',
+        src: '../source/character/敌人-011-状态001-正常状态.png'
+    },
+    {
+        id: '../source/character/敌人-012-状态001-正常状态.png',
+        label: '敌人-012 骷髅弓箭手',
+        src: '../source/character/敌人-012-状态001-正常状态.png'
     }
 ];
 const DEFAULT_ENEMY_SKILL_ALIASES = {
@@ -59,12 +94,7 @@ const DEFAULT_ENEMY_PORTRAIT_REFS = {
         orc_warrior: 'enemy_orc_warrior',
         orc_berserker_lvl5: 'enemy_orc_berserker',
         skeleton_guard_lvl4: 'enemy_skeleton_guard',
-        skeleton_story_repair_guard: 'enemy_skeleton_guard',
-        enemy_acceptance_guard: 'enemy_construct_guard',
-        enemy_acceptance_repair: 'enemy_construct_guard',
-        enemy_acceptance_heal: 'enemy_construct_guard',
-        enemy_acceptance_pursuit: 'enemy_construct_guard',
-        enemy_acceptance_head_tapper: 'enemy_construct_guard'
+        skeleton_story_repair_guard: 'enemy_skeleton_guard'
     },
     byRaceClass: {
         'goblin:hunter': 'enemy_goblin_hunter',

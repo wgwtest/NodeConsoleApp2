@@ -312,7 +312,7 @@
         },
         {
           "id": "c1_node_04a",
-          "levelId": "level_1_3_acceptance_on_hit_armor",
+          "levelId": "level_1_3_story",
           "label": "1-4A",
           "title": "猎手埋伏",
           "kind": "elite",
@@ -335,7 +335,7 @@
         },
         {
           "id": "c1_node_03b",
-          "levelId": "level_1_2_acceptance",
+          "levelId": "level_1_2_story",
           "label": "1-3B",
           "title": "南侧补给道",
           "kind": "supply",
@@ -357,7 +357,7 @@
         },
         {
           "id": "c1_node_04b",
-          "levelId": "level_1_4_acceptance_enemy_repair",
+          "levelId": "level_1_3_story",
           "label": "1-4B",
           "title": "破损营地",
           "kind": "supply",
@@ -402,7 +402,7 @@
         },
         {
           "id": "c1_node_06",
-          "levelId": "level_1_5_acceptance_enemy_heal",
+          "levelId": "level_1_2_story",
           "label": "1-6",
           "title": "雾中岔口",
           "kind": "branch",
@@ -424,7 +424,7 @@
         },
         {
           "id": "c1_node_07",
-          "levelId": "level_1_6_acceptance_armor_guard",
+          "levelId": "level_1_3_story",
           "label": "1-7",
           "title": "古井回声",
           "kind": "supply",
@@ -469,7 +469,7 @@
         },
         {
           "id": "c1_node_09",
-          "levelId": "level_1_7_acceptance_enemy_pursuit",
+          "levelId": "level_1_3_story",
           "label": "1-9",
           "title": "关隘守卫",
           "kind": "elite",
@@ -652,7 +652,7 @@
         },
         {
           "id": "c2_node_02",
-          "levelId": "level_1_2_acceptance",
+          "levelId": "level_1_2_story",
           "label": "2-2",
           "title": "冻土营火",
           "kind": "supply",
@@ -697,7 +697,7 @@
         },
         {
           "id": "c2_node_04a",
-          "levelId": "level_1_3_acceptance_on_hit_armor",
+          "levelId": "level_1_3_story",
           "label": "2-4A",
           "title": "裂冰伏击",
           "kind": "elite",
@@ -741,7 +741,7 @@
         },
         {
           "id": "c2_node_04b",
-          "levelId": "level_1_4_acceptance_enemy_repair",
+          "levelId": "level_1_3_story",
           "label": "2-4B",
           "title": "寒塔哨站",
           "kind": "elite",
@@ -763,7 +763,7 @@
         },
         {
           "id": "c2_node_05",
-          "levelId": "level_1_5_acceptance_enemy_heal",
+          "levelId": "level_1_2_story",
           "label": "2-5",
           "title": "旧矿洞口",
           "kind": "supply",
@@ -808,7 +808,7 @@
         },
         {
           "id": "c2_node_07",
-          "levelId": "level_1_6_acceptance_armor_guard",
+          "levelId": "level_1_3_story",
           "label": "2-7",
           "title": "古代热源",
           "kind": "branch",
@@ -830,7 +830,7 @@
         },
         {
           "id": "c2_node_08",
-          "levelId": "level_1_2_acceptance",
+          "levelId": "level_1_2_story",
           "label": "2-8",
           "title": "冰封军械库",
           "kind": "supply",
@@ -853,7 +853,7 @@
         },
         {
           "id": "c2_node_09",
-          "levelId": "level_1_7_acceptance_enemy_pursuit",
+          "levelId": "level_1_3_story",
           "label": "2-9",
           "title": "中庭门卫",
           "kind": "elite",
@@ -1030,7 +1030,7 @@
         },
         {
           "id": "c3_node_02",
-          "levelId": "level_1_2_acceptance",
+          "levelId": "level_1_2_story",
           "label": "3-2",
           "title": "旧路碑",
           "kind": "supply",
@@ -1052,7 +1052,7 @@
         },
         {
           "id": "c3_node_03a",
-          "levelId": "level_1_3_acceptance_on_hit_armor",
+          "levelId": "level_1_3_story",
           "label": "3-3A",
           "title": "断桥伏击",
           "kind": "elite",
@@ -1074,7 +1074,7 @@
         },
         {
           "id": "c3_node_03b",
-          "levelId": "level_1_2_acceptance",
+          "levelId": "level_1_2_story",
           "label": "3-3B",
           "title": "商队残骸",
           "kind": "supply",
@@ -1119,7 +1119,7 @@
         },
         {
           "id": "c3_node_05a",
-          "levelId": "level_1_5_acceptance_enemy_heal",
+          "levelId": "level_1_2_story",
           "label": "3-5A",
           "title": "祭坛侧阶",
           "kind": "branch",
@@ -1141,7 +1141,7 @@
         },
         {
           "id": "c3_node_05b",
-          "levelId": "level_1_6_acceptance_armor_guard",
+          "levelId": "level_1_3_story",
           "label": "3-5B",
           "title": "塌陷古井",
           "kind": "branch",
@@ -1163,7 +1163,7 @@
         },
         {
           "id": "c3_node_06",
-          "levelId": "level_1_4_acceptance_enemy_repair",
+          "levelId": "level_1_3_story",
           "label": "3-6",
           "title": "影卫巡路",
           "kind": "elite",
@@ -1185,7 +1185,7 @@
         },
         {
           "id": "c3_node_07",
-          "levelId": "level_1_2_acceptance",
+          "levelId": "level_1_2_story",
           "label": "3-7",
           "title": "暮堡暗门",
           "kind": "supply",
@@ -1229,7 +1229,7 @@
         },
         {
           "id": "c3_node_09",
-          "levelId": "level_1_7_acceptance_enemy_pursuit",
+          "levelId": "level_1_3_story",
           "label": "3-9",
           "title": "暮堡守门人",
           "kind": "elite",

@@ -1533,7 +1533,7 @@
       overridePack.enemyPools = overridePack.enemyPools || {};
       overridePack.enemyPools.pool_runtime_probe = {
         id: 'pool_runtime_probe',
-        members: [{ templateId: 'enemy_acceptance_repair', position: 1 }]
+        members: [{ templateId: 'skeleton_story_repair_guard', position: 1 }]
       };
       assert(Array.isArray(probeLevel.waves) && probeLevel.waves.length > 0, 'probe 关卡缺少 waves');
       probeLevel.waves[0].enemyPoolId = 'pool_runtime_probe';
@@ -1550,7 +1550,7 @@
 
         await DataManager.loadConfigs();
         assert(DataManager.getLevelConfig('level_1_1')?.name === '幽暗森林边缘·运行时覆写样本', 'DataManager 未消费关卡覆写产物');
-        assert(DataManager.getLevelConfig('level_1_1')?.waves?.[0]?.enemies?.[0]?.templateId === 'enemy_acceptance_repair', 'DataManager 未展开覆写 enemyPool');
+        assert(DataManager.getLevelConfig('level_1_1')?.waves?.[0]?.enemies?.[0]?.templateId === 'skeleton_story_repair_guard', 'DataManager 未展开覆写 enemyPool');
         assert(DataManager.getLevelPackMeta()?.source === 'override', `Level pack source 错误: ${DataManager.getLevelPackMeta()?.source}`);
       } finally {
         clearContentPackOverride('levels');
@@ -2292,7 +2292,7 @@
       assert(engine.timeline.entries.length === 2, `resumeBattle 未重建时间线条目: ${engine.timeline.entries.length}`);
     }
 
-    async function testAcceptanceLevelProvidesManualVerificationEntry() {
+    async function testRuntimeEnemyCatalogRetiresAcceptanceEnemyFixtures() {
       const [levelsPack, enemies, skills] = await Promise.all([
         fetchRegistryJson('levels'),
         fetchRegistryJson('enemies'),
@@ -2300,19 +2300,17 @@
       ]);
       const levels = getWrappedLevels(levelsPack);
 
-      const level = levels.level_1_2_acceptance;
-      assert(level, '缺少人工验收关卡 level_1_2_acceptance');
-      const waveEnemies = resolveLevelWaveEnemyRefs(levelsPack, level.waves?.[0]);
-      assert(waveEnemies?.[0]?.templateId === 'enemy_acceptance_guard', `验收关卡未接入样本敌人: ${waveEnemies?.[0]?.templateId}`);
+      const acceptanceLevelIds = Object.keys(levels).filter(levelId => /^level_1_\d+_acceptance/u.test(levelId));
+      const acceptancePoolIds = Object.keys(levelsPack.enemyPools || {}).filter(poolId => poolId.startsWith('pool_acceptance_'));
+      const acceptanceEnemyIds = Object.keys(enemies || {}).filter(enemyId => enemyId.startsWith('enemy_acceptance_'));
 
-      const enemy = enemies.enemy_acceptance_guard;
-      assert(enemy, '缺少样本敌人 enemy_acceptance_guard');
-      assert(Array.isArray(enemy.skills) && enemy.skills.includes('skill_demo_enemy_head_break'), '样本敌人缺少固定头部重击技能 skill_demo_enemy_head_break');
+      assert(acceptanceLevelIds.length === 0, `正式运行包不应继续发布 enemy_acceptance 专用关卡: ${acceptanceLevelIds.join(', ')}`);
+      assert(acceptancePoolIds.length === 0, `正式运行包不应继续发布 pool_acceptance_*: ${acceptancePoolIds.join(', ')}`);
+      assert(acceptanceEnemyIds.length === 0, `正式敌人库不应继续发布 enemy_acceptance_*: ${acceptanceEnemyIds.join(', ')}`);
 
       const skillList = Array.isArray(skills.skills) ? skills.skills : [];
       const byId = (id) => skillList.find(skill => skill.id === id);
 
-      assert(byId('skill_demo_hp_guard'), '缺少人工验收技能 skill_demo_hp_guard');
       assert(byId('skill_demo_armor_guard'), '缺少人工验收技能 skill_demo_armor_guard');
       assert(byId('skill_demo_on_hit_armor'), '缺少人工验收技能 skill_demo_on_hit_armor');
       assert(byId('skill_demo_enemy_head_break'), '缺少固定头部重击技能 skill_demo_enemy_head_break');
@@ -2320,59 +2318,31 @@
       assert(byId('skill_demo_wait'), '缺少敌人样本等待技能 skill_demo_wait');
     }
 
-    async function testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates() {
+    async function testStoryLevelsUseFormalEnemyPoolsAndPlayerStates() {
       const [levelsPack, enemies] = await Promise.all([
         fetchRegistryJson('levels'),
         fetchRegistryJson('enemies')
       ]);
       const levels = getWrappedLevels(levelsPack);
 
-      const onHitLevel = levels.level_1_3_acceptance_on_hit_armor;
-      assert(onHitLevel, '缺少受击获甲人工验收关卡 level_1_3_acceptance_on_hit_armor');
-      assert(resolveLevelWaveEnemyRefs(levelsPack, onHitLevel.waves?.[0])?.[0]?.templateId === 'enemy_acceptance_head_tapper', `受击获甲验收关卡未接入敌人: ${resolveLevelWaveEnemyRefs(levelsPack, onHitLevel.waves?.[0])?.[0]?.templateId}`);
-      assert(onHitLevel.battlePlayerState?.bodyParts?.head?.current === 0, `受击获甲验收关卡未将玩家头部护甲置为 0: ${onHitLevel.battlePlayerState?.bodyParts?.head?.current}`);
-      assert(onHitLevel.battlePlayerState?.bodyParts?.head?.max === 20, `受击获甲验收关卡头部护甲上限异常: ${onHitLevel.battlePlayerState?.bodyParts?.head?.max}`);
+      const expected = new Map([
+        ['level_1_1', 'goblin_story_headhunter'],
+        ['level_1_2_story', 'goblin_story_medic'],
+        ['level_1_3_story', 'skeleton_story_repair_guard']
+      ]);
 
-      const armorGuardLevel = levels.level_1_6_acceptance_armor_guard;
-      assert(armorGuardLevel, '缺少护甲免伤人工验收关卡 level_1_6_acceptance_armor_guard');
-      assert(resolveLevelWaveEnemyRefs(levelsPack, armorGuardLevel.waves?.[0])?.[0]?.templateId === 'enemy_acceptance_head_tapper', `护甲免伤验收关卡未接入敌人: ${resolveLevelWaveEnemyRefs(levelsPack, armorGuardLevel.waves?.[0])?.[0]?.templateId}`);
+      for (const [levelId, templateId] of expected) {
+        const level = levels[levelId];
+        assert(level, `缺少正式剧情关卡 ${levelId}`);
+        const waveEnemies = resolveLevelWaveEnemyRefs(levelsPack, level.waves?.[0]);
+        assert(waveEnemies?.[0]?.templateId === templateId, `${levelId} 未接入正式敌人 ${templateId}: ${waveEnemies?.[0]?.templateId}`);
+        assert(enemies[templateId], `缺少正式敌人 ${templateId}`);
+      }
 
-      const repairLevel = levels.level_1_4_acceptance_enemy_repair;
-      assert(repairLevel, '缺少敌人修甲人工验收关卡 level_1_4_acceptance_enemy_repair');
-      assert(resolveLevelWaveEnemyRefs(levelsPack, repairLevel.waves?.[0])?.[0]?.templateId === 'enemy_acceptance_repair', `敌人修甲验收关卡未接入样本敌人: ${resolveLevelWaveEnemyRefs(levelsPack, repairLevel.waves?.[0])?.[0]?.templateId}`);
-      assert(Array.isArray(repairLevel.battlePlayerSkills?.learnedAdd) && repairLevel.battlePlayerSkills.learnedAdd.includes('skill_demo_wait'), '敌人修甲验收关卡未注入等待技能');
-
-      const repairEnemy = enemies.enemy_acceptance_repair;
-      assert(repairEnemy, '缺少敌人修甲样本 enemy_acceptance_repair');
-      assert(repairEnemy.bodyParts?.chest?.current === 4, `敌人修甲样本初始胸部护甲错误: ${repairEnemy.bodyParts?.chest?.current}`);
-      assert(Array.isArray(repairEnemy.skills) && repairEnemy.skills.includes('skill_block'), '敌人修甲样本缺少 skill_block');
-
-      const healLevel = levels.level_1_5_acceptance_enemy_heal;
-      assert(healLevel, '缺少敌人回血人工验收关卡 level_1_5_acceptance_enemy_heal');
-      assert(resolveLevelWaveEnemyRefs(levelsPack, healLevel.waves?.[0])?.[0]?.templateId === 'enemy_acceptance_heal', `敌人回血验收关卡未接入样本敌人: ${resolveLevelWaveEnemyRefs(levelsPack, healLevel.waves?.[0])?.[0]?.templateId}`);
-      assert(Array.isArray(healLevel.battlePlayerSkills?.learnedAdd) && healLevel.battlePlayerSkills.learnedAdd.includes('skill_demo_wait'), '敌人回血验收关卡未注入等待技能');
-
-      const healEnemy = enemies.enemy_acceptance_heal;
-      assert(healEnemy, '缺少敌人回血样本 enemy_acceptance_heal');
-      assert(Number(healEnemy.stats?.hp ?? 0) === 18, `敌人回血样本初始 HP 错误: ${healEnemy.stats?.hp}`);
-      assert(Array.isArray(healEnemy.skills) && healEnemy.skills.includes('skill_heal'), '敌人回血样本缺少 skill_heal');
-
-      const pursuitLevel = levels.level_1_7_acceptance_enemy_pursuit;
-      assert(pursuitLevel, '缺少敌人弱点追击人工验收关卡 level_1_7_acceptance_enemy_pursuit');
-      assert(resolveLevelWaveEnemyRefs(levelsPack, pursuitLevel.waves?.[0])?.[0]?.templateId === 'enemy_acceptance_pursuit', `敌人弱点追击验收关卡未接入样本敌人: ${resolveLevelWaveEnemyRefs(levelsPack, pursuitLevel.waves?.[0])?.[0]?.templateId}`);
-      assert(Array.isArray(pursuitLevel.battlePlayerSkills?.learnedAdd) && pursuitLevel.battlePlayerSkills.learnedAdd.includes('skill_demo_wait'), '敌人弱点追击验收关卡未注入等待技能');
-      assert(pursuitLevel.battlePlayerState?.bodyParts?.head?.current === 20, `敌人弱点追击验收关卡头部护甲起始值错误: ${pursuitLevel.battlePlayerState?.bodyParts?.head?.current}`);
-      assert(pursuitLevel.battlePlayerState?.bodyParts?.head?.weakness === 1.5, `敌人弱点追击验收关卡头部弱点系数错误: ${pursuitLevel.battlePlayerState?.bodyParts?.head?.weakness}`);
-
-      const pursuitEnemy = enemies.enemy_acceptance_pursuit;
-      assert(pursuitEnemy, '缺少敌人弱点追击样本 enemy_acceptance_pursuit');
-      assert(Array.isArray(pursuitEnemy.skills) && pursuitEnemy.skills.includes('skill_throw_stone'), '敌人弱点追击样本缺少 skill_throw_stone');
-      assert(Array.isArray(pursuitEnemy.skills) && pursuitEnemy.skills.includes('skill_bite'), '敌人弱点追击样本缺少基础攻击 skill_bite');
-      assert((Number(pursuitEnemy.stats?.ap ?? 0) || 0) >= 4, `敌人弱点追击样本 AP 不足: ${pursuitEnemy.stats?.ap}`);
-
-      const armorEnemy = enemies.enemy_acceptance_head_tapper;
-      assert(armorEnemy, '缺少护甲验收样本 enemy_acceptance_head_tapper');
-      assert(Array.isArray(armorEnemy.skills) && armorEnemy.skills.includes('skill_demo_enemy_head_tap'), '护甲验收样本缺少固定头部攻击技能');
+      const edgeLevel = levels.level_1_1;
+      assert(edgeLevel.battlePlayerState?.bodyParts?.head?.current === 20, `幽暗森林边缘头部护甲起始值错误: ${edgeLevel.battlePlayerState?.bodyParts?.head?.current}`);
+      assert(edgeLevel.battlePlayerState?.bodyParts?.chest?.current === 10, `幽暗森林边缘胸部护甲起始值错误: ${edgeLevel.battlePlayerState?.bodyParts?.chest?.current}`);
+      assert(edgeLevel.battlePlayerState?.bodyParts?.head?.weakness === 1.5, `幽暗森林边缘头部弱点系数错误: ${edgeLevel.battlePlayerState?.bodyParts?.head?.weakness}`);
     }
 
     async function testAcceptanceBuffSampleLevelsInjectVisibleArmorBaselineForLegacySaves() {
@@ -2441,7 +2411,7 @@
         engine.initializePlayerBodyParts = CoreEngine.prototype.initializePlayerBodyParts;
         engine._cloneSerializable = CoreEngine.prototype._cloneSerializable;
 
-        for (const levelId of ['level_1_2_acceptance', 'level_1_6_acceptance_armor_guard']) {
+        for (const levelId of ['level_1_1']) {
           DataManager.currentLevelData = DataManager.instantiateLevel(levelId);
           const runtimeState = CoreEngine.prototype._buildBattlePlayerState.call(engine);
           const visibleParts = Object.values(runtimeState.bodyParts || {}).filter(part => Number(part?.max ?? 0) > 0);
@@ -2462,40 +2432,40 @@
       }
     }
 
-    async function testEnemyPlannerUsesExpectedStrategyOnAcceptanceEnemySamples() {
+    async function testEnemyPlannerUsesExpectedStrategyOnStoryEnemies() {
       const planner = new EnemyActionPlanner({
         getSkillConfig: (skillId) => DataManager.getSkillConfig(skillId)
       });
 
-      const repair = await buildStoryEnemyPlanningFixture('level_1_4_acceptance_enemy_repair');
+      const repair = await buildStoryEnemyPlanningFixture('level_1_3_story');
       const repairPlan = planner.planTurn({
         enemy: repair.enemy,
         player: repair.player,
         playerBodyParts: repair.player.bodyParts
       });
-      assert(repairPlan, '敌人修甲验收样本未生成任何规划');
+      assert(repairPlan, '废墟关隘骷髅敌人未生成任何规划');
       assert(repairPlan.skillId === 'skill_block', `敌人修甲验收样本未优先修甲: ${repairPlan.skillId}`);
       assert(repairPlan.targetId === repair.enemy.id, `敌人修甲验收样本 targetId 错误: ${repairPlan.targetId}`);
       assert(repairPlan.bodyPart === 'chest', `敌人修甲验收样本未选择胸部残甲: ${repairPlan.bodyPart}`);
 
-      const heal = await buildStoryEnemyPlanningFixture('level_1_5_acceptance_enemy_heal');
+      const heal = await buildStoryEnemyPlanningFixture('level_1_2_story');
       const healPlan = planner.planTurn({
         enemy: heal.enemy,
         player: heal.player,
         playerBodyParts: heal.player.bodyParts
       });
-      assert(healPlan, '敌人回血验收样本未生成任何规划');
+      assert(healPlan, '密林前哨医护敌人未生成任何规划');
       assert(healPlan.skillId === 'skill_heal', `敌人回血验收样本未优先回血: ${healPlan.skillId}`);
       assert(healPlan.targetId === heal.enemy.id, `敌人回血验收样本 targetId 错误: ${healPlan.targetId}`);
 
-      const pursuit = await buildStoryEnemyPlanningFixture('level_1_7_acceptance_enemy_pursuit');
+      const pursuit = await buildStoryEnemyPlanningFixture('level_1_1');
       const pursuitPlan = planner.planTurn({
         enemy: pursuit.enemy,
         player: pursuit.player,
         playerBodyParts: pursuit.player.bodyParts
       });
-      assert(pursuitPlan, '敌人弱点追击验收样本未生成任何规划');
-      assert(pursuitPlan.skillId === 'skill_throw_stone', `敌人弱点追击验收样本未优先追击弱点: ${pursuitPlan.skillId}`);
+      assert(pursuitPlan, '幽暗森林边缘追猎手未生成任何规划');
+      assert(pursuitPlan.skillId === 'skill_skull_cracker', `弱点追击敌人未优先使用映射后的裂颅一击: ${pursuitPlan.skillId}`);
       assert(pursuitPlan.bodyPart === 'head', `敌人弱点追击验收样本未锁定头部: ${pursuitPlan.bodyPart}`);
       assert(pursuitPlan.targetId === pursuit.player.id, `敌人弱点追击验收样本 targetId 错误: ${pursuitPlan.targetId}`);
     }
@@ -2534,20 +2504,20 @@
       }
     }
 
-    async function testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack() {
+    async function testAcceptanceDefenseSkillsResolveBeforeStoryEnemyAttack() {
       const [enemies, skills] = await Promise.all([
         fetchRegistryJson('enemies'),
         fetchRegistryJson('skills', { skillTreeId: 'melee_v4_5' })
       ]);
 
-      const enemy = enemies.enemy_acceptance_guard;
-      assert(enemy, '缺少样本敌人 enemy_acceptance_guard');
+      const enemy = enemies.goblin_story_headhunter;
+      assert(enemy, '缺少正式敌人 goblin_story_headhunter');
 
       const skillList = Array.isArray(skills.skills) ? skills.skills : [];
       const byId = (id) => skillList.find(skill => skill.id === id);
       const enemyBaseSpeed = Number(enemy.stats?.speed ?? 0) || 0;
 
-      for (const id of ['skill_demo_hp_guard', 'skill_demo_armor_guard', 'skill_demo_on_hit_armor']) {
+      for (const id of ['skill_demo_armor_guard', 'skill_demo_on_hit_armor']) {
         const skill = byId(id);
         assert(skill, `缺少验收技能 ${id}`);
         const totalSpeed = enemyBaseSpeed - 1; // keep lint of usage? placeholder
@@ -2557,9 +2527,8 @@
       }
     }
 
-    async function testAcceptanceHpGuardManualSampleProvidesHeadFocusedObservation() {
+    async function testHpGuardBattlePipelineProvidesHeadFocusedObservation() {
       const rawBuffs = await fetchRegistryJson('buffs');
-      await DataManager.loadConfigs();
 
       const eventBus = new EventBus.constructor();
       const registry = new BuffRegistry(rawBuffs.buffs);
@@ -2568,17 +2537,43 @@
 
       const driver = createBattleDriver(eventBus);
       const planner = new EnemyActionPlanner({
-        getSkillConfig: (skillId) => DataManager.getSkillConfig(skillId)
+        getSkillConfig(skillId) {
+          return {
+            skill_demo_enemy_head_break: {
+              id: 'skill_demo_enemy_head_break',
+              name: '验收重击',
+              speed: 0,
+              target: {
+                subject: 'SUBJECT_ENEMY',
+                scope: 'SCOPE_PART',
+                selection: { candidateParts: ['head'], selectedParts: ['head'], selectCount: 1 }
+              },
+              costs: { ap: 1 },
+              actions: [{ effect: { effectType: 'DMG_ARMOR', amount: 20 } }]
+            }
+          }[skillId] || null;
+        }
       });
 
-      const runtimeLevel = DataManager.instantiateLevel('level_1_2_acceptance');
-      const enemy = runtimeLevel?.enemies?.[0];
-      assert(enemy, '人工验收样本未实例化敌人');
+      const enemy = createCombatant({
+        id: 'fixture_head_breaker',
+        name: '局部测试敌人',
+        hp: 80,
+        maxHp: 80,
+        ap: 1,
+        speed: 0,
+        skills: ['skill_demo_enemy_head_break']
+      });
 
-      const levelConfig = DataManager.getLevelConfig('level_1_2_acceptance');
       const player = createCombatant({
-        id: 'player_acceptance_manual',
-        bodyParts: deepClone(levelConfig?.battlePlayerState?.bodyParts || {}),
+        id: 'player_hp_guard_fixture',
+        bodyParts: {
+          head: { current: 20, max: 20, weakness: 1.5 },
+          chest: { current: 10, max: 20, weakness: 1 },
+          abdomen: { current: 6, max: 20, weakness: 1.1 },
+          arm: { current: 6, max: 20, weakness: 1 },
+          leg: { current: 12, max: 20, weakness: 1 }
+        },
         hp: 100,
         maxHp: 100,
         ap: 4,
@@ -2587,6 +2582,7 @@
       player.name = 'Tester';
       player.buffs = new BuffManager(player, registry, eventBus);
       system.registerManager(player.buffs);
+      player.buffs.add('new_buff_1771481936095', { duration: 1 });
 
       driver.data = {
         playerData: player,
@@ -2594,20 +2590,9 @@
           enemies: [enemy]
         },
         getSkillConfig(skillId) {
-          return DataManager.getSkillConfig(skillId);
+          return planner._getSkillConfig(skillId);
         }
       };
-
-      const applyHpGuard = driver._executeSkillActions({
-        actor: player,
-        action: {
-          sourceId: player.id,
-          targetId: player.id,
-          skillId: 'skill_demo_hp_guard'
-        },
-        skillConfig: DataManager.getSkillConfig('skill_demo_hp_guard')
-      });
-      assert(applyHpGuard?.ok, 'HP免伤演示未成功施加 Buff');
 
       const enemyPlan = planner.planTurn({
         enemy,
@@ -2615,16 +2600,16 @@
         playerBodyParts: player.bodyParts
       });
 
-      assert(enemyPlan, '人工验收样本敌人未生成规划');
-      assert(enemyPlan.skillId === 'skill_demo_enemy_head_break', `人工验收样本未使用固定头部重击: ${enemyPlan.skillId}`);
-      assert(enemyPlan.bodyPart === 'head', `人工验收样本未固定攻击头部: ${enemyPlan.bodyPart}`);
+      assert(enemyPlan, 'HP免伤局部敌人未生成规划');
+      assert(enemyPlan.skillId === 'skill_demo_enemy_head_break', `HP免伤局部敌人未使用固定头部重击: ${enemyPlan.skillId}`);
+      assert(enemyPlan.bodyPart === 'head', `HP免伤局部敌人未固定攻击头部: ${enemyPlan.bodyPart}`);
 
       const result = driver._executeSkillActions({
         actor: enemy,
         action: enemyPlan,
-        skillConfig: DataManager.getSkillConfig(enemyPlan.skillId)
+        skillConfig: planner._getSkillConfig(enemyPlan.skillId)
       });
-      assert(result?.ok, '人工验收样本敌人执行失败');
+      assert(result?.ok, 'HP免伤局部敌人执行失败');
       assert(player.bodyParts?.head?.current === 0, `HP免伤样本头部护甲未清零: ${player.bodyParts?.head?.current}`);
       assert(player.stats?.hp === 100, `HP免伤样本仍然掉血: ${player.stats?.hp}`);
     }
@@ -3203,8 +3188,8 @@
           }
         },
         currentLevelData: {
-          id: 'level_1_2_acceptance',
-          name: '验收样本',
+          id: 'fixture_battle_skill_injection',
+          name: '战斗技能注入局部测试',
           enemies: [],
           battlePlayerSkills: {
             learnedAdd: ['skill_demo_hp_guard', 'skill_demo_armor_guard', 'skill_demo_on_hit_armor']
@@ -3275,8 +3260,8 @@
           }
         },
         currentLevelData: {
-          id: 'level_1_3_acceptance_on_hit_armor',
-          name: '受击获甲样本',
+          id: 'fixture_battle_player_state_override',
+          name: '战斗玩家状态覆盖局部测试',
           enemies: [],
           battlePlayerState: {
             bodyParts: {
@@ -3383,14 +3368,14 @@
               name: 'repair',
               waves: [
                 {
-                  enemies: [{ templateId: 'enemy_acceptance_repair' }]
+                  enemies: [{ templateId: 'fixture_repair_enemy' }]
                 }
               ]
             }
           },
           enemies: {
-            enemy_acceptance_repair: {
-              id: 'enemy_acceptance_repair',
+            fixture_repair_enemy: {
+              id: 'fixture_repair_enemy',
               name: 'repair enemy',
               stats: { hp: 90, maxHp: 90, speed: 6, ap: 3 },
               bodyParts: {
@@ -6520,12 +6505,12 @@
       ['CoreEngine.resumeBattle 会重建 Buff/规划/时间线状态', testCoreEngineResumeBattleRebuildsRuntimeState],
       ['DataManager 显式保存后会刷新存档槽元数据', testDataManagerSaveSlotsReflectExplicitSaveMetadata],
       ['DataManager.getSaveList 包含自动存档正式槽位', testDataManagerGetSaveListIncludesAutoSaveEntry],
-      ['验收关卡与样本敌人/技能已配置', testAcceptanceLevelProvidesManualVerificationEntry],
-      ['验收关卡提供确定性的玩家与敌人状态', testAcceptanceLevelsProvideDeterministicEnemyAndPlayerStates],
+      ['正式运行包已退役 enemy_acceptance 测试敌人', testRuntimeEnemyCatalogRetiresAcceptanceEnemyFixtures],
+      ['故事关卡使用正式敌人池与玩家状态', testStoryLevelsUseFormalEnemyPoolsAndPlayerStates],
       ['Buff 验收样本会为旧存档玩家注入可见护甲基线', testAcceptanceBuffSampleLevelsInjectVisibleArmorBaselineForLegacySaves],
-      ['验收防御技能会先于样本敌人执行', testAcceptanceDefenseSkillsResolveBeforeAcceptanceEnemyAttack],
-      ['人工验收样本会稳定给出头部掉甲不掉血的 HP 免伤现象', testAcceptanceHpGuardManualSampleProvidesHeadFocusedObservation],
-      ['EnemyActionPlanner 会在敌人行为验收样本中选出对应策略', testEnemyPlannerUsesExpectedStrategyOnAcceptanceEnemySamples],
+      ['验收防御技能会先于故事敌人执行', testAcceptanceDefenseSkillsResolveBeforeStoryEnemyAttack],
+      ['HP 免伤链路会稳定给出头部掉甲不掉血现象', testHpGuardBattlePipelineProvidesHeadFocusedObservation],
+      ['EnemyActionPlanner 会在故事敌人中选出对应策略', testEnemyPlannerUsesExpectedStrategyOnStoryEnemies],
       ['主流程 Buff 样本链具备正式可学路径', testMainFlowBuffSamplesProvideProductionReadySkillTreeChains],
       ['关卡 pack schema 与敌人池配置映射对齐', testLevelPackSchemaAndEnemyPoolMappingAreAligned],
       ['技能 pack schema 与编辑器字段映射对齐', testSkillPackSchemaAndEditorFieldMappingAreAligned],
