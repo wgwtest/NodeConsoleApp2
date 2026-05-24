@@ -313,6 +313,116 @@ async function runMainFlow(cdpEndpoint, mainUrl) {
     }
 }
 
+async function runLevelSelectMultiMapSmoke(cdpEndpoint, mainUrl) {
+    let client = null;
+    try {
+        client = await attach(cdpEndpoint, mainUrl);
+        await waitFor(
+            client,
+            `(() => document.getElementById("modalTitle")?.textContent.trim() === "欢迎"
+                && [...document.querySelectorAll("button")].some(btn => btn.textContent.trim() === "新游戏"))()`,
+            "mock_ui_v11.html 欢迎页和新游戏按钮"
+        );
+
+        const report = await evaluate(client, `(async () => {
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+            const clickButtonByText = text => {
+                const btn = [...document.querySelectorAll("button")]
+                    .find(item => item.textContent.trim() === text);
+                if (!btn) throw new Error("找不到按钮：" + text);
+                btn.click();
+                return btn.textContent.trim();
+            };
+            const waitForPredicate = async (predicate, label, timeoutMs = 12000) => {
+                const started = Date.now();
+                while (Date.now() - started < timeoutMs) {
+                    if (predicate()) return true;
+                    await sleep(100);
+                }
+                throw new Error("等待超时：" + label);
+            };
+            const selectLevelOnMap = async ({ mapId, levelId }) => {
+                const switchButton = document.querySelector('.level-map-switcher__button[data-map-id="' + mapId + '"]');
+                if (!switchButton) throw new Error("找不到地图切换：" + mapId);
+                switchButton.click();
+                await waitForPredicate(() => document.querySelector(".level-select-runtime-map")?.dataset.mapId === mapId, "地图切换 " + mapId);
+                await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + levelId + '"]'), "关卡节点 " + levelId);
+
+                const node = document.querySelector('.level-map-node[data-level-id="' + levelId + '"]');
+                if (!node || node.disabled || node.getAttribute("aria-disabled") === "true") {
+                    throw new Error("关卡节点不可点击：" + levelId);
+                }
+                node.click();
+                await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + levelId + '"][data-selected="true"]'), "选中关卡 " + levelId);
+
+                const enterButton = document.querySelector("[data-action='enter-level']");
+                if (!enterButton || enterButton.disabled || enterButton.getAttribute("aria-disabled") === "true") {
+                    throw new Error("地图详情抽屉没有可用进入按钮：" + levelId);
+                }
+                const title = document.querySelector(".level-map-drawer__title")?.textContent.trim() || "";
+                const label = document.querySelector(".level-map-drawer__label")?.textContent.trim() || "";
+                return {
+                    mapId,
+                    levelId,
+                    nodeText: node.textContent.trim().replace(/\\s+/g, " "),
+                    title,
+                    label,
+                    enterText: enterButton.textContent.trim(),
+                    selectedLevelId: document.querySelector(".level-map-node[data-selected='true']")?.dataset.levelId || "",
+                    rootMapId: document.querySelector(".level-select-runtime-map")?.dataset.mapId || ""
+                };
+            };
+
+            clickButtonByText("新游戏");
+            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "游戏菜单");
+
+            clickButtonByText("关卡选择");
+            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
+            await waitForPredicate(() => document.querySelector(".level-map-switcher__button"), "地图切换按钮");
+
+            const mapButtons = [...document.querySelectorAll(".level-map-switcher__button")].map(button => ({
+                mapId: button.dataset.mapId || "",
+                text: button.textContent.trim().replace(/\\s+/g, " "),
+                selected: button.getAttribute("aria-selected") === "true"
+            }));
+            const targets = [
+                { mapId: "chapter_1_authoring_map", levelId: "level_1_10" },
+                { mapId: "chapter_2_authoring_map", levelId: "level_2_10" },
+                { mapId: "chapter_3_authoring_map", levelId: "level_3_10" }
+            ];
+            const selections = [];
+            for (const target of targets) {
+                selections.push(await selectLevelOnMap(target));
+            }
+
+            return {
+                path: "mock_ui_v11.html",
+                mapButtons,
+                selections,
+                finalState: window.GameEngine?.fsm?.currentState || "",
+                title: document.getElementById("modalTitle")?.textContent.trim() || ""
+            };
+        })()`);
+
+        assertCondition(report.mapButtons.length >= 3, "关卡选择页没有暴露三张地图切换按钮");
+        assertCondition(
+            ["chapter_1_authoring_map", "chapter_2_authoring_map", "chapter_3_authoring_map"]
+                .every(mapId => report.mapButtons.some(button => button.mapId === mapId)),
+            "关卡选择页缺少第一/二/三章地图切换入口"
+        );
+        assertCondition(
+            ["level_1_10", "level_2_10", "level_3_10"]
+                .every(levelId => report.selections.some(selection => selection.levelId === levelId && selection.selectedLevelId === levelId)),
+            "关卡选择页未能跨章节选中三个章节 Boss 关"
+        );
+        assertCondition(report.finalState === "MAIN_MENU", `多地图关卡选择 smoke 不应进入战斗，当前状态：${report.finalState}`);
+        assertCondition(client.runtimeExceptions.length === 0, "多地图关卡选择页面出现 Runtime exception");
+        return report;
+    } finally {
+        await closeClient(client);
+    }
+}
+
 async function runPresentationProbe(cdpEndpoint, probeUrl) {
     let client = null;
     try {
@@ -452,6 +562,7 @@ async function main() {
         appBaseUrl,
         urls,
         mainFlow: await runMainFlow(cdpEndpoint, urls.main),
+        levelSelectMultiMap: await runLevelSelectMultiMapSmoke(cdpEndpoint, urls.main),
         presentationProbe: await runPresentationProbe(cdpEndpoint, urls.probe),
         presentationConfigurator: await runPresentationConfigurator(cdpEndpoint, urls.configurator)
     };
