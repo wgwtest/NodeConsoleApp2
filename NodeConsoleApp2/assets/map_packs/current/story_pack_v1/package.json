@@ -3,7 +3,7 @@
   "packageId": "story_pack_v1",
   "packageVersion": "1.0.0",
   "title": "故事地图包 v1",
-  "status": "runtime",
+  "status": "authoring",
   "entryStoryId": "story_default",
   "entryChapterId": "story_chapter_1",
   "files": {

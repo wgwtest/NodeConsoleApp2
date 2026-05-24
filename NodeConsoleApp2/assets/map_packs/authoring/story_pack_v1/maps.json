@@ -275,8 +275,8 @@
           "nodeSkinRef": "skin_story_main",
           "iconLabel": "主线",
           "position": {
-            "x": 387,
-            "y": 518
+            "x": 663,
+            "y": 705
           },
           "objectiveText": "找到被破坏的路标，确认补给队曾经过这里。",
           "difficultyLabel": "标准",
@@ -297,8 +297,8 @@
           "nodeSkinRef": "skin_story_branch",
           "iconLabel": "分支",
           "position": {
-            "x": 455,
-            "y": 285
+            "x": 497,
+            "y": 526
           },
           "objectiveText": "侦察北侧树冠，提前看见废墟守卫动向。",
           "difficultyLabel": "分支",
@@ -319,8 +319,8 @@
           "nodeSkinRef": "skin_story_elite",
           "iconLabel": "精英",
           "position": {
-            "x": 630,
-            "y": 254
+            "x": 590,
+            "y": 367
           },
           "objectiveText": "高风险侦察战，成功后削弱关隘前压力。",
           "difficultyLabel": "高压",
@@ -342,8 +342,8 @@
           "nodeSkinRef": "skin_story_supply",
           "iconLabel": "补给",
           "position": {
-            "x": 553,
-            "y": 579
+            "x": 960,
+            "y": 755
           },
           "objectiveText": "绕到南侧补给线，获得稳定资源但路线更长。",
           "difficultyLabel": "补给",
@@ -364,8 +364,8 @@
           "nodeSkinRef": "skin_story_supply",
           "iconLabel": "补给",
           "position": {
-            "x": 776,
-            "y": 647
+            "x": 1036,
+            "y": 580
           },
           "objectiveText": "清理被袭营地，获得 Boss 前补给。",
           "difficultyLabel": "事件",
@@ -387,8 +387,8 @@
           "nodeSkinRef": "skin_story_main",
           "iconLabel": "主线",
           "position": {
-            "x": 795,
-            "y": 426
+            "x": 720,
+            "y": 525
           },
           "objectiveText": "两条支线在前哨附近回流。",
           "difficultyLabel": "进阶",
@@ -409,8 +409,8 @@
           "nodeSkinRef": "skin_story_branch",
           "iconLabel": "分支",
           "position": {
-            "x": 962,
-            "y": 332
+            "x": 748,
+            "y": 310
           },
           "objectiveText": "Boss 前最后一次路线选择。",
           "difficultyLabel": "选择",
@@ -431,8 +431,8 @@
           "nodeSkinRef": "skin_story_supply",
           "iconLabel": "补给",
           "position": {
-            "x": 1050,
-            "y": 570
+            "x": 910,
+            "y": 480
           },
           "objectiveText": "找到遗留补给和废墟线索。",
           "difficultyLabel": "事件",
@@ -454,8 +454,8 @@
           "nodeSkinRef": "skin_story_main",
           "iconLabel": "主线",
           "position": {
-            "x": 1210,
-            "y": 436
+            "x": 979,
+            "y": 236
           },
           "objectiveText": "进入废墟外侧，准备突破关隘。",
           "difficultyLabel": "进阶",
@@ -476,8 +476,8 @@
           "nodeSkinRef": "skin_story_elite",
           "iconLabel": "精英",
           "position": {
-            "x": 1350,
-            "y": 350
+            "x": 1059,
+            "y": 153
           },
           "objectiveText": "可选精英守卫，胜利后改善 Boss 前资源。",
           "difficultyLabel": "高压",
@@ -498,8 +498,8 @@
           "nodeSkinRef": "skin_story_boss",
           "iconLabel": "Boss",
           "position": {
-            "x": 1435,
-            "y": 532
+            "x": 1242,
+            "y": 245
           },
           "objectiveText": "第一章 Boss 与剧情门。",
           "difficultyLabel": "Boss",
@@ -611,6 +611,13 @@
           "toNodeId": "c1_node_10",
           "type": "main",
           "branchLabel": "绕开精英"
+        },
+        {
+          "id": "edge_1",
+          "fromNodeId": "c1_node_04b",
+          "toNodeId": "c1_node_07",
+          "type": "branch",
+          "branchLabel": ""
         }
       ],
       "previewModes": []
