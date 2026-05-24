@@ -78,6 +78,7 @@ function normalizeNode(index, node, fallbackLevelId = '') {
         label: typeof source.label === 'string' && source.label.trim() ? source.label.trim() : `节点 ${index + 1}`,
         title: typeof source.title === 'string' && source.title.trim() ? source.title.trim() : `未命名节点 ${index + 1}`,
         kind: typeof source.kind === 'string' && source.kind.trim() ? source.kind.trim() : 'battle',
+        contentRole: typeof source.contentRole === 'string' && source.contentRole.trim() ? source.contentRole.trim() : '',
         nodeSkinRef: typeof source.nodeSkinRef === 'string' ? source.nodeSkinRef.trim() : '',
         iconLabel: typeof source.iconLabel === 'string' ? source.iconLabel.trim() : '',
         position,

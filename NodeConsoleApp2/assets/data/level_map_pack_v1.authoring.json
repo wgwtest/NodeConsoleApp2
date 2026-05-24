@@ -7,8 +7,8 @@
     "status": "authoring",
     "notes": [
       "这是地图编辑器默认加载的三章地图工作包。",
-      "本包用于可视化排布、拖拽微调、边关系编辑与导出，不会自动覆盖主流程生产地图包。",
-      "当前 levels.json 只有有限 story/acceptance levelId，因此 authoring 节点会复用已有 levelId；后续可在扩充 levels.json 后逐个改绑。"
+      "本包的 30 个 contentRole=story_level 节点一一绑定正式 story 关卡。",
+      "6 个 contentRole=route_variant 节点用于路线 / 补给 / 事件变体，不计入 30 关难度曲线。"
     ]
   },
   "assetLibrary": {
@@ -179,182 +179,368 @@
           "kind": "main",
           "nodeSkinRef": "skin_story_main",
           "iconLabel": "主线",
-          "position": { "x": 145, "y": 468 },
+          "position": {
+            "x": 145,
+            "y": 468
+          },
           "objectiveText": "边境失联，玩家从森林外缘进入幽暗森林。",
-          "difficultyLabel": "标准",
-          "rewardPreview": ["KP +1", "金币 50"],
-          "artRefs": { "nodeArt": "node_icon_elf_archer", "portrait": "enemy_goblin_hunter" }
+          "difficultyLabel": "入门",
+          "rewardPreview": [
+            "KP +1",
+            "金币 69"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
         },
         {
           "id": "c1_node_02",
-          "levelId": "level_1_2_story",
+          "levelId": "level_1_2",
           "label": "1-2",
           "title": "失联路标",
           "kind": "main",
           "nodeSkinRef": "skin_story_main",
           "iconLabel": "主线",
-          "position": { "x": 285, "y": 402 },
+          "position": {
+            "x": 285,
+            "y": 402
+          },
           "objectiveText": "找到被破坏的路标，确认补给队曾经过这里。",
-          "difficultyLabel": "标准",
-          "rewardPreview": ["金币 60"],
-          "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" }
+          "difficultyLabel": "入门",
+          "rewardPreview": [
+            "金币 78"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
         },
         {
           "id": "c1_node_03a",
-          "levelId": "level_1_2_story",
-          "label": "1-3A",
+          "levelId": "level_1_3",
+          "label": "1-3",
           "title": "北侧树冠",
-          "kind": "branch",
-          "nodeSkinRef": "skin_story_branch",
-          "iconLabel": "分支",
-          "position": { "x": 455, "y": 285 },
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 455,
+            "y": 285
+          },
           "objectiveText": "侦察北侧树冠，提前看见废墟守卫动向。",
-          "difficultyLabel": "分支",
-          "rewardPreview": ["情报"],
-          "artRefs": { "nodeArt": "node_icon_elf_archer", "portrait": "enemy_goblin_hunter" }
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "金币 87"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
         },
         {
           "id": "c1_node_04a",
-          "levelId": "level_1_3_story",
-          "label": "1-4A",
+          "levelId": "level_1_4",
+          "label": "1-4",
           "title": "猎手埋伏",
           "kind": "elite",
           "nodeSkinRef": "skin_story_elite",
           "iconLabel": "精英",
-          "position": { "x": 630, "y": 254 },
+          "position": {
+            "x": 630,
+            "y": 254
+          },
           "objectiveText": "高风险侦察战，成功后削弱关隘前压力。",
-          "difficultyLabel": "高压",
-          "rewardPreview": ["KP +1", "精英奖励"],
-          "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" }
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "KP +1",
+            "金币 131"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_goblin_warrior",
+            "portrait": "enemy_skeleton_guard"
+          },
+          "contentRole": "story_level"
         },
         {
           "id": "c1_node_03b",
-          "levelId": "level_1_2_story",
-          "label": "1-3B",
+          "levelId": "level_1_3_supply_route",
+          "label": "补给-1",
           "title": "南侧补给道",
           "kind": "supply",
           "nodeSkinRef": "skin_story_supply",
           "iconLabel": "补给",
-          "position": { "x": 450, "y": 600 },
+          "position": {
+            "x": 450,
+            "y": 600
+          },
           "objectiveText": "绕到南侧补给线，获得稳定资源但路线更长。",
           "difficultyLabel": "补给",
-          "rewardPreview": ["金币 120"],
-          "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" }
+          "rewardPreview": [
+            "金币 120",
+            "补给"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elemental",
+            "portrait": "enemy_goblin_medic"
+          },
+          "contentRole": "route_variant"
         },
         {
           "id": "c1_node_04b",
-          "levelId": "level_1_3_story",
-          "label": "1-4B",
+          "levelId": "level_1_4_supply_route",
+          "label": "补给-2",
           "title": "破损营地",
           "kind": "supply",
           "nodeSkinRef": "skin_story_supply",
           "iconLabel": "补给",
-          "position": { "x": 625, "y": 642 },
+          "position": {
+            "x": 625,
+            "y": 642
+          },
           "objectiveText": "清理被袭营地，获得 Boss 前补给。",
           "difficultyLabel": "事件",
-          "rewardPreview": ["补给", "护甲素材"],
-          "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" }
+          "rewardPreview": [
+            "金币 100",
+            "补给"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_goblin_warrior",
+            "portrait": "enemy_skeleton_guard"
+          },
+          "contentRole": "route_variant"
         },
         {
           "id": "c1_node_05",
-          "levelId": "level_1_2_story",
+          "levelId": "level_1_5",
           "label": "1-5",
           "title": "密林前哨",
           "kind": "main",
           "nodeSkinRef": "skin_story_main",
           "iconLabel": "主线",
-          "position": { "x": 795, "y": 426 },
+          "position": {
+            "x": 795,
+            "y": 426
+          },
           "objectiveText": "两条支线在前哨附近回流。",
-          "difficultyLabel": "进阶",
-          "rewardPreview": ["KP +1"],
-          "artRefs": { "nodeArt": "node_icon_elf_archer", "portrait": "enemy_goblin_hunter" }
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "KP +1",
+            "金币 105"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
         },
         {
           "id": "c1_node_06",
-          "levelId": "level_1_2_story",
+          "levelId": "level_1_6",
           "label": "1-6",
           "title": "雾中岔口",
-          "kind": "branch",
-          "nodeSkinRef": "skin_story_branch",
-          "iconLabel": "分支",
-          "position": { "x": 962, "y": 332 },
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 962,
+            "y": 332
+          },
           "objectiveText": "Boss 前最后一次路线选择。",
-          "difficultyLabel": "选择",
-          "rewardPreview": ["路线信息"],
-          "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" }
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "金币 114"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
         },
         {
           "id": "c1_node_07",
-          "levelId": "level_1_3_story",
+          "levelId": "level_1_7",
           "label": "1-7",
           "title": "古井回声",
-          "kind": "supply",
-          "nodeSkinRef": "skin_story_supply",
-          "iconLabel": "补给",
-          "position": { "x": 1050, "y": 570 },
+          "kind": "event",
+          "nodeSkinRef": "skin_story_branch",
+          "iconLabel": "机制",
+          "position": {
+            "x": 1050,
+            "y": 570
+          },
           "objectiveText": "找到遗留补给和废墟线索。",
-          "difficultyLabel": "事件",
-          "rewardPreview": ["恢复", "金币 80"],
-          "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" }
+          "difficultyLabel": "高压",
+          "rewardPreview": [
+            "金币 123"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elemental",
+            "portrait": "enemy_goblin_medic"
+          },
+          "contentRole": "story_level"
         },
         {
           "id": "c1_node_08",
-          "levelId": "level_1_3_story",
+          "levelId": "level_1_8",
           "label": "1-8",
           "title": "废墟斜坡",
           "kind": "main",
           "nodeSkinRef": "skin_story_main",
           "iconLabel": "主线",
-          "position": { "x": 1210, "y": 436 },
+          "position": {
+            "x": 1210,
+            "y": 436
+          },
           "objectiveText": "进入废墟外侧，准备突破关隘。",
-          "difficultyLabel": "进阶",
-          "rewardPreview": ["金币 90"],
-          "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" }
+          "difficultyLabel": "高压",
+          "rewardPreview": [
+            "KP +1",
+            "金币 132"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
         },
         {
           "id": "c1_node_09",
-          "levelId": "level_1_3_story",
+          "levelId": "level_1_9",
           "label": "1-9",
           "title": "关隘守卫",
           "kind": "elite",
           "nodeSkinRef": "skin_story_elite",
           "iconLabel": "精英",
-          "position": { "x": 1350, "y": 350 },
+          "position": {
+            "x": 1350,
+            "y": 350
+          },
           "objectiveText": "可选精英守卫，胜利后改善 Boss 前资源。",
           "difficultyLabel": "高压",
-          "rewardPreview": ["精英奖励"],
-          "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" }
+          "rewardPreview": [
+            "KP +1",
+            "金币 176"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_goblin_warrior",
+            "portrait": "enemy_skeleton_guard"
+          },
+          "contentRole": "story_level"
         },
         {
           "id": "c1_node_10",
-          "levelId": "level_1_3_story",
+          "levelId": "level_1_10",
           "label": "1-10",
           "title": "废墟关隘",
           "kind": "boss",
           "nodeSkinRef": "skin_story_boss",
           "iconLabel": "Boss",
-          "position": { "x": 1435, "y": 532 },
+          "position": {
+            "x": 1435,
+            "y": 532
+          },
           "objectiveText": "第一章 Boss 与剧情门。",
           "difficultyLabel": "Boss",
-          "rewardPreview": ["KP +2", "章节奖励"],
-          "artRefs": { "nodeArt": "node_icon_owlbear", "portrait": "enemy_ruins_boss" }
+          "rewardPreview": [
+            "KP +2",
+            "金币 230"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_owlbear",
+            "portrait": "enemy_ruins_boss"
+          },
+          "contentRole": "story_level"
         }
       ],
       "edges": [
-        { "id": "c1_edge_01", "fromNodeId": "c1_node_01", "toNodeId": "c1_node_02", "branchLabel": "主线" },
-        { "id": "c1_edge_02", "fromNodeId": "c1_node_02", "toNodeId": "c1_node_03a", "branchLabel": "侦察线" },
-        { "id": "c1_edge_03", "fromNodeId": "c1_node_03a", "toNodeId": "c1_node_04a", "branchLabel": "高风险" },
-        { "id": "c1_edge_04", "fromNodeId": "c1_node_04a", "toNodeId": "c1_node_05", "branchLabel": "回流" },
-        { "id": "c1_edge_05", "fromNodeId": "c1_node_02", "toNodeId": "c1_node_03b", "branchLabel": "补给线" },
-        { "id": "c1_edge_06", "fromNodeId": "c1_node_03b", "toNodeId": "c1_node_04b", "branchLabel": "补给" },
-        { "id": "c1_edge_07", "fromNodeId": "c1_node_04b", "toNodeId": "c1_node_05", "branchLabel": "回流" },
-        { "id": "c1_edge_08", "fromNodeId": "c1_node_05", "toNodeId": "c1_node_06", "branchLabel": "推进" },
-        { "id": "c1_edge_09", "fromNodeId": "c1_node_06", "toNodeId": "c1_node_07", "branchLabel": "补给绕行" },
-        { "id": "c1_edge_10", "fromNodeId": "c1_node_07", "toNodeId": "c1_node_08", "branchLabel": "回主路" },
-        { "id": "c1_edge_11", "fromNodeId": "c1_node_06", "toNodeId": "c1_node_08", "branchLabel": "直行" },
-        { "id": "c1_edge_12", "fromNodeId": "c1_node_08", "toNodeId": "c1_node_09", "branchLabel": "挑战" },
-        { "id": "c1_edge_13", "fromNodeId": "c1_node_09", "toNodeId": "c1_node_10", "branchLabel": "Boss" },
-        { "id": "c1_edge_14", "fromNodeId": "c1_node_08", "toNodeId": "c1_node_10", "branchLabel": "绕开精英" }
+        {
+          "id": "c1_edge_01",
+          "fromNodeId": "c1_node_01",
+          "toNodeId": "c1_node_02",
+          "branchLabel": "主线"
+        },
+        {
+          "id": "c1_edge_02",
+          "fromNodeId": "c1_node_02",
+          "toNodeId": "c1_node_03a",
+          "branchLabel": "侦察线"
+        },
+        {
+          "id": "c1_edge_03",
+          "fromNodeId": "c1_node_03a",
+          "toNodeId": "c1_node_04a",
+          "branchLabel": "高风险"
+        },
+        {
+          "id": "c1_edge_04",
+          "fromNodeId": "c1_node_04a",
+          "toNodeId": "c1_node_05",
+          "branchLabel": "回流"
+        },
+        {
+          "id": "c1_edge_05",
+          "fromNodeId": "c1_node_02",
+          "toNodeId": "c1_node_03b",
+          "branchLabel": "补给线"
+        },
+        {
+          "id": "c1_edge_06",
+          "fromNodeId": "c1_node_03b",
+          "toNodeId": "c1_node_04b",
+          "branchLabel": "补给"
+        },
+        {
+          "id": "c1_edge_07",
+          "fromNodeId": "c1_node_04b",
+          "toNodeId": "c1_node_05",
+          "branchLabel": "回流"
+        },
+        {
+          "id": "c1_edge_08",
+          "fromNodeId": "c1_node_05",
+          "toNodeId": "c1_node_06",
+          "branchLabel": "推进"
+        },
+        {
+          "id": "c1_edge_09",
+          "fromNodeId": "c1_node_06",
+          "toNodeId": "c1_node_07",
+          "branchLabel": "补给绕行"
+        },
+        {
+          "id": "c1_edge_10",
+          "fromNodeId": "c1_node_07",
+          "toNodeId": "c1_node_08",
+          "branchLabel": "回主路"
+        },
+        {
+          "id": "c1_edge_11",
+          "fromNodeId": "c1_node_06",
+          "toNodeId": "c1_node_08",
+          "branchLabel": "直行"
+        },
+        {
+          "id": "c1_edge_12",
+          "fromNodeId": "c1_node_08",
+          "toNodeId": "c1_node_09",
+          "branchLabel": "挑战"
+        },
+        {
+          "id": "c1_edge_13",
+          "fromNodeId": "c1_node_09",
+          "toNodeId": "c1_node_10",
+          "branchLabel": "Boss"
+        },
+        {
+          "id": "c1_edge_14",
+          "fromNodeId": "c1_node_08",
+          "toNodeId": "c1_node_10",
+          "branchLabel": "绕开精英"
+        }
       ]
     },
     {
@@ -378,34 +564,375 @@
       "backgroundRef": "bg_map_winter_02",
       "entryNodeId": "c2_node_01",
       "nodes": [
-        { "id": "c2_node_01", "levelId": "level_1_1", "label": "2-1", "title": "霜雾山口", "kind": "main", "nodeSkinRef": "skin_story_main", "iconLabel": "主线", "position": { "x": 160, "y": 510 }, "objectiveText": "追踪线索进入高寒峡谷。", "difficultyLabel": "标准", "rewardPreview": ["KP +1"], "artRefs": { "nodeArt": "node_icon_elf_archer", "portrait": "enemy_goblin_hunter" } },
-        { "id": "c2_node_02", "levelId": "level_1_2_story", "label": "2-2", "title": "冻土营火", "kind": "supply", "nodeSkinRef": "skin_story_supply", "iconLabel": "补给", "position": { "x": 315, "y": 622 }, "objectiveText": "在营火旁恢复并判断下一段路线。", "difficultyLabel": "补给", "rewardPreview": ["恢复", "金币 60"], "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" } },
-        { "id": "c2_node_03a", "levelId": "level_1_2_story", "label": "2-3A", "title": "冰桥近路", "kind": "branch", "nodeSkinRef": "skin_story_branch", "iconLabel": "分支", "position": { "x": 440, "y": 430 }, "objectiveText": "走冰桥近路，路线更短但有坍塌风险。", "difficultyLabel": "捷径", "rewardPreview": ["路线缩短"], "artRefs": { "nodeArt": "node_icon_elf_archer", "portrait": "enemy_goblin_hunter" } },
-        { "id": "c2_node_04a", "levelId": "level_1_3_story", "label": "2-4A", "title": "裂冰伏击", "kind": "elite", "nodeSkinRef": "skin_story_elite", "iconLabel": "精英", "position": { "x": 612, "y": 365 }, "objectiveText": "精英伏击，成功后获得冰桥控制权。", "difficultyLabel": "高压", "rewardPreview": ["精英奖励"], "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" } },
-        { "id": "c2_node_03b", "levelId": "level_1_3_story", "label": "2-3B", "title": "哨塔外墙", "kind": "main", "nodeSkinRef": "skin_story_main", "iconLabel": "主线", "position": { "x": 580, "y": 566 }, "objectiveText": "沿哨塔外墙稳步推进。", "difficultyLabel": "进阶", "rewardPreview": ["金币 80"], "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" } },
-        { "id": "c2_node_04b", "levelId": "level_1_3_story", "label": "2-4B", "title": "寒塔哨站", "kind": "elite", "nodeSkinRef": "skin_story_elite", "iconLabel": "精英", "position": { "x": 765, "y": 515 }, "objectiveText": "清理哨站守卫，换取更安全的中段路线。", "difficultyLabel": "高压", "rewardPreview": ["KP +1"], "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" } },
-        { "id": "c2_node_05", "levelId": "level_1_2_story", "label": "2-5", "title": "旧矿洞口", "kind": "supply", "nodeSkinRef": "skin_story_supply", "iconLabel": "补给", "position": { "x": 880, "y": 692 }, "objectiveText": "洞口避风，提供补给和绕行选择。", "difficultyLabel": "事件", "rewardPreview": ["补给", "线索"], "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" } },
-        { "id": "c2_node_06", "levelId": "level_1_2_story", "label": "2-6", "title": "冰雾裂谷", "kind": "main", "nodeSkinRef": "skin_story_main", "iconLabel": "主线", "position": { "x": 970, "y": 430 }, "objectiveText": "两条路线在裂谷前回合。", "difficultyLabel": "进阶", "rewardPreview": ["金币 90"], "artRefs": { "nodeArt": "node_icon_elf_archer", "portrait": "enemy_goblin_hunter" } },
-        { "id": "c2_node_07", "levelId": "level_1_3_story", "label": "2-7", "title": "古代热源", "kind": "branch", "nodeSkinRef": "skin_story_branch", "iconLabel": "机关", "position": { "x": 1110, "y": 305 }, "objectiveText": "激活古代热源，削弱终战压力。", "difficultyLabel": "机关", "rewardPreview": ["Boss 削弱"], "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" } },
-        { "id": "c2_node_08", "levelId": "level_1_2_story", "label": "2-8", "title": "冰封军械库", "kind": "supply", "nodeSkinRef": "skin_story_supply", "iconLabel": "补给", "position": { "x": 1152, "y": 575 }, "objectiveText": "从军械库取得 Boss 前资源。", "difficultyLabel": "奖励", "rewardPreview": ["金币 130", "装备素材"], "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" } },
-        { "id": "c2_node_09", "levelId": "level_1_3_story", "label": "2-9", "title": "中庭门卫", "kind": "elite", "nodeSkinRef": "skin_story_elite", "iconLabel": "精英", "position": { "x": 1332, "y": 445 }, "objectiveText": "Boss 门前精英守卫。", "difficultyLabel": "高压", "rewardPreview": ["精英奖励"], "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" } },
-        { "id": "c2_node_10", "levelId": "level_1_3_story", "label": "2-10", "title": "冰封中庭", "kind": "boss", "nodeSkinRef": "skin_story_boss", "iconLabel": "Boss", "position": { "x": 1445, "y": 590 }, "objectiveText": "第二章 Boss，检验持续作战能力。", "difficultyLabel": "Boss", "rewardPreview": ["KP +2", "章节奖励"], "artRefs": { "nodeArt": "node_icon_owlbear", "portrait": "enemy_ruins_boss" } }
+        {
+          "id": "c2_node_01",
+          "levelId": "level_2_1",
+          "label": "2-1",
+          "title": "霜雾山口",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 160,
+            "y": 510
+          },
+          "objectiveText": "追踪线索进入高寒峡谷。",
+          "difficultyLabel": "入门",
+          "rewardPreview": [
+            "KP +1",
+            "金币 89"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c2_node_02",
+          "levelId": "level_2_2",
+          "label": "2-2",
+          "title": "冻土营火",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 315,
+            "y": 622
+          },
+          "objectiveText": "在营火旁恢复并判断下一段路线。",
+          "difficultyLabel": "入门",
+          "rewardPreview": [
+            "金币 98"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c2_node_03a",
+          "levelId": "level_2_3_shortcut_route",
+          "label": "捷径-1",
+          "title": "冰桥近路",
+          "kind": "branch",
+          "nodeSkinRef": "skin_story_branch",
+          "iconLabel": "分支",
+          "position": {
+            "x": 440,
+            "y": 430
+          },
+          "objectiveText": "走冰桥近路，路线更短但有坍塌风险。",
+          "difficultyLabel": "捷径",
+          "rewardPreview": [
+            "金币 70"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "route_variant"
+        },
+        {
+          "id": "c2_node_04a",
+          "levelId": "level_2_4_shortcut_elite",
+          "label": "精英岔路",
+          "title": "裂冰伏击",
+          "kind": "elite",
+          "nodeSkinRef": "skin_story_elite",
+          "iconLabel": "精英",
+          "position": {
+            "x": 612,
+            "y": 365
+          },
+          "objectiveText": "精英伏击，成功后获得冰桥控制权。",
+          "difficultyLabel": "高压",
+          "rewardPreview": [
+            "KP +1",
+            "金币 120"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_goblin_warrior",
+            "portrait": "enemy_skeleton_guard"
+          },
+          "contentRole": "route_variant"
+        },
+        {
+          "id": "c2_node_03b",
+          "levelId": "level_2_3",
+          "label": "2-3",
+          "title": "哨塔外墙",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 580,
+            "y": 566
+          },
+          "objectiveText": "沿哨塔外墙稳步推进。",
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "金币 107"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c2_node_04b",
+          "levelId": "level_2_4",
+          "label": "2-4",
+          "title": "寒塔哨站",
+          "kind": "elite",
+          "nodeSkinRef": "skin_story_elite",
+          "iconLabel": "精英",
+          "position": {
+            "x": 765,
+            "y": 515
+          },
+          "objectiveText": "清理哨站守卫，换取更安全的中段路线。",
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "KP +1",
+            "金币 151"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_goblin_warrior",
+            "portrait": "enemy_skeleton_guard"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c2_node_05",
+          "levelId": "level_2_5",
+          "label": "2-5",
+          "title": "旧矿洞口",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 880,
+            "y": 692
+          },
+          "objectiveText": "洞口避风，提供补给和绕行选择。",
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "KP +1",
+            "金币 125"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c2_node_06",
+          "levelId": "level_2_6",
+          "label": "2-6",
+          "title": "冰雾裂谷",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 970,
+            "y": 430
+          },
+          "objectiveText": "两条路线在裂谷前回合。",
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "金币 134"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c2_node_07",
+          "levelId": "level_2_7",
+          "label": "2-7",
+          "title": "古代热源",
+          "kind": "event",
+          "nodeSkinRef": "skin_story_branch",
+          "iconLabel": "机制",
+          "position": {
+            "x": 1110,
+            "y": 305
+          },
+          "objectiveText": "激活古代热源，削弱终战压力。",
+          "difficultyLabel": "高压",
+          "rewardPreview": [
+            "金币 143"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elemental",
+            "portrait": "enemy_goblin_medic"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c2_node_08",
+          "levelId": "level_2_8",
+          "label": "2-8",
+          "title": "冰封军械库",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 1152,
+            "y": 575
+          },
+          "objectiveText": "从军械库取得 Boss 前资源。",
+          "difficultyLabel": "高压",
+          "rewardPreview": [
+            "KP +1",
+            "金币 152"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c2_node_09",
+          "levelId": "level_2_9",
+          "label": "2-9",
+          "title": "中庭门卫",
+          "kind": "elite",
+          "nodeSkinRef": "skin_story_elite",
+          "iconLabel": "精英",
+          "position": {
+            "x": 1332,
+            "y": 445
+          },
+          "objectiveText": "Boss 门前精英守卫。",
+          "difficultyLabel": "高压",
+          "rewardPreview": [
+            "KP +1",
+            "金币 196"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_goblin_warrior",
+            "portrait": "enemy_skeleton_guard"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c2_node_10",
+          "levelId": "level_2_10",
+          "label": "2-10",
+          "title": "冰封中庭",
+          "kind": "boss",
+          "nodeSkinRef": "skin_story_boss",
+          "iconLabel": "Boss",
+          "position": {
+            "x": 1445,
+            "y": 590
+          },
+          "objectiveText": "第二章 Boss，检验持续作战能力。",
+          "difficultyLabel": "Boss",
+          "rewardPreview": [
+            "KP +2",
+            "金币 250"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_owlbear",
+            "portrait": "enemy_ruins_boss"
+          },
+          "contentRole": "story_level"
+        }
       ],
       "edges": [
-        { "id": "c2_edge_01", "fromNodeId": "c2_node_01", "toNodeId": "c2_node_02", "branchLabel": "主线" },
-        { "id": "c2_edge_02", "fromNodeId": "c2_node_02", "toNodeId": "c2_node_03a", "branchLabel": "冰桥近路" },
-        { "id": "c2_edge_03", "fromNodeId": "c2_node_03a", "toNodeId": "c2_node_04a", "branchLabel": "伏击" },
-        { "id": "c2_edge_04", "fromNodeId": "c2_node_04a", "toNodeId": "c2_node_06", "branchLabel": "回流" },
-        { "id": "c2_edge_05", "fromNodeId": "c2_node_02", "toNodeId": "c2_node_03b", "branchLabel": "哨塔线" },
-        { "id": "c2_edge_06", "fromNodeId": "c2_node_03b", "toNodeId": "c2_node_04b", "branchLabel": "推进" },
-        { "id": "c2_edge_07", "fromNodeId": "c2_node_04b", "toNodeId": "c2_node_06", "branchLabel": "推进" },
-        { "id": "c2_edge_08", "fromNodeId": "c2_node_04b", "toNodeId": "c2_node_05", "branchLabel": "洞窟避风" },
-        { "id": "c2_edge_09", "fromNodeId": "c2_node_05", "toNodeId": "c2_node_08", "branchLabel": "军械库" },
-        { "id": "c2_edge_10", "fromNodeId": "c2_node_06", "toNodeId": "c2_node_07", "branchLabel": "热源" },
-        { "id": "c2_edge_11", "fromNodeId": "c2_node_07", "toNodeId": "c2_node_09", "branchLabel": "削弱后推进" },
-        { "id": "c2_edge_12", "fromNodeId": "c2_node_06", "toNodeId": "c2_node_09", "branchLabel": "直行" },
-        { "id": "c2_edge_13", "fromNodeId": "c2_node_08", "toNodeId": "c2_node_10", "branchLabel": "补给后挑战" },
-        { "id": "c2_edge_14", "fromNodeId": "c2_node_09", "toNodeId": "c2_node_10", "branchLabel": "Boss" }
+        {
+          "id": "c2_edge_01",
+          "fromNodeId": "c2_node_01",
+          "toNodeId": "c2_node_02",
+          "branchLabel": "主线"
+        },
+        {
+          "id": "c2_edge_02",
+          "fromNodeId": "c2_node_02",
+          "toNodeId": "c2_node_03a",
+          "branchLabel": "冰桥近路"
+        },
+        {
+          "id": "c2_edge_03",
+          "fromNodeId": "c2_node_03a",
+          "toNodeId": "c2_node_04a",
+          "branchLabel": "伏击"
+        },
+        {
+          "id": "c2_edge_04",
+          "fromNodeId": "c2_node_04a",
+          "toNodeId": "c2_node_06",
+          "branchLabel": "回流"
+        },
+        {
+          "id": "c2_edge_05",
+          "fromNodeId": "c2_node_02",
+          "toNodeId": "c2_node_03b",
+          "branchLabel": "哨塔线"
+        },
+        {
+          "id": "c2_edge_06",
+          "fromNodeId": "c2_node_03b",
+          "toNodeId": "c2_node_04b",
+          "branchLabel": "推进"
+        },
+        {
+          "id": "c2_edge_07",
+          "fromNodeId": "c2_node_04b",
+          "toNodeId": "c2_node_06",
+          "branchLabel": "推进"
+        },
+        {
+          "id": "c2_edge_08",
+          "fromNodeId": "c2_node_04b",
+          "toNodeId": "c2_node_05",
+          "branchLabel": "洞窟避风"
+        },
+        {
+          "id": "c2_edge_09",
+          "fromNodeId": "c2_node_05",
+          "toNodeId": "c2_node_08",
+          "branchLabel": "军械库"
+        },
+        {
+          "id": "c2_edge_10",
+          "fromNodeId": "c2_node_06",
+          "toNodeId": "c2_node_07",
+          "branchLabel": "热源"
+        },
+        {
+          "id": "c2_edge_11",
+          "fromNodeId": "c2_node_07",
+          "toNodeId": "c2_node_09",
+          "branchLabel": "削弱后推进"
+        },
+        {
+          "id": "c2_edge_12",
+          "fromNodeId": "c2_node_06",
+          "toNodeId": "c2_node_09",
+          "branchLabel": "直行"
+        },
+        {
+          "id": "c2_edge_13",
+          "fromNodeId": "c2_node_08",
+          "toNodeId": "c2_node_10",
+          "branchLabel": "补给后挑战"
+        },
+        {
+          "id": "c2_edge_14",
+          "fromNodeId": "c2_node_09",
+          "toNodeId": "c2_node_10",
+          "branchLabel": "Boss"
+        }
       ]
     },
     {
@@ -429,34 +956,377 @@
       "backgroundRef": "bg_map_glade_03",
       "entryNodeId": "c3_node_01",
       "nodes": [
-        { "id": "c3_node_01", "levelId": "level_1_1", "label": "3-1", "title": "暮色关门", "kind": "main", "nodeSkinRef": "skin_story_main", "iconLabel": "主线", "position": { "x": 145, "y": 455 }, "objectiveText": "古道关门关闭，玩家无法原路撤退。", "difficultyLabel": "标准", "rewardPreview": ["KP +1"], "artRefs": { "nodeArt": "node_icon_elf_archer", "portrait": "enemy_goblin_hunter" } },
-        { "id": "c3_node_02", "levelId": "level_1_2_story", "label": "3-2", "title": "旧路碑", "kind": "supply", "nodeSkinRef": "skin_story_supply", "iconLabel": "事件", "position": { "x": 300, "y": 350 }, "objectiveText": "路碑揭示暮堡守卫异常。", "difficultyLabel": "事件", "rewardPreview": ["线索"], "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" } },
-        { "id": "c3_node_03a", "levelId": "level_1_3_story", "label": "3-3A", "title": "断桥伏击", "kind": "elite", "nodeSkinRef": "skin_story_elite", "iconLabel": "精英", "position": { "x": 470, "y": 520 }, "objectiveText": "断桥处的高压伏击。", "difficultyLabel": "高压", "rewardPreview": ["精英奖励"], "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" } },
-        { "id": "c3_node_03b", "levelId": "level_1_2_story", "label": "3-3B", "title": "商队残骸", "kind": "supply", "nodeSkinRef": "skin_story_supply", "iconLabel": "补给", "position": { "x": 475, "y": 688 }, "objectiveText": "商队残骸提供恢复和真相线索。", "difficultyLabel": "补给", "rewardPreview": ["恢复", "金币 100"], "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" } },
-        { "id": "c3_node_04", "levelId": "level_1_2_story", "label": "3-4", "title": "暮鸦林道", "kind": "main", "nodeSkinRef": "skin_story_main", "iconLabel": "主线", "position": { "x": 670, "y": 425 }, "objectiveText": "两条入口线在暮鸦林道汇合。", "difficultyLabel": "进阶", "rewardPreview": ["金币 90"], "artRefs": { "nodeArt": "node_icon_elf_archer", "portrait": "enemy_goblin_hunter" } },
-        { "id": "c3_node_05a", "levelId": "level_1_2_story", "label": "3-5A", "title": "祭坛侧阶", "kind": "branch", "nodeSkinRef": "skin_story_branch", "iconLabel": "分支", "position": { "x": 845, "y": 285 }, "objectiveText": "走祭坛侧阶，揭示暮堡异常来源。", "difficultyLabel": "分支", "rewardPreview": ["剧情线索"], "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" } },
-        { "id": "c3_node_05b", "levelId": "level_1_3_story", "label": "3-5B", "title": "塌陷古井", "kind": "branch", "nodeSkinRef": "skin_story_branch", "iconLabel": "分支", "position": { "x": 860, "y": 612 }, "objectiveText": "从塌陷古井绕行，避开部分正面压力。", "difficultyLabel": "分支", "rewardPreview": ["路线调整"], "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" } },
-        { "id": "c3_node_06", "levelId": "level_1_3_story", "label": "3-6", "title": "影卫巡路", "kind": "elite", "nodeSkinRef": "skin_story_elite", "iconLabel": "精英", "position": { "x": 1018, "y": 450 }, "objectiveText": "暮堡影卫巡逻线，两路回流后的高压验证。", "difficultyLabel": "高压", "rewardPreview": ["精英奖励"], "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" } },
-        { "id": "c3_node_07", "levelId": "level_1_2_story", "label": "3-7", "title": "暮堡暗门", "kind": "supply", "nodeSkinRef": "skin_story_supply", "iconLabel": "机关", "position": { "x": 1165, "y": 315 }, "objectiveText": "暗门线揭示 Boss 前机关。", "difficultyLabel": "机关", "rewardPreview": ["Boss 情报"], "artRefs": { "nodeArt": "node_icon_elemental", "portrait": "enemy_goblin_medic" } },
-        { "id": "c3_node_08", "levelId": "level_1_3_story", "label": "3-8", "title": "外环营垒", "kind": "main", "nodeSkinRef": "skin_story_main", "iconLabel": "主线", "position": { "x": 1210, "y": 605 }, "objectiveText": "正面外环营垒，快速推进但损耗更高。", "difficultyLabel": "进阶", "rewardPreview": ["金币 120"], "artRefs": { "nodeArt": "node_icon_elf_archer", "portrait": "enemy_goblin_hunter" } },
-        { "id": "c3_node_09", "levelId": "level_1_3_story", "label": "3-9", "title": "暮堡守门人", "kind": "elite", "nodeSkinRef": "skin_story_elite", "iconLabel": "精英", "position": { "x": 1362, "y": 420 }, "objectiveText": "终战门卫，承接暗门或营垒路线。", "difficultyLabel": "高压", "rewardPreview": ["精英奖励"], "artRefs": { "nodeArt": "node_icon_goblin_warrior", "portrait": "enemy_skeleton_guard" } },
-        { "id": "c3_node_10", "levelId": "level_1_3_story", "label": "3-10", "title": "暮堡外环", "kind": "boss", "nodeSkinRef": "skin_story_boss", "iconLabel": "Boss", "position": { "x": 1450, "y": 565 }, "objectiveText": "第三章 Boss，打开后续主城线。", "difficultyLabel": "Boss", "rewardPreview": ["KP +2", "章节奖励"], "artRefs": { "nodeArt": "node_icon_owlbear", "portrait": "enemy_ruins_boss" } }
+        {
+          "id": "c3_node_01",
+          "levelId": "level_3_1",
+          "label": "3-1",
+          "title": "暮色关门",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 145,
+            "y": 455
+          },
+          "objectiveText": "古道关门关闭，玩家无法原路撤退。",
+          "difficultyLabel": "入门",
+          "rewardPreview": [
+            "KP +1",
+            "金币 109"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c3_node_02",
+          "levelId": "level_3_2",
+          "label": "3-2",
+          "title": "旧路碑",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 300,
+            "y": 350
+          },
+          "objectiveText": "路碑揭示暮堡守卫异常。",
+          "difficultyLabel": "入门",
+          "rewardPreview": [
+            "金币 118"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c3_node_03a",
+          "levelId": "level_3_3",
+          "label": "3-3",
+          "title": "断桥伏击",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 470,
+            "y": 520
+          },
+          "objectiveText": "断桥处的高压伏击。",
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "KP +1",
+            "金币 162"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c3_node_03b",
+          "levelId": "level_3_3_supply_route",
+          "label": "补给-3",
+          "title": "商队残骸",
+          "kind": "supply",
+          "nodeSkinRef": "skin_story_supply",
+          "iconLabel": "补给",
+          "position": {
+            "x": 475,
+            "y": 688
+          },
+          "objectiveText": "商队残骸提供恢复和真相线索。",
+          "difficultyLabel": "补给",
+          "rewardPreview": [
+            "金币 140",
+            "补给"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elemental",
+            "portrait": "enemy_goblin_medic"
+          },
+          "contentRole": "route_variant"
+        },
+        {
+          "id": "c3_node_04",
+          "levelId": "level_3_4",
+          "label": "3-4",
+          "title": "暮鸦林道",
+          "kind": "elite",
+          "nodeSkinRef": "skin_story_elite",
+          "iconLabel": "精英",
+          "position": {
+            "x": 670,
+            "y": 425
+          },
+          "objectiveText": "两条入口线在暮鸦林道汇合。",
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "KP +1",
+            "金币 171"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_goblin_warrior",
+            "portrait": "enemy_skeleton_guard"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c3_node_05a",
+          "levelId": "level_3_5",
+          "label": "3-5",
+          "title": "祭坛侧阶",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 845,
+            "y": 285
+          },
+          "objectiveText": "走祭坛侧阶，揭示暮堡异常来源。",
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "KP +1",
+            "金币 145"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c3_node_05b",
+          "levelId": "level_3_5_well_route",
+          "label": "绕行-1",
+          "title": "塌陷古井",
+          "kind": "branch",
+          "nodeSkinRef": "skin_story_branch",
+          "iconLabel": "分支",
+          "position": {
+            "x": 860,
+            "y": 612
+          },
+          "objectiveText": "从塌陷古井绕行，避开部分正面压力。",
+          "difficultyLabel": "分支",
+          "rewardPreview": [
+            "金币 110"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_goblin_warrior",
+            "portrait": "enemy_skeleton_guard"
+          },
+          "contentRole": "route_variant"
+        },
+        {
+          "id": "c3_node_06",
+          "levelId": "level_3_6",
+          "label": "3-6",
+          "title": "影卫巡路",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 1018,
+            "y": 450
+          },
+          "objectiveText": "暮堡影卫巡逻线，两路回流后的高压验证。",
+          "difficultyLabel": "标准",
+          "rewardPreview": [
+            "KP +1",
+            "金币 189"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c3_node_07",
+          "levelId": "level_3_7",
+          "label": "3-7",
+          "title": "暮堡暗门",
+          "kind": "event",
+          "nodeSkinRef": "skin_story_branch",
+          "iconLabel": "机制",
+          "position": {
+            "x": 1165,
+            "y": 315
+          },
+          "objectiveText": "暗门线揭示 Boss 前机关。",
+          "difficultyLabel": "高压",
+          "rewardPreview": [
+            "金币 163"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elemental",
+            "portrait": "enemy_goblin_medic"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c3_node_08",
+          "levelId": "level_3_8",
+          "label": "3-8",
+          "title": "外环营垒",
+          "kind": "main",
+          "nodeSkinRef": "skin_story_main",
+          "iconLabel": "主线",
+          "position": {
+            "x": 1210,
+            "y": 605
+          },
+          "objectiveText": "正面外环营垒，快速推进但损耗更高。",
+          "difficultyLabel": "高压",
+          "rewardPreview": [
+            "KP +1",
+            "金币 172"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_elf_archer",
+            "portrait": "enemy_goblin_hunter"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c3_node_09",
+          "levelId": "level_3_9",
+          "label": "3-9",
+          "title": "暮堡守门人",
+          "kind": "elite",
+          "nodeSkinRef": "skin_story_elite",
+          "iconLabel": "精英",
+          "position": {
+            "x": 1362,
+            "y": 420
+          },
+          "objectiveText": "终战门卫，承接暗门或营垒路线。",
+          "difficultyLabel": "高压",
+          "rewardPreview": [
+            "KP +1",
+            "金币 216"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_goblin_warrior",
+            "portrait": "enemy_skeleton_guard"
+          },
+          "contentRole": "story_level"
+        },
+        {
+          "id": "c3_node_10",
+          "levelId": "level_3_10",
+          "label": "3-10",
+          "title": "暮堡外环",
+          "kind": "boss",
+          "nodeSkinRef": "skin_story_boss",
+          "iconLabel": "Boss",
+          "position": {
+            "x": 1450,
+            "y": 565
+          },
+          "objectiveText": "第三章 Boss，打开后续主城线。",
+          "difficultyLabel": "Boss",
+          "rewardPreview": [
+            "KP +2",
+            "金币 270"
+          ],
+          "artRefs": {
+            "nodeArt": "node_icon_owlbear",
+            "portrait": "enemy_ruins_boss"
+          },
+          "contentRole": "story_level"
+        }
       ],
       "edges": [
-        { "id": "c3_edge_01", "fromNodeId": "c3_node_01", "toNodeId": "c3_node_02", "branchLabel": "主线" },
-        { "id": "c3_edge_02", "fromNodeId": "c3_node_02", "toNodeId": "c3_node_03a", "branchLabel": "断桥" },
-        { "id": "c3_edge_03", "fromNodeId": "c3_node_02", "toNodeId": "c3_node_03b", "branchLabel": "商队" },
-        { "id": "c3_edge_04", "fromNodeId": "c3_node_03a", "toNodeId": "c3_node_04", "branchLabel": "回流" },
-        { "id": "c3_edge_05", "fromNodeId": "c3_node_03b", "toNodeId": "c3_node_04", "branchLabel": "回流" },
-        { "id": "c3_edge_06", "fromNodeId": "c3_node_04", "toNodeId": "c3_node_05a", "branchLabel": "祭坛" },
-        { "id": "c3_edge_07", "fromNodeId": "c3_node_04", "toNodeId": "c3_node_05b", "branchLabel": "古井" },
-        { "id": "c3_edge_08", "fromNodeId": "c3_node_05a", "toNodeId": "c3_node_06", "branchLabel": "回流" },
-        { "id": "c3_edge_09", "fromNodeId": "c3_node_05b", "toNodeId": "c3_node_06", "branchLabel": "回流" },
-        { "id": "c3_edge_10", "fromNodeId": "c3_node_06", "toNodeId": "c3_node_07", "branchLabel": "暗门" },
-        { "id": "c3_edge_11", "fromNodeId": "c3_node_06", "toNodeId": "c3_node_08", "branchLabel": "营垒" },
-        { "id": "c3_edge_12", "fromNodeId": "c3_node_07", "toNodeId": "c3_node_09", "branchLabel": "机关线" },
-        { "id": "c3_edge_13", "fromNodeId": "c3_node_08", "toNodeId": "c3_node_09", "branchLabel": "正面线" },
-        { "id": "c3_edge_14", "fromNodeId": "c3_node_09", "toNodeId": "c3_node_10", "branchLabel": "Boss" }
+        {
+          "id": "c3_edge_01",
+          "fromNodeId": "c3_node_01",
+          "toNodeId": "c3_node_02",
+          "branchLabel": "主线"
+        },
+        {
+          "id": "c3_edge_02",
+          "fromNodeId": "c3_node_02",
+          "toNodeId": "c3_node_03a",
+          "branchLabel": "断桥"
+        },
+        {
+          "id": "c3_edge_03",
+          "fromNodeId": "c3_node_02",
+          "toNodeId": "c3_node_03b",
+          "branchLabel": "商队"
+        },
+        {
+          "id": "c3_edge_04",
+          "fromNodeId": "c3_node_03a",
+          "toNodeId": "c3_node_04",
+          "branchLabel": "回流"
+        },
+        {
+          "id": "c3_edge_05",
+          "fromNodeId": "c3_node_03b",
+          "toNodeId": "c3_node_04",
+          "branchLabel": "回流"
+        },
+        {
+          "id": "c3_edge_06",
+          "fromNodeId": "c3_node_04",
+          "toNodeId": "c3_node_05a",
+          "branchLabel": "祭坛"
+        },
+        {
+          "id": "c3_edge_07",
+          "fromNodeId": "c3_node_04",
+          "toNodeId": "c3_node_05b",
+          "branchLabel": "古井"
+        },
+        {
+          "id": "c3_edge_08",
+          "fromNodeId": "c3_node_05a",
+          "toNodeId": "c3_node_06",
+          "branchLabel": "回流"
+        },
+        {
+          "id": "c3_edge_09",
+          "fromNodeId": "c3_node_05b",
+          "toNodeId": "c3_node_06",
+          "branchLabel": "回流"
+        },
+        {
+          "id": "c3_edge_10",
+          "fromNodeId": "c3_node_06",
+          "toNodeId": "c3_node_07",
+          "branchLabel": "暗门"
+        },
+        {
+          "id": "c3_edge_11",
+          "fromNodeId": "c3_node_06",
+          "toNodeId": "c3_node_08",
+          "branchLabel": "营垒"
+        },
+        {
+          "id": "c3_edge_12",
+          "fromNodeId": "c3_node_07",
+          "toNodeId": "c3_node_09",
+          "branchLabel": "机关线"
+        },
+        {
+          "id": "c3_edge_13",
+          "fromNodeId": "c3_node_08",
+          "toNodeId": "c3_node_09",
+          "branchLabel": "正面线"
+        },
+        {
+          "id": "c3_edge_14",
+          "fromNodeId": "c3_node_09",
+          "toNodeId": "c3_node_10",
+          "branchLabel": "Boss"
+        }
       ]
     }
   ]

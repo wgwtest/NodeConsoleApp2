@@ -160,6 +160,7 @@ function normalizeMapPack(source) {
             label: String(node.label || '').trim(),
             title: String(node.title || '').trim(),
             kind: String(node.kind || 'battle').trim(),
+            contentRole: String(node.contentRole || '').trim(),
             nodeSkinRef: String(node.nodeSkinRef || '').trim(),
             iconLabel: String(node.iconLabel || '').trim(),
             position: normalizeNodePosition(node),

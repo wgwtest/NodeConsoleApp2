@@ -561,6 +561,7 @@ class DataManager {
                             label: typeof nextNode.label === 'string' ? nextNode.label.trim() : '',
                             title: typeof nextNode.title === 'string' ? nextNode.title.trim() : '',
                             kind: typeof nextNode.kind === 'string' && nextNode.kind.trim() ? nextNode.kind.trim() : 'battle',
+                            contentRole: typeof nextNode.contentRole === 'string' && nextNode.contentRole.trim() ? nextNode.contentRole.trim() : '',
                             nodeSkinRef: typeof nextNode.nodeSkinRef === 'string' ? nextNode.nodeSkinRef.trim() : '',
                             iconLabel: typeof nextNode.iconLabel === 'string' ? nextNode.iconLabel.trim() : '',
                             position: this._normalizeLevelMapNodePosition(nextNode),
@@ -1493,6 +1494,7 @@ class DataManager {
 
     _resolveTemporaryLevelSelectTarget(node, entryByLevelId, entries) {
         if (entryByLevelId.has(node.levelId)) return node.levelId;
+        if (node.levelId && this.getLevelConfig(node.levelId)) return node.levelId;
         if (!TEMPORARY_UNLOCK_ALL_LEVEL_SELECT) return node.levelId;
         const firstRunnableEntry = this._asArray(entries).find(entry => entry?.id);
         return firstRunnableEntry?.id || node.levelId;
@@ -1513,18 +1515,20 @@ class DataManager {
     _buildLevelSelectMapRuntimeMap(map, entryByLevelId, recommendedLevelId, entries = []) {
         const nodes = this._asArray(map?.nodes).map(node => {
             const entry = entryByLevelId.get(node.levelId) || null;
+            const levelConfig = entry ? null : this.getLevelConfig(node.levelId);
             const status = this._resolveLevelMapNodeStatus(node, entryByLevelId, recommendedLevelId);
-            const selectionMeta = entry?.selectionMeta || null;
+            const selectionMeta = entry?.selectionMeta || this._normalizeLevelSelectionMeta(levelConfig?.selectionMeta);
+            const levelFlow = entry?.flow || (levelConfig ? this._getLevelFlow(levelConfig) : null);
             const selectLevelId = this._resolveTemporaryLevelSelectTarget(node, entryByLevelId, entries);
             return {
                 ...this._clonePlain(node),
                 selectLevelId,
-                levelName: entry?.name || node.title || node.levelId,
-                levelDescription: entry?.description || '',
-                title: node.title || entry?.name || node.levelId,
-                objectiveText: node.objectiveText || entry?.flow?.objectiveText || selectionMeta?.buildHint || '',
+                levelName: entry?.name || levelConfig?.name || node.title || node.levelId,
+                levelDescription: entry?.description || levelConfig?.description || '',
+                title: node.title || entry?.name || levelConfig?.name || node.levelId,
+                objectiveText: node.objectiveText || levelFlow?.objectiveText || selectionMeta?.buildHint || '',
                 difficultyLabel: node.difficultyLabel || selectionMeta?.difficultyLabel || '',
-                rewardPreview: this._buildLevelMapRewardPreview(node, entry),
+                rewardPreview: this._buildLevelMapRewardPreview(node, entry || levelConfig),
                 unlockHint: entry?.progression?.unlockHint || '',
                 status,
                 statusLabel: status === 'completed'

@@ -1,10 +1,10 @@
 {
   "$schemaVersion": "levels_v1_wrapped",
   "meta": {
-    "title": "Level Pack v1",
+    "title": "Story Campaign Level Pack v1",
     "notes": [
-      "关卡数据统一封装为 { $schemaVersion, meta, enemyPools, levels }。",
-      "level 只声明 wave -> enemyPoolId 的映射，不再在关卡节点内重复散落敌人模板列表。",
+      "三章 30 个正式 story 关卡使用独立 levelId 与独立 enemyPoolId。",
+      "6 个路线 / 补给 / 事件变体使用 flow.kind=route_variant，不计入正式难度曲线。",
       "运行时由 DataManagerV2 在装载阶段把 enemyPoolId 展开为 waves[].enemies。"
     ],
     "fieldNotes": {
@@ -20,7 +20,8 @@
       "levels.*.battlePlayerState.stats": "进入战斗时覆盖玩家运行时 stats，例如 hp / ap / speed。建议用于验收样本或特殊战斗规则。",
       "levels.*.battlePlayerState.bodyParts": "进入战斗时覆盖玩家运行时 bodyParts，可指定部位护甲当前值、上限和 weakness。",
       "levels.*.selectionMeta": "关卡选择卡片使用的轻量内容元数据。当前支持 difficultyLabel / enemyStyleTags / buildHint。",
-      "levels.*.rewards": "关卡结算奖励。当前支持 exp / gold / kp，其中 kp 用于技能树知识点。"
+      "levels.*.rewards": "关卡结算奖励。当前支持 exp / gold / kp，其中 kp 用于技能树知识点。",
+      "levels.*.flow.kind": "story 表示正式 30 关；route_variant 表示路线 / 补给 / 事件变体，不进入 30 关平衡统计。"
     },
     "enums": {
       "waveTypes": [
@@ -35,9 +36,9 @@
     }
   },
   "enemyPools": {
-    "pool_story_goblin_edge": {
-      "id": "pool_story_goblin_edge",
-      "name": "幽暗森林边缘敌人池",
+    "pool_level_1_1_primary": {
+      "id": "pool_level_1_1_primary",
+      "name": "幽暗森林 1 敌人池",
       "members": [
         {
           "templateId": "goblin_story_headhunter",
@@ -45,9 +46,39 @@
         }
       ]
     },
-    "pool_story_goblin_outpost": {
-      "id": "pool_story_goblin_outpost",
-      "name": "密林前哨敌人池",
+    "pool_level_1_2_primary": {
+      "id": "pool_level_1_2_primary",
+      "name": "幽暗森林 2 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_scout",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_1_3_primary": {
+      "id": "pool_level_1_3_primary",
+      "name": "幽暗森林 3 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_scout_lvl3",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_1_4_primary": {
+      "id": "pool_level_1_4_primary",
+      "name": "幽暗森林 4 敌人池",
+      "members": [
+        {
+          "templateId": "orc_warrior",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_1_5_primary": {
+      "id": "pool_level_1_5_primary",
+      "name": "幽暗森林 5 敌人池",
       "members": [
         {
           "templateId": "goblin_story_medic",
@@ -55,12 +86,312 @@
         }
       ]
     },
-    "pool_story_ruins_gate": {
-      "id": "pool_story_ruins_gate",
-      "name": "废墟关隘敌人池",
+    "pool_level_1_6_primary": {
+      "id": "pool_level_1_6_primary",
+      "name": "幽暗森林 6 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_story_headhunter",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_1_7_primary": {
+      "id": "pool_level_1_7_primary",
+      "name": "幽暗森林 7 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_story_medic",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_1_8_primary": {
+      "id": "pool_level_1_8_primary",
+      "name": "幽暗森林 8 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_guard_lvl4",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_1_9_primary": {
+      "id": "pool_level_1_9_primary",
+      "name": "幽暗森林 9 敌人池",
       "members": [
         {
           "templateId": "skeleton_story_repair_guard",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_1_10_primary": {
+      "id": "pool_level_1_10_primary",
+      "name": "幽暗森林 10 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_story_repair_guard",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_1_primary": {
+      "id": "pool_level_2_1_primary",
+      "name": "霜雾峡谷 1 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_scout_lvl3",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_2_primary": {
+      "id": "pool_level_2_2_primary",
+      "name": "霜雾峡谷 2 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_guard_lvl4",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_3_primary": {
+      "id": "pool_level_2_3_primary",
+      "name": "霜雾峡谷 3 敌人池",
+      "members": [
+        {
+          "templateId": "orc_warrior",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_4_primary": {
+      "id": "pool_level_2_4_primary",
+      "name": "霜雾峡谷 4 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_story_repair_guard",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_5_primary": {
+      "id": "pool_level_2_5_primary",
+      "name": "霜雾峡谷 5 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_story_medic",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_6_primary": {
+      "id": "pool_level_2_6_primary",
+      "name": "霜雾峡谷 6 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_guard_lvl4",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_7_primary": {
+      "id": "pool_level_2_7_primary",
+      "name": "霜雾峡谷 7 敌人池",
+      "members": [
+        {
+          "templateId": "orc_berserker_lvl5",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_8_primary": {
+      "id": "pool_level_2_8_primary",
+      "name": "霜雾峡谷 8 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_story_repair_guard",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_9_primary": {
+      "id": "pool_level_2_9_primary",
+      "name": "霜雾峡谷 9 敌人池",
+      "members": [
+        {
+          "templateId": "orc_berserker_lvl5",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_10_primary": {
+      "id": "pool_level_2_10_primary",
+      "name": "霜雾峡谷 10 敌人池",
+      "members": [
+        {
+          "templateId": "orc_berserker_lvl5",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_1_primary": {
+      "id": "pool_level_3_1_primary",
+      "name": "暮色古道 1 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_scout_lvl3",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_2_primary": {
+      "id": "pool_level_3_2_primary",
+      "name": "暮色古道 2 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_story_medic",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_3_primary": {
+      "id": "pool_level_3_3_primary",
+      "name": "暮色古道 3 敌人池",
+      "members": [
+        {
+          "templateId": "orc_berserker_lvl5",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_4_primary": {
+      "id": "pool_level_3_4_primary",
+      "name": "暮色古道 4 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_guard_lvl4",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_5_primary": {
+      "id": "pool_level_3_5_primary",
+      "name": "暮色古道 5 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_story_headhunter",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_6_primary": {
+      "id": "pool_level_3_6_primary",
+      "name": "暮色古道 6 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_story_repair_guard",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_7_primary": {
+      "id": "pool_level_3_7_primary",
+      "name": "暮色古道 7 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_story_medic",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_8_primary": {
+      "id": "pool_level_3_8_primary",
+      "name": "暮色古道 8 敌人池",
+      "members": [
+        {
+          "templateId": "orc_berserker_lvl5",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_9_primary": {
+      "id": "pool_level_3_9_primary",
+      "name": "暮色古道 9 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_story_repair_guard",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_10_primary": {
+      "id": "pool_level_3_10_primary",
+      "name": "暮色古道 10 敌人池",
+      "members": [
+        {
+          "templateId": "orc_berserker_lvl5",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_1_3_supply_route_primary": {
+      "id": "pool_level_1_3_supply_route_primary",
+      "name": "南侧补给道 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_story_medic",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_1_4_supply_route_primary": {
+      "id": "pool_level_1_4_supply_route_primary",
+      "name": "破损营地 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_guard_lvl4",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_3_shortcut_route_primary": {
+      "id": "pool_level_2_3_shortcut_route_primary",
+      "name": "冰桥近路 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_scout_lvl3",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_2_4_shortcut_elite_primary": {
+      "id": "pool_level_2_4_shortcut_elite_primary",
+      "name": "裂冰伏击 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_story_repair_guard",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_3_supply_route_primary": {
+      "id": "pool_level_3_3_supply_route_primary",
+      "name": "商队残骸 敌人池",
+      "members": [
+        {
+          "templateId": "goblin_story_medic",
+          "position": 1
+        }
+      ]
+    },
+    "pool_level_3_5_well_route_primary": {
+      "id": "pool_level_3_5_well_route_primary",
+      "name": "塌陷古井 敌人池",
+      "members": [
+        {
+          "templateId": "skeleton_guard_lvl4",
           "position": 1
         }
       ]
@@ -69,8 +400,8 @@
   "levels": {
     "level_1_1": {
       "id": "level_1_1",
-      "name": "幽暗森林边缘",
-      "description": "森林外围的哥布林追猎手会优先压迫玩家最脆弱的部位。",
+      "name": "森林外缘",
+      "description": "幽暗森林第 1 个正式关卡，围绕快攻、入门压力推进。",
       "flow": {
         "kind": "story",
         "order": 1,
@@ -79,66 +410,46 @@
         "chapterLabel": "第一章",
         "chapterTitle": "幽暗森林",
         "nodeLabel": "1-1",
-        "objectiveText": "稳住森林边缘的第一波压迫，建立基础防御节奏。"
+        "objectiveText": "边境失联，玩家从森林外缘进入幽暗森林。"
       },
       "selectionMeta": {
-        "difficultyLabel": "标准",
+        "difficultyLabel": "入门",
         "enemyStyleTags": [
-          "弱点追击",
-          "快攻"
+          "快攻",
+          "入门"
         ],
-        "buildHint": "优先补头部防御，再用低耗技能稳定换血。"
+        "buildHint": "优先补甲与低 AP 稳定输出，避免弱点部位被连续压迫。"
       },
       "background": "bg_forest_01",
-      "battleRules": {
-        "slotLayoutId": "default_v1"
+      "primaryEnemy": {
+        "templateId": "goblin_story_headhunter"
       },
-      "battlePlayerState": {
-        "bodyParts": {
-          "head": {
-            "current": 20,
-            "max": 20,
-            "weakness": 1.5
-          },
-          "chest": {
-            "current": 10,
-            "max": 20,
-            "weakness": 1
-          },
-          "abdomen": {
-            "current": 6,
-            "max": 20,
-            "weakness": 1.1
-          },
-          "arm": {
-            "current": 6,
-            "max": 20,
-            "weakness": 1
-          },
-          "leg": {
-            "current": 12,
-            "max": 20,
-            "weakness": 1
-          }
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
         }
       },
       "waves": [
         {
           "waveId": "wave_1",
           "waveType": "fixed",
-          "enemyPoolId": "pool_story_goblin_edge"
+          "enemyPoolId": "pool_level_1_1_primary"
         }
       ],
       "rewards": {
-        "exp": 100,
-        "gold": 50,
+        "exp": 133,
+        "gold": 69,
         "kp": 1
       }
     },
-    "level_1_2_story": {
-      "id": "level_1_2_story",
-      "name": "密林前哨",
-      "description": "前哨内的医护斥候会在低血量时优先自疗，再重新投入战斗。",
+    "level_1_2": {
+      "id": "level_1_2",
+      "name": "失联路标",
+      "description": "幽暗森林第 2 个正式关卡，围绕快攻、入门压力推进。",
       "flow": {
         "kind": "story",
         "order": 2,
@@ -147,37 +458,46 @@
         "chapterLabel": "第一章",
         "chapterTitle": "幽暗森林",
         "nodeLabel": "1-2",
-        "objectiveText": "穿过密林前哨，压制敌方续航并继续推进。"
+        "objectiveText": "找到被破坏的路标，确认补给队曾经过这里。"
       },
       "selectionMeta": {
-        "difficultyLabel": "进阶",
+        "difficultyLabel": "入门",
         "enemyStyleTags": [
-          "低血自疗",
-          "节奏拉扯"
+          "快攻",
+          "入门"
         ],
-        "buildHint": "保留一张斩杀或打断节奏的技能，避免被敌人续航拖长回合。"
+        "buildHint": "优先补甲与低 AP 稳定输出，避免弱点部位被连续压迫。"
       },
       "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_scout"
+      },
       "battleRules": {
-        "slotLayoutId": "default_v1"
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
       },
       "waves": [
         {
           "waveId": "wave_1",
           "waveType": "fixed",
-          "enemyPoolId": "pool_story_goblin_outpost"
+          "enemyPoolId": "pool_level_1_2_primary"
         }
       ],
       "rewards": {
-        "exp": 140,
-        "gold": 80,
-        "kp": 1
+        "exp": 151,
+        "gold": 78,
+        "kp": 0
       }
     },
-    "level_1_3_story": {
-      "id": "level_1_3_story",
-      "name": "废墟关隘",
-      "description": "残甲骷髅卫士会先修补破损胸甲，再用重击继续压迫玩家。",
+    "level_1_3": {
+      "id": "level_1_3",
+      "name": "北侧树冠",
+      "description": "幽暗森林第 3 个正式关卡，围绕快攻、弱点追击压力推进。",
       "flow": {
         "kind": "story",
         "order": 3,
@@ -186,31 +506,1627 @@
         "chapterLabel": "第一章",
         "chapterTitle": "幽暗森林",
         "nodeLabel": "1-3",
-        "objectiveText": "突破废墟关隘，完成第一章收束。"
+        "objectiveText": "侦察北侧树冠，提前看见废墟守卫动向。"
       },
       "selectionMeta": {
-        "difficultyLabel": "高压",
+        "difficultyLabel": "标准",
         "enemyStyleTags": [
-          "残甲修补",
-          "重击压迫"
+          "快攻",
+          "弱点追击"
         ],
-        "buildHint": "优先准备破甲或高爆发节奏，不要让敌人反复补甲进入长线。"
+        "buildHint": "优先补甲与低 AP 稳定输出，避免弱点部位被连续压迫。"
       },
       "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_scout_lvl3"
+      },
       "battleRules": {
-        "slotLayoutId": "default_v1"
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
       },
       "waves": [
         {
           "waveId": "wave_1",
           "waveType": "fixed",
-          "enemyPoolId": "pool_story_ruins_gate"
+          "enemyPoolId": "pool_level_1_3_primary"
         }
       ],
       "rewards": {
-        "exp": 220,
-        "gold": 120,
+        "exp": 169,
+        "gold": 87,
+        "kp": 0
+      }
+    },
+    "level_1_4": {
+      "id": "level_1_4",
+      "name": "猎手埋伏",
+      "description": "幽暗森林第 4 个正式关卡，围绕快攻、弱点追击压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 4,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-4",
+        "objectiveText": "高风险侦察战，成功后削弱关隘前压力。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "快攻",
+          "弱点追击"
+        ],
+        "buildHint": "优先补甲与低 AP 稳定输出，避免弱点部位被连续压迫。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "orc_warrior"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_1_4_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 232,
+        "gold": 131,
+        "kp": 1
+      }
+    },
+    "level_1_5": {
+      "id": "level_1_5",
+      "name": "密林前哨",
+      "description": "幽暗森林第 5 个正式关卡，围绕快攻、弱点追击压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 5,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-5",
+        "objectiveText": "两条支线在前哨附近回流。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "快攻",
+          "弱点追击"
+        ],
+        "buildHint": "优先补甲与低 AP 稳定输出，避免弱点部位被连续压迫。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_story_medic"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_1_5_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 205,
+        "gold": 105,
+        "kp": 1
+      }
+    },
+    "level_1_6": {
+      "id": "level_1_6",
+      "name": "雾中岔口",
+      "description": "幽暗森林第 6 个正式关卡，围绕快攻、弱点追击压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 6,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-6",
+        "objectiveText": "Boss 前最后一次路线选择。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "快攻",
+          "弱点追击"
+        ],
+        "buildHint": "优先补甲与低 AP 稳定输出，避免弱点部位被连续压迫。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_story_headhunter"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_1_6_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 223,
+        "gold": 114,
+        "kp": 0
+      }
+    },
+    "level_1_7": {
+      "id": "level_1_7",
+      "name": "古井回声",
+      "description": "幽暗森林第 7 个正式关卡，围绕弱点追击、流血压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 7,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-7",
+        "objectiveText": "找到遗留补给和废墟线索。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": [
+          "弱点追击",
+          "流血"
+        ],
+        "buildHint": "优先补甲与低 AP 稳定输出，避免弱点部位被连续压迫。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_story_medic"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_1_7_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 241,
+        "gold": 123,
+        "kp": 0
+      }
+    },
+    "level_1_8": {
+      "id": "level_1_8",
+      "name": "废墟斜坡",
+      "description": "幽暗森林第 8 个正式关卡，围绕弱点追击、流血压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 8,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-8",
+        "objectiveText": "进入废墟外侧，准备突破关隘。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": [
+          "弱点追击",
+          "流血"
+        ],
+        "buildHint": "优先补甲与低 AP 稳定输出，避免弱点部位被连续压迫。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_guard_lvl4"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_1_8_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 259,
+        "gold": 132,
+        "kp": 1
+      }
+    },
+    "level_1_9": {
+      "id": "level_1_9",
+      "name": "关隘守卫",
+      "description": "幽暗森林第 9 个正式关卡，围绕弱点追击、流血压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 9,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-9",
+        "objectiveText": "可选精英守卫，胜利后改善 Boss 前资源。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": [
+          "弱点追击",
+          "流血"
+        ],
+        "buildHint": "优先补甲与低 AP 稳定输出，避免弱点部位被连续压迫。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_story_repair_guard"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_1_9_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 322,
+        "gold": 176,
+        "kp": 1
+      }
+    },
+    "level_1_10": {
+      "id": "level_1_10",
+      "name": "废墟关隘",
+      "description": "幽暗森林第 10 个正式关卡，围绕快攻、弱点追击、流血压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 10,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "1-10",
+        "objectiveText": "第一章 Boss 与剧情门。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "Boss",
+        "enemyStyleTags": [
+          "快攻",
+          "弱点追击",
+          "流血"
+        ],
+        "buildHint": "优先补甲与低 AP 稳定输出，避免弱点部位被连续压迫。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_story_repair_guard"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_1_10_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 415,
+        "gold": 230,
         "kp": 2
+      }
+    },
+    "level_2_1": {
+      "id": "level_2_1",
+      "name": "霜雾山口",
+      "description": "霜雾峡谷第 1 个正式关卡，围绕护甲、入门压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 11,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "2-1",
+        "objectiveText": "追踪线索进入高寒峡谷。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "入门",
+        "enemyStyleTags": [
+          "护甲",
+          "入门"
+        ],
+        "buildHint": "准备破甲与速度管理，避免被护甲敌人拖入长线。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_scout_lvl3"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_1_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 168,
+        "gold": 89,
+        "kp": 1
+      }
+    },
+    "level_2_2": {
+      "id": "level_2_2",
+      "name": "冻土营火",
+      "description": "霜雾峡谷第 2 个正式关卡，围绕护甲、入门压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 12,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "2-2",
+        "objectiveText": "在营火旁恢复并判断下一段路线。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "入门",
+        "enemyStyleTags": [
+          "护甲",
+          "入门"
+        ],
+        "buildHint": "准备破甲与速度管理，避免被护甲敌人拖入长线。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_guard_lvl4"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_2_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 186,
+        "gold": 98,
+        "kp": 0
+      }
+    },
+    "level_2_3": {
+      "id": "level_2_3",
+      "name": "哨塔外墙",
+      "description": "霜雾峡谷第 3 个正式关卡，围绕护甲、控制压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 13,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "2-3",
+        "objectiveText": "沿哨塔外墙稳步推进。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "护甲",
+          "控制"
+        ],
+        "buildHint": "准备破甲与速度管理，避免被护甲敌人拖入长线。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "orc_warrior"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_3_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 204,
+        "gold": 107,
+        "kp": 0
+      }
+    },
+    "level_2_4": {
+      "id": "level_2_4",
+      "name": "寒塔哨站",
+      "description": "霜雾峡谷第 4 个正式关卡，围绕护甲、控制压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 14,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "2-4",
+        "objectiveText": "清理哨站守卫，换取更安全的中段路线。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "护甲",
+          "控制"
+        ],
+        "buildHint": "准备破甲与速度管理，避免被护甲敌人拖入长线。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_story_repair_guard"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_4_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 267,
+        "gold": 151,
+        "kp": 1
+      }
+    },
+    "level_2_5": {
+      "id": "level_2_5",
+      "name": "旧矿洞口",
+      "description": "霜雾峡谷第 5 个正式关卡，围绕护甲、控制压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 15,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "2-5",
+        "objectiveText": "洞口避风，提供补给和绕行选择。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "护甲",
+          "控制"
+        ],
+        "buildHint": "准备破甲与速度管理，避免被护甲敌人拖入长线。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_story_medic"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_5_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 240,
+        "gold": 125,
+        "kp": 1
+      }
+    },
+    "level_2_6": {
+      "id": "level_2_6",
+      "name": "冰雾裂谷",
+      "description": "霜雾峡谷第 6 个正式关卡，围绕护甲、控制压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 16,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "2-6",
+        "objectiveText": "两条路线在裂谷前回合。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "护甲",
+          "控制"
+        ],
+        "buildHint": "准备破甲与速度管理，避免被护甲敌人拖入长线。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_guard_lvl4"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_6_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 258,
+        "gold": 134,
+        "kp": 0
+      }
+    },
+    "level_2_7": {
+      "id": "level_2_7",
+      "name": "古代热源",
+      "description": "霜雾峡谷第 7 个正式关卡，围绕控制、修复压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 17,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "2-7",
+        "objectiveText": "激活古代热源，削弱终战压力。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": [
+          "控制",
+          "修复"
+        ],
+        "buildHint": "准备破甲与速度管理，避免被护甲敌人拖入长线。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "orc_berserker_lvl5"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_7_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 276,
+        "gold": 143,
+        "kp": 0
+      }
+    },
+    "level_2_8": {
+      "id": "level_2_8",
+      "name": "冰封军械库",
+      "description": "霜雾峡谷第 8 个正式关卡，围绕控制、修复压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 18,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "2-8",
+        "objectiveText": "从军械库取得 Boss 前资源。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": [
+          "控制",
+          "修复"
+        ],
+        "buildHint": "准备破甲与速度管理，避免被护甲敌人拖入长线。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_story_repair_guard"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_8_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 294,
+        "gold": 152,
+        "kp": 1
+      }
+    },
+    "level_2_9": {
+      "id": "level_2_9",
+      "name": "中庭门卫",
+      "description": "霜雾峡谷第 9 个正式关卡，围绕控制、修复压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 19,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "2-9",
+        "objectiveText": "Boss 门前精英守卫。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": [
+          "控制",
+          "修复"
+        ],
+        "buildHint": "准备破甲与速度管理，避免被护甲敌人拖入长线。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "orc_berserker_lvl5"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_9_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 357,
+        "gold": 196,
+        "kp": 1
+      }
+    },
+    "level_2_10": {
+      "id": "level_2_10",
+      "name": "冰封中庭",
+      "description": "霜雾峡谷第 10 个正式关卡，围绕护甲、控制、修复压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 20,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "2-10",
+        "objectiveText": "第二章 Boss，检验持续作战能力。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "Boss",
+        "enemyStyleTags": [
+          "护甲",
+          "控制",
+          "修复"
+        ],
+        "buildHint": "准备破甲与速度管理，避免被护甲敌人拖入长线。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "orc_berserker_lvl5"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_10_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 450,
+        "gold": 250,
+        "kp": 2
+      }
+    },
+    "level_3_1": {
+      "id": "level_3_1",
+      "name": "暮色关门",
+      "description": "暮色古道第 1 个正式关卡，围绕持续压迫、入门压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 21,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "3-1",
+        "objectiveText": "古道关门关闭，玩家无法原路撤退。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "入门",
+        "enemyStyleTags": [
+          "持续压迫",
+          "入门"
+        ],
+        "buildHint": "保留续航、状态处理与爆发窗口，不要只堆单次输出。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_scout_lvl3"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_1_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 203,
+        "gold": 109,
+        "kp": 1
+      }
+    },
+    "level_3_2": {
+      "id": "level_3_2",
+      "name": "旧路碑",
+      "description": "暮色古道第 2 个正式关卡，围绕持续压迫、入门压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 22,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "3-2",
+        "objectiveText": "路碑揭示暮堡守卫异常。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "入门",
+        "enemyStyleTags": [
+          "持续压迫",
+          "入门"
+        ],
+        "buildHint": "保留续航、状态处理与爆发窗口，不要只堆单次输出。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_story_medic"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_2_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 221,
+        "gold": 118,
+        "kp": 0
+      }
+    },
+    "level_3_3": {
+      "id": "level_3_3",
+      "name": "断桥伏击",
+      "description": "暮色古道第 3 个正式关卡，围绕持续压迫、毒血压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 23,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "3-3",
+        "objectiveText": "断桥处的高压伏击。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "持续压迫",
+          "毒血"
+        ],
+        "buildHint": "保留续航、状态处理与爆发窗口，不要只堆单次输出。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "orc_berserker_lvl5"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_3_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 284,
+        "gold": 162,
+        "kp": 1
+      }
+    },
+    "level_3_4": {
+      "id": "level_3_4",
+      "name": "暮鸦林道",
+      "description": "暮色古道第 4 个正式关卡，围绕持续压迫、毒血压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 24,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "3-4",
+        "objectiveText": "两条入口线在暮鸦林道汇合。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "持续压迫",
+          "毒血"
+        ],
+        "buildHint": "保留续航、状态处理与爆发窗口，不要只堆单次输出。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_guard_lvl4"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_4_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 302,
+        "gold": 171,
+        "kp": 1
+      }
+    },
+    "level_3_5": {
+      "id": "level_3_5",
+      "name": "祭坛侧阶",
+      "description": "暮色古道第 5 个正式关卡，围绕持续压迫、毒血压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 25,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "3-5",
+        "objectiveText": "走祭坛侧阶，揭示暮堡异常来源。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "持续压迫",
+          "毒血"
+        ],
+        "buildHint": "保留续航、状态处理与爆发窗口，不要只堆单次输出。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_story_headhunter"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_5_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 275,
+        "gold": 145,
+        "kp": 1
+      }
+    },
+    "level_3_6": {
+      "id": "level_3_6",
+      "name": "影卫巡路",
+      "description": "暮色古道第 6 个正式关卡，围绕持续压迫、毒血压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 26,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "3-6",
+        "objectiveText": "暮堡影卫巡逻线，两路回流后的高压验证。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "标准",
+        "enemyStyleTags": [
+          "持续压迫",
+          "毒血"
+        ],
+        "buildHint": "保留续航、状态处理与爆发窗口，不要只堆单次输出。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_story_repair_guard"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_6_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 338,
+        "gold": 189,
+        "kp": 1
+      }
+    },
+    "level_3_7": {
+      "id": "level_3_7",
+      "name": "暮堡暗门",
+      "description": "暮色古道第 7 个正式关卡，围绕毒血、反击压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 27,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "3-7",
+        "objectiveText": "暗门线揭示 Boss 前机关。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": [
+          "毒血",
+          "反击"
+        ],
+        "buildHint": "保留续航、状态处理与爆发窗口，不要只堆单次输出。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_story_medic"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_7_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 311,
+        "gold": 163,
+        "kp": 0
+      }
+    },
+    "level_3_8": {
+      "id": "level_3_8",
+      "name": "外环营垒",
+      "description": "暮色古道第 8 个正式关卡，围绕毒血、反击压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 28,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "3-8",
+        "objectiveText": "正面外环营垒，快速推进但损耗更高。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": [
+          "毒血",
+          "反击"
+        ],
+        "buildHint": "保留续航、状态处理与爆发窗口，不要只堆单次输出。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "orc_berserker_lvl5"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_8_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 329,
+        "gold": 172,
+        "kp": 1
+      }
+    },
+    "level_3_9": {
+      "id": "level_3_9",
+      "name": "暮堡守门人",
+      "description": "暮色古道第 9 个正式关卡，围绕毒血、反击压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 29,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "3-9",
+        "objectiveText": "终战门卫，承接暗门或营垒路线。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": [
+          "毒血",
+          "反击"
+        ],
+        "buildHint": "保留续航、状态处理与爆发窗口，不要只堆单次输出。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_story_repair_guard"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_9_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 392,
+        "gold": 216,
+        "kp": 1
+      }
+    },
+    "level_3_10": {
+      "id": "level_3_10",
+      "name": "暮堡外环",
+      "description": "暮色古道第 10 个正式关卡，围绕持续压迫、毒血、反击压力推进。",
+      "flow": {
+        "kind": "story",
+        "order": 30,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "3-10",
+        "objectiveText": "第三章 Boss，打开后续主城线。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "Boss",
+        "enemyStyleTags": [
+          "持续压迫",
+          "毒血",
+          "反击"
+        ],
+        "buildHint": "保留续航、状态处理与爆发窗口，不要只堆单次输出。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "orc_berserker_lvl5"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_10_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 485,
+        "gold": 270,
+        "kp": 2
+      }
+    },
+    "level_1_3_supply_route": {
+      "id": "level_1_3_supply_route",
+      "name": "南侧补给道",
+      "description": "南侧补给道 是幽暗森林中的路线 / 补给 / 事件变体，不计入 30 个正式 story 关卡。",
+      "flow": {
+        "kind": "route_variant",
+        "order": 31,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "补给-1",
+        "objectiveText": "绕到南侧补给线，获得稳定资源但路线更长。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "补给",
+        "enemyStyleTags": [
+          "route_supply",
+          "路线变体"
+        ],
+        "buildHint": "该节点用于路线资源或风险变化，不参与 30 关难度曲线统计。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_story_medic"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_1_3_supply_route_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 60,
+        "gold": 120,
+        "kp": 0
+      }
+    },
+    "level_1_4_supply_route": {
+      "id": "level_1_4_supply_route",
+      "name": "破损营地",
+      "description": "破损营地 是幽暗森林中的路线 / 补给 / 事件变体，不计入 30 个正式 story 关卡。",
+      "flow": {
+        "kind": "route_variant",
+        "order": 32,
+        "chapterId": "story_chapter_1",
+        "chapterOrder": 1,
+        "chapterLabel": "第一章",
+        "chapterTitle": "幽暗森林",
+        "nodeLabel": "补给-2",
+        "objectiveText": "清理被袭营地，获得 Boss 前补给。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "事件",
+        "enemyStyleTags": [
+          "route_supply",
+          "路线变体"
+        ],
+        "buildHint": "该节点用于路线资源或风险变化，不参与 30 关难度曲线统计。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_guard_lvl4"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_1_4_supply_route_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 70,
+        "gold": 100,
+        "kp": 0
+      }
+    },
+    "level_2_3_shortcut_route": {
+      "id": "level_2_3_shortcut_route",
+      "name": "冰桥近路",
+      "description": "冰桥近路 是霜雾峡谷中的路线 / 补给 / 事件变体，不计入 30 个正式 story 关卡。",
+      "flow": {
+        "kind": "route_variant",
+        "order": 33,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "捷径-1",
+        "objectiveText": "走冰桥近路，路线更短但有坍塌风险。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "捷径",
+        "enemyStyleTags": [
+          "route_shortcut",
+          "路线变体"
+        ],
+        "buildHint": "该节点用于路线资源或风险变化，不参与 30 关难度曲线统计。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_scout_lvl3"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_3_shortcut_route_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 90,
+        "gold": 70,
+        "kp": 0
+      }
+    },
+    "level_2_4_shortcut_elite": {
+      "id": "level_2_4_shortcut_elite",
+      "name": "裂冰伏击",
+      "description": "裂冰伏击 是霜雾峡谷中的路线 / 补给 / 事件变体，不计入 30 个正式 story 关卡。",
+      "flow": {
+        "kind": "route_variant",
+        "order": 34,
+        "chapterId": "story_chapter_2",
+        "chapterOrder": 2,
+        "chapterLabel": "第二章",
+        "chapterTitle": "霜雾峡谷",
+        "nodeLabel": "精英岔路",
+        "objectiveText": "精英伏击，成功后获得冰桥控制权。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "高压",
+        "enemyStyleTags": [
+          "route_elite",
+          "路线变体"
+        ],
+        "buildHint": "该节点用于路线资源或风险变化，不参与 30 关难度曲线统计。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_story_repair_guard"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_2_4_shortcut_elite_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 180,
+        "gold": 120,
+        "kp": 1
+      }
+    },
+    "level_3_3_supply_route": {
+      "id": "level_3_3_supply_route",
+      "name": "商队残骸",
+      "description": "商队残骸 是暮色古道中的路线 / 补给 / 事件变体，不计入 30 个正式 story 关卡。",
+      "flow": {
+        "kind": "route_variant",
+        "order": 35,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "补给-3",
+        "objectiveText": "商队残骸提供恢复和真相线索。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "补给",
+        "enemyStyleTags": [
+          "route_supply",
+          "路线变体"
+        ],
+        "buildHint": "该节点用于路线资源或风险变化，不参与 30 关难度曲线统计。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "goblin_story_medic"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_3_supply_route_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 110,
+        "gold": 140,
+        "kp": 0
+      }
+    },
+    "level_3_5_well_route": {
+      "id": "level_3_5_well_route",
+      "name": "塌陷古井",
+      "description": "塌陷古井 是暮色古道中的路线 / 补给 / 事件变体，不计入 30 个正式 story 关卡。",
+      "flow": {
+        "kind": "route_variant",
+        "order": 36,
+        "chapterId": "story_chapter_3",
+        "chapterOrder": 3,
+        "chapterLabel": "第三章",
+        "chapterTitle": "暮色古道",
+        "nodeLabel": "绕行-1",
+        "objectiveText": "从塌陷古井绕行，避开部分正面压力。"
+      },
+      "selectionMeta": {
+        "difficultyLabel": "分支",
+        "enemyStyleTags": [
+          "route_shortcut",
+          "路线变体"
+        ],
+        "buildHint": "该节点用于路线资源或风险变化，不参与 30 关难度曲线统计。"
+      },
+      "background": "bg_forest_01",
+      "primaryEnemy": {
+        "templateId": "skeleton_guard_lvl4"
+      },
+      "battleRules": {
+        "slotLayoutId": "default_v1",
+        "victoryCondition": {
+          "type": "defeat_all_enemies"
+        },
+        "failureCondition": {
+          "type": "player_hp_zero"
+        }
+      },
+      "waves": [
+        {
+          "waveId": "wave_1",
+          "waveType": "fixed",
+          "enemyPoolId": "pool_level_3_5_well_route_primary"
+        }
+      ],
+      "rewards": {
+        "exp": 130,
+        "gold": 110,
+        "kp": 0
       }
     }
   }
