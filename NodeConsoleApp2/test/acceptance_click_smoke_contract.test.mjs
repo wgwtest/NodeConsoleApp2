@@ -31,7 +31,11 @@ test('自动点击验收脚本固定主流程与专项页面覆盖范围', async
   );
   assert.match(
     toolSource,
-    /const naturalProgressionLevels = \["level_1_1", "level_1_2", "level_1_3", "level_1_4", "level_1_5", "level_1_6", "level_1_7", "level_1_8", "level_1_9", "level_1_10"\];/u
+    /const targetChapterCount = 2;/u
+  );
+  assert.match(
+    toolSource,
+    /const naturalProgressionLevels = Array\.from\(\{ length: targetChapterCount \}, \(_, chapterIndex\) => Array\.from\(\{ length: 10 \}, \(_, levelIndex\) => `level_\$\{chapterIndex \+ 1\}_\$\{levelIndex \+ 1\}`\)\)\.flat\(\);/u
   );
 
   for (const requiredText of [
@@ -87,11 +91,26 @@ test('自动点击验收脚本固定主流程与专项页面覆盖范围', async
     'naturalProgressiveOutcome',
     'learnedThisLevel',
     'firstChapterNaturalProgression',
+    'secondChapterNaturalProgression',
+    'pickWeakestEnemyPart',
+    'pickMostDamagedSelfPart',
+    'summarizeNaturalProgressiveSkill',
+    'scoreNaturalProgressiveSkill',
+    'naturalProgressiveFinishWindow',
+    'naturalProgressiveBossSurvivalFloor',
+    'naturalProgressiveBossFinishSustainReserve',
+    'naturalProgressiveBossSecondaryDamagePenalty',
+    'naturalProgressiveFirstBossArmorBreakWindow',
+    'installNaturalProgressiveFastTimeline',
+    'getNaturalProgressiveMaxTurns',
+    'naturalProgressiveHighPressureLevels',
     'skipSelfDamageSkillsForBoss',
     'selfDamageSkillIds',
     'skill_block',
     'skill_1771769351059',
     'skill_skull_cracker',
+    'skill_regroup',
+    'skill_shockwave_copy_1770042951717',
     'level_1_1',
     'level_1_2',
     'level_1_3',
@@ -103,6 +122,16 @@ test('自动点击验收脚本固定主流程与专项页面覆盖范围', async
     'level_1_9',
     'level_1_10',
     'level_2_1',
+    'level_2_2',
+    'level_2_3',
+    'level_2_4',
+    'level_2_5',
+    'level_2_6',
+    'level_2_7',
+    'level_2_8',
+    'level_2_9',
+    'level_2_10',
+    'level_3_1',
     'runNaturalBattleAutoplaySmoke',
     'naturalBattleAutoplay',
     'naturalOutcome',

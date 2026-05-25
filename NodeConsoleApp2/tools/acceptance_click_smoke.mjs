@@ -1177,9 +1177,11 @@ async function runChapterThreeProgressionSmoke(cdpEndpoint, mainUrl) {
 }
 
 async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
-    const naturalProgressionLevels = ["level_1_1", "level_1_2", "level_1_3", "level_1_4", "level_1_5", "level_1_6", "level_1_7", "level_1_8", "level_1_9", "level_1_10"];
+    const targetChapterCount = 2;
+    const naturalProgressionLevels = Array.from({ length: targetChapterCount }, (_, chapterIndex) => Array.from({ length: 10 }, (_, levelIndex) => `level_${chapterIndex + 1}_${levelIndex + 1}`)).flat();
     const initialSkillPointsOverride = 0;
     const firstChapterNaturalProgression = true;
+    const secondChapterNaturalProgression = true;
     let client = null;
     try {
         client = await attach(cdpEndpoint, mainUrl);
@@ -1194,7 +1196,8 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
             const naturalProgressionLevels = ${JSON.stringify(naturalProgressionLevels)};
             const initialSkillPointsOverride = ${initialSkillPointsOverride};
             const firstChapterNaturalProgression = ${JSON.stringify(firstChapterNaturalProgression)};
-            const naturalProgressiveLearningPriority = ["skill_block", "skill_1771769351059", "skill_skull_cracker"];
+            const secondChapterNaturalProgression = ${JSON.stringify(secondChapterNaturalProgression)};
+            const naturalProgressiveLearningPriority = ["skill_block", "skill_1771769351059", "skill_skull_cracker", "skill_regroup", "skill_shockwave_copy_1770042951717"];
             const selfDamageSkillIds = ["skill_savage_charge"];
             const skipSelfDamageSkillsForBoss = true;
             const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -1250,6 +1253,16 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 progress.lastLearnAction = null;
                 return snapshotSkillTree();
             };
+            const installNaturalProgressiveFastTimeline = () => {
+                const timeline = window.GameEngine?.timeline;
+                if (!timeline || typeof timeline.start !== "function" || timeline.__naturalProgressiveFastTimelineInstalled) {
+                    return false;
+                }
+                const realStart = timeline.start.bind(timeline);
+                timeline.start = (options = {}) => realStart({ ...options, stepDelayMs: 0 });
+                timeline.__naturalProgressiveFastTimelineInstalled = true;
+                return true;
+            };
             const enterLevelFromMenu = async levelId => {
                 clickButtonByText("关卡选择");
                 await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
@@ -1268,6 +1281,7 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 enterButton.click();
                 await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
                     && window.GameEngine?.data?.currentLevelData?.id === levelId, "进入自然连续推进 " + levelId);
+                installNaturalProgressiveFastTimeline();
                 await sleep(250);
                 return { levelId, enteredBy: "level-select", drawerTitle };
             };
@@ -1284,6 +1298,152 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 }
                 return null;
             };
+            const getSelectionParts = skill => {
+                const selection = skill?.target?.selection || {};
+                const selectedParts = Array.isArray(selection.selectedParts) ? selection.selectedParts : [];
+                const candidateParts = Array.isArray(selection.candidateParts) ? selection.candidateParts : [];
+                return selectedParts.length > 0 ? selectedParts : candidateParts;
+            };
+            const findPrimaryEnemy = () => [...(window.GameEngine?.data?.currentLevelData?.enemies || [])]
+                .filter(enemy => getEntityHp(enemy) > 0)
+                .sort((a, b) => {
+                    const hpA = getEntityHp(a);
+                    const hpB = getEntityHp(b);
+                    if (hpA !== hpB) return hpA - hpB;
+                    return String(a.id || "").localeCompare(String(b.id || ""));
+                })[0] || null;
+            const pickWeakestEnemyPart = (skill, slots) => {
+                const target = findPrimaryEnemy();
+                const availableParts = new Set(slots
+                    .filter(slot => slot.dataset.targetType === "enemy")
+                    .map(slot => slot.dataset.part)
+                    .filter(Boolean));
+                const selectionParts = getSelectionParts(skill);
+                const allowedParts = selectionParts.length > 0 ? new Set(selectionParts) : null;
+                const bodyPartRows = Object.entries(target?.bodyParts || {})
+                    .filter(([part, data]) => availableParts.has(part)
+                        && (!allowedParts || allowedParts.has(part))
+                        && ((Number(data?.max ?? 0) || 0) > 0 || (Number(data?.current ?? 0) || 0) > 0))
+                    .map(([part, data]) => ({
+                        part,
+                        armor: Math.max(0, Number(data?.current ?? 0) || 0),
+                        weakness: Number(data?.weakness ?? 1) || 1
+                    }));
+                bodyPartRows.sort((a, b) => {
+                    if (a.armor !== b.armor) return a.armor - b.armor;
+                    if (a.weakness !== b.weakness) return b.weakness - a.weakness;
+                    return a.part.localeCompare(b.part);
+                });
+                if (bodyPartRows[0]?.part) return bodyPartRows[0].part;
+                return [...availableParts].find(part => !allowedParts || allowedParts.has(part)) || null;
+            };
+            const pickMostDamagedSelfPart = (skill, slots) => {
+                const availableParts = new Set(slots
+                    .filter(slot => slot.dataset.targetType === "self")
+                    .map(slot => slot.dataset.part)
+                    .filter(Boolean));
+                if (availableParts.has("global")) return "global";
+                const selectionParts = getSelectionParts(skill);
+                const allowedParts = selectionParts.length > 0 ? new Set(selectionParts) : null;
+                const player = window.GameEngine?.data?.playerData || {};
+                const bodyPartRows = Object.entries(player.bodyParts || {})
+                    .filter(([part]) => availableParts.has(part) && (!allowedParts || allowedParts.has(part)))
+                    .map(([part, data]) => ({
+                        part,
+                        missing: Math.max(0, (Number(data?.max ?? 0) || 0) - (Number(data?.current ?? 0) || 0))
+                    }));
+                bodyPartRows.sort((a, b) => {
+                    if (a.missing !== b.missing) return b.missing - a.missing;
+                    return a.part.localeCompare(b.part);
+                });
+                if (bodyPartRows[0]?.part) return bodyPartRows[0].part;
+                return [...availableParts].find(part => !allowedParts || allowedParts.has(part)) || null;
+            };
+            const getSkillAp = skill => Math.max(0, Number(skill?.costs?.ap ?? 0) || 0);
+            const summarizeNaturalProgressiveSkill = (skill, { player, target, selectedPart }) => {
+                const summary = { damageHp: 0, damageArmor: 0, heal: 0, armorAdd: 0, preHitArmor: 0, dot: 0 };
+                for (const action of Array.isArray(skill?.actions) ? skill.actions : []) {
+                    const effect = action?.effect || {};
+                    const amount = Math.max(0, Number(effect.amount ?? 0) || 0);
+                    if (effect.effectType === "DMG_HP") summary.damageHp += amount;
+                    if (effect.effectType === "DMG_ARMOR") summary.damageArmor += amount;
+                    if (effect.effectType === "HEAL") summary.heal += amount;
+                    if (effect.effectType === "ARMOR_ADD") summary.armorAdd += amount;
+                }
+                for (const row of Array.isArray(skill?.buffRefs?.apply) ? skill.buffRefs.apply : []) {
+                    if (["buff_bleed", "buff_poison", "buff_tear_wound"].includes(row?.buffId)) summary.dot += 10;
+                    if (row?.buffId === "new_buff_1771485041778") {
+                        summary.preHitArmor += Math.max(0, Number(row?.params?.healArmorVal ?? 5) || 5);
+                    }
+                }
+                const targetArmor = Math.max(0, Number(target?.bodyParts?.[selectedPart]?.current ?? 0) || 0);
+                summary.hpThroughArmor = Math.max(0, summary.damageHp - targetArmor);
+                summary.armorRemovedByHp = Math.min(targetArmor, summary.damageHp);
+                summary.armorRemovedByArmor = Math.min(targetArmor, summary.damageArmor);
+                summary.playerMissingHp = Math.max(0, getEntityMaxHp(player) - getEntityHp(player));
+                summary.targetHp = getEntityHp(target);
+                return summary;
+            };
+            const scoreNaturalProgressiveSkill = (skill, selectedPart) => {
+                const player = window.GameEngine?.data?.playerData || {};
+                const target = findPrimaryEnemy();
+                if (!skill || !target) return 0;
+                const summary = summarizeNaturalProgressiveSkill(skill, { player, target, selectedPart });
+                const maxHp = getEntityMaxHp(player);
+                const hpRatio = maxHp > 0 ? getEntityHp(player) / maxHp : 1;
+                const levelId = window.GameEngine?.data?.currentLevelData?.id || "";
+                const subject = skill?.target?.subject || "";
+                const naturalProgressiveFinishWindow = summary.targetHp > 0 && summary.targetHp <= 45;
+                const naturalProgressiveBossSurvivalFloor = levelId.endsWith("_10") ? 0.7 : 0.55;
+                const naturalProgressiveBossFinishSustainReserve = levelId.endsWith("_10")
+                    && naturalProgressiveFinishWindow
+                    && hpRatio < naturalProgressiveBossSurvivalFloor;
+                let score = 0;
+                if (subject === "SUBJECT_SELF") {
+                    if (naturalProgressiveFinishWindow && hpRatio >= naturalProgressiveBossSurvivalFloor) return 0;
+                    if (summary.heal > 0 && summary.playerMissingHp > 0) {
+                        if (hpRatio > 0.8 && summary.playerMissingHp < summary.heal) return 0;
+                        score += Math.min(summary.playerMissingHp, summary.heal) * (hpRatio < 0.65 ? 3.2 : 1.2);
+                    }
+                    if (summary.armorAdd > 0) score += summary.armorAdd * (hpRatio < 0.7 ? 1.8 : 0.7);
+                    if (summary.preHitArmor > 0) score += summary.preHitArmor * (hpRatio < 0.8 ? 3.5 : 1.8);
+                    if (skill.id === "skill_savage_charge" && hpRatio < 0.75) return 0;
+                    if (naturalProgressiveBossFinishSustainReserve) {
+                        score += summary.heal * 3.5;
+                        score += summary.armorAdd * 3.5;
+                        score += summary.preHitArmor * 24;
+                    }
+                    if (skill.id === "skill_regroup" && hpRatio > naturalProgressiveBossSurvivalFloor && summary.targetHp < 45) score -= 8;
+                    return Math.max(0, score);
+                }
+                score += summary.hpThroughArmor * 3.2;
+                score += summary.armorRemovedByHp * 0.9;
+                score += summary.armorRemovedByArmor * 1.4;
+                score += summary.dot * 1.1;
+                const naturalProgressiveFirstBossArmorBreakWindow = levelId === "level_1_10"
+                    && skill.id === "skill_skull_cracker"
+                    && summary.armorRemovedByArmor > 0;
+                if (naturalProgressiveFirstBossArmorBreakWindow) score += 260;
+                if (summary.damageHp >= summary.targetHp) score += 120;
+                if (naturalProgressiveFinishWindow) {
+                    if (summary.damageHp <= 0) return 0;
+                    score += summary.hpThroughArmor * 5;
+                    if (summary.damageHp >= summary.targetHp || summary.hpThroughArmor >= summary.targetHp) score += 180;
+                    if (skill.id === "skill_heavy_swing") score += 80;
+                    if (skill.id === "skill_1771769351059") score += 45;
+                    if (naturalProgressiveBossFinishSustainReserve && summary.damageHp > summary.targetHp) {
+                        score -= (summary.damageHp - summary.targetHp) * 16;
+                    }
+                    const naturalProgressiveBossSecondaryDamagePenalty = naturalProgressiveBossFinishSustainReserve
+                        && summary.damageHp > 0
+                        && summary.damageHp < summary.targetHp;
+                    if (naturalProgressiveBossSecondaryDamagePenalty) score -= 180;
+                }
+                if (skill.id === "skill_heavy_swing") score += 12;
+                if (skill.id === "skill_1771769351059") score += 10;
+                if (skill.id === "skill_skull_cracker" && summary.armorRemovedByArmor <= 0) score -= 120;
+                return Math.max(0, score);
+            };
             const preferredSkillOrder = () => {
                 const hpRatio = (() => {
                     const player = window.GameEngine?.data?.playerData || {};
@@ -1292,17 +1452,34 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 })();
                 const levelId = window.GameEngine?.data?.currentLevelData?.id || "";
                 const learned = new Set(snapshotSkillTree().learned);
-                const order = [];
-                if (hpRatio < 0.65) order.push("skill_heal");
-                if (learned.has("skill_1771769351059")) order.push("skill_1771769351059");
-                if (learned.has("skill_skull_cracker")) order.push("skill_skull_cracker");
-                order.push("skill_heavy_swing");
-                if (learned.has("skill_block")) order.push("skill_block");
+                const candidateSkillIds = [
+                    "skill_heal",
+                    "skill_regroup",
+                    "skill_shockwave_copy_1770042951717",
+                    "skill_1771769351059",
+                    "skill_skull_cracker",
+                    "skill_heavy_swing",
+                    "skill_block"
+                ];
                 const skipSelfDamage = selfDamageSkillIds.includes("skill_savage_charge")
-                    && ((skipSelfDamageSkillsForBoss && levelId === "level_1_10") || hpRatio < 0.75);
-                if (!skipSelfDamage) order.push("skill_savage_charge");
-                if (!order.includes("skill_heal")) order.push("skill_heal");
-                return [...new Set(order)];
+                    && ((skipSelfDamageSkillsForBoss && levelId.endsWith("_10")) || hpRatio < 0.75);
+                if (!skipSelfDamage) candidateSkillIds.push("skill_savage_charge");
+                return [...new Set(candidateSkillIds)]
+                    .filter(skillId => learned.has(skillId) || ["skill_heal", "skill_heavy_swing", "skill_savage_charge"].includes(skillId))
+                    .map(skillId => {
+                        const skill = getSkillConfig(skillId);
+                        const targetType = skill?.target?.subject === "SUBJECT_SELF" ? "self" : "enemy";
+                        const slots = [...document.querySelectorAll(".slot-placeholder:not(.filled)")].filter(slot => slot.dataset.targetType === targetType);
+                        const selectedPart = targetType === "self" ? pickMostDamagedSelfPart(skill, slots) : pickWeakestEnemyPart(skill, slots);
+                        return { skillId, ap: getSkillAp(skill), score: scoreNaturalProgressiveSkill(skill, selectedPart) };
+                    })
+                    .filter(row => row.score > 0)
+                    .sort((a, b) => {
+                        if (b.score !== a.score) return b.score - a.score;
+                        if (a.ap !== b.ap) return a.ap - b.ap;
+                        return a.skillId.localeCompare(b.skillId);
+                    })
+                    .map(row => row.skillId);
             };
             const placeSkill = async skillId => {
                 const btn = getSkillButton(skillId);
@@ -1313,7 +1490,11 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 const subject = skill?.target?.subject || "";
                 const desiredTargetType = subject === "SUBJECT_SELF" ? "self" : "enemy";
                 const slots = [...document.querySelectorAll(".slot-placeholder.highlight-valid:not(.filled)")];
-                const slot = slots.find(item => item.dataset.targetType === desiredTargetType)
+                const desiredPart = desiredTargetType === "self"
+                    ? pickMostDamagedSelfPart(skill, slots)
+                    : pickWeakestEnemyPart(skill, slots);
+                const slot = slots.find(item => item.dataset.targetType === desiredTargetType && item.dataset.part === desiredPart)
+                    || slots.find(item => item.dataset.targetType === desiredTargetType)
                     || slots[0];
                 if (!slot) {
                     btn.click();
@@ -1323,9 +1504,12 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 const slotKey = [slot.dataset.targetType, slot.dataset.part, slot.dataset.slotIndex || "0"].join(":");
                 slot.click();
                 await sleep(160);
+                const filledSlot = document.querySelector('.slot-placeholder.filled[data-occupied-skill-id="' + skillId + '"]');
+                if (!filledSlot) return null;
                 return {
                     skillId,
                     skillName: skill?.name || skillId,
+                    desiredPart,
                     slotKey,
                     buttonText: visibleText(btn)
                 };
@@ -1356,13 +1540,19 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 }
                 return "turn_wait_timeout";
             };
+            const naturalProgressiveHighPressureLevels = ["level_2_9"];
+            const getNaturalProgressiveMaxTurns = levelId => {
+                if (levelId.endsWith("_10")) return 14;
+                if (naturalProgressiveHighPressureLevels.includes(levelId)) return 12;
+                return 10;
+            };
             const playNaturalLevel = async levelId => {
                 await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
                     && window.GameEngine?.data?.currentLevelData?.id === levelId, levelId + " 战斗中");
                 const skillTreeBeforeBattle = snapshotSkillTree();
                 const naturalTurnSnapshots = [];
                 let naturalProgressiveOutcome = "turn_limit";
-                const maxNaturalTurns = levelId === "level_1_10" ? 12 : 10;
+                const maxNaturalTurns = getNaturalProgressiveMaxTurns(levelId);
                 for (let index = 0; index < maxNaturalTurns; index += 1) {
                     if (window.GameEngine?.fsm?.currentState === "BATTLE_SETTLEMENT") break;
                     await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
@@ -1517,6 +1707,7 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
             return {
                 path: "mock_ui_v11.html",
                 firstChapterNaturalProgression,
+                secondChapterNaturalProgression,
                 skipSelfDamageSkillsForBoss,
                 selfDamageSkillIds,
                 naturalProgressionLevels,
@@ -1541,6 +1732,7 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
         );
         assertCondition(report.initialSkillPointsOverride === initialSkillPointsOverride, "自然进度式 smoke 初始 KP 覆盖异常");
         assertCondition(report.firstChapterNaturalProgression === true, "自然进度式 smoke 未标记第一章完整自然推进");
+        assertCondition(report.secondChapterNaturalProgression === true, "自然进度式 smoke 未标记第二章完整自然推进");
         assertCondition(report.initialSkillTree?.skillPoints === initialSkillPointsOverride, "自然进度式 smoke 未从低 KP 初始技能树开始");
         const naturalProgressiveFailureSummary = JSON.stringify({
             outcome: report.naturalProgressiveOutcome,
@@ -1598,6 +1790,18 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
             "自然进度式 smoke 没有在第一章 Boss 前学习 skill_skull_cracker"
         );
         assertCondition(
+            report.naturalProgressiveLearningSnapshots.some(item => item.learnedThisLevel.includes("skill_regroup")
+                && item.skillTreeBeforeLearning.skillPoints >= 2
+                && item.skillTreeAfterLearning.learned.includes("skill_regroup")),
+            "自然进度式 smoke 没有在第二章中学习 skill_regroup"
+        );
+        assertCondition(
+            report.naturalProgressiveLearningSnapshots.some(item => item.learnedThisLevel.includes("skill_shockwave_copy_1770042951717")
+                && item.skillTreeBeforeLearning.skillPoints >= 3
+                && item.skillTreeAfterLearning.learned.includes("skill_shockwave_copy_1770042951717")),
+            "自然进度式 smoke 没有在第二章中学习 skill_shockwave_copy_1770042951717"
+        );
+        assertCondition(
             report.naturalLevelResults.slice(1).some(level => level.naturalTurnSnapshots
                 .some(turn => (turn.plannedActions || []).some(action => action.skillId === "skill_block"))),
             "自然进度式 smoke 学习后没有在后续自然战斗中部署 skill_block"
@@ -1608,10 +1812,21 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
             "自然进度式 smoke 第一章 Boss 战没有部署 skill_skull_cracker"
         );
         assertCondition(
+            report.naturalLevelResults.some(level => level.levelId.startsWith("level_2_") && level.naturalTurnSnapshots
+                .some(turn => (turn.plannedActions || []).some(action => action.skillId === "skill_regroup"))),
+            "自然进度式 smoke 第二章学习后没有部署 skill_regroup"
+        );
+        assertCondition(
+            report.naturalLevelResults.some(level => level.levelId.startsWith("level_2_") && level.naturalTurnSnapshots
+                .some(turn => (turn.plannedActions || []).some(action => action.skillId === "skill_shockwave_copy_1770042951717"))),
+            "自然进度式 smoke 第二章学习后没有部署 skill_shockwave_copy_1770042951717"
+        );
+        assertCondition(
             naturalProgressionLevels.every(levelId => report.completedLevels.includes(levelId)),
             "自然进度式 smoke 最终 completedLevels 未覆盖目标连续关卡"
         );
         assertCondition(report.unlockedLevels.includes("level_2_1"), "自然进度式 smoke 通关第一章后没有解锁 level_2_1");
+        assertCondition(report.unlockedLevels.includes("level_3_1"), "自然进度式 smoke 通关第二章后没有解锁 level_3_1");
         assertCondition(client.runtimeExceptions.length === 0, "自然进度式 smoke 页面出现 Runtime exception");
         return report;
     } finally {
