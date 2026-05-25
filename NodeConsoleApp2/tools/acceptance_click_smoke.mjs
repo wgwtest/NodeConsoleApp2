@@ -1176,6 +1176,327 @@ async function runChapterThreeProgressionSmoke(cdpEndpoint, mainUrl) {
     });
 }
 
+async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
+    let client = null;
+    try {
+        client = await attach(cdpEndpoint, mainUrl);
+        await waitFor(
+            client,
+            `(() => document.getElementById("modalTitle")?.textContent.trim() === "欢迎"
+                && [...document.querySelectorAll("button")].some(btn => btn.textContent.trim() === "新游戏"))()`,
+            "mock_ui_v11.html natural battle autoplay 欢迎页和新游戏按钮"
+        );
+
+        const report = await evaluate(client, `(async () => {
+            const targetLevelId = "level_1_1";
+            const maxNaturalTurns = 12;
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+            const visibleText = el => (el?.textContent || "").replace(/\\s+/g, " ").trim();
+            const buttons = () => [...document.querySelectorAll("button")];
+            const clickButtonByText = text => {
+                const btn = buttons().find(item => visibleText(item) === text);
+                if (!btn) throw new Error("找不到按钮：" + text);
+                btn.click();
+                return visibleText(btn);
+            };
+            const waitForPredicate = async (predicate, label, timeoutMs = 15000) => {
+                const started = Date.now();
+                while (Date.now() - started < timeoutMs) {
+                    if (predicate()) return true;
+                    await sleep(100);
+                }
+                throw new Error("等待超时：" + label);
+            };
+            const getEntityHp = entity => Number(entity?.hp ?? entity?.stats?.hp ?? 0) || 0;
+            const getEntityMaxHp = entity => Number(entity?.maxHp ?? entity?.stats?.maxHp ?? entity?.stats?.hp ?? entity?.hp ?? 0) || 0;
+            const getSkillAp = skill => Number(skill?.costs?.ap ?? skill?.cost?.ap ?? skill?.apCost ?? 0) || 0;
+            const getSkillEffects = skill => [
+                ...(Array.isArray(skill?.effects) ? skill.effects : []),
+                ...(Array.isArray(skill?.actions) ? skill.actions.map(action => action?.effect).filter(Boolean) : [])
+            ];
+            const summarizeSkill = skill => {
+                const summary = { damageHp: 0, damageArmor: 0, heal: 0, armorAdd: 0, dot: 0, control: 0 };
+                for (const effect of getSkillEffects(skill)) {
+                    const amount = Math.max(0, Number(effect?.amount ?? effect?.value ?? 0) || 0);
+                    if (effect?.effectType === "DMG_HP") summary.damageHp += amount;
+                    if (effect?.effectType === "DMG_ARMOR") summary.damageArmor += amount;
+                    if (effect?.effectType === "HEAL") summary.heal += amount;
+                    if (effect?.effectType === "ARMOR_ADD") summary.armorAdd += amount;
+                }
+                const appliedBuffs = [
+                    ...(Array.isArray(skill?.buffRefs?.apply) ? skill.buffRefs.apply : []),
+                    ...(Array.isArray(skill?.buffRefs?.applySelf) ? skill.buffRefs.applySelf : [])
+                ];
+                for (const row of appliedBuffs) {
+                    if (["buff_bleed", "buff_poison", "buff_tear_wound"].includes(row?.buffId)) summary.dot += 10;
+                    if (["buff_slow", "buff_vulnerable"].includes(row?.buffId)) summary.control += 6;
+                }
+                return summary;
+            };
+            const getCandidateParts = (skill, target) => {
+                const fromSkill = Array.isArray(skill?.target?.selection?.candidateParts) ? skill.target.selection.candidateParts : [];
+                if (fromSkill.length > 0) return fromSkill;
+                return Object.keys(target?.bodyParts || {});
+            };
+            const pickWeakestPart = (target, skill) => {
+                const candidates = getCandidateParts(skill, target)
+                    .map(part => ({ part, data: target?.bodyParts?.[part] }))
+                    .filter(entry => entry.data);
+                if (candidates.length === 0) return null;
+                candidates.sort((a, b) => {
+                    const armorA = Number(a.data.current ?? 0) || 0;
+                    const armorB = Number(b.data.current ?? 0) || 0;
+                    if (armorA !== armorB) return armorA - armorB;
+                    const weakA = Number(a.data.weakness ?? 1) || 1;
+                    const weakB = Number(b.data.weakness ?? 1) || 1;
+                    return weakB - weakA;
+                });
+                return candidates[0].part;
+            };
+            const pickMostDamagedSelfPart = player => {
+                const damaged = Object.entries(player?.bodyParts || {})
+                    .map(([part, data]) => ({
+                        part,
+                        missing: Math.max(0, (Number(data?.max ?? 0) || 0) - (Number(data?.current ?? 0) || 0))
+                    }))
+                    .filter(row => row.missing > 0)
+                    .sort((a, b) => b.missing - a.missing);
+                return damaged[0]?.part || "chest";
+            };
+            const findPrimaryEnemy = () => [...(window.GameEngine?.data?.currentLevelData?.enemies || [])]
+                .filter(enemy => getEntityHp(enemy) > 0)
+                .sort((a, b) => {
+                    const hpA = getEntityHp(a);
+                    const hpB = getEntityHp(b);
+                    if (hpA !== hpB) return hpA - hpB;
+                    return String(a.id).localeCompare(String(b.id));
+                })[0] || null;
+            const scoreSkill = ({ skill, player, target }) => {
+                const subject = skill?.target?.subject || "";
+                const summary = summarizeSkill(skill);
+                const playerHpRatio = getEntityMaxHp(player) > 0 ? getEntityHp(player) / getEntityMaxHp(player) : 1;
+                const missingHp = Math.max(0, getEntityMaxHp(player) - getEntityHp(player));
+                if (subject === "SUBJECT_SELF") {
+                    const missingArmor = Object.values(player?.bodyParts || {})
+                        .reduce((sum, part) => sum + Math.max(0, (Number(part?.max ?? 0) || 0) - (Number(part?.current ?? 0) || 0)), 0);
+                    let score = 0;
+                    if (summary.heal > 0 && missingHp > 0) score += Math.min(missingHp, summary.heal) * (playerHpRatio < 0.7 ? 3.2 : 1.2);
+                    if (summary.armorAdd > 0 && missingArmor > 0) score += Math.min(missingArmor, summary.armorAdd) * (playerHpRatio < 0.75 ? 2.2 : 1.1);
+                    return score;
+                }
+
+                const selectedPart = pickWeakestPart(target, skill);
+                const selectedArmor = Math.max(0, Number(target?.bodyParts?.[selectedPart]?.current ?? 0) || 0);
+                const hpThroughArmor = Math.max(0, summary.damageHp - selectedArmor);
+                const armorFromHpSkill = Math.min(selectedArmor, summary.damageHp);
+                const armorFromArmorSkill = Math.min(selectedArmor, summary.damageArmor);
+                let score = hpThroughArmor * 3 + armorFromHpSkill * 0.8 + armorFromArmorSkill * 1.6 + summary.dot + summary.control;
+                if (getEntityHp(target) <= Math.max(summary.damageHp, hpThroughArmor)) score += 120;
+                if (selectedPart === "head") score += 8;
+                return score;
+            };
+            const snapshotVitals = () => {
+                const player = window.GameEngine?.data?.playerData || {};
+                const enemies = [...(window.GameEngine?.data?.currentLevelData?.enemies || [])].map(enemy => ({
+                    id: enemy.id || "",
+                    name: enemy.name || "",
+                    hp: getEntityHp(enemy),
+                    maxHp: getEntityMaxHp(enemy),
+                    bodyParts: JSON.parse(JSON.stringify(enemy.bodyParts || {}))
+                }));
+                return {
+                    playerHp: getEntityHp(player),
+                    playerMaxHp: getEntityMaxHp(player),
+                    playerBodyParts: JSON.parse(JSON.stringify(player.bodyParts || {})),
+                    enemies,
+                    enemyRemainingHp: enemies.reduce((sum, enemy) => sum + Math.max(0, enemy.hp), 0)
+                };
+            };
+            const chooseAndPlaceSkills = async () => {
+                await waitForPredicate(() => document.getElementById("btnCommitPlanning") && document.getElementById("btnExecute"), "自然战斗按钮");
+                const player = window.GameEngine?.data?.playerData || {};
+                const target = findPrimaryEnemy();
+                if (!target) return { placed: [], reason: "no_live_enemy" };
+
+                const candidates = [...document.querySelectorAll(".skill-icon-button")]
+                    .filter(btn => !btn.classList.contains("disabled") && !btn.disabled && btn.getAttribute("aria-disabled") !== "true")
+                    .map(btn => {
+                        const skill = window.GameEngine?.data?.getSkillConfig?.(btn.dataset.id);
+                        return { btn, skill, score: skill ? scoreSkill({ skill, player, target }) : 0 };
+                    })
+                    .filter(row => row.skill && row.score > 0)
+                    .sort((a, b) => b.score - a.score);
+
+                const placed = [];
+                let remainingAp = Number(player?.stats?.ap ?? 0) || 0;
+                for (const row of candidates) {
+                    const ap = getSkillAp(row.skill);
+                    if (ap > remainingAp) continue;
+                    row.btn.click();
+                    await sleep(120);
+                    const subject = row.skill?.target?.subject || "";
+                    const desiredPart = subject === "SUBJECT_SELF" ? pickMostDamagedSelfPart(player) : pickWeakestPart(target, row.skill);
+                    const desiredTargetType = subject === "SUBJECT_SELF" ? "self" : "enemy";
+                    const slots = [...document.querySelectorAll(".slot-placeholder.highlight-valid:not(.filled)")];
+                    const slot = slots.find(item => item.dataset.targetType === desiredTargetType && item.dataset.part === desiredPart)
+                        || slots.find(item => item.dataset.targetType === desiredTargetType)
+                        || slots[0];
+                    if (!slot) {
+                        row.btn.click();
+                        await sleep(80);
+                        continue;
+                    }
+                    const slotKey = [slot.dataset.targetType, slot.dataset.part, slot.dataset.slotIndex || "0"].join(":");
+                    slot.click();
+                    await sleep(160);
+                    if (!document.querySelector('.slot-placeholder.filled[data-occupied-skill-id="' + row.skill.id + '"]')) {
+                        continue;
+                    }
+                    placed.push({
+                        skillId: row.skill.id,
+                        skillName: row.skill.name || row.skill.id,
+                        score: row.score,
+                        ap,
+                        slotKey
+                    });
+                    remainingAp -= ap;
+                }
+                return {
+                    placed,
+                    reason: placed.length > 0 ? "planned" : "no_deployable_skill"
+                };
+            };
+            const waitForTurnOrSettlement = async turnBefore => {
+                const started = Date.now();
+                while (Date.now() - started < 20000) {
+                    const state = window.GameEngine?.fsm?.currentState || "";
+                    if (state === "BATTLE_SETTLEMENT") return "settled";
+                    if (state === "BATTLE_LOOP"
+                        && window.GameEngine?.battlePhase === "PLANNING"
+                        && Number(window.GameEngine?.currentTurn ?? 0) > turnBefore) {
+                        return "next_turn";
+                    }
+                    await sleep(120);
+                }
+                return "turn_wait_timeout";
+            };
+
+            clickButtonByText("新游戏");
+            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "游戏菜单");
+            clickButtonByText("关卡选择");
+            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
+            await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + targetLevelId + '"]'), targetLevelId + " 节点");
+            const levelNode = document.querySelector('.level-map-node[data-level-id="' + targetLevelId + '"]');
+            levelNode.click();
+            await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + targetLevelId + '"][data-selected="true"]'), "选中 " + targetLevelId);
+            document.querySelector("[data-action='enter-level']").click();
+            await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
+                && window.GameEngine?.data?.currentLevelData?.id === targetLevelId, "进入自然战斗 " + targetLevelId);
+            await sleep(400);
+
+            const naturalTurnSnapshots = [];
+            let naturalOutcome = "turn_limit";
+            let failureReason = "";
+            for (let i = 0; i < maxNaturalTurns; i += 1) {
+                if (window.GameEngine?.fsm?.currentState === "BATTLE_SETTLEMENT") break;
+                await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
+                    && window.GameEngine?.battlePhase === "PLANNING", "自然战斗规划阶段");
+                const turnBefore = Number(window.GameEngine?.currentTurn ?? 0) || 0;
+                const before = snapshotVitals();
+                const planning = await chooseAndPlaceSkills();
+                if (planning.placed.length === 0) {
+                    failureReason = planning.reason;
+                    naturalTurnSnapshots.push({ turnBefore, before, planning, after: snapshotVitals(), waitResult: "not_executed" });
+                    break;
+                }
+
+                clickButtonByText("提交规划");
+                await waitForPredicate(() => {
+                    const execute = document.getElementById("btnExecute");
+                    return execute && !execute.classList.contains("disabled") && execute.getAttribute("aria-disabled") !== "true";
+                }, "自然战斗执行回合可用");
+                const plannedActions = [...(window.GameEngine?.playerSkillQueue || [])].map(action => ({
+                    skillId: action.skillId || "",
+                    bodyPart: action.bodyPart || "",
+                    targetId: action.targetId || "",
+                    slotKey: action.slotKey || ""
+                }));
+                clickButtonByText("执行回合");
+                const waitResult = await waitForTurnOrSettlement(turnBefore);
+                const after = snapshotVitals();
+                naturalTurnSnapshots.push({
+                    turnBefore,
+                    currentTurn: Number(window.GameEngine?.currentTurn ?? 0) || 0,
+                    before,
+                    planning,
+                    plannedActions,
+                    waitResult,
+                    after,
+                    state: window.GameEngine?.fsm?.currentState || "",
+                    battlePhase: window.GameEngine?.battlePhase || ""
+                });
+                if (waitResult === "turn_wait_timeout") {
+                    failureReason = waitResult;
+                    break;
+                }
+                if (window.GameEngine?.fsm?.currentState === "BATTLE_SETTLEMENT") break;
+                await sleep(250);
+            }
+
+            const settlement = window.GameEngine?.data?.dataConfig?.global?.progress?.lastSettlement || {};
+            const finalState = window.GameEngine?.fsm?.currentState || "";
+            if (finalState === "BATTLE_SETTLEMENT") {
+                naturalOutcome = settlement.victory === true ? "victory" : "defeat";
+            } else if (failureReason) {
+                naturalOutcome = failureReason;
+            }
+            const finalVitals = snapshotVitals();
+
+            return {
+                path: "mock_ui_v11.html",
+                levelId: targetLevelId,
+                maxNaturalTurns,
+                naturalTurnSnapshots,
+                naturalOutcome,
+                forcedSettlementUsed: false,
+                finalState,
+                finalTitle: document.getElementById("modalTitle")?.textContent.trim() || "",
+                settlement: {
+                    levelId: settlement.levelId || "",
+                    victory: settlement.victory === true,
+                    nextLevelId: settlement.nextLevelId || "",
+                    rewards: settlement.rewards || null
+                },
+                finalVitals
+            };
+        })()`);
+
+        assertCondition(report.levelId === "level_1_1", `自然战斗 smoke 关卡异常：${report.levelId}`);
+        assertCondition(report.forcedSettlementUsed === false, "自然战斗 smoke 不应使用强制结算");
+        assertCondition(report.maxNaturalTurns === 12, `自然战斗最大回合数异常：${report.maxNaturalTurns}`);
+        assertCondition(report.naturalTurnSnapshots.length > 0, "自然战斗 smoke 没有记录任何自然回合");
+        assertCondition(
+            report.naturalTurnSnapshots.some(turn => Array.isArray(turn.planning?.placed) && turn.planning.placed.length > 0),
+            "自然战斗 smoke 没有部署任何玩家技能"
+        );
+        assertCondition(
+            report.naturalTurnSnapshots.some(turn => Array.isArray(turn.plannedActions) && turn.plannedActions.length > 0),
+            "自然战斗 smoke 没有提交任何玩家规划"
+        );
+        assertCondition(
+            ["victory", "defeat", "turn_limit", "no_deployable_skill", "turn_wait_timeout"].includes(report.naturalOutcome),
+            `自然战斗 smoke 结果不可识别：${report.naturalOutcome}`
+        );
+        assertCondition(report.naturalOutcome === "victory", `level_1_1 未能在自然战斗中取胜：${report.naturalOutcome}`);
+        assertCondition(report.finalState === "BATTLE_SETTLEMENT", `自然战斗胜利后状态异常：${report.finalState}`);
+        assertCondition(report.settlement?.victory === true, "自然战斗胜利没有写入胜利结算");
+        assertCondition(client.runtimeExceptions.length === 0, "自然战斗 smoke 页面出现 Runtime exception");
+        return report;
+    } finally {
+        await closeClient(client);
+    }
+}
+
 async function runPresentationProbe(cdpEndpoint, probeUrl) {
     let client = null;
     try {
@@ -1322,6 +1643,7 @@ async function main() {
         chapterOneProgression: await runChapterOneProgressionSmoke(cdpEndpoint, urls.main),
         chapterTwoProgression: await runChapterTwoProgressionSmoke(cdpEndpoint, urls.main),
         chapterThreeProgression: await runChapterThreeProgressionSmoke(cdpEndpoint, urls.main),
+        naturalBattleAutoplay: await runNaturalBattleAutoplaySmoke(cdpEndpoint, urls.main),
         presentationProbe: await runPresentationProbe(cdpEndpoint, urls.probe),
         presentationConfigurator: await runPresentationConfigurator(cdpEndpoint, urls.configurator)
     };
