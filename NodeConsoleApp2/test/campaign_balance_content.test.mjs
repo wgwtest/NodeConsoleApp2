@@ -366,6 +366,30 @@ test('三章 30 关实际使用敌人的技能组满足 WBS-3.4.3 的数量、AP
   assert.deepEqual(actionIssues, [], 'EnemyActionPlanner 应能为每个实际使用敌人生成可支付的首回合行动');
 });
 
+test('终局后期吸血应早于暮堡重抡形成可执行反制窗口', async () => {
+  const player = await readJson('assets/data/player.json');
+  const playerSkills = await readJson('assets/data/skills_melee_v4_5.json');
+  const enemySkills = await readJson('assets/data/skills_enemy_v1.json');
+  const enemies = normalizeEnemies(await readJson('assets/data/enemies.json'));
+
+  const playerBaseSpeed = Number(player.default?.stats?.speed ?? 0) || 0;
+  const bossBaseSpeed = Number(enemies.boss_c3_twilight_bastion?.stats?.speed ?? 0) || 0;
+  const lateSustain = playerSkills.skills.find(skill => skill.id === 'skill_execute_copy_1770044052832');
+  const bossSwing = enemySkills.skills.find(skill => skill.id === 'enemy_skill_twilight_bastion_swing');
+
+  assert(lateSustain, '缺少后期吸血 skill_execute_copy_1770044052832');
+  assert(bossSwing, '缺少终局 Boss 专用重击 enemy_skill_twilight_bastion_swing');
+
+  const lateSustainSpeed = playerBaseSpeed + (Number(lateSustain.speed) || 0);
+  const bossSwingSpeed = bossBaseSpeed + (Number(bossSwing.speed) || 0);
+
+  assert.equal(
+    lateSustainSpeed > bossSwingSpeed,
+    true,
+    `后期吸血应早于暮堡重抡，避免低血反制晚于致死爆发：吸血 ${lateSustainSpeed} vs 暮堡重抡 ${bossSwingSpeed}`
+  );
+});
+
 test('DataManagerV2 能实例化 30 个正式关卡，并让路线变体节点保留自身进入目标', async () => {
   const levelsDocument = await readJson('assets/map_packs/current/story_pack_v1/levels.json');
   const mapDocument = await readJson('assets/map_packs/current/story_pack_v1/maps.json');

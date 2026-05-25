@@ -1194,6 +1194,26 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
         maxAp: 8,
         hpBonus: 20
     });
+    const naturalLateGameProbeBuild = Object.freeze({
+        id: "late_game_progressive",
+        label: "后期进度式构筑",
+        learned: [
+            "skill_heal",
+            "skill_heavy_swing",
+            "skill_savage_charge",
+            "skill_block",
+            "skill_1771769351059",
+            "skill_skull_cracker",
+            "skill_shockwave_copy_1770042951717",
+            "skill_leftover_lunchbox",
+            "skill_execute",
+            "skill_execute_copy_1770043820577",
+            "skill_regroup",
+            "skill_execute_copy_1770044052832"
+        ],
+        maxAp: 6,
+        hpBonus: 0
+    });
     const naturalCheckpoints = [
         {
             levelId: "level_1_1",
@@ -1240,8 +1260,9 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
             mapId: "chapter_3_authoring_map",
             label: "第三章终局 Boss 压力检查",
             maxNaturalTurns: 18,
-            skillLoadoutSource: "naturalBalanceProbeBuild",
-            requireVictory: false
+            skillLoadoutSource: "lateGameNaturalProbeBuild",
+            requireVictory: true,
+            requirePressure: true
         }
     ];
 
@@ -1281,6 +1302,16 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
                 : []
         };
     };
+    const describeNaturalReport = report => JSON.stringify({
+        naturalOutcome: report?.naturalOutcome || "",
+        finalState: report?.finalState || "",
+        finalTitle: report?.finalTitle || "",
+        skillLoadoutSource: report?.skillLoadoutSource || "",
+        finalVitals: report?.finalVitals || null,
+        lethalFailureDiagnosis: report?.lethalFailureDiagnosis || null,
+        plannedSkillIdsByTurn: (Array.isArray(report?.naturalTurnSnapshots) ? report.naturalTurnSnapshots : [])
+            .map(turn => (turn.plannedActions || []).map(action => action.skillId || "").filter(Boolean))
+    });
 
     const runNaturalCheckpoint = async (checkpoint) => {
         let client = null;
@@ -1296,6 +1327,7 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
             const report = await evaluate(client, `(async () => {
             const checkpoint = ${JSON.stringify(checkpoint)};
             const naturalBalanceProbeBuild = ${JSON.stringify(naturalBalanceProbeBuild)};
+            const naturalLateGameProbeBuild = ${JSON.stringify(naturalLateGameProbeBuild)};
             const targetLevelId = checkpoint.levelId;
             const maxNaturalTurns = Number(checkpoint.maxNaturalTurns ?? 12) || 12;
             const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -1318,14 +1350,84 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
             const getEntityHp = entity => Number(entity?.hp ?? entity?.stats?.hp ?? 0) || 0;
             const getEntityMaxHp = entity => Number(entity?.maxHp ?? entity?.stats?.maxHp ?? entity?.stats?.hp ?? entity?.hp ?? 0) || 0;
             const getSkillAp = skill => Number(skill?.costs?.ap ?? skill?.cost?.ap ?? skill?.apCost ?? 0) || 0;
+            const terminalSurvivalFloor = 0.55;
+            const terminalCriticalFloor = 0.35;
+            const terminalBossSwingEffectiveSpeed = 3;
+            const maintainTerminalBleedWindow = true;
+            const terminalSustainRotation = true;
+            const stopFillingTerminalPressureActions = true;
+            const getEntityBuffStacks = (entity, buffId, fallback = 0) => {
+                if (!buffId || !entity) return fallback;
+                if (typeof entity?.buffs?.getStacks === "function") {
+                    return Number(entity.buffs.getStacks(buffId)) || fallback;
+                }
+                if (Array.isArray(entity?.buffs)) {
+                    const found = entity.buffs.find(row => row?.id === buffId || row?.buffId === buffId);
+                    return Number(found?.stacks ?? found?.stack ?? found?.layers ?? 0) || fallback;
+                }
+                if (entity?.buffs && typeof entity.buffs === "object") {
+                    const found = entity.buffs[buffId];
+                    return Number(found?.stacks ?? found?.stack ?? found?.layers ?? found ?? 0) || fallback;
+                }
+                return fallback;
+            };
+            const getEntityBuffInfo = (entity, buffId) => {
+                if (!buffId || !entity) return { stacks: 0, remaining: null };
+                if (typeof entity?.buffs?.getAll === "function") {
+                    const found = entity.buffs.getAll().find(row => row?.id === buffId || row?.buffId === buffId);
+                    return {
+                        stacks: Number(found?.stacks ?? 0) || 0,
+                        remaining: Number.isFinite(Number(found?.remaining)) ? Number(found.remaining) : null
+                    };
+                }
+                if (Array.isArray(entity?.buffs)) {
+                    const found = entity.buffs.find(row => row?.id === buffId || row?.buffId === buffId);
+                    return {
+                        stacks: Number(found?.stacks ?? found?.stack ?? found?.layers ?? 0) || 0,
+                        remaining: Number.isFinite(Number(found?.remaining ?? found?.durationLeft ?? found?.duration))
+                            ? Number(found.remaining ?? found.durationLeft ?? found.duration)
+                            : null
+                    };
+                }
+                if (entity?.buffs && typeof entity.buffs === "object") {
+                    const found = entity.buffs[buffId];
+                    if (found && typeof found === "object") {
+                        return {
+                            stacks: Number(found.stacks ?? found.stack ?? found.layers ?? 0) || 0,
+                            remaining: Number.isFinite(Number(found.remaining ?? found.durationLeft ?? found.duration))
+                                ? Number(found.remaining ?? found.durationLeft ?? found.duration)
+                                : null
+                        };
+                    }
+                    return { stacks: Number(found ?? 0) || 0, remaining: null };
+                }
+                return { stacks: 0, remaining: null };
+            };
+            const computeEffectAmountForScore = (effect, { target }) => {
+                const amount = Math.max(0, Number(effect?.amount ?? effect?.value ?? 0) || 0);
+                const amountType = effect?.amountType || "ABS";
+                if (amountType === "PCT_CURRENT") return Math.max(0, getEntityHp(target) * amount / 100);
+                if (amountType === "PCT_MAX") return Math.max(0, getEntityMaxHp(target) * amount / 100);
+                if (amountType === "BUFF_STACKS") {
+                    const source = effect?.amountSource || {};
+                    const buffId = source.buffId || "";
+                    const stacks = getEntityBuffStacks(target, buffId, Number(source.missingAs ?? 0) || 0);
+                    const multiplier = Number(source.multiplier ?? amount ?? 1) || 0;
+                    return Math.max(0, stacks * multiplier);
+                }
+                return amount;
+            };
             const getSkillEffects = skill => [
                 ...(Array.isArray(skill?.effects) ? skill.effects : []),
                 ...(Array.isArray(skill?.actions) ? skill.actions.map(action => action?.effect).filter(Boolean) : [])
             ];
-            const summarizeSkill = skill => {
-                const summary = { damageHp: 0, damageArmor: 0, heal: 0, armorAdd: 0, dot: 0, control: 0 };
+            const summarizeSkill = (skill, { target = null, actor = null, skillTarget = null } = {}) => {
+                const summary = { damageHp: 0, damageArmor: 0, heal: 0, armorAdd: 0, preHitArmor: 0, dot: 0, control: 0 };
                 for (const effect of getSkillEffects(skill)) {
-                    const amount = Math.max(0, Number(effect?.amount ?? effect?.value ?? 0) || 0);
+                    const amountTarget = effect?.amountSource?.owner === "actor" || effect?.amountSource?.owner === "self"
+                        ? actor
+                        : (effect?.amountSource?.owner === "skillTarget" ? skillTarget : target);
+                    const amount = computeEffectAmountForScore(effect, { target: amountTarget || target });
                     if (effect?.effectType === "DMG_HP") summary.damageHp += amount;
                     if (effect?.effectType === "DMG_ARMOR") summary.damageArmor += amount;
                     if (effect?.effectType === "HEAL") summary.heal += amount;
@@ -1338,6 +1440,9 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
                 for (const row of appliedBuffs) {
                     if (["buff_bleed", "buff_poison", "buff_tear_wound"].includes(row?.buffId)) summary.dot += 10;
                     if (["buff_slow", "buff_vulnerable"].includes(row?.buffId)) summary.control += 6;
+                    if (row?.buffId === "new_buff_1771485041778") {
+                        summary.preHitArmor += Math.max(0, Number(row?.params?.healArmorVal ?? 5) || 5);
+                    }
                 }
                 return summary;
             };
@@ -1381,15 +1486,77 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
                 })[0] || null;
             const scoreSkill = ({ skill, player, target }) => {
                 const subject = skill?.target?.subject || "";
-                const summary = summarizeSkill(skill);
+                const summary = summarizeSkill(skill, {
+                    target: subject === "SUBJECT_SELF" ? player : target,
+                    actor: player,
+                    skillTarget: target
+                });
                 const playerHpRatio = getEntityMaxHp(player) > 0 ? getEntityHp(player) / getEntityMaxHp(player) : 1;
                 const missingHp = Math.max(0, getEntityMaxHp(player) - getEntityHp(player));
+                const targetHpRatio = getEntityMaxHp(target) > 0 ? getEntityHp(target) / getEntityMaxHp(target) : 1;
+                const targetBleedInfo = getEntityBuffInfo(target, "buff_bleed");
+                const targetBleedStacks = targetBleedInfo.stacks;
+                const targetBleedRemaining = targetBleedInfo.remaining;
+                const terminalBleedExpiring = targetBleedStacks <= 0 || (targetBleedRemaining !== null && targetBleedRemaining <= 1);
                 if (subject === "SUBJECT_SELF") {
-                    const missingArmor = Object.values(player?.bodyParts || {})
-                        .reduce((sum, part) => sum + Math.max(0, (Number(part?.max ?? 0) || 0) - (Number(part?.current ?? 0) || 0)), 0);
+                    const missingArmorByPart = Object.fromEntries(Object.entries(player?.bodyParts || {})
+                        .map(([part, data]) => [part, Math.max(0, (Number(data?.max ?? 0) || 0) - (Number(data?.current ?? 0) || 0))]));
+                    const missingArmor = Object.values(missingArmorByPart).reduce((sum, value) => sum + value, 0);
                     let score = 0;
-                    if (summary.heal > 0 && missingHp > 0) score += Math.min(missingHp, summary.heal) * (playerHpRatio < 0.7 ? 3.2 : 1.2);
-                    if (summary.armorAdd > 0 && missingArmor > 0) score += Math.min(missingArmor, summary.armorAdd) * (playerHpRatio < 0.75 ? 2.2 : 1.1);
+                    if (checkpoint.requirePressure) {
+                        if (summary.damageHp > 0) return 0;
+                        if (summary.heal > 0 && missingHp > 0) {
+                            if (playerHpRatio >= 0.8 && missingHp < summary.heal) return 0;
+                            score += summary.heal * (playerHpRatio < 0.7 ? 2.8 : 0.8);
+                            score += Math.min(missingHp, summary.heal) * 1.5;
+                            if (playerHpRatio < terminalSurvivalFloor && skill.id === "skill_heal") score += 80;
+                            if (playerHpRatio < terminalCriticalFloor && skill.id === "skill_heal") score += 80;
+                        }
+                        if (summary.armorAdd > 0 && missingArmor > 0) {
+                            const maxMissingArmor = Math.max(0, ...Object.values(missingArmorByPart));
+                            score += summary.armorAdd * 0.8;
+                            score += Math.min(maxMissingArmor, summary.armorAdd) * 1.8;
+                            score += Math.min(missingArmor, summary.armorAdd) * 0.6;
+                            if (playerHpRatio < terminalSurvivalFloor && skill.id === "skill_block") score += 60;
+                            if (missingArmorByPart.head > 0 && skill.id === "skill_block") score += 35;
+                        }
+                        if (summary.preHitArmor > 0) {
+                            score += summary.preHitArmor * 1.6;
+                            if (playerHpRatio < 0.75) score += summary.preHitArmor * 2.0;
+                            score += 18;
+                            if (playerHpRatio < terminalSurvivalFloor && skill.id === "skill_regroup") score += 45;
+                        }
+                        return score;
+                    }
+                    if (checkpoint.requirePressure && playerHpRatio < 0.65 && summary.damageHp > 0) return 0;
+                    if (summary.heal > 0 && missingHp > 0) {
+                        score += Math.min(missingHp, summary.heal) * (playerHpRatio < 0.7 ? 3.2 : 1.2);
+                        if (checkpoint.requirePressure && playerHpRatio < 0.7) score += 45;
+                        if (checkpoint.requirePressure && playerHpRatio < 0.45) score += 45;
+                        if (checkpoint.requirePressure && playerHpRatio < 0.4 && skill.id === "skill_heal") score += 220;
+                        if (checkpoint.requirePressure && playerHpRatio < 0.2 && skill.id === "skill_heal") score += 220;
+                        if (checkpoint.requirePressure && targetHpRatio <= 0.18 && playerHpRatio >= 0.3 && skill.id === "skill_heal") {
+                            score -= 180;
+                        }
+                        if (checkpoint.requirePressure && playerHpRatio < 0.55 && missingArmorByPart.head > 0) score -= 50;
+                    }
+                    if (summary.armorAdd > 0 && missingArmor > 0) {
+                        score += Math.min(missingArmor, summary.armorAdd) * (playerHpRatio < 0.75 ? 2.2 : 1.1);
+                        if (checkpoint.requirePressure && playerHpRatio < 0.75) score += 40;
+                        if (checkpoint.requirePressure && missingArmorByPart.head > 0) score += 35;
+                        if (checkpoint.requirePressure && playerHpRatio < 0.55 && missingArmorByPart.head > 0 && skill.id === "skill_block") {
+                            score += 220;
+                        }
+                        if (checkpoint.requirePressure && targetHpRatio <= 0.18 && playerHpRatio >= 0.3 && skill.id === "skill_block") {
+                            score -= 110;
+                        }
+                    }
+                    if (summary.preHitArmor > 0) {
+                        score += summary.preHitArmor * (checkpoint.requirePressure ? 8.0 : 1.6);
+                        if (playerHpRatio < 0.9) score += summary.preHitArmor * 4.0;
+                        if (playerHpRatio < 0.75) score += summary.preHitArmor * 5.0;
+                        if (checkpoint.requirePressure) score += 35;
+                    }
                     return score;
                 }
 
@@ -1399,6 +1566,82 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
                 const armorFromHpSkill = Math.min(selectedArmor, summary.damageHp);
                 const armorFromArmorSkill = Math.min(selectedArmor, summary.damageArmor);
                 let score = hpThroughArmor * 3 + armorFromHpSkill * 0.8 + armorFromArmorSkill * 1.6 + summary.dot + summary.control;
+                if (checkpoint.requirePressure) {
+                    const playerBaseSpeed = Number(player?.stats?.speed ?? 1) || 1;
+                    const actsBeforeTerminalSwing = playerBaseSpeed + (Number(skill?.speed ?? 0) || 0) > terminalBossSwingEffectiveSpeed;
+                    const terminalFinishWindow = targetHpRatio <= 0.18 && playerHpRatio >= terminalCriticalFloor;
+                    const terminalDirectFinishBonus = 720;
+                    const terminalNonDamageFinishPenalty = 320;
+                    score = hpThroughArmor * 2.2 + armorFromHpSkill * 0.8 + armorFromArmorSkill * 2.0 + summary.dot * 1.5 + summary.control;
+                    if (summary.heal > 0 && missingHp > 0) {
+                        score += summary.heal * (playerHpRatio < 0.7 ? 3.4 : 1.0);
+                        score += Math.min(missingHp, summary.heal) * 1.8;
+                        if (targetBleedStacks > 0) {
+                            score += 26 + targetBleedStacks * 5;
+                            if (playerHpRatio < 0.75) score += 16;
+                        }
+                        if (playerHpRatio < terminalSurvivalFloor && targetBleedStacks > 0 && skill.id === "skill_execute_copy_1770044052832") {
+                            score += 260;
+                        }
+                        if (playerHpRatio < terminalCriticalFloor && targetBleedStacks > 0 && skill.id === "skill_execute_copy_1770044052832") {
+                            score += 160;
+                        }
+                    }
+                    if (targetBleedStacks <= 0 && playerHpRatio < 0.75) {
+                        if (skill.id === "skill_1771769351059") score += playerHpRatio < terminalSurvivalFloor ? 520 : 140;
+                        if (skill.id === "skill_shockwave_copy_1770042951717") score += playerHpRatio < terminalSurvivalFloor ? 40 : 110;
+                    }
+                    if (terminalSustainRotation && terminalBleedExpiring && playerHpRatio < terminalSurvivalFloor && skill.id === "skill_1771769351059") {
+                        score += 260;
+                    }
+                    if (maintainTerminalBleedWindow && !terminalSustainRotation && targetBleedStacks > 0 && playerHpRatio < terminalSurvivalFloor && skill.id === "skill_1771769351059") {
+                        score += 260;
+                    }
+                    if (playerHpRatio < 0.5 && summary.damageHp > 0 && !actsBeforeTerminalSwing && summary.heal <= 0) {
+                        score -= 160;
+                    }
+                    const targetArmor = Object.values(target?.bodyParts || {})
+                        .reduce((sum, part) => sum + (Number(part.current ?? 0) || 0), 0);
+                    if (targetArmor > 35) score += armorFromArmorSkill * 1.2;
+                    if (terminalFinishWindow) {
+                        score += hpThroughArmor * 8;
+                        if (terminalFinishWindow && summary.damageHp <= 0 && summary.damageArmor <= 0) score -= terminalNonDamageFinishPenalty;
+                        if (terminalFinishWindow && summary.damageHp >= getEntityHp(target)) score += terminalDirectFinishBonus;
+                        if (skill.id === "skill_heavy_swing") score += 140;
+                        if (skill.id === "skill_execute_copy_1770043820577" && targetBleedStacks > 0) score += 80;
+                        if (skill.id === "skill_execute") score += 70;
+                    }
+                    return score;
+                }
+                if (checkpoint.requirePressure && playerHpRatio < 0.65 && targetHpRatio > 0.18 && skill.id === "skill_execute") {
+                    score -= 180;
+                }
+                if (checkpoint.requirePressure && playerHpRatio < 0.65 && targetBleedStacks <= 0 && skill.id === "skill_1771769351059") {
+                    score += 140;
+                }
+                if (checkpoint.requirePressure && playerHpRatio < 0.65 && targetBleedStacks <= 0 && skill.id === "skill_shockwave_copy_1770042951717") {
+                    score += 90;
+                }
+                if (summary.heal > 0 && missingHp > 0) {
+                    score += Math.min(missingHp, summary.heal) * (playerHpRatio < 0.7 ? 3.4 : 1.2);
+                    if (targetBleedStacks > 0) score += 26 + targetBleedStacks * 5;
+                    if (playerHpRatio < 0.75) score += 16;
+                    if (checkpoint.requirePressure && playerHpRatio < 0.35 && skill.id === "skill_execute_copy_1770044052832") {
+                        score += 160;
+                    }
+                    if (checkpoint.requirePressure && targetHpRatio <= 0.18 && playerHpRatio >= 0.3 && skill.id === "skill_execute_copy_1770044052832") {
+                        score -= 170;
+                    }
+                    if (checkpoint.requirePressure && targetBleedStacks > 0 && playerHpRatio < 0.55) {
+                        score += 180;
+                    }
+                }
+                if (checkpoint.requirePressure && targetHpRatio <= 0.18 && playerHpRatio >= 0.3 && summary.damageHp > 0) {
+                    score += hpThroughArmor * 7;
+                    if (skill.id === "skill_heavy_swing") score += 140;
+                    if (skill.id === "skill_1771769351059") score += 80;
+                    if (skill.id === "skill_execute") score += 70;
+                }
                 if (getEntityHp(target) <= Math.max(summary.damageHp, hpThroughArmor)) score += 120;
                 if (selectedPart === "head") score += 8;
                 return score;
@@ -1480,7 +1723,7 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
                     return { skillLoadoutSource: "missing_player_data", learned: [], maxAp: 0, maxHp: 0 };
                 }
 
-                if (checkpoint.skillLoadoutSource !== "naturalBalanceProbeBuild") {
+                if (!["naturalBalanceProbeBuild", "lateGameNaturalProbeBuild"].includes(checkpoint.skillLoadoutSource)) {
                     return {
                         skillLoadoutSource: checkpoint.skillLoadoutSource || "default_starting_skills",
                         learned: [...(Array.isArray(player.skills.learned) ? player.skills.learned : [])],
@@ -1489,18 +1732,21 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
                     };
                 }
 
+                const selectedBuild = checkpoint.skillLoadoutSource === "lateGameNaturalProbeBuild"
+                    ? naturalLateGameProbeBuild
+                    : naturalBalanceProbeBuild;
                 const baseMaxHp = Number(player.stats.maxHp ?? player.stats.hp ?? 100) || 100;
-                const nextMaxHp = Math.max(1, baseMaxHp + (Number(naturalBalanceProbeBuild.hpBonus) || 0));
-                const nextMaxAp = Math.max(1, Number(naturalBalanceProbeBuild.maxAp ?? player.stats.maxAp ?? player.stats.ap ?? 6) || 6);
-                player.skills.learned = [...new Set(naturalBalanceProbeBuild.learned || [])];
+                const nextMaxHp = Math.max(1, baseMaxHp + (Number(selectedBuild.hpBonus) || 0));
+                const nextMaxAp = Math.max(1, Number(selectedBuild.maxAp ?? player.stats.maxAp ?? player.stats.ap ?? 6) || 6);
+                player.skills.learned = [...new Set(selectedBuild.learned || [])];
                 player.stats.maxHp = nextMaxHp;
                 player.stats.hp = nextMaxHp;
                 player.stats.maxAp = nextMaxAp;
                 player.stats.ap = nextMaxAp;
                 return {
-                    skillLoadoutSource: "naturalBalanceProbeBuild",
-                    buildId: naturalBalanceProbeBuild.id || "",
-                    buildLabel: naturalBalanceProbeBuild.label || "",
+                    skillLoadoutSource: checkpoint.skillLoadoutSource,
+                    buildId: selectedBuild.id || "",
+                    buildLabel: selectedBuild.label || "",
                     learned: [...player.skills.learned],
                     maxAp: nextMaxAp,
                     maxHp: nextMaxHp
@@ -1667,9 +1913,29 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
                 `${checkpoint.levelId} 自然战斗失败诊断不可识别：${report.lethalFailureDiagnosis.diagnosisCode}`
             );
             if (checkpoint.requireVictory) {
-                assertCondition(report.naturalOutcome === "victory", `${checkpoint.levelId} 未能在自然战斗中取胜：${report.naturalOutcome}`);
-                assertCondition(report.finalState === "BATTLE_SETTLEMENT", `${checkpoint.levelId} 自然胜利后状态异常：${report.finalState}`);
-                assertCondition(report.settlement?.victory === true, `${checkpoint.levelId} 自然胜利没有写入胜利结算`);
+                assertCondition(report.naturalOutcome === "victory", `${checkpoint.levelId} 未能在自然战斗中取胜：${describeNaturalReport(report)}`);
+                assertCondition(report.finalState === "BATTLE_SETTLEMENT", `${checkpoint.levelId} 自然胜利后状态异常：${describeNaturalReport(report)}`);
+                assertCondition(report.settlement?.victory === true, `${checkpoint.levelId} 自然胜利没有写入胜利结算：${describeNaturalReport(report)}`);
+            }
+            if (checkpoint.requirePressure) {
+                assertCondition(report.naturalOutcome === "victory", `${checkpoint.levelId} 后期自然压力检查应能低血取胜：${report.naturalOutcome}`);
+                assertCondition(report.finalVitals.playerHp > 0, `${checkpoint.levelId} 后期自然压力检查胜利后玩家 HP 异常：${report.finalVitals.playerHp}`);
+                assertCondition(
+                    report.finalVitals.playerHp < report.finalVitals.playerMaxHp * 0.75,
+                    `${checkpoint.levelId} 后期自然压力检查不应高血通过：${report.finalVitals.playerHp}/${report.finalVitals.playerMaxHp}`
+                );
+                assertCondition(
+                    report.naturalTurnSnapshots.some(turn => (turn.plannedActions || []).some(action => action.skillId === "skill_regroup")),
+                    `${checkpoint.levelId} 后期自然压力检查应实际部署 skill_regroup`
+                );
+                assertCondition(
+                    report.naturalTurnSnapshots.some(turn => (turn.plannedActions || []).some(action => action.skillId === "skill_execute_copy_1770044052832")),
+                    `${checkpoint.levelId} 后期自然压力检查应实际部署 skill_execute_copy_1770044052832`
+                );
+                assertCondition(
+                    report.lethalFailureDiagnosis.diagnosisCode !== "mutual_kill_settlement_loss",
+                    `${checkpoint.levelId} 后期自然压力检查不应仍是互杀失败`
+                );
             }
             assertCondition(client.runtimeExceptions.length === 0, `${checkpoint.levelId} 自然战斗 smoke 页面出现 Runtime exception`);
             return report;
@@ -1696,6 +1962,7 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
         outcomesByLevel: Object.fromEntries(naturalCheckpointResults.map(item => [item.levelId, item.naturalOutcome])),
         skillLoadoutSourcesByLevel: Object.fromEntries(naturalCheckpointResults.map(item => [item.levelId, item.skillLoadoutSource])),
         lethalFailureDiagnosisByLevel: Object.fromEntries(naturalCheckpointResults.map(item => [item.levelId, item.lethalFailureDiagnosis])),
+        terminalBossNaturalOutcome: naturalCheckpointResults.find(item => item.levelId === "level_3_10")?.naturalOutcome || "",
         terminalBossDiagnosis: naturalCheckpointResults.find(item => item.levelId === "level_3_10")?.lethalFailureDiagnosis || null
     };
     const primary = naturalCheckpointResults.find(item => item.levelId === "level_1_1") || naturalCheckpointResults[0];
@@ -1717,10 +1984,12 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
     );
     const terminalBossResult = naturalCheckpointResults.find(result => result.levelId === "level_3_10");
     assertCondition(terminalBossResult?.lethalFailureDiagnosis, "第三章终局 Boss 缺少失败诊断");
+    assertCondition(terminalBossResult?.skillLoadoutSource === "lateGameNaturalProbeBuild", "第三章终局 Boss 应使用后期自然检查构筑");
 
     return {
         ...primary,
         naturalBalanceProbeBuild,
+        naturalLateGameProbeBuild,
         naturalCheckpointResults,
         naturalCheckpointSummary
     };

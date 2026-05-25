@@ -2405,7 +2405,7 @@
         "group": "melee",
         "locked": false
       },
-      "speed": 1,
+      "speed": 3,
       "target": {
         "subject": "SUBJECT_ENEMY",
         "scope": "SCOPE_PART",

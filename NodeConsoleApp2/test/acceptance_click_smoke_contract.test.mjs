@@ -80,7 +80,14 @@ test('自动点击验收脚本固定主流程与专项页面覆盖范围', async
     'naturalCheckpointResults',
     'naturalCheckpointSummary',
     'naturalBalanceProbeBuild',
+    'naturalLateGameProbeBuild',
     'skillLoadoutSource',
+    'lateGameNaturalProbeBuild',
+    'terminalBossNaturalOutcome',
+    'terminalSurvivalFloor',
+    'maintainTerminalBleedWindow',
+    'terminalSustainRotation',
+    'stopFillingTerminalPressureActions',
     'lethalFailureDiagnosis',
     'mutualKill',
     'playerHpBeforeFinalTurn',
@@ -93,6 +100,9 @@ test('自动点击验收脚本固定主流程与专项页面覆盖范围', async
     'level_2_5',
     'level_2_10',
     'level_3_10',
+    'skill_regroup',
+    'skill_execute_copy_1770044052832',
+    'mutual_kill_settlement_loss',
     'level_1_3',
     'level_1_4',
     'level_2_1',
@@ -109,4 +119,25 @@ test('自动点击验收脚本固定主流程与专项页面覆盖范围', async
   ]) {
     assert.match(toolSource, new RegExp(requiredText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'u'));
   }
+});
+
+test('终局压力自动战斗在残血窗口应优先收尾而不是继续纯续航', async () => {
+  const toolSource = await readProjectFile('tools/acceptance_click_smoke.mjs');
+  const pressureEnemyBranch = toolSource.match(
+    /if \(checkpoint\.requirePressure\) \{\n\s+const playerBaseSpeed[\s\S]+?\n\s+return score;\n\s+\}/u
+  )?.[0] || '';
+
+  assert.match(pressureEnemyBranch, /terminalFinishWindow/u);
+  assert.match(pressureEnemyBranch, /terminalDirectFinishBonus/u);
+  assert.match(pressureEnemyBranch, /terminalNonDamageFinishPenalty/u);
+  assert.match(
+    pressureEnemyBranch,
+    /terminalFinishWindow && summary\.damageHp <= 0 && summary\.damageArmor <= 0/u,
+    '终局残血窗口应压低不造成直接伤害的续航技能，避免 Boss 剩余少量 HP 时继续拖回合'
+  );
+  assert.match(
+    pressureEnemyBranch,
+    /if \(terminalFinishWindow && summary\.damageHp >= getEntityHp\(target\)\) score \+= terminalDirectFinishBonus;/u,
+    '终局残血窗口应给可直接击杀技能足够高的优先级'
+  );
 });
