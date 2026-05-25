@@ -1177,19 +1177,90 @@ async function runChapterThreeProgressionSmoke(cdpEndpoint, mainUrl) {
 }
 
 async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
-    let client = null;
-    try {
-        client = await attach(cdpEndpoint, mainUrl);
-        await waitFor(
-            client,
-            `(() => document.getElementById("modalTitle")?.textContent.trim() === "欢迎"
-                && [...document.querySelectorAll("button")].some(btn => btn.textContent.trim() === "新游戏"))()`,
-            "mock_ui_v11.html natural battle autoplay 欢迎页和新游戏按钮"
-        );
+    const naturalBalanceProbeBuild = Object.freeze({
+        id: "recommended",
+        label: "推荐构筑",
+        learned: [
+            "skill_heal",
+            "skill_block",
+            "skill_heavy_swing",
+            "skill_skull_cracker",
+            "skill_shockwave_copy_1770042951717",
+            "skill_execute",
+            "skill_execute_copy_1770043820577",
+            "skill_1771769351059",
+            "skill_leftover_lunchbox"
+        ],
+        maxAp: 8,
+        hpBonus: 20
+    });
+    const naturalCheckpoints = [
+        {
+            levelId: "level_1_1",
+            mapId: "chapter_1_authoring_map",
+            label: "第一章开局自然基线",
+            maxNaturalTurns: 12,
+            skillLoadoutSource: "default_starting_skills",
+            requireVictory: true
+        },
+        {
+            levelId: "level_1_4",
+            mapId: "chapter_1_authoring_map",
+            label: "第一章中段压力检查",
+            maxNaturalTurns: 12,
+            skillLoadoutSource: "naturalBalanceProbeBuild",
+            requireVictory: false
+        },
+        {
+            levelId: "level_1_10",
+            mapId: "chapter_1_authoring_map",
+            label: "第一章 Boss 压力检查",
+            maxNaturalTurns: 14,
+            skillLoadoutSource: "naturalBalanceProbeBuild",
+            requireVictory: false
+        },
+        {
+            levelId: "level_2_5",
+            mapId: "chapter_2_authoring_map",
+            label: "第二章护甲检查点",
+            maxNaturalTurns: 14,
+            skillLoadoutSource: "naturalBalanceProbeBuild",
+            requireVictory: false
+        },
+        {
+            levelId: "level_2_10",
+            mapId: "chapter_2_authoring_map",
+            label: "第二章 Boss 压力检查",
+            maxNaturalTurns: 16,
+            skillLoadoutSource: "naturalBalanceProbeBuild",
+            requireVictory: false
+        },
+        {
+            levelId: "level_3_10",
+            mapId: "chapter_3_authoring_map",
+            label: "第三章终局 Boss 压力检查",
+            maxNaturalTurns: 18,
+            skillLoadoutSource: "naturalBalanceProbeBuild",
+            requireVictory: false
+        }
+    ];
 
-        const report = await evaluate(client, `(async () => {
-            const targetLevelId = "level_1_1";
-            const maxNaturalTurns = 12;
+    const runNaturalCheckpoint = async (checkpoint) => {
+        let client = null;
+        try {
+            client = await attach(cdpEndpoint, mainUrl);
+            await waitFor(
+                client,
+                `(() => document.getElementById("modalTitle")?.textContent.trim() === "欢迎"
+                    && [...document.querySelectorAll("button")].some(btn => btn.textContent.trim() === "新游戏"))()`,
+                `mock_ui_v11.html natural battle autoplay ${checkpoint.levelId} 欢迎页和新游戏按钮`
+            );
+
+            const report = await evaluate(client, `(async () => {
+            const checkpoint = ${JSON.stringify(checkpoint)};
+            const naturalBalanceProbeBuild = ${JSON.stringify(naturalBalanceProbeBuild)};
+            const targetLevelId = checkpoint.levelId;
+            const maxNaturalTurns = Number(checkpoint.maxNaturalTurns ?? 12) || 12;
             const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
             const visibleText = el => (el?.textContent || "").replace(/\\s+/g, " ").trim();
             const buttons = () => [...document.querySelectorAll("button")];
@@ -1366,6 +1437,69 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
                     reason: placed.length > 0 ? "planned" : "no_deployable_skill"
                 };
             };
+            const applyCheckpointSkillLoadout = () => {
+                const player = window.GameEngine?.data?.playerData;
+                if (!player || !player.stats || !player.skills) {
+                    return { skillLoadoutSource: "missing_player_data", learned: [], maxAp: 0, maxHp: 0 };
+                }
+
+                if (checkpoint.skillLoadoutSource !== "naturalBalanceProbeBuild") {
+                    return {
+                        skillLoadoutSource: checkpoint.skillLoadoutSource || "default_starting_skills",
+                        learned: [...(Array.isArray(player.skills.learned) ? player.skills.learned : [])],
+                        maxAp: Number(player.stats.maxAp ?? player.stats.ap ?? 0) || 0,
+                        maxHp: Number(player.stats.maxHp ?? player.stats.hp ?? 0) || 0
+                    };
+                }
+
+                const baseMaxHp = Number(player.stats.maxHp ?? player.stats.hp ?? 100) || 100;
+                const nextMaxHp = Math.max(1, baseMaxHp + (Number(naturalBalanceProbeBuild.hpBonus) || 0));
+                const nextMaxAp = Math.max(1, Number(naturalBalanceProbeBuild.maxAp ?? player.stats.maxAp ?? player.stats.ap ?? 6) || 6);
+                player.skills.learned = [...new Set(naturalBalanceProbeBuild.learned || [])];
+                player.stats.maxHp = nextMaxHp;
+                player.stats.hp = nextMaxHp;
+                player.stats.maxAp = nextMaxAp;
+                player.stats.ap = nextMaxAp;
+                return {
+                    skillLoadoutSource: "naturalBalanceProbeBuild",
+                    buildId: naturalBalanceProbeBuild.id || "",
+                    buildLabel: naturalBalanceProbeBuild.label || "",
+                    learned: [...player.skills.learned],
+                    maxAp: nextMaxAp,
+                    maxHp: nextMaxHp
+                };
+            };
+            const ensureLevelUnlocked = levelId => {
+                const progress = window.GameEngine?.data?.dataConfig?.global?.progress;
+                if (!progress) return [];
+                if (!Array.isArray(progress.unlockedLevels)) progress.unlockedLevels = [];
+                if (!progress.unlockedLevels.includes(levelId)) progress.unlockedLevels.push(levelId);
+                return [...progress.unlockedLevels];
+            };
+            const selectCheckpointLevel = async () => {
+                clickButtonByText("关卡选择");
+                await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
+                if (checkpoint.mapId) {
+                    await waitForPredicate(() => document.querySelector('.level-map-switcher__button[data-map-id="' + checkpoint.mapId + '"]'), "地图切换 " + checkpoint.mapId);
+                    const switchButton = document.querySelector('.level-map-switcher__button[data-map-id="' + checkpoint.mapId + '"]');
+                    switchButton.click();
+                    await waitForPredicate(() => document.querySelector(".level-select-runtime-map")?.dataset.mapId === checkpoint.mapId, "地图已切换 " + checkpoint.mapId);
+                }
+                await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + targetLevelId + '"]'), targetLevelId + " 节点");
+                const levelNode = document.querySelector('.level-map-node[data-level-id="' + targetLevelId + '"]');
+                if (!levelNode || levelNode.disabled || levelNode.getAttribute("aria-disabled") === "true") {
+                    throw new Error("自然战斗检查点关卡节点不可进入：" + targetLevelId);
+                }
+                levelNode.click();
+                await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + targetLevelId + '"][data-selected="true"]'), "选中 " + targetLevelId);
+                const drawerTitle = document.querySelector(".level-map-drawer__title")?.textContent.trim() || "";
+                const enterButton = document.querySelector("[data-action='enter-level']");
+                if (!enterButton || enterButton.disabled || enterButton.getAttribute("aria-disabled") === "true") {
+                    throw new Error("自然战斗检查点进入按钮不可用：" + targetLevelId);
+                }
+                enterButton.click();
+                return drawerTitle;
+            };
             const waitForTurnOrSettlement = async turnBefore => {
                 const started = Date.now();
                 while (Date.now() - started < 20000) {
@@ -1383,13 +1517,9 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
 
             clickButtonByText("新游戏");
             await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "游戏菜单");
-            clickButtonByText("关卡选择");
-            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
-            await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + targetLevelId + '"]'), targetLevelId + " 节点");
-            const levelNode = document.querySelector('.level-map-node[data-level-id="' + targetLevelId + '"]');
-            levelNode.click();
-            await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + targetLevelId + '"][data-selected="true"]'), "选中 " + targetLevelId);
-            document.querySelector("[data-action='enter-level']").click();
+            const appliedSkillLoadout = applyCheckpointSkillLoadout();
+            const unlockedLevels = ensureLevelUnlocked(targetLevelId);
+            const drawerTitle = await selectCheckpointLevel();
             await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
                 && window.GameEngine?.data?.currentLevelData?.id === targetLevelId, "进入自然战斗 " + targetLevelId);
             await sleep(400);
@@ -1455,7 +1585,13 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
             return {
                 path: "mock_ui_v11.html",
                 levelId: targetLevelId,
+                checkpointLabel: checkpoint.label || "",
+                mapId: checkpoint.mapId || "",
                 maxNaturalTurns,
+                skillLoadoutSource: appliedSkillLoadout.skillLoadoutSource,
+                appliedSkillLoadout,
+                unlockedLevels,
+                drawerTitle,
                 naturalTurnSnapshots,
                 naturalOutcome,
                 forcedSettlementUsed: false,
@@ -1471,30 +1607,73 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
             };
         })()`);
 
-        assertCondition(report.levelId === "level_1_1", `自然战斗 smoke 关卡异常：${report.levelId}`);
-        assertCondition(report.forcedSettlementUsed === false, "自然战斗 smoke 不应使用强制结算");
-        assertCondition(report.maxNaturalTurns === 12, `自然战斗最大回合数异常：${report.maxNaturalTurns}`);
-        assertCondition(report.naturalTurnSnapshots.length > 0, "自然战斗 smoke 没有记录任何自然回合");
-        assertCondition(
-            report.naturalTurnSnapshots.some(turn => Array.isArray(turn.planning?.placed) && turn.planning.placed.length > 0),
-            "自然战斗 smoke 没有部署任何玩家技能"
-        );
-        assertCondition(
-            report.naturalTurnSnapshots.some(turn => Array.isArray(turn.plannedActions) && turn.plannedActions.length > 0),
-            "自然战斗 smoke 没有提交任何玩家规划"
-        );
-        assertCondition(
-            ["victory", "defeat", "turn_limit", "no_deployable_skill", "turn_wait_timeout"].includes(report.naturalOutcome),
-            `自然战斗 smoke 结果不可识别：${report.naturalOutcome}`
-        );
-        assertCondition(report.naturalOutcome === "victory", `level_1_1 未能在自然战斗中取胜：${report.naturalOutcome}`);
-        assertCondition(report.finalState === "BATTLE_SETTLEMENT", `自然战斗胜利后状态异常：${report.finalState}`);
-        assertCondition(report.settlement?.victory === true, "自然战斗胜利没有写入胜利结算");
-        assertCondition(client.runtimeExceptions.length === 0, "自然战斗 smoke 页面出现 Runtime exception");
-        return report;
-    } finally {
-        await closeClient(client);
+            assertCondition(report.levelId === checkpoint.levelId, `自然战斗检查点关卡异常：${report.levelId}`);
+            assertCondition(report.forcedSettlementUsed === false, "自然战斗 smoke 不应使用强制结算");
+            assertCondition(report.maxNaturalTurns === checkpoint.maxNaturalTurns, `自然战斗最大回合数异常：${report.maxNaturalTurns}`);
+            assertCondition(report.skillLoadoutSource === checkpoint.skillLoadoutSource, `自然战斗技能配置来源异常：${report.skillLoadoutSource}`);
+            assertCondition(report.naturalTurnSnapshots.length > 0, `${checkpoint.levelId} 没有记录任何自然回合`);
+            assertCondition(
+                report.naturalTurnSnapshots.some(turn => Array.isArray(turn.planning?.placed) && turn.planning.placed.length > 0),
+                `${checkpoint.levelId} 没有部署任何玩家技能`
+            );
+            assertCondition(
+                report.naturalTurnSnapshots.some(turn => Array.isArray(turn.plannedActions) && turn.plannedActions.length > 0),
+                `${checkpoint.levelId} 没有提交任何玩家规划`
+            );
+            assertCondition(
+                ["victory", "defeat", "turn_limit", "no_deployable_skill", "turn_wait_timeout"].includes(report.naturalOutcome),
+                `${checkpoint.levelId} 自然战斗结果不可识别：${report.naturalOutcome}`
+            );
+            if (checkpoint.requireVictory) {
+                assertCondition(report.naturalOutcome === "victory", `${checkpoint.levelId} 未能在自然战斗中取胜：${report.naturalOutcome}`);
+                assertCondition(report.finalState === "BATTLE_SETTLEMENT", `${checkpoint.levelId} 自然胜利后状态异常：${report.finalState}`);
+                assertCondition(report.settlement?.victory === true, `${checkpoint.levelId} 自然胜利没有写入胜利结算`);
+            }
+            assertCondition(client.runtimeExceptions.length === 0, `${checkpoint.levelId} 自然战斗 smoke 页面出现 Runtime exception`);
+            return report;
+        } finally {
+            await closeClient(client);
+        }
+    };
+
+    const naturalCheckpointResults = [];
+    for (const checkpoint of naturalCheckpoints) {
+        naturalCheckpointResults.push(await runNaturalCheckpoint(checkpoint));
     }
+
+    const recognizedOutcomes = ["victory", "defeat", "turn_limit", "no_deployable_skill", "turn_wait_timeout"];
+    const naturalCheckpointSummary = {
+        total: naturalCheckpointResults.length,
+        victories: naturalCheckpointResults.filter(item => item.naturalOutcome === "victory").length,
+        defeats: naturalCheckpointResults.filter(item => item.naturalOutcome === "defeat").length,
+        turnLimits: naturalCheckpointResults.filter(item => item.naturalOutcome === "turn_limit").length,
+        forcedSettlementUsed: naturalCheckpointResults.some(item => item.forcedSettlementUsed === true),
+        requiredVictoriesOk: naturalCheckpoints
+            .filter(item => item.requireVictory)
+            .every(item => naturalCheckpointResults.some(result => result.levelId === item.levelId && result.naturalOutcome === "victory")),
+        outcomesByLevel: Object.fromEntries(naturalCheckpointResults.map(item => [item.levelId, item.naturalOutcome])),
+        skillLoadoutSourcesByLevel: Object.fromEntries(naturalCheckpointResults.map(item => [item.levelId, item.skillLoadoutSource]))
+    };
+    const primary = naturalCheckpointResults.find(item => item.levelId === "level_1_1") || naturalCheckpointResults[0];
+
+    assertCondition(naturalCheckpointResults.length === naturalCheckpoints.length, "自然战斗检查点数量异常");
+    assertCondition(naturalCheckpointSummary.forcedSettlementUsed === false, "自然战斗检查点不应使用强制结算");
+    assertCondition(naturalCheckpointSummary.requiredVictoriesOk === true, "自然战斗必胜检查点未全部通过");
+    assertCondition(
+        naturalCheckpoints.every(checkpoint => naturalCheckpointResults.some(result => result.levelId === checkpoint.levelId)),
+        "自然战斗检查点结果缺少目标关卡"
+    );
+    assertCondition(
+        naturalCheckpointResults.every(result => recognizedOutcomes.includes(result.naturalOutcome)),
+        "自然战斗检查点存在不可识别结果"
+    );
+
+    return {
+        ...primary,
+        naturalBalanceProbeBuild,
+        naturalCheckpointResults,
+        naturalCheckpointSummary
+    };
 }
 
 async function runPresentationProbe(cdpEndpoint, probeUrl) {
