@@ -21,6 +21,14 @@ test('自动点击验收脚本固定主流程与专项页面覆盖范围', async
     toolSource,
     /const targetLevelIds = \["level_1_1", "level_1_2", "level_1_3", "level_1_4", "level_1_5", "level_1_6", "level_1_7", "level_1_8", "level_1_9", "level_1_10"\];/u
   );
+  assert.match(
+    toolSource,
+    /const targetLevelIds = \["level_2_1", "level_2_2", "level_2_3", "level_2_4", "level_2_5", "level_2_6", "level_2_7", "level_2_8", "level_2_9", "level_2_10"\];/u
+  );
+  assert.match(
+    toolSource,
+    /const targetLevelIds = \["level_3_1", "level_3_2", "level_3_3", "level_3_4", "level_3_5", "level_3_6", "level_3_7", "level_3_8", "level_3_9", "level_3_10"\];/u
+  );
 
   for (const requiredText of [
     'mock_ui_v11.html',
@@ -59,8 +67,16 @@ test('自动点击验收脚本固定主流程与专项页面覆盖范围', async
     'executedLearnedSkill',
     'runChapterOneProgressionSmoke',
     'chapterOneProgression',
+    'runChapterTwoProgressionSmoke',
+    'chapterTwoProgression',
+    'runChapterThreeProgressionSmoke',
+    'chapterThreeProgression',
     'level_1_3',
     'level_1_4',
+    'level_2_1',
+    'level_2_9',
+    'level_3_1',
+    'level_3_9',
     'roundExecuted',
     'settlementSnapshots',
     '提交规划',

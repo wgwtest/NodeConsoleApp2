@@ -866,7 +866,15 @@ async function runLearnedSkillBattleExecutionSmoke(cdpEndpoint, mainUrl) {
     }
 }
 
-async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
+async function runChapterProgressionSmoke(cdpEndpoint, mainUrl, options) {
+    const {
+        label,
+        mapId,
+        targetLevelIds,
+        learnSkillBlockAfterFirst = false,
+        finalCompletionMessage,
+        expectedFinalUnlockedLevelId = ""
+    } = options;
     let client = null;
     try {
         client = await attach(cdpEndpoint, mainUrl);
@@ -874,11 +882,13 @@ async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
             client,
             `(() => document.getElementById("modalTitle")?.textContent.trim() === "欢迎"
                 && [...document.querySelectorAll("button")].some(btn => btn.textContent.trim() === "新游戏"))()`,
-            "mock_ui_v11.html chapter one progression 欢迎页和新游戏按钮"
+            `mock_ui_v11.html ${label} progression 欢迎页和新游戏按钮`
         );
 
         const report = await evaluate(client, `(async () => {
-            const targetLevelIds = ["level_1_1", "level_1_2", "level_1_3", "level_1_4", "level_1_5", "level_1_6", "level_1_7", "level_1_8", "level_1_9", "level_1_10"];
+            const mapId = ${JSON.stringify(mapId || "")};
+            const targetLevelIds = ${JSON.stringify(targetLevelIds)};
+            const learnSkillBlockAfterFirst = ${learnSkillBlockAfterFirst ? "true" : "false"};
             const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
             const visibleText = el => (el?.textContent || "").replace(/\\s+/g, " ").trim();
             const buttons = () => [...document.querySelectorAll("button")];
@@ -905,6 +915,12 @@ async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
             const enterLevelFromMenu = async (levelId) => {
                 clickButtonByText("关卡选择");
                 await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
+                if (mapId) {
+                    await waitForPredicate(() => document.querySelector('.level-map-switcher__button[data-map-id="' + mapId + '"]'), "地图切换按钮 " + mapId);
+                    const switchButton = document.querySelector('.level-map-switcher__button[data-map-id="' + mapId + '"]');
+                    switchButton.click();
+                    await waitForPredicate(() => document.querySelector(".level-select-runtime-map")?.dataset.mapId === mapId, "地图切换 " + mapId);
+                }
                 await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + levelId + '"]'), levelId + " 节点");
                 const node = document.querySelector('.level-map-node[data-level-id="' + levelId + '"]');
                 if (!node || node.disabled || node.getAttribute("aria-disabled") === "true") {
@@ -1048,7 +1064,7 @@ async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
                 const settlement = await forceVictorySettlement(levelId);
                 settlementSnapshots.push(settlement);
 
-                if (index === 0) {
+                if (index === 0 && learnSkillBlockAfterFirst) {
                     learnedSnapshots.push(await learnSkillBlockFromSettlement());
                     const nextLevelId = targetLevelIds[index + 1];
                     const drawerTitle = await enterLevelFromMenu(nextLevelId);
@@ -1068,6 +1084,7 @@ async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
 
             return {
                 path: "mock_ui_v11.html",
+                mapId,
                 targetLevelIds,
                 levelEntries,
                 roundSnapshots,
@@ -1080,14 +1097,14 @@ async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
             };
         })()`);
 
-        const expectedLevelIds = ["level_1_1", "level_1_2", "level_1_3", "level_1_4", "level_1_5", "level_1_6", "level_1_7", "level_1_8", "level_1_9", "level_1_10"];
+        const expectedLevelIds = targetLevelIds;
         assertCondition(
             JSON.stringify(report.targetLevelIds) === JSON.stringify(expectedLevelIds),
-            `连续推进 smoke 目标关卡异常：${JSON.stringify(report.targetLevelIds)}`
+            `${label} 连续推进 smoke 目标关卡异常：${JSON.stringify(report.targetLevelIds)}`
         );
-        assertCondition(report.levelEntries.length === expectedLevelIds.length, `连续推进 smoke 没有进入 ${expectedLevelIds.length} 个关卡`);
-        assertCondition(report.roundSnapshots.length === expectedLevelIds.length, `连续推进 smoke 没有记录 ${expectedLevelIds.length} 个回合执行`);
-        assertCondition(report.settlementSnapshots.length === expectedLevelIds.length, `连续推进 smoke 没有记录 ${expectedLevelIds.length} 个结算`);
+        assertCondition(report.levelEntries.length === expectedLevelIds.length, `${label} 连续推进 smoke 没有进入 ${expectedLevelIds.length} 个关卡`);
+        assertCondition(report.roundSnapshots.length === expectedLevelIds.length, `${label} 连续推进 smoke 没有记录 ${expectedLevelIds.length} 个回合执行`);
+        assertCondition(report.settlementSnapshots.length === expectedLevelIds.length, `${label} 连续推进 smoke 没有记录 ${expectedLevelIds.length} 个结算`);
         for (const levelId of expectedLevelIds) {
             const round = report.roundSnapshots.find(item => item.levelId === levelId);
             const settlement = report.settlementSnapshots.find(item => item.levelId === levelId);
@@ -1096,21 +1113,67 @@ async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
             assertCondition(round?.plannedActions?.length > 0, `${levelId} 没有提交玩家规划`);
             assertCondition(settlement?.victory === true, `${levelId} 没有胜利结算`);
             assertCondition(settlement?.completedLevels?.includes(levelId), `${levelId} 没有写入 completedLevels`);
+            const levelIndex = expectedLevelIds.indexOf(levelId);
+            const expectedNextLevelId = expectedLevelIds[levelIndex + 1] || expectedFinalUnlockedLevelId;
+            if (expectedNextLevelId) {
+                assertCondition(settlement?.nextLevelId === expectedNextLevelId, `${levelId} nextLevelId 异常：${settlement?.nextLevelId}`);
+            }
+        }
+        if (learnSkillBlockAfterFirst) {
+            assertCondition(
+                report.learnedSnapshots.some(item => item.learnedSkillId === "skill_block" && item.afterLearned.includes("skill_block")),
+                `${label} 连续推进 smoke 没有在结算后学习 skill_block`
+            );
         }
         assertCondition(
-            report.learnedSnapshots.some(item => item.learnedSkillId === "skill_block" && item.afterLearned.includes("skill_block")),
-            "连续推进 smoke 没有在结算后学习 skill_block"
-        );
-        assertCondition(
             expectedLevelIds.every(levelId => report.completedLevels.includes(levelId)),
-            "连续推进 smoke 最终 completedLevels 未覆盖第一章完整 10 关"
+            finalCompletionMessage
         );
+        if (expectedFinalUnlockedLevelId) {
+            assertCondition(
+                report.unlockedLevels.includes(expectedFinalUnlockedLevelId),
+                `${label} 连续推进 smoke 最终未解锁 ${expectedFinalUnlockedLevelId}`
+            );
+        }
         assertCondition(report.finalState === "BATTLE_SETTLEMENT", `连续推进 smoke 结束状态异常：${report.finalState}`);
         assertCondition(client.runtimeExceptions.length === 0, "连续推进 smoke 页面出现 Runtime exception");
         return report;
     } finally {
         await closeClient(client);
     }
+}
+
+async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
+    const targetLevelIds = ["level_1_1", "level_1_2", "level_1_3", "level_1_4", "level_1_5", "level_1_6", "level_1_7", "level_1_8", "level_1_9", "level_1_10"];
+    return runChapterProgressionSmoke(cdpEndpoint, mainUrl, {
+        label: "chapter one",
+        mapId: "chapter_1_authoring_map",
+        targetLevelIds,
+        learnSkillBlockAfterFirst: true,
+        finalCompletionMessage: "连续推进 smoke 最终 completedLevels 未覆盖第一章完整 10 关",
+        expectedFinalUnlockedLevelId: "level_2_1"
+    });
+}
+
+async function runChapterTwoProgressionSmoke(cdpEndpoint, mainUrl) {
+    const targetLevelIds = ["level_2_1", "level_2_2", "level_2_3", "level_2_4", "level_2_5", "level_2_6", "level_2_7", "level_2_8", "level_2_9", "level_2_10"];
+    return runChapterProgressionSmoke(cdpEndpoint, mainUrl, {
+        label: "chapter two",
+        mapId: "chapter_2_authoring_map",
+        targetLevelIds,
+        finalCompletionMessage: "连续推进 smoke 最终 completedLevels 未覆盖第二章完整 10 关",
+        expectedFinalUnlockedLevelId: "level_3_1"
+    });
+}
+
+async function runChapterThreeProgressionSmoke(cdpEndpoint, mainUrl) {
+    const targetLevelIds = ["level_3_1", "level_3_2", "level_3_3", "level_3_4", "level_3_5", "level_3_6", "level_3_7", "level_3_8", "level_3_9", "level_3_10"];
+    return runChapterProgressionSmoke(cdpEndpoint, mainUrl, {
+        label: "chapter three",
+        mapId: "chapter_3_authoring_map",
+        targetLevelIds,
+        finalCompletionMessage: "连续推进 smoke 最终 completedLevels 未覆盖第三章完整 10 关"
+    });
 }
 
 async function runPresentationProbe(cdpEndpoint, probeUrl) {
@@ -1257,6 +1320,8 @@ async function main() {
         postSettlementProgression: await runPostSettlementProgressionSmoke(cdpEndpoint, urls.main),
         learnedSkillBattleExecution: await runLearnedSkillBattleExecutionSmoke(cdpEndpoint, urls.main),
         chapterOneProgression: await runChapterOneProgressionSmoke(cdpEndpoint, urls.main),
+        chapterTwoProgression: await runChapterTwoProgressionSmoke(cdpEndpoint, urls.main),
+        chapterThreeProgression: await runChapterThreeProgressionSmoke(cdpEndpoint, urls.main),
         presentationProbe: await runPresentationProbe(cdpEndpoint, urls.probe),
         presentationConfigurator: await runPresentationConfigurator(cdpEndpoint, urls.configurator)
     };
