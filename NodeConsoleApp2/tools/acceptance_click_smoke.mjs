@@ -1176,6 +1176,393 @@ async function runChapterThreeProgressionSmoke(cdpEndpoint, mainUrl) {
     });
 }
 
+async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
+    const naturalProgressionLevels = ["level_1_1", "level_1_2", "level_1_3"];
+    const initialSkillPointsOverride = 0;
+    let client = null;
+    try {
+        client = await attach(cdpEndpoint, mainUrl);
+        await waitFor(
+            client,
+            `(() => document.getElementById("modalTitle")?.textContent.trim() === "欢迎"
+                && [...document.querySelectorAll("button")].some(btn => btn.textContent.trim() === "新游戏"))()`,
+            "mock_ui_v11.html natural progressive campaign 欢迎页和新游戏按钮"
+        );
+
+        const report = await evaluate(client, `(async () => {
+            const naturalProgressionLevels = ${JSON.stringify(naturalProgressionLevels)};
+            const initialSkillPointsOverride = ${initialSkillPointsOverride};
+            const naturalProgressiveLearningPriority = ["skill_block", "skill_1771769351059"];
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+            const visibleText = el => (el?.textContent || "").replace(/\\s+/g, " ").trim();
+            const buttons = () => [...document.querySelectorAll("button")];
+            const clickButtonByText = text => {
+                const btn = buttons().find(item => visibleText(item) === text);
+                if (!btn) throw new Error("找不到按钮：" + text);
+                btn.click();
+                return visibleText(btn);
+            };
+            const clickButtonContaining = text => {
+                const btn = buttons().find(item => visibleText(item).includes(text));
+                if (!btn) throw new Error("找不到包含文本的按钮：" + text);
+                btn.click();
+                return visibleText(btn);
+            };
+            const waitForPredicate = async (predicate, label, timeoutMs = 15000) => {
+                const started = Date.now();
+                while (Date.now() - started < timeoutMs) {
+                    if (predicate()) return true;
+                    await sleep(100);
+                }
+                throw new Error("等待超时：" + label);
+            };
+            const getEntityHp = entity => Number(entity?.hp ?? entity?.stats?.hp ?? 0) || 0;
+            const getEntityMaxHp = entity => Number(entity?.maxHp ?? entity?.stats?.maxHp ?? entity?.stats?.hp ?? entity?.hp ?? 0) || 0;
+            const snapshotSkillTree = () => {
+                const skills = window.GameEngine?.data?.playerData?.skills || {};
+                return {
+                    skillPoints: Math.max(0, Number(skills.skillPoints ?? 0) || 0),
+                    learned: [...(Array.isArray(skills.learned) ? skills.learned : [])]
+                };
+            };
+            const snapshotVitals = () => {
+                const player = window.GameEngine?.data?.playerData || {};
+                const enemies = [...(window.GameEngine?.data?.currentLevelData?.enemies || [])];
+                return {
+                    playerHp: getEntityHp(player),
+                    playerMaxHp: getEntityMaxHp(player),
+                    enemyRemainingHp: enemies.reduce((sum, enemy) => sum + Math.max(0, getEntityHp(enemy)), 0),
+                    currentTurn: Number(window.GameEngine?.currentTurn ?? 0) || 0,
+                    state: window.GameEngine?.fsm?.currentState || "",
+                    battlePhase: window.GameEngine?.battlePhase || ""
+                };
+            };
+            const resetToLowKpStart = () => {
+                const player = window.GameEngine?.data?.playerData;
+                if (!player?.skills) throw new Error("玩家技能树缺失");
+                player.skills.skillPoints = initialSkillPointsOverride;
+                player.skills.learned = ["skill_heal", "skill_heavy_swing", "skill_savage_charge"];
+                const progress = window.GameEngine?.data?.dataConfig?.global?.progress || {};
+                progress.lastLearnAction = null;
+                return snapshotSkillTree();
+            };
+            const enterLevelFromMenu = async levelId => {
+                clickButtonByText("关卡选择");
+                await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "选择关卡", "选择关卡");
+                await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + levelId + '"]'), levelId + " 节点");
+                const node = document.querySelector('.level-map-node[data-level-id="' + levelId + '"]');
+                if (!node || node.disabled || node.getAttribute("aria-disabled") === "true") {
+                    throw new Error("自然连续推进关卡节点不可进入：" + levelId);
+                }
+                node.click();
+                await waitForPredicate(() => document.querySelector('.level-map-node[data-level-id="' + levelId + '"][data-selected="true"]'), "选中 " + levelId);
+                const enterButton = document.querySelector("[data-action='enter-level']");
+                if (!enterButton || enterButton.disabled || enterButton.getAttribute("aria-disabled") === "true") {
+                    throw new Error("自然连续推进进入按钮不可用：" + levelId);
+                }
+                const drawerTitle = document.querySelector(".level-map-drawer__title")?.textContent.trim() || "";
+                enterButton.click();
+                await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
+                    && window.GameEngine?.data?.currentLevelData?.id === levelId, "进入自然连续推进 " + levelId);
+                await sleep(250);
+                return { levelId, enteredBy: "level-select", drawerTitle };
+            };
+            const getSkillButton = skillId => {
+                const btn = document.querySelector('.skill-icon-button[data-id="' + skillId + '"]');
+                if (!btn || btn.disabled || btn.classList.contains("disabled") || btn.getAttribute("aria-disabled") === "true") {
+                    return null;
+                }
+                return btn;
+            };
+            const getSkillConfig = skillId => {
+                if (typeof window.GameEngine?.data?.getSkillConfig === "function") {
+                    return window.GameEngine.data.getSkillConfig(skillId) || null;
+                }
+                return null;
+            };
+            const preferredSkillOrder = () => {
+                const hpRatio = (() => {
+                    const player = window.GameEngine?.data?.playerData || {};
+                    const maxHp = getEntityMaxHp(player);
+                    return maxHp > 0 ? getEntityHp(player) / maxHp : 1;
+                })();
+                const learned = new Set(snapshotSkillTree().learned);
+                const order = [];
+                if (hpRatio < 0.65) order.push("skill_heal");
+                if (learned.has("skill_1771769351059")) order.push("skill_1771769351059");
+                order.push("skill_heavy_swing");
+                if (learned.has("skill_block")) order.push("skill_block");
+                order.push("skill_savage_charge");
+                if (!order.includes("skill_heal")) order.push("skill_heal");
+                return [...new Set(order)];
+            };
+            const placeSkill = async skillId => {
+                const btn = getSkillButton(skillId);
+                if (!btn) return null;
+                const skill = getSkillConfig(skillId);
+                btn.click();
+                await sleep(150);
+                const subject = skill?.target?.subject || "";
+                const desiredTargetType = subject === "SUBJECT_SELF" ? "self" : "enemy";
+                const slots = [...document.querySelectorAll(".slot-placeholder.highlight-valid:not(.filled)")];
+                const slot = slots.find(item => item.dataset.targetType === desiredTargetType)
+                    || slots[0];
+                if (!slot) {
+                    btn.click();
+                    await sleep(80);
+                    return null;
+                }
+                const slotKey = [slot.dataset.targetType, slot.dataset.part, slot.dataset.slotIndex || "0"].join(":");
+                slot.click();
+                await sleep(160);
+                return {
+                    skillId,
+                    skillName: skill?.name || skillId,
+                    slotKey,
+                    buttonText: visibleText(btn)
+                };
+            };
+            const chooseAndPlaceNaturalSkills = async () => {
+                const placed = [];
+                for (const skillId of preferredSkillOrder()) {
+                    const result = await placeSkill(skillId);
+                    if (result) placed.push(result);
+                    if (placed.length >= 3) break;
+                }
+                return {
+                    placed,
+                    reason: placed.length > 0 ? "planned" : "no_deployable_skill"
+                };
+            };
+            const waitForTurnOrSettlement = async turnBefore => {
+                const started = Date.now();
+                while (Date.now() - started < 20000) {
+                    const state = window.GameEngine?.fsm?.currentState || "";
+                    if (state === "BATTLE_SETTLEMENT") return "settled";
+                    if (state === "BATTLE_LOOP"
+                        && window.GameEngine?.battlePhase === "PLANNING"
+                        && Number(window.GameEngine?.currentTurn ?? 0) > turnBefore) {
+                        return "next_turn";
+                    }
+                    await sleep(120);
+                }
+                return "turn_wait_timeout";
+            };
+            const playNaturalLevel = async levelId => {
+                await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
+                    && window.GameEngine?.data?.currentLevelData?.id === levelId, levelId + " 战斗中");
+                const skillTreeBeforeBattle = snapshotSkillTree();
+                const naturalTurnSnapshots = [];
+                let naturalProgressiveOutcome = "turn_limit";
+                for (let index = 0; index < 10; index += 1) {
+                    if (window.GameEngine?.fsm?.currentState === "BATTLE_SETTLEMENT") break;
+                    await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
+                        && window.GameEngine?.battlePhase === "PLANNING", levelId + " 自然规划阶段");
+                    const turnBefore = Number(window.GameEngine?.currentTurn ?? 0) || 0;
+                    const before = snapshotVitals();
+                    const planning = await chooseAndPlaceNaturalSkills();
+                    if (planning.placed.length === 0) {
+                        naturalProgressiveOutcome = planning.reason;
+                        naturalTurnSnapshots.push({ turnBefore, before, planning, after: snapshotVitals(), waitResult: "not_executed" });
+                        break;
+                    }
+                    clickButtonByText("提交规划");
+                    await waitForPredicate(() => {
+                        const execute = document.getElementById("btnExecute");
+                        return execute && !execute.classList.contains("disabled") && execute.getAttribute("aria-disabled") !== "true";
+                    }, levelId + " 自然执行可用");
+                    const plannedActions = [...(window.GameEngine?.playerSkillQueue || [])].map(action => ({
+                        skillId: action.skillId || "",
+                        bodyPart: action.bodyPart || "",
+                        targetId: action.targetId || "",
+                        slotKey: action.slotKey || ""
+                    }));
+                    clickButtonByText("执行回合");
+                    const waitResult = await waitForTurnOrSettlement(turnBefore);
+                    const after = snapshotVitals();
+                    naturalTurnSnapshots.push({
+                        turnBefore,
+                        currentTurn: Number(window.GameEngine?.currentTurn ?? 0) || 0,
+                        before,
+                        planning,
+                        plannedActions,
+                        waitResult,
+                        after,
+                        state: window.GameEngine?.fsm?.currentState || "",
+                        battlePhase: window.GameEngine?.battlePhase || ""
+                    });
+                    if (waitResult === "turn_wait_timeout") {
+                        naturalProgressiveOutcome = waitResult;
+                        break;
+                    }
+                    if (window.GameEngine?.fsm?.currentState === "BATTLE_SETTLEMENT") break;
+                    await sleep(250);
+                }
+                const settlement = window.GameEngine?.data?.dataConfig?.global?.progress?.lastSettlement || {};
+                if (window.GameEngine?.fsm?.currentState === "BATTLE_SETTLEMENT") {
+                    naturalProgressiveOutcome = settlement.victory === true ? "victory" : "defeat";
+                }
+                const progress = window.GameEngine?.data?.dataConfig?.global?.progress || {};
+                return {
+                    levelId,
+                    skillTreeBeforeBattle,
+                    naturalTurnSnapshots,
+                    naturalProgressiveOutcome,
+                    settlement: {
+                        levelId: settlement.levelId || "",
+                        victory: settlement.victory === true,
+                        nextLevelId: settlement.nextLevelId || "",
+                        rewards: settlement.rewards || null,
+                        firstClear: settlement.firstClear === true
+                    },
+                    skillTreeAfterSettlement: snapshotSkillTree(),
+                    completedLevels: [...(progress.completedLevels || [])],
+                    unlockedLevels: [...(progress.unlockedLevels || [])],
+                    finalVitals: snapshotVitals()
+                };
+            };
+            const learnAvailableSkillFromSettlement = async () => {
+                const skillTreeBeforeLearning = snapshotSkillTree();
+                for (const skillId of naturalProgressiveLearningPriority) {
+                    if (skillTreeBeforeLearning.learned.includes(skillId)) continue;
+                    const skill = getSkillConfig(skillId);
+                    const kpCost = Math.max(0, Number(skill?.unlock?.cost?.kp ?? 0) || 0);
+                    if (skillTreeBeforeLearning.skillPoints < kpCost) continue;
+                    const openedBy = clickButtonContaining("前往技能树 / 构筑");
+                    await waitForPredicate(() => document.getElementById("skillTreeOverlay")?.classList.contains("visible"), "自然连续技能树 Overlay 打开");
+                    await waitForPredicate(() => document.querySelector('.ui-skilltree__node[data-skill-id="' + skillId + '"] .ui-skilltree__nodeAction'), skillId + " 可学习");
+                    document.querySelector('.ui-skilltree__node[data-skill-id="' + skillId + '"] .ui-skilltree__nodeAction').click();
+                    await waitForPredicate(() => document.querySelector('.ui-skilltree__node[data-skill-id="' + skillId + '"][data-status="PENDING"]'), skillId + " 暂存");
+                    clickButtonByText("提交并关闭");
+                    await waitForPredicate(() => !document.getElementById("skillTreeOverlay")?.classList.contains("visible"), "自然连续技能树关闭");
+                    await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "MAIN_MENU"
+                        && document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "自然连续学习后回主菜单");
+                    const skillTreeAfterLearning = snapshotSkillTree();
+                    const lastLearnAction = window.GameEngine?.data?.dataConfig?.global?.progress?.lastLearnAction || {};
+                    return {
+                        openedBy,
+                        learnedThisLevel: [skillId],
+                        skillTreeBeforeLearning,
+                        skillTreeAfterLearning,
+                        lastLearnAction,
+                        mainMenuText: visibleText(document.getElementById("modalBody"))
+                    };
+                }
+                return {
+                    openedBy: "",
+                    learnedThisLevel: [],
+                    skillTreeBeforeLearning,
+                    skillTreeAfterLearning: skillTreeBeforeLearning,
+                    lastLearnAction: null,
+                    mainMenuText: visibleText(document.getElementById("modalBody"))
+                };
+            };
+
+            clickButtonByText("新游戏");
+            await waitForPredicate(() => document.getElementById("modalTitle")?.textContent.trim() === "游戏菜单", "游戏菜单");
+            const initialSkillTree = resetToLowKpStart();
+            const levelEntries = [];
+            const naturalLevelResults = [];
+            const naturalProgressiveLearningSnapshots = [];
+            const naturalProgressiveSkillTreeSnapshots = [];
+
+            levelEntries.push(await enterLevelFromMenu(naturalProgressionLevels[0]));
+            for (let index = 0; index < naturalProgressionLevels.length; index += 1) {
+                const levelId = naturalProgressionLevels[index];
+                const levelResult = await playNaturalLevel(levelId);
+                naturalLevelResults.push(levelResult);
+                naturalProgressiveSkillTreeSnapshots.push({
+                    levelId,
+                    skillTreeBeforeBattle: levelResult.skillTreeBeforeBattle,
+                    skillTreeAfterSettlement: levelResult.skillTreeAfterSettlement
+                });
+
+                if (levelResult.naturalProgressiveOutcome !== "victory" || index >= naturalProgressionLevels.length - 1) {
+                    break;
+                }
+
+                const learningSnapshot = await learnAvailableSkillFromSettlement();
+                naturalProgressiveLearningSnapshots.push({ levelId, ...learningSnapshot });
+                if (learningSnapshot.learnedThisLevel.length > 0) {
+                    const nextLevelId = naturalProgressionLevels[index + 1];
+                    levelEntries.push(await enterLevelFromMenu(nextLevelId));
+                } else {
+                    const nextLevelId = naturalProgressionLevels[index + 1];
+                    const clickedNext = clickButtonContaining("前往下一关");
+                    await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
+                        && window.GameEngine?.data?.currentLevelData?.id === nextLevelId, "自然连续前往下一关 " + nextLevelId);
+                    await sleep(250);
+                    levelEntries.push({ levelId: nextLevelId, enteredBy: "settlement-next", clickedNext });
+                }
+            }
+
+            const progress = window.GameEngine?.data?.dataConfig?.global?.progress || {};
+            const naturalProgressiveOutcome = {
+                total: naturalProgressionLevels.length,
+                victories: naturalLevelResults.filter(item => item.naturalProgressiveOutcome === "victory").length,
+                failures: naturalLevelResults.filter(item => item.naturalProgressiveOutcome !== "victory"),
+                forcedSettlementUsed: false
+            };
+
+            return {
+                path: "mock_ui_v11.html",
+                naturalProgressionLevels,
+                initialSkillPointsOverride,
+                initialSkillTree,
+                levelEntries,
+                naturalLevelResults,
+                naturalProgressiveSkillTreeSnapshots,
+                naturalProgressiveLearningSnapshots,
+                naturalProgressiveOutcome,
+                completedLevels: [...(progress.completedLevels || [])],
+                unlockedLevels: [...(progress.unlockedLevels || [])],
+                finalSkillTree: snapshotSkillTree(),
+                finalState: window.GameEngine?.fsm?.currentState || "",
+                finalTitle: document.getElementById("modalTitle")?.textContent.trim() || ""
+            };
+        })()`);
+
+        assertCondition(
+            JSON.stringify(report.naturalProgressionLevels) === JSON.stringify(naturalProgressionLevels),
+            `自然进度式 smoke 目标关卡异常：${JSON.stringify(report.naturalProgressionLevels)}`
+        );
+        assertCondition(report.initialSkillPointsOverride === initialSkillPointsOverride, "自然进度式 smoke 初始 KP 覆盖异常");
+        assertCondition(report.initialSkillTree?.skillPoints === initialSkillPointsOverride, "自然进度式 smoke 未从低 KP 初始技能树开始");
+        assertCondition(report.naturalLevelResults.length === naturalProgressionLevels.length, "自然进度式 smoke 未覆盖目标连续关卡数");
+        assertCondition(report.naturalProgressiveOutcome.victories === naturalProgressionLevels.length, "自然进度式 smoke 未自然通过全部目标关卡");
+        assertCondition(report.naturalProgressiveOutcome.forcedSettlementUsed === false, "自然进度式 smoke 不应使用强制结算");
+        for (const levelId of naturalProgressionLevels) {
+            const level = report.naturalLevelResults.find(item => item.levelId === levelId);
+            assertCondition(level?.naturalProgressiveOutcome === "victory", `${levelId} 自然进度式未胜利：${level?.naturalProgressiveOutcome}`);
+            assertCondition(level?.settlement?.victory === true, `${levelId} 自然进度式没有胜利结算`);
+            assertCondition(level?.completedLevels?.includes(levelId), `${levelId} 自然进度式没有写入 completedLevels`);
+            assertCondition(
+                level?.naturalTurnSnapshots?.some(turn => (turn.plannedActions || []).length > 0),
+                `${levelId} 自然进度式没有提交任何玩家规划`
+            );
+        }
+        assertCondition(
+            report.naturalProgressiveLearningSnapshots.some(item => item.learnedThisLevel.includes("skill_block")
+                && item.skillTreeBeforeLearning.skillPoints >= 1
+                && item.skillTreeAfterLearning.learned.includes("skill_block")),
+            "自然进度式 smoke 没有在结算后学习 skill_block"
+        );
+        assertCondition(
+            report.naturalLevelResults.slice(1).some(level => level.naturalTurnSnapshots
+                .some(turn => (turn.plannedActions || []).some(action => action.skillId === "skill_block"))),
+            "自然进度式 smoke 学习后没有在后续自然战斗中部署 skill_block"
+        );
+        assertCondition(
+            naturalProgressionLevels.every(levelId => report.completedLevels.includes(levelId)),
+            "自然进度式 smoke 最终 completedLevels 未覆盖目标连续关卡"
+        );
+        assertCondition(client.runtimeExceptions.length === 0, "自然进度式 smoke 页面出现 Runtime exception");
+        return report;
+    } finally {
+        await closeClient(client);
+    }
+}
+
 async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
     const naturalBalanceProbeBuild = Object.freeze({
         id: "recommended",
@@ -2141,6 +2528,7 @@ async function main() {
         chapterOneProgression: await runChapterOneProgressionSmoke(cdpEndpoint, urls.main),
         chapterTwoProgression: await runChapterTwoProgressionSmoke(cdpEndpoint, urls.main),
         chapterThreeProgression: await runChapterThreeProgressionSmoke(cdpEndpoint, urls.main),
+        naturalProgressiveCampaign: await runNaturalProgressiveCampaignSmoke(cdpEndpoint, urls.main),
         naturalBattleAutoplay: await runNaturalBattleAutoplaySmoke(cdpEndpoint, urls.main),
         presentationProbe: await runPresentationProbe(cdpEndpoint, urls.probe),
         presentationConfigurator: await runPresentationConfigurator(cdpEndpoint, urls.configurator)
