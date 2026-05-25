@@ -1245,6 +1245,43 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
         }
     ];
 
+    const readNumber = value => Number.isFinite(Number(value)) ? Number(value) : 0;
+    const buildLethalFailureDiagnosis = report => {
+        const turns = Array.isArray(report?.naturalTurnSnapshots) ? report.naturalTurnSnapshots : [];
+        const finalTurn = turns.at(-1) || {};
+        const before = finalTurn.before || {};
+        const after = finalTurn.after || report?.finalVitals || {};
+        const playerHpBeforeFinalTurn = readNumber(before.playerHp);
+        const enemyRemainingHpBeforeFinalTurn = readNumber(before.enemyRemainingHp);
+        const playerHpAfterFinalTurn = readNumber(after.playerHp ?? report?.finalVitals?.playerHp);
+        const enemyRemainingHpAfterFinalTurn = readNumber(after.enemyRemainingHp ?? report?.finalVitals?.enemyRemainingHp);
+        const mutualKill = report?.naturalOutcome === "defeat"
+            && playerHpAfterFinalTurn <= 0
+            && enemyRemainingHpAfterFinalTurn <= 0;
+        let diagnosisCode = "not_failed";
+        if (mutualKill) {
+            diagnosisCode = "mutual_kill_settlement_loss";
+        } else if (report?.naturalOutcome === "defeat" && playerHpAfterFinalTurn <= 0) {
+            diagnosisCode = "lethal_enemy_pressure";
+        } else if (["turn_limit", "turn_wait_timeout"].includes(report?.naturalOutcome)) {
+            diagnosisCode = "timeout_pressure_or_damage_gap";
+        } else if (report?.naturalOutcome === "no_deployable_skill") {
+            diagnosisCode = "no_player_action";
+        }
+        return {
+            diagnosisCode,
+            mutualKill,
+            playerHpBeforeFinalTurn,
+            enemyRemainingHpBeforeFinalTurn,
+            playerHpAfterFinalTurn,
+            enemyRemainingHpAfterFinalTurn,
+            turnsTaken: turns.length,
+            finalPlannedSkillIds: Array.isArray(finalTurn.plannedActions)
+                ? finalTurn.plannedActions.map(action => action.skillId || "").filter(Boolean)
+                : []
+        };
+    };
+
     const runNaturalCheckpoint = async (checkpoint) => {
         let client = null;
         try {
@@ -1608,6 +1645,7 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
         })()`);
 
             assertCondition(report.levelId === checkpoint.levelId, `自然战斗检查点关卡异常：${report.levelId}`);
+            report.lethalFailureDiagnosis = buildLethalFailureDiagnosis(report);
             assertCondition(report.forcedSettlementUsed === false, "自然战斗 smoke 不应使用强制结算");
             assertCondition(report.maxNaturalTurns === checkpoint.maxNaturalTurns, `自然战斗最大回合数异常：${report.maxNaturalTurns}`);
             assertCondition(report.skillLoadoutSource === checkpoint.skillLoadoutSource, `自然战斗技能配置来源异常：${report.skillLoadoutSource}`);
@@ -1623,6 +1661,10 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
             assertCondition(
                 ["victory", "defeat", "turn_limit", "no_deployable_skill", "turn_wait_timeout"].includes(report.naturalOutcome),
                 `${checkpoint.levelId} 自然战斗结果不可识别：${report.naturalOutcome}`
+            );
+            assertCondition(
+                ["not_failed", "mutual_kill_settlement_loss", "lethal_enemy_pressure", "timeout_pressure_or_damage_gap", "no_player_action"].includes(report.lethalFailureDiagnosis.diagnosisCode),
+                `${checkpoint.levelId} 自然战斗失败诊断不可识别：${report.lethalFailureDiagnosis.diagnosisCode}`
             );
             if (checkpoint.requireVictory) {
                 assertCondition(report.naturalOutcome === "victory", `${checkpoint.levelId} 未能在自然战斗中取胜：${report.naturalOutcome}`);
@@ -1652,7 +1694,9 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
             .filter(item => item.requireVictory)
             .every(item => naturalCheckpointResults.some(result => result.levelId === item.levelId && result.naturalOutcome === "victory")),
         outcomesByLevel: Object.fromEntries(naturalCheckpointResults.map(item => [item.levelId, item.naturalOutcome])),
-        skillLoadoutSourcesByLevel: Object.fromEntries(naturalCheckpointResults.map(item => [item.levelId, item.skillLoadoutSource]))
+        skillLoadoutSourcesByLevel: Object.fromEntries(naturalCheckpointResults.map(item => [item.levelId, item.skillLoadoutSource])),
+        lethalFailureDiagnosisByLevel: Object.fromEntries(naturalCheckpointResults.map(item => [item.levelId, item.lethalFailureDiagnosis])),
+        terminalBossDiagnosis: naturalCheckpointResults.find(item => item.levelId === "level_3_10")?.lethalFailureDiagnosis || null
     };
     const primary = naturalCheckpointResults.find(item => item.levelId === "level_1_1") || naturalCheckpointResults[0];
 
@@ -1667,6 +1711,12 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
         naturalCheckpointResults.every(result => recognizedOutcomes.includes(result.naturalOutcome)),
         "自然战斗检查点存在不可识别结果"
     );
+    assertCondition(
+        naturalCheckpointResults.every(result => result.lethalFailureDiagnosis && result.lethalFailureDiagnosis.diagnosisCode),
+        "自然战斗检查点缺少失败诊断"
+    );
+    const terminalBossResult = naturalCheckpointResults.find(result => result.levelId === "level_3_10");
+    assertCondition(terminalBossResult?.lethalFailureDiagnosis, "第三章终局 Boss 缺少失败诊断");
 
     return {
         ...primary,
