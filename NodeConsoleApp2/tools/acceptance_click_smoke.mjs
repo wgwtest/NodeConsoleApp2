@@ -1177,8 +1177,9 @@ async function runChapterThreeProgressionSmoke(cdpEndpoint, mainUrl) {
 }
 
 async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
-    const naturalProgressionLevels = ["level_1_1", "level_1_2", "level_1_3"];
+    const naturalProgressionLevels = ["level_1_1", "level_1_2", "level_1_3", "level_1_4", "level_1_5", "level_1_6", "level_1_7", "level_1_8", "level_1_9", "level_1_10"];
     const initialSkillPointsOverride = 0;
+    const firstChapterNaturalProgression = true;
     let client = null;
     try {
         client = await attach(cdpEndpoint, mainUrl);
@@ -1192,7 +1193,10 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
         const report = await evaluate(client, `(async () => {
             const naturalProgressionLevels = ${JSON.stringify(naturalProgressionLevels)};
             const initialSkillPointsOverride = ${initialSkillPointsOverride};
-            const naturalProgressiveLearningPriority = ["skill_block", "skill_1771769351059"];
+            const firstChapterNaturalProgression = ${JSON.stringify(firstChapterNaturalProgression)};
+            const naturalProgressiveLearningPriority = ["skill_block", "skill_1771769351059", "skill_skull_cracker"];
+            const selfDamageSkillIds = ["skill_savage_charge"];
+            const skipSelfDamageSkillsForBoss = true;
             const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
             const visibleText = el => (el?.textContent || "").replace(/\\s+/g, " ").trim();
             const buttons = () => [...document.querySelectorAll("button")];
@@ -1286,13 +1290,17 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                     const maxHp = getEntityMaxHp(player);
                     return maxHp > 0 ? getEntityHp(player) / maxHp : 1;
                 })();
+                const levelId = window.GameEngine?.data?.currentLevelData?.id || "";
                 const learned = new Set(snapshotSkillTree().learned);
                 const order = [];
                 if (hpRatio < 0.65) order.push("skill_heal");
                 if (learned.has("skill_1771769351059")) order.push("skill_1771769351059");
+                if (learned.has("skill_skull_cracker")) order.push("skill_skull_cracker");
                 order.push("skill_heavy_swing");
                 if (learned.has("skill_block")) order.push("skill_block");
-                order.push("skill_savage_charge");
+                const skipSelfDamage = selfDamageSkillIds.includes("skill_savage_charge")
+                    && ((skipSelfDamageSkillsForBoss && levelId === "level_1_10") || hpRatio < 0.75);
+                if (!skipSelfDamage) order.push("skill_savage_charge");
                 if (!order.includes("skill_heal")) order.push("skill_heal");
                 return [...new Set(order)];
             };
@@ -1327,7 +1335,7 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 for (const skillId of preferredSkillOrder()) {
                     const result = await placeSkill(skillId);
                     if (result) placed.push(result);
-                    if (placed.length >= 3) break;
+                    if (placed.length >= 5) break;
                 }
                 return {
                     placed,
@@ -1354,7 +1362,8 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 const skillTreeBeforeBattle = snapshotSkillTree();
                 const naturalTurnSnapshots = [];
                 let naturalProgressiveOutcome = "turn_limit";
-                for (let index = 0; index < 10; index += 1) {
+                const maxNaturalTurns = levelId === "level_1_10" ? 12 : 10;
+                for (let index = 0; index < maxNaturalTurns; index += 1) {
                     if (window.GameEngine?.fsm?.currentState === "BATTLE_SETTLEMENT") break;
                     await waitForPredicate(() => window.GameEngine?.fsm?.currentState === "BATTLE_LOOP"
                         && window.GameEngine?.battlePhase === "PLANNING", levelId + " 自然规划阶段");
@@ -1406,6 +1415,7 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 return {
                     levelId,
                     skillTreeBeforeBattle,
+                    maxNaturalTurns,
                     naturalTurnSnapshots,
                     naturalProgressiveOutcome,
                     settlement: {
@@ -1506,6 +1516,9 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
 
             return {
                 path: "mock_ui_v11.html",
+                firstChapterNaturalProgression,
+                skipSelfDamageSkillsForBoss,
+                selfDamageSkillIds,
                 naturalProgressionLevels,
                 initialSkillPointsOverride,
                 initialSkillTree,
@@ -1527,9 +1540,34 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
             `自然进度式 smoke 目标关卡异常：${JSON.stringify(report.naturalProgressionLevels)}`
         );
         assertCondition(report.initialSkillPointsOverride === initialSkillPointsOverride, "自然进度式 smoke 初始 KP 覆盖异常");
+        assertCondition(report.firstChapterNaturalProgression === true, "自然进度式 smoke 未标记第一章完整自然推进");
         assertCondition(report.initialSkillTree?.skillPoints === initialSkillPointsOverride, "自然进度式 smoke 未从低 KP 初始技能树开始");
-        assertCondition(report.naturalLevelResults.length === naturalProgressionLevels.length, "自然进度式 smoke 未覆盖目标连续关卡数");
-        assertCondition(report.naturalProgressiveOutcome.victories === naturalProgressionLevels.length, "自然进度式 smoke 未自然通过全部目标关卡");
+        const naturalProgressiveFailureSummary = JSON.stringify({
+            outcome: report.naturalProgressiveOutcome,
+            levels: report.naturalLevelResults.map(level => ({
+                levelId: level.levelId,
+                outcome: level.naturalProgressiveOutcome,
+                turns: level.naturalTurnSnapshots?.length || 0,
+                finalVitals: level.finalVitals,
+                skillTreeBeforeBattle: level.skillTreeBeforeBattle,
+                skillTreeAfterSettlement: level.skillTreeAfterSettlement,
+                plannedSkillIds: [...new Set((level.naturalTurnSnapshots || [])
+                    .flatMap(turn => (turn.plannedActions || []).map(action => action.skillId || "").filter(Boolean)))]
+            })),
+            learning: report.naturalProgressiveLearningSnapshots.map(item => ({
+                levelId: item.levelId,
+                learnedThisLevel: item.learnedThisLevel,
+                before: item.skillTreeBeforeLearning,
+                after: item.skillTreeAfterLearning
+            })),
+            completedLevels: report.completedLevels,
+            unlockedLevels: report.unlockedLevels,
+            finalSkillTree: report.finalSkillTree,
+            finalState: report.finalState,
+            finalTitle: report.finalTitle
+        });
+        assertCondition(report.naturalLevelResults.length === naturalProgressionLevels.length, `自然进度式 smoke 未覆盖目标连续关卡数：${naturalProgressiveFailureSummary}`);
+        assertCondition(report.naturalProgressiveOutcome.victories === naturalProgressionLevels.length, `自然进度式 smoke 未自然通过全部目标关卡：${naturalProgressiveFailureSummary}`);
         assertCondition(report.naturalProgressiveOutcome.forcedSettlementUsed === false, "自然进度式 smoke 不应使用强制结算");
         for (const levelId of naturalProgressionLevels) {
             const level = report.naturalLevelResults.find(item => item.levelId === levelId);
@@ -1548,14 +1586,32 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
             "自然进度式 smoke 没有在结算后学习 skill_block"
         );
         assertCondition(
+            report.naturalProgressiveLearningSnapshots.some(item => item.learnedThisLevel.includes("skill_1771769351059")
+                && item.skillTreeBeforeLearning.skillPoints >= 2
+                && item.skillTreeAfterLearning.learned.includes("skill_1771769351059")),
+            "自然进度式 smoke 没有在第一章中学习 skill_1771769351059"
+        );
+        assertCondition(
+            report.naturalProgressiveLearningSnapshots.some(item => item.learnedThisLevel.includes("skill_skull_cracker")
+                && item.skillTreeBeforeLearning.skillPoints >= 2
+                && item.skillTreeAfterLearning.learned.includes("skill_skull_cracker")),
+            "自然进度式 smoke 没有在第一章 Boss 前学习 skill_skull_cracker"
+        );
+        assertCondition(
             report.naturalLevelResults.slice(1).some(level => level.naturalTurnSnapshots
                 .some(turn => (turn.plannedActions || []).some(action => action.skillId === "skill_block"))),
             "自然进度式 smoke 学习后没有在后续自然战斗中部署 skill_block"
         );
         assertCondition(
+            report.naturalLevelResults.some(level => level.levelId === "level_1_10" && level.naturalTurnSnapshots
+                .some(turn => (turn.plannedActions || []).some(action => action.skillId === "skill_skull_cracker"))),
+            "自然进度式 smoke 第一章 Boss 战没有部署 skill_skull_cracker"
+        );
+        assertCondition(
             naturalProgressionLevels.every(levelId => report.completedLevels.includes(levelId)),
             "自然进度式 smoke 最终 completedLevels 未覆盖目标连续关卡"
         );
+        assertCondition(report.unlockedLevels.includes("level_2_1"), "自然进度式 smoke 通关第一章后没有解锁 level_2_1");
         assertCondition(client.runtimeExceptions.length === 0, "自然进度式 smoke 页面出现 Runtime exception");
         return report;
     } finally {
