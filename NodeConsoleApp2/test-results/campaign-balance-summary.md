@@ -1,6 +1,6 @@
 # Campaign Balance Summary
 
-Generated: 2026-05-24T22:33:09.603Z
+Generated: 2026-05-25T06:05:01.256Z
 Levels: 30
 Builds: basic, recommended, specialist
 
@@ -8,9 +8,9 @@ Builds: basic, recommended, specialist
 
 | Build | Wins | Attempts | Win Rate | Avg Turns | Avg Player HP |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| basic | 27 | 30 | 90.0% | 2.0 | 66.9 |
-| recommended | 27 | 30 | 90.0% | 2.6 | 80.7 |
-| specialist | 27 | 30 | 90.0% | 1.3 | 55.4 |
+| basic | 27 | 30 | 90.0% | 2.0 | 63.2 |
+| recommended | 27 | 30 | 90.0% | 2.6 | 78.1 |
+| specialist | 27 | 30 | 90.0% | 1.3 | 53.5 |
 
 ## Level Results
 
@@ -29,15 +29,15 @@ Builds: basic, recommended, specialist
 | level_1_4 | recommended | Y | 2 | 76 | 0 | ok |
 | level_1_4 | specialist | Y | 1 | 42 | 0 | ok |
 | level_1_5 | basic | Y | 1 | 75 | 0 | ok |
-| level_1_5 | recommended | Y | 2 | 90 | 0 | ok |
-| level_1_5 | specialist | Y | 1 | 67 | 0 | ok |
+| level_1_5 | recommended | Y | 2 | 95 | 0 | ok |
+| level_1_5 | specialist | Y | 1 | 72 | 0 | ok |
 | level_1_6 | basic | Y | 2 | 69 | 0 | ok |
 | level_1_6 | recommended | Y | 2 | 59 | 0 | ok |
 | level_1_6 | specialist | Y | 1 | 42 | 0 | ok |
 | level_1_7 | basic | Y | 1 | 80 | 0 | ok |
 | level_1_7 | recommended | Y | 2 | 100 | 0 | ok |
 | level_1_7 | specialist | Y | 1 | 72 | 0 | ok |
-| level_1_8 | basic | Y | 1 | 80 | 0 | ok |
+| level_1_8 | basic | Y | 1 | 85 | 0 | ok |
 | level_1_8 | recommended | Y | 1 | 100 | 0 | ok |
 | level_1_8 | specialist | Y | 1 | 78 | 0 | ok |
 | level_1_9 | basic | Y | 2 | 69 | 0 | ok |
@@ -47,29 +47,29 @@ Builds: basic, recommended, specialist
 | level_1_10 | recommended | Y | 4 | 20 | 0 | ok |
 | level_1_10 | specialist | Y | 2 | 22 | 0 | ok |
 | level_2_1 | basic | Y | 2 | 89 | 0 | ok |
-| level_2_1 | recommended | Y | 2 | 89 | 0 | ok |
+| level_2_1 | recommended | Y | 2 | 94 | 0 | ok |
 | level_2_1 | specialist | Y | 1 | 73 | 0 | ok |
 | level_2_2 | basic | Y | 1 | 74 | 0 | ok |
 | level_2_2 | recommended | Y | 1 | 94 | 0 | ok |
 | level_2_2 | specialist | Y | 1 | 66 | 0 | ok |
-| level_2_3 | basic | Y | 3 | 88 | 0 | ok |
-| level_2_3 | recommended | Y | 4 | 92 | 0 | ok |
-| level_2_3 | specialist | Y | 2 | 70 | 0 | ok |
+| level_2_3 | basic | Y | 3 | 32 | 0 | ok |
+| level_2_3 | recommended | Y | 4 | 45 | 0 | ok |
+| level_2_3 | specialist | Y | 2 | 40 | 0 | ok |
 | level_2_4 | basic | Y | 2 | 56 | 0 | ok |
 | level_2_4 | recommended | Y | 3 | 79 | 0 | ok |
 | level_2_4 | specialist | Y | 1 | 42 | 0 | ok |
-| level_2_5 | basic | Y | 2 | 77 | 0 | ok |
+| level_2_5 | basic | Y | 2 | 72 | 0 | ok |
 | level_2_5 | recommended | Y | 3 | 107 | 0 | ok |
-| level_2_5 | specialist | Y | 2 | 62 | 0 | ok |
+| level_2_5 | specialist | Y | 2 | 57 | 0 | ok |
 | level_2_6 | basic | Y | 2 | 95 | 0 | enemy_too_weak |
-| level_2_6 | recommended | Y | 3 | 110 | 0 | enemy_too_weak |
+| level_2_6 | recommended | Y | 3 | 105 | 0 | ok |
 | level_2_6 | specialist | Y | 1 | 79 | 0 | ok |
 | level_2_7 | basic | Y | 2 | 84 | 0 | ok |
 | level_2_7 | recommended | Y | 3 | 104 | 0 | ok |
 | level_2_7 | specialist | Y | 1 | 72 | 0 | ok |
-| level_2_8 | basic | Y | 3 | 88 | 0 | ok |
-| level_2_8 | recommended | Y | 4 | 92 | 0 | ok |
-| level_2_8 | specialist | Y | 2 | 70 | 0 | ok |
+| level_2_8 | basic | Y | 3 | 32 | 0 | ok |
+| level_2_8 | recommended | Y | 4 | 45 | 0 | ok |
+| level_2_8 | specialist | Y | 2 | 40 | 0 | ok |
 | level_2_9 | basic | Y | 2 | 56 | 0 | ok |
 | level_2_9 | recommended | Y | 3 | 79 | 0 | ok |
 | level_2_9 | specialist | Y | 1 | 42 | 0 | ok |
@@ -77,8 +77,8 @@ Builds: basic, recommended, specialist
 | level_2_10 | recommended | N | 5 | 0 | 17 | enemy_skill_pressure_high |
 | level_2_10 | specialist | N | 2 | 0 | 12 | player_build_mismatch |
 | level_3_1 | basic | Y | 1 | 75 | 0 | ok |
-| level_3_1 | recommended | Y | 1 | 95 | 0 | ok |
-| level_3_1 | specialist | Y | 1 | 67 | 0 | ok |
+| level_3_1 | recommended | Y | 1 | 100 | 0 | ok |
+| level_3_1 | specialist | Y | 1 | 72 | 0 | ok |
 | level_3_2 | basic | Y | 2 | 70 | 0 | ok |
 | level_3_2 | recommended | Y | 3 | 98 | 0 | ok |
 | level_3_2 | specialist | Y | 1 | 59 | 0 | ok |
@@ -92,7 +92,7 @@ Builds: basic, recommended, specialist
 | level_3_5 | recommended | Y | 3 | 104 | 0 | ok |
 | level_3_5 | specialist | Y | 1 | 72 | 0 | ok |
 | level_3_6 | basic | Y | 2 | 72 | 0 | ok |
-| level_3_6 | recommended | Y | 3 | 102 | 0 | ok |
+| level_3_6 | recommended | Y | 3 | 107 | 0 | ok |
 | level_3_6 | specialist | Y | 2 | 57 | 0 | ok |
 | level_3_7 | basic | Y | 1 | 80 | 0 | ok |
 | level_3_7 | recommended | Y | 2 | 100 | 0 | ok |

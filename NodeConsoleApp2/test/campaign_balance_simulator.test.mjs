@@ -1,12 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { pathToFileURL } from 'node:url';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const simulatorPath = path.join(projectRoot, 'tools', 'campaign_balance_simulator.mjs');
+const execFileAsync = promisify(execFile);
 
 function balanceSignature(report) {
   return report.results
@@ -170,6 +173,84 @@ test('progressive campaign report can be written with learning and reward detail
   assert.match(savedSummary, /Final learned skills/u);
   assert.match(savedSummary, /Learned this level/u);
   assert.match(savedSummary, /Rewards KP/u);
+});
+
+test('progressive campaign CLI writes a real low-KP report when requested', async () => {
+  const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), 'campaign-progressive-cli-'));
+  const reportPath = path.join(outputDir, 'campaign-progressive-real-report.json');
+
+  await execFileAsync(process.execPath, [
+    simulatorPath,
+    '--mode', 'progressive',
+    '--seed', 'wbs-3.4.27-progressive-cli',
+    '--initial-skill-points', '0',
+    '--report', reportPath
+  ], { cwd: projectRoot });
+
+  const savedReport = JSON.parse(await fs.readFile(reportPath, 'utf8'));
+  const savedSummary = await fs.readFile(path.join(outputDir, 'campaign-progressive-real-report-summary.md'), 'utf8');
+
+  assert.equal(savedReport.meta.mode, 'progressive');
+  assert.equal(savedReport.meta.initialSkillPoints, 0);
+  assert.deepEqual(savedReport.summary.firstLevelPreloadedLateSkills, []);
+  assert.match(savedSummary, /Initial skill points: 0/u);
+  assert.match(savedSummary, /First-level preloaded late skills: -/u);
+});
+
+test('progressive campaign can start from a real low-KP skill tree without preloading late skills', async () => {
+  const simulator = await import(pathToFileURL(simulatorPath));
+  const report = await simulator.runProgressiveCampaignSimulation({
+    projectRoot,
+    maxTurns: 12,
+    randomSeed: 'wbs-3.4.27-real-progressive-low-kp',
+    initialSkillPoints: 0
+  });
+
+  assert.equal(report.meta.initialSkillPoints, 0);
+  assert.equal(report.meta.learningTiming, 'between_levels_before_battle');
+
+  const first = report.results[0];
+  assert.equal(first.levelId, 'level_1_1');
+  assert.equal(first.skillTreeBeforeLearning.skillPoints, 0);
+  assert.deepEqual(
+    first.skillTreeBeforeLearning.learned,
+    ['skill_heal', 'skill_heavy_swing', 'skill_savage_charge'],
+    '真实进度式第一关应从玩家默认初始技能进入，不能在战斗前预装后期技能'
+  );
+  assert.deepEqual(first.learnedThisLevel, [], '0 KP 开局时第一关前不应自动学习任何技能');
+  assert.deepEqual(
+    first.skillTreeBefore.learned,
+    first.skillTreeBeforeLearning.learned,
+    '第一关战斗前技能树应等于低 KP 初始技能树'
+  );
+
+  const lateSkillIds = ['skill_regroup', 'skill_execute_copy_1770044052832'];
+  assert.equal(
+    lateSkillIds.some(skillId => first.skillTreeBefore.learned.includes(skillId)),
+    false,
+    `真实进度式第一关不应拥有后期防御/续航技能：${first.skillTreeBefore.learned.join(', ')}`
+  );
+  assert.equal(report.summary.initialSkillPoints, 0);
+  assert.equal(report.summary.firstLevelPreloadedLateSkills.length, 0);
+  assert.equal(report.summary.wins, 30, '真实低 KP 进度式构筑应能通关 30 个正式关卡');
+
+  const pressureRows = report.results.filter(row => ['level_1_10', 'level_2_10', 'level_3_9', 'level_3_10'].includes(row.levelId));
+  assert.equal(pressureRows.length, 4);
+  assert.deepEqual(
+    pressureRows.map(row => `${row.levelId}:${row.victory ? 'Y' : 'N'}`),
+    [
+      'level_1_10:Y',
+      'level_2_10:Y',
+      'level_3_9:Y',
+      'level_3_10:Y'
+    ],
+    '真实低 KP 进度式构筑应能通过章节 Boss 和终局门卫'
+  );
+  assert.equal(
+    pressureRows.every(row => row.playerRemainingHp > 0 && row.playerRemainingHp < row.playerMaxHp * 0.75),
+    true,
+    `章节 Boss / 门卫应产生实际压力，不能高血量碾压：${pressureRows.map(row => `${row.levelId}:${row.playerRemainingHp}/${row.playerMaxHp}`).join(', ')}`
+  );
 });
 
 test('campaign runtime smoke enters all 30 story levels and executes the first combat round', async () => {

@@ -1,10 +1,12 @@
 {
   "meta": {
-    "generatedAt": "2026-05-24T22:33:09.816Z",
+    "generatedAt": "2026-05-25T06:05:01.099Z",
     "mode": "progressive",
     "levelCount": 30,
     "maxTurns": 12,
-    "randomSeed": "campaign-progressive-v1",
+    "randomSeed": "wbs-3.4.27-real-progressive",
+    "initialSkillPoints": 0,
+    "learningTiming": "between_levels_before_battle",
     "source": "tools/campaign_balance_simulator.mjs"
   },
   "learningPriority": [
@@ -26,19 +28,15 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 1,
+      "turns": 2,
       "playerMaxHp": 100,
-      "playerRemainingHp": 85,
+      "playerRemainingHp": 73,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 2,
-        "skill_execute": 1,
-        "skill_heavy_swing": 2,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1
+        "skill_heavy_swing": 3
       },
       "enemySkillUsage": {
-        "enemy_skill_rusty_shiv": 2
+        "enemy_skill_rusty_shiv": 3
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -47,51 +45,31 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 2,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
-          "skill_savage_charge",
-          "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_savage_charge"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 0,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 3,
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
-          "skill_savage_charge",
-          "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_savage_charge"
         ]
       },
-      "learnedThisLevel": [
-        "skill_block",
-        "skill_1771769351059",
-        "skill_skull_cracker",
-        "skill_shockwave_copy_1770042951717",
-        "skill_leftover_lunchbox",
-        "skill_execute",
-        "skill_execute_copy_1770043820577",
-        "skill_regroup",
-        "skill_execute_copy_1770044052832"
-      ],
+      "learnedThisLevel": [],
       "rewards": {
         "exp": 133,
         "gold": 69,
@@ -105,17 +83,16 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 0,
+      "turns": 1,
       "playerMaxHp": 100,
-      "playerRemainingHp": 85,
+      "playerRemainingHp": 74,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 1,
-        "skill_execute": 1,
-        "skill_heavy_swing": 1
+        "skill_block": 2,
+        "skill_heavy_swing": 2
       },
       "enemySkillUsage": {
-        "skill_throw_stone": 1
+        "skill_throw_stone": 2
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -124,41 +101,35 @@
         "isBoss": false,
         "isElite": false
       },
+      "skillTreeBeforeLearning": {
+        "skillPoints": 1,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge"
+        ]
+      },
       "skillTreeBefore": {
-        "skillPoints": 3,
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
-          "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_block"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 3,
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
-          "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_block"
         ]
       },
-      "learnedThisLevel": [],
+      "learnedThisLevel": [
+        "skill_block"
+      ],
       "rewards": {
         "exp": 151,
         "gold": 78,
@@ -172,20 +143,18 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 1,
+      "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 74,
+      "playerRemainingHp": 83,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 2,
-        "skill_execute": 1,
-        "skill_heavy_swing": 2,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1,
-        "skill_leftover_lunchbox": 1
+        "skill_block": 4,
+        "skill_heavy_swing": 4,
+        "skill_heal": 1
       },
       "enemySkillUsage": {
-        "skill_throw_stone": 2
+        "skill_throw_stone": 2,
+        "enemy_skill_rusty_shiv": 2
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -194,38 +163,31 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 3,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
-          "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_block"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 0,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 3,
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
-          "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_block"
         ]
       },
       "learnedThisLevel": [],
@@ -242,20 +204,17 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 63,
+      "playerRemainingHp": 62,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 4,
-        "skill_execute": 1,
-        "skill_heavy_swing": 3,
-        "skill_1771769351059": 1,
-        "skill_heal": 2,
-        "skill_execute_copy_1770044052832": 1
+        "skill_block": 5,
+        "skill_heavy_swing": 5,
+        "skill_heal": 3
       },
       "enemySkillUsage": {
-        "skill_smash": 4
+        "skill_smash": 5
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -264,38 +223,31 @@
         "isBoss": false,
         "isElite": true
       },
-      "skillTreeBefore": {
-        "skillPoints": 3,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
-          "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_block"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 0,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 4,
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
-          "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_block"
         ]
       },
       "learnedThisLevel": [],
@@ -312,18 +264,18 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 2,
+      "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 70,
+      "playerRemainingHp": 92,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 3,
-        "skill_execute": 2,
-        "skill_heavy_swing": 3
+        "skill_block": 5,
+        "skill_heavy_swing": 5,
+        "skill_heal": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_bad_lunchbox": 2,
-        "enemy_skill_dirty_bandage": 1
+        "enemy_skill_bad_lunchbox": 3,
+        "enemy_skill_dirty_bandage": 2
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -332,38 +284,31 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 4,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
-          "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_block"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 1,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 5,
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
-          "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_block"
         ]
       },
       "learnedThisLevel": [],
@@ -380,17 +325,18 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 2,
+      "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 49,
+      "playerRemainingHp": 52,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 3,
-        "skill_execute": 2,
-        "skill_heavy_swing": 3
+        "skill_block": 4,
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 3,
+        "skill_heal": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_orc_club": 3
+        "enemy_skill_orc_club": 4
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -399,41 +345,38 @@
         "isBoss": false,
         "isElite": false
       },
+      "skillTreeBeforeLearning": {
+        "skillPoints": 2,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block"
+        ]
+      },
       "skillTreeBefore": {
-        "skillPoints": 5,
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
           "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_1771769351059"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 5,
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
           "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_1771769351059"
         ]
       },
-      "learnedThisLevel": [],
+      "learnedThisLevel": [
+        "skill_1771769351059"
+      ],
       "rewards": {
         "exp": 223,
         "gold": 114,
@@ -447,20 +390,17 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 1,
+      "turns": 2,
       "playerMaxHp": 100,
-      "playerRemainingHp": 80,
+      "playerRemainingHp": 72,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 2,
-        "skill_execute": 1,
-        "skill_heavy_swing": 2,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1,
-        "skill_leftover_lunchbox": 1
+        "skill_block": 3,
+        "skill_heavy_swing": 3,
+        "skill_1771769351059": 2
       },
       "enemySkillUsage": {
-        "skill_bite": 2
+        "skill_bite": 3
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -469,38 +409,34 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 5,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
           "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_1771769351059"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 0,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 5,
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
           "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_1771769351059"
         ]
       },
       "learnedThisLevel": [],
@@ -517,16 +453,14 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 1,
+      "turns": 2,
       "playerMaxHp": 100,
-      "playerRemainingHp": 85,
+      "playerRemainingHp": 80,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_block": 2,
-        "skill_execute": 1,
         "skill_heavy_swing": 2,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1
+        "skill_1771769351059": 2
       },
       "enemySkillUsage": {
         "enemy_skill_rusty_shiv": 2
@@ -538,38 +472,34 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 5,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
           "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_1771769351059"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 0,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 6,
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
           "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_1771769351059"
         ]
       },
       "learnedThisLevel": [],
@@ -586,17 +516,18 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 2,
+      "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 49,
+      "playerRemainingHp": 52,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 3,
-        "skill_execute": 2,
-        "skill_heavy_swing": 3
+        "skill_block": 4,
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 3,
+        "skill_heal": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_orc_club": 3
+        "enemy_skill_orc_club": 4
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -605,38 +536,34 @@
         "isBoss": false,
         "isElite": true
       },
-      "skillTreeBefore": {
-        "skillPoints": 6,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
           "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_1771769351059"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 1,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 7,
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
           "skill_block",
-          "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_1771769351059"
         ]
       },
       "learnedThisLevel": [],
@@ -655,16 +582,14 @@
       "victory": true,
       "turns": 6,
       "playerMaxHp": 100,
-      "playerRemainingHp": 16,
+      "playerRemainingHp": 18,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 6,
-        "skill_execute": 3,
-        "skill_1771769351059": 2,
-        "skill_execute_copy_1770044052832": 3,
-        "skill_heal": 4,
-        "skill_heavy_swing": 2
+        "skill_block": 7,
+        "skill_1771769351059": 7,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 6,
+        "skill_heal": 5
       },
       "enemySkillUsage": {
         "enemy_skill_wrecking_swing": 7
@@ -676,41 +601,41 @@
         "isBoss": true,
         "isElite": false
       },
+      "skillTreeBeforeLearning": {
+        "skillPoints": 2,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059"
+        ]
+      },
       "skillTreeBefore": {
-        "skillPoints": 7,
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
           "skill_block",
           "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_skull_cracker"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 9,
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
           "skill_savage_charge",
           "skill_block",
           "skill_1771769351059",
-          "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_skull_cracker"
         ]
       },
-      "learnedThisLevel": [],
+      "learnedThisLevel": [
+        "skill_skull_cracker"
+      ],
       "rewards": {
         "exp": 415,
         "gold": 230,
@@ -724,14 +649,15 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 2,
+      "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 74,
+      "playerRemainingHp": 79,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
+        "skill_regroup": 3,
         "skill_block": 3,
-        "skill_execute": 2,
-        "skill_heavy_swing": 3
+        "skill_heavy_swing": 3,
+        "skill_1771769351059": 3
       },
       "enemySkillUsage": {
         "enemy_skill_rusty_shiv": 3
@@ -743,8 +669,19 @@
         "isBoss": false,
         "isElite": false
       },
+      "skillTreeBeforeLearning": {
+        "skillPoints": 2,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker"
+        ]
+      },
       "skillTreeBefore": {
-        "skillPoints": 9,
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -752,16 +689,11 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_regroup"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 10,
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -769,15 +701,12 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_regroup"
         ]
       },
-      "learnedThisLevel": [],
+      "learnedThisLevel": [
+        "skill_regroup"
+      ],
       "rewards": {
         "exp": 168,
         "gold": 89,
@@ -791,16 +720,15 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 1,
+      "turns": 2,
       "playerMaxHp": 100,
-      "playerRemainingHp": 74,
+      "playerRemainingHp": 79,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
+        "skill_regroup": 2,
         "skill_block": 2,
-        "skill_execute": 1,
         "skill_heavy_swing": 2,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1
+        "skill_1771769351059": 2
       },
       "enemySkillUsage": {
         "skill_throw_stone": 2
@@ -812,8 +740,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 10,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -821,16 +749,23 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_regroup"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 1,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 10,
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -838,12 +773,7 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_regroup"
         ]
       },
       "learnedThisLevel": [],
@@ -860,32 +790,30 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 5,
       "playerMaxHp": 100,
-      "playerRemainingHp": 100,
+      "playerRemainingHp": 48,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_regroup": 2,
-        "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 4,
-        "skill_execute": 3,
-        "skill_heavy_swing": 3,
-        "skill_1771769351059": 1,
-        "skill_leftover_lunchbox": 1
+        "skill_regroup": 4,
+        "skill_block": 3,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 5,
+        "skill_1771769351059": 4,
+        "skill_heal": 4
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 3
+        "enemy_skill_iceplate_head_crush": 6
       },
       "failureReason": "victory",
-      "diagnosis": "enemy_too_weak",
+      "diagnosis": "ok",
       "levelClass": {
         "order": 3,
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 10,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -893,16 +821,23 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_regroup"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 1,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 10,
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -910,12 +845,7 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_regroup"
         ]
       },
       "learnedThisLevel": [],
@@ -932,20 +862,19 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 2,
+      "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 65,
+      "playerRemainingHp": 73,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 2,
-        "skill_execute": 2,
-        "skill_heavy_swing": 2,
-        "skill_regroup": 1,
-        "skill_heal": 1,
-        "skill_1771769351059": 1
+        "skill_regroup": 4,
+        "skill_block": 4,
+        "skill_heavy_swing": 5,
+        "skill_1771769351059": 4,
+        "skill_heal": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_orc_club": 3
+        "enemy_skill_orc_club": 5
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -954,8 +883,8 @@
         "isBoss": false,
         "isElite": true
       },
-      "skillTreeBefore": {
-        "skillPoints": 10,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -963,16 +892,23 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_regroup"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 1,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 11,
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -980,12 +916,7 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_regroup"
         ]
       },
       "learnedThisLevel": [],
@@ -1002,17 +933,17 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 4,
+      "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 97,
+      "playerRemainingHp": 67,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_heavy_swing": 3,
+        "skill_heavy_swing": 4,
         "skill_skull_cracker": 1,
-        "skill_block": 3,
-        "skill_execute": 1,
-        "skill_heal": 3,
-        "skill_1771769351059": 2
+        "skill_block": 2,
+        "skill_1771769351059": 3,
+        "skill_heal": 1,
+        "skill_regroup": 2
       },
       "enemySkillUsage": {
         "enemy_skill_bone_splinter_jab": 3,
@@ -1025,8 +956,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 11,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1034,16 +965,23 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_regroup"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 2,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 12,
+        "skillPoints": 3,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1051,12 +989,7 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_regroup"
         ]
       },
       "learnedThisLevel": [],
@@ -1073,19 +1006,20 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 2,
+      "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 70,
+      "playerRemainingHp": 80,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 2,
-        "skill_execute": 2,
-        "skill_heavy_swing": 3,
-        "skill_regroup": 1
+        "skill_regroup": 3,
+        "skill_shockwave_copy_1770042951717": 3,
+        "skill_block": 4,
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 4
       },
       "enemySkillUsage": {
         "enemy_skill_bad_lunchbox": 2,
-        "enemy_skill_dirty_bandage": 1
+        "enemy_skill_dirty_bandage": 2
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1094,8 +1028,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 12,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 3,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1103,16 +1037,24 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
+          "skill_regroup"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 0,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 12,
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1120,15 +1062,13 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
         ]
       },
-      "learnedThisLevel": [],
+      "learnedThisLevel": [
+        "skill_shockwave_copy_1770042951717"
+      ],
       "rewards": {
         "exp": 258,
         "gold": 134,
@@ -1144,20 +1084,19 @@
       "victory": true,
       "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 80,
+      "playerRemainingHp": 88,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_shockwave_copy_1770042951717": 1,
+        "skill_shockwave_copy_1770042951717": 5,
         "skill_block": 5,
         "skill_skull_cracker": 1,
-        "skill_execute": 2,
-        "skill_heavy_swing": 3,
-        "skill_execute_copy_1770044052832": 1,
-        "skill_heal": 1
+        "skill_regroup": 4,
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 4
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 4,
-        "enemy_skill_bone_patch": 1
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 3
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1166,8 +1105,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 12,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1175,16 +1114,25 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 0,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup",
+          "skill_shockwave_copy_1770042951717"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 12,
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1192,12 +1140,8 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
         ]
       },
       "learnedThisLevel": [],
@@ -1214,32 +1158,31 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 5,
       "playerMaxHp": 100,
-      "playerRemainingHp": 100,
+      "playerRemainingHp": 43,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_regroup": 2,
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 4,
-        "skill_execute": 3,
-        "skill_heavy_swing": 3,
-        "skill_1771769351059": 1,
-        "skill_leftover_lunchbox": 1
+        "skill_block": 1,
+        "skill_skull_cracker": 1,
+        "skill_regroup": 5,
+        "skill_heavy_swing": 5,
+        "skill_1771769351059": 4,
+        "skill_heal": 4
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1,
-        "enemy_skill_bone_patch": 3
+        "enemy_skill_iceplate_head_crush": 6
       },
       "failureReason": "victory",
-      "diagnosis": "enemy_too_weak",
+      "diagnosis": "ok",
       "levelClass": {
         "order": 8,
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 12,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 0,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1247,16 +1190,25 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 0,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup",
+          "skill_shockwave_copy_1770042951717"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 13,
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1264,12 +1216,8 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
         ]
       },
       "learnedThisLevel": [],
@@ -1286,20 +1234,20 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 2,
+      "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 65,
+      "playerRemainingHp": 79,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_block": 2,
-        "skill_execute": 2,
-        "skill_heavy_swing": 2,
-        "skill_regroup": 1,
-        "skill_heal": 1,
-        "skill_1771769351059": 1
+        "skill_regroup": 4,
+        "skill_shockwave_copy_1770042951717": 3,
+        "skill_block": 4,
+        "skill_heavy_swing": 5,
+        "skill_1771769351059": 4,
+        "skill_heal": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_orc_club": 3
+        "enemy_skill_orc_club": 5
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1308,8 +1256,8 @@
         "isBoss": false,
         "isElite": true
       },
-      "skillTreeBefore": {
-        "skillPoints": 13,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1317,16 +1265,25 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 1,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup",
+          "skill_shockwave_copy_1770042951717"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 14,
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1334,12 +1291,8 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
         ]
       },
       "learnedThisLevel": [],
@@ -1356,22 +1309,21 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 6,
+      "turns": 7,
       "playerMaxHp": 100,
-      "playerRemainingHp": 29,
+      "playerRemainingHp": 1,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_regroup": 4,
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 2,
-        "skill_execute": 3,
-        "skill_heal": 4,
-        "skill_execute_copy_1770044052832": 2,
-        "skill_heavy_swing": 2,
-        "skill_1771769351059": 2
+        "skill_block": 1,
+        "skill_skull_cracker": 1,
+        "skill_regroup": 7,
+        "skill_heavy_swing": 7,
+        "skill_1771769351059": 6,
+        "skill_heal": 6
       },
       "enemySkillUsage": {
-        "enemy_skill_centurion_wrecking_swing": 6
+        "enemy_skill_centurion_wrecking_swing": 8
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1380,8 +1332,8 @@
         "isBoss": true,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 14,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1389,16 +1341,25 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 2,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup",
+          "skill_shockwave_copy_1770042951717"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 16,
+        "skillPoints": 4,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1406,12 +1367,8 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
         ]
       },
       "learnedThisLevel": [],
@@ -1430,14 +1387,14 @@
       "victory": true,
       "turns": 1,
       "playerMaxHp": 100,
-      "playerRemainingHp": 76,
+      "playerRemainingHp": 80,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
+        "skill_regroup": 2,
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_execute": 1,
+        "skill_block": 2,
         "skill_heavy_swing": 2,
-        "skill_regroup": 1,
-        "skill_block": 1
+        "skill_1771769351059": 2
       },
       "enemySkillUsage": {
         "enemy_skill_bad_lunchbox": 2
@@ -1449,8 +1406,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 16,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 4,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1458,16 +1415,26 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 1,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 17,
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1475,15 +1442,14 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
         ]
       },
-      "learnedThisLevel": [],
+      "learnedThisLevel": [
+        "skill_leftover_lunchbox"
+      ],
       "rewards": {
         "exp": 203,
         "gold": 109,
@@ -1497,23 +1463,22 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 81,
+      "playerRemainingHp": 76,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_execute": 1,
-        "skill_heavy_swing": 3,
-        "skill_block": 3,
-        "skill_1771769351059": 2,
+        "skill_block": 5,
+        "skill_skull_cracker": 1,
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 3,
         "skill_heal": 2,
-        "skill_execute_copy_1770044052832": 1,
         "skill_regroup": 1,
         "skill_leftover_lunchbox": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_plague_mist_burst": 4
+        "enemy_skill_plague_mist_burst": 5
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1522,8 +1487,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 17,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1531,16 +1496,27 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 2,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 17,
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1548,12 +1524,9 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
         ]
       },
       "learnedThisLevel": [],
@@ -1570,18 +1543,17 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 3,
+      "turns": 4,
       "playerMaxHp": 100,
-      "playerRemainingHp": 76,
+      "playerRemainingHp": 87,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
+        "skill_regroup": 3,
         "skill_block": 3,
-        "skill_execute": 2,
-        "skill_heavy_swing": 3,
-        "skill_regroup": 1,
-        "skill_heal": 2,
-        "skill_1771769351059": 1,
-        "skill_execute_copy_1770044052832": 1
+        "skill_heavy_swing": 4,
+        "skill_1771769351059": 4,
+        "skill_leftover_lunchbox": 2,
+        "skill_heal": 2
       },
       "enemySkillUsage": {
         "enemy_skill_orc_club": 4
@@ -1593,8 +1565,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 17,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1602,16 +1574,27 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 2,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 18,
+        "skillPoints": 3,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1619,12 +1602,9 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
         ]
       },
       "learnedThisLevel": [],
@@ -1641,22 +1621,22 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 4,
+      "turns": 6,
       "playerMaxHp": 100,
-      "playerRemainingHp": 100,
+      "playerRemainingHp": 84,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_regroup": 2,
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 5,
-        "skill_execute": 3,
-        "skill_heavy_swing": 4,
-        "skill_execute_copy_1770044052832": 1,
-        "skill_1771769351059": 1
+        "skill_block": 6,
+        "skill_skull_cracker": 1,
+        "skill_regroup": 5,
+        "skill_heavy_swing": 5,
+        "skill_1771769351059": 5,
+        "skill_leftover_lunchbox": 5
       },
       "enemySkillUsage": {
         "enemy_skill_shield_tap": 2,
-        "enemy_skill_bone_patch": 3
+        "enemy_skill_bone_patch": 4
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1665,8 +1645,8 @@
         "isBoss": false,
         "isElite": true
       },
-      "skillTreeBefore": {
-        "skillPoints": 18,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 3,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1674,16 +1654,27 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 3,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 19,
+        "skillPoints": 4,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1691,12 +1682,9 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
         ]
       },
       "learnedThisLevel": [],
@@ -1713,24 +1701,22 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 4,
+      "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 88,
+      "playerRemainingHp": 84,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_block": 4,
         "skill_skull_cracker": 1,
-        "skill_execute": 1,
-        "skill_heavy_swing": 2,
-        "skill_execute_copy_1770044052832": 1,
-        "skill_heal": 1,
-        "skill_regroup": 1,
-        "skill_1771769351059": 1,
-        "skill_leftover_lunchbox": 1
+        "skill_regroup": 3,
+        "skill_heavy_swing": 3,
+        "skill_1771769351059": 3,
+        "skill_leftover_lunchbox": 3
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 4
+        "enemy_skill_shield_tap": 2,
+        "enemy_skill_bone_patch": 2
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1739,8 +1725,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 19,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 4,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1748,16 +1734,27 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 4,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 20,
+        "skillPoints": 5,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1765,12 +1762,9 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
-          "skill_shockwave_copy_1770042951717",
-          "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
         ]
       },
       "learnedThisLevel": [],
@@ -1787,17 +1781,17 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 4,
+      "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 97,
+      "playerRemainingHp": 67,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_heavy_swing": 3,
         "skill_skull_cracker": 1,
-        "skill_block": 3,
-        "skill_execute": 1,
-        "skill_heal": 3,
-        "skill_1771769351059": 2
+        "skill_block": 2,
+        "skill_execute": 2,
+        "skill_heal": 1,
+        "skill_regroup": 1
       },
       "enemySkillUsage": {
         "enemy_skill_bone_splinter_jab": 3,
@@ -1810,8 +1804,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 20,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 5,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1819,16 +1813,28 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
+          "skill_regroup",
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 0,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
+          "skill_regroup",
           "skill_shockwave_copy_1770042951717",
           "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_execute"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 21,
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1836,15 +1842,15 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
+          "skill_regroup",
           "skill_shockwave_copy_1770042951717",
           "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_execute"
         ]
       },
-      "learnedThisLevel": [],
+      "learnedThisLevel": [
+        "skill_execute"
+      ],
       "rewards": {
         "exp": 338,
         "gold": 189,
@@ -1880,8 +1886,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 21,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1889,16 +1895,29 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
+          "skill_regroup",
           "skill_shockwave_copy_1770042951717",
           "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
+          "skill_execute"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 1,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 21,
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1906,12 +1925,10 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
+          "skill_regroup",
           "skill_shockwave_copy_1770042951717",
           "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_execute"
         ]
       },
       "learnedThisLevel": [],
@@ -1930,21 +1947,18 @@
       "victory": true,
       "turns": 3,
       "playerMaxHp": 100,
-      "playerRemainingHp": 81,
+      "playerRemainingHp": 78,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
         "skill_shockwave_copy_1770042951717": 1,
         "skill_execute": 1,
         "skill_heavy_swing": 3,
-        "skill_block": 3,
+        "skill_block": 2,
         "skill_1771769351059": 2,
-        "skill_heal": 2,
-        "skill_execute_copy_1770044052832": 1,
-        "skill_regroup": 1,
-        "skill_leftover_lunchbox": 1
+        "skill_heal": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_plague_mist_burst": 4
+        "enemy_skill_plague_mist_burst": 3
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -1953,8 +1967,8 @@
         "isBoss": false,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 21,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 1,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1962,16 +1976,29 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
+          "skill_regroup",
           "skill_shockwave_copy_1770042951717",
           "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
+          "skill_execute"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 1,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 22,
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -1979,12 +2006,10 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
+          "skill_regroup",
           "skill_shockwave_copy_1770042951717",
           "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_execute"
         ]
       },
       "learnedThisLevel": [],
@@ -2001,22 +2026,21 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 6,
+      "turns": 5,
       "playerMaxHp": 100,
-      "playerRemainingHp": 9,
+      "playerRemainingHp": 45,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_regroup": 5,
+        "skill_regroup": 2,
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 2,
+        "skill_block": 5,
         "skill_execute": 4,
         "skill_heal": 4,
-        "skill_execute_copy_1770044052832": 2,
         "skill_heavy_swing": 2,
         "skill_1771769351059": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_twilight_gate_crush": 7
+        "enemy_skill_twilight_gate_crush": 6
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -2025,8 +2049,8 @@
         "isBoss": false,
         "isElite": true
       },
-      "skillTreeBefore": {
-        "skillPoints": 22,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 2,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -2034,16 +2058,29 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
+          "skill_regroup",
           "skill_shockwave_copy_1770042951717",
           "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
+          "skill_execute"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 2,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 23,
+        "skillPoints": 3,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -2051,12 +2088,10 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
+          "skill_regroup",
           "skill_shockwave_copy_1770042951717",
           "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_execute"
         ]
       },
       "learnedThisLevel": [],
@@ -2073,22 +2108,21 @@
       "buildId": "progressive",
       "buildLabel": "进度式推荐构筑",
       "victory": true,
-      "turns": 7,
+      "turns": 6,
       "playerMaxHp": 100,
-      "playerRemainingHp": 29,
+      "playerRemainingHp": 65,
       "enemyRemainingHp": 0,
       "playerSkillUsage": {
-        "skill_regroup": 5,
+        "skill_regroup": 2,
         "skill_shockwave_copy_1770042951717": 1,
-        "skill_block": 2,
+        "skill_block": 5,
         "skill_execute": 4,
         "skill_heal": 5,
-        "skill_execute_copy_1770044052832": 2,
         "skill_heavy_swing": 2,
         "skill_1771769351059": 2
       },
       "enemySkillUsage": {
-        "enemy_skill_twilight_bastion_swing": 7
+        "enemy_skill_twilight_bastion_swing": 6
       },
       "failureReason": "victory",
       "diagnosis": "ok",
@@ -2097,8 +2131,8 @@
         "isBoss": true,
         "isElite": false
       },
-      "skillTreeBefore": {
-        "skillPoints": 23,
+      "skillTreeBeforeLearning": {
+        "skillPoints": 3,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -2106,16 +2140,29 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
+          "skill_regroup",
           "skill_shockwave_copy_1770042951717",
           "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
+          "skill_execute"
+        ]
+      },
+      "skillTreeBefore": {
+        "skillPoints": 3,
+        "learned": [
+          "skill_heal",
+          "skill_heavy_swing",
+          "skill_savage_charge",
+          "skill_block",
+          "skill_1771769351059",
+          "skill_skull_cracker",
           "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_shockwave_copy_1770042951717",
+          "skill_leftover_lunchbox",
+          "skill_execute"
         ]
       },
       "skillTreeAfter": {
-        "skillPoints": 25,
+        "skillPoints": 5,
         "learned": [
           "skill_heal",
           "skill_heavy_swing",
@@ -2123,12 +2170,10 @@
           "skill_block",
           "skill_1771769351059",
           "skill_skull_cracker",
+          "skill_regroup",
           "skill_shockwave_copy_1770042951717",
           "skill_leftover_lunchbox",
-          "skill_execute",
-          "skill_execute_copy_1770043820577",
-          "skill_regroup",
-          "skill_execute_copy_1770044052832"
+          "skill_execute"
         ]
       },
       "learnedThisLevel": [],
@@ -2144,11 +2189,12 @@
     "wins": 30,
     "winRate": 1,
     "diagnosisCounts": {
-      "ok": 28,
-      "enemy_too_weak": 2
+      "ok": 30
     },
     "skillTreeGapCandidates": 0,
-    "finalSkillPoints": 25,
+    "initialSkillPoints": 0,
+    "firstLevelPreloadedLateSkills": [],
+    "finalSkillPoints": 5,
     "finalLearned": [
       "skill_heal",
       "skill_heavy_swing",
@@ -2156,12 +2202,10 @@
       "skill_block",
       "skill_1771769351059",
       "skill_skull_cracker",
+      "skill_regroup",
       "skill_shockwave_copy_1770042951717",
       "skill_leftover_lunchbox",
-      "skill_execute",
-      "skill_execute_copy_1770043820577",
-      "skill_regroup",
-      "skill_execute_copy_1770044052832"
+      "skill_execute"
     ]
   }
 }

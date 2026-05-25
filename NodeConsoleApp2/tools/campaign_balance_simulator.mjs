@@ -865,6 +865,9 @@ function renderSummary(report) {
     lines.push('## Progressive Learning Summary');
     lines.push('');
     lines.push(`Wins: ${report.summary.wins}/${report.summary.attempts} (${(report.summary.winRate * 100).toFixed(1)}%)`);
+    lines.push(`Initial skill points: ${report.summary.initialSkillPoints}`);
+    lines.push(`Learning timing: ${report.meta.learningTiming || 'unknown'}`);
+    lines.push(`First-level preloaded late skills: ${report.summary.firstLevelPreloadedLateSkills?.join(', ') || '-'}`);
     lines.push(`Skill tree gap candidates: ${report.summary.skillTreeGapCandidates}`);
     lines.push(`Final skill points: ${report.summary.finalSkillPoints}`);
     lines.push(`Final learned skills: ${report.summary.finalLearned.join(', ')}`);
@@ -990,6 +993,7 @@ async function simulateLevelBuild({ CoreEngine, modules, data, levelId, build, m
 }
 
 async function simulateProgressiveLevel({ CoreEngine, modules, data, levelId, player, maxTurns }) {
+  const skillTreeBeforeLearning = snapshotSkillTree(player);
   const learnedThisLevel = autoLearnProgressiveSkills({
     player,
     skillsById: data.skillMaps.playerSkills
@@ -1004,6 +1008,7 @@ async function simulateProgressiveLevel({ CoreEngine, modules, data, levelId, pl
   };
   const row = await simulateLevelBuild({ CoreEngine, modules, data, levelId, build, maxTurns });
   const rewards = applyLevelRewardsToPlayer(player, data.levels.levels[levelId], row.victory);
+  row.skillTreeBeforeLearning = skillTreeBeforeLearning;
   row.skillTreeBefore = skillTreeBefore;
   row.skillTreeAfter = snapshotSkillTree(player);
   row.learnedThisLevel = learnedThisLevel;
@@ -1131,12 +1136,14 @@ function summarizeRuntimeSmoke(results) {
   };
 }
 
-function summarizeProgressiveReport(results, player) {
+function summarizeProgressiveReport(results, player, options = {}) {
   const wins = results.filter(row => row.victory).length;
   const diagnosisCounts = Object.create(null);
   for (const row of results) {
     diagnosisCounts[row.diagnosis] = (diagnosisCounts[row.diagnosis] || 0) + 1;
   }
+  const firstLevel = results[0] || null;
+  const lateSkillIds = ['skill_regroup', 'skill_execute_copy_1770044052832'];
   const failedWithAllPrioritySkills = results.filter(row => (
     !row.victory
     && progressiveLearningPriority.every(skillId => row.skillTreeBefore.learned.includes(skillId))
@@ -1148,6 +1155,11 @@ function summarizeProgressiveReport(results, player) {
     winRate: results.length > 0 ? wins / results.length : 0,
     diagnosisCounts,
     skillTreeGapCandidates: failedWithAllPrioritySkills.length,
+    initialSkillPoints: options.initialSkillPoints,
+    firstLevelPreloadedLateSkills: lateSkillIds.filter(skillId => (
+      firstLevel?.skillTreeBeforeLearning?.learned?.includes(skillId)
+      || firstLevel?.learnedThisLevel?.includes(skillId)
+    )),
     finalSkillPoints: snapshotSkillTree(player).skillPoints,
     finalLearned: snapshotSkillTree(player).learned
   };
@@ -1206,6 +1218,9 @@ export async function runProgressiveCampaignSimulation(options = {}) {
   const projectRoot = path.resolve(options.projectRoot || defaultProjectRoot);
   const maxTurns = Number(options.maxTurns ?? 12) || 12;
   const randomSeed = String(options.randomSeed || 'campaign-progressive-v1');
+  const initialSkillPoints = options.initialSkillPoints === undefined
+    ? Math.max(0, Number.NaN)
+    : Math.max(0, Number(options.initialSkillPoints) || 0);
 
   return withSeededRandom(randomSeed, async () => {
     const { CoreEngine } = await importCoreEngineClass(projectRoot);
@@ -1229,7 +1244,10 @@ export async function runProgressiveCampaignSimulation(options = {}) {
       maxAp: data.player.default?.stats?.maxAp ?? progressiveBuildProfile.maxAp,
       hpBonus: 0
     });
-    player.skills.skillPoints = Math.max(0, Number(data.player.default?.skills?.skillPoints ?? 0) || 0);
+    const resolvedInitialSkillPoints = Number.isFinite(initialSkillPoints)
+      ? initialSkillPoints
+      : Math.max(0, Number(data.player.default?.skills?.skillPoints ?? 0) || 0);
+    player.skills.skillPoints = resolvedInitialSkillPoints;
     player.resources = clone(data.player.default?.resources || { exp: 0, gold: 0 });
 
     const results = [];
@@ -1244,11 +1262,13 @@ export async function runProgressiveCampaignSimulation(options = {}) {
         levelCount: storyLevelIds.length,
         maxTurns,
         randomSeed,
+        initialSkillPoints: resolvedInitialSkillPoints,
+        learningTiming: 'between_levels_before_battle',
         source: 'tools/campaign_balance_simulator.mjs'
       },
       learningPriority: [...progressiveLearningPriority],
       results,
-      summary: summarizeProgressiveReport(results, player)
+      summary: summarizeProgressiveReport(results, player, { initialSkillPoints: resolvedInitialSkillPoints })
     };
   });
 }
@@ -1327,6 +1347,9 @@ function parseCliArgs(argv) {
     } else if (arg === '--mode') {
       out.mode = argv[index + 1];
       index += 1;
+    } else if (arg === '--initial-skill-points') {
+      out.initialSkillPoints = Number(argv[index + 1]);
+      index += 1;
     }
   }
   return out;
@@ -1340,7 +1363,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const report = await runner({
     projectRoot: defaultProjectRoot,
     maxTurns: args.maxTurns,
-    randomSeed: args.randomSeed
+    randomSeed: args.randomSeed,
+    initialSkillPoints: args.initialSkillPoints
   });
   const written = await writeCampaignBalanceReport(report, { reportPath: args.reportPath });
   console.log(`Wrote ${written.reportPath}`);

@@ -1,50 +1,53 @@
 # Campaign Balance Summary
 
-Generated: 2026-05-24T22:33:09.816Z
+Generated: 2026-05-25T06:05:01.099Z
 Mode: progressive
 Levels: 30
 
 ## Progressive Learning Summary
 
 Wins: 30/30 (100.0%)
+Initial skill points: 0
+Learning timing: between_levels_before_battle
+First-level preloaded late skills: -
 Skill tree gap candidates: 0
-Final skill points: 25
-Final learned skills: skill_heal, skill_heavy_swing, skill_savage_charge, skill_block, skill_1771769351059, skill_skull_cracker, skill_shockwave_copy_1770042951717, skill_leftover_lunchbox, skill_execute, skill_execute_copy_1770043820577, skill_regroup, skill_execute_copy_1770044052832
+Final skill points: 5
+Final learned skills: skill_heal, skill_heavy_swing, skill_savage_charge, skill_block, skill_1771769351059, skill_skull_cracker, skill_regroup, skill_shockwave_copy_1770042951717, skill_leftover_lunchbox, skill_execute
 
 ## Level Results
 
 | Level | Victory | Turns | Player HP | Enemy HP | Learned this level | Rewards KP | Diagnosis |
 | --- | --- | ---: | ---: | ---: | --- | ---: | --- |
-| level_1_1 | Y | 1 | 85 | 0 | skill_block, skill_1771769351059, skill_skull_cracker, skill_shockwave_copy_1770042951717, skill_leftover_lunchbox, skill_execute, skill_execute_copy_1770043820577, skill_regroup, skill_execute_copy_1770044052832 | 1 | ok |
-| level_1_2 | Y | 0 | 85 | 0 | - | 0 | ok |
-| level_1_3 | Y | 1 | 74 | 0 | - | 0 | ok |
-| level_1_4 | Y | 3 | 63 | 0 | - | 1 | ok |
-| level_1_5 | Y | 2 | 70 | 0 | - | 1 | ok |
-| level_1_6 | Y | 2 | 49 | 0 | - | 0 | ok |
-| level_1_7 | Y | 1 | 80 | 0 | - | 0 | ok |
-| level_1_8 | Y | 1 | 85 | 0 | - | 1 | ok |
-| level_1_9 | Y | 2 | 49 | 0 | - | 1 | ok |
-| level_1_10 | Y | 6 | 16 | 0 | - | 2 | ok |
-| level_2_1 | Y | 2 | 74 | 0 | - | 1 | ok |
-| level_2_2 | Y | 1 | 74 | 0 | - | 0 | ok |
-| level_2_3 | Y | 3 | 100 | 0 | - | 0 | enemy_too_weak |
-| level_2_4 | Y | 2 | 65 | 0 | - | 1 | ok |
-| level_2_5 | Y | 4 | 97 | 0 | - | 1 | ok |
-| level_2_6 | Y | 2 | 70 | 0 | - | 0 | ok |
-| level_2_7 | Y | 4 | 80 | 0 | - | 0 | ok |
-| level_2_8 | Y | 3 | 100 | 0 | - | 1 | enemy_too_weak |
-| level_2_9 | Y | 2 | 65 | 0 | - | 1 | ok |
-| level_2_10 | Y | 6 | 29 | 0 | - | 2 | ok |
-| level_3_1 | Y | 1 | 76 | 0 | - | 1 | ok |
-| level_3_2 | Y | 3 | 81 | 0 | - | 0 | ok |
-| level_3_3 | Y | 3 | 76 | 0 | - | 1 | ok |
-| level_3_4 | Y | 4 | 100 | 0 | - | 1 | ok |
-| level_3_5 | Y | 4 | 88 | 0 | - | 1 | ok |
-| level_3_6 | Y | 4 | 97 | 0 | - | 1 | ok |
+| level_1_1 | Y | 2 | 73 | 0 | - | 1 | ok |
+| level_1_2 | Y | 1 | 74 | 0 | skill_block | 0 | ok |
+| level_1_3 | Y | 3 | 83 | 0 | - | 0 | ok |
+| level_1_4 | Y | 4 | 62 | 0 | - | 1 | ok |
+| level_1_5 | Y | 4 | 92 | 0 | - | 1 | ok |
+| level_1_6 | Y | 3 | 52 | 0 | skill_1771769351059 | 0 | ok |
+| level_1_7 | Y | 2 | 72 | 0 | - | 0 | ok |
+| level_1_8 | Y | 2 | 80 | 0 | - | 1 | ok |
+| level_1_9 | Y | 3 | 52 | 0 | - | 1 | ok |
+| level_1_10 | Y | 6 | 18 | 0 | skill_skull_cracker | 2 | ok |
+| level_2_1 | Y | 3 | 79 | 0 | skill_regroup | 1 | ok |
+| level_2_2 | Y | 2 | 79 | 0 | - | 0 | ok |
+| level_2_3 | Y | 5 | 48 | 0 | - | 0 | ok |
+| level_2_4 | Y | 4 | 73 | 0 | - | 1 | ok |
+| level_2_5 | Y | 3 | 67 | 0 | - | 1 | ok |
+| level_2_6 | Y | 3 | 80 | 0 | skill_shockwave_copy_1770042951717 | 0 | ok |
+| level_2_7 | Y | 4 | 88 | 0 | - | 0 | ok |
+| level_2_8 | Y | 5 | 43 | 0 | - | 1 | ok |
+| level_2_9 | Y | 4 | 79 | 0 | - | 1 | ok |
+| level_2_10 | Y | 7 | 1 | 0 | - | 2 | ok |
+| level_3_1 | Y | 1 | 80 | 0 | skill_leftover_lunchbox | 1 | ok |
+| level_3_2 | Y | 4 | 76 | 0 | - | 0 | ok |
+| level_3_3 | Y | 4 | 87 | 0 | - | 1 | ok |
+| level_3_4 | Y | 6 | 84 | 0 | - | 1 | ok |
+| level_3_5 | Y | 3 | 84 | 0 | - | 1 | ok |
+| level_3_6 | Y | 3 | 67 | 0 | skill_execute | 1 | ok |
 | level_3_7 | Y | 1 | 80 | 0 | - | 0 | ok |
-| level_3_8 | Y | 3 | 81 | 0 | - | 1 | ok |
-| level_3_9 | Y | 6 | 9 | 0 | - | 1 | ok |
-| level_3_10 | Y | 7 | 29 | 0 | - | 2 | ok |
+| level_3_8 | Y | 3 | 78 | 0 | - | 1 | ok |
+| level_3_9 | Y | 5 | 45 | 0 | - | 1 | ok |
+| level_3_10 | Y | 6 | 65 | 0 | - | 2 | ok |
 
 ## Diagnosis Legend
 

@@ -1,9 +1,9 @@
 {
   "meta": {
-    "generatedAt": "2026-05-24T22:52:35.196Z",
+    "generatedAt": "2026-05-25T06:05:00.950Z",
     "mode": "runtime_smoke",
     "levelCount": 30,
-    "randomSeed": "wbs-3.4.13-runtime-smoke",
+    "randomSeed": "wbs-3.4.27-runtime-smoke",
     "source": "tools/campaign_balance_simulator.mjs"
   },
   "results": [
@@ -316,7 +316,7 @@
         "skill_skull_cracker": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1
+        "enemy_skill_iceplate_head_crush": 1
       }
     },
     {
@@ -436,7 +436,7 @@
         "skill_skull_cracker": 1
       },
       "enemySkillUsage": {
-        "enemy_skill_shield_tap": 1
+        "enemy_skill_iceplate_head_crush": 1
       }
     },
     {
