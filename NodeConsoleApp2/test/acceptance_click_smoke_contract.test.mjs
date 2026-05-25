@@ -17,6 +17,10 @@ test('自动点击验收脚本固定主流程与专项页面覆盖范围', async
 
   const pkg = JSON.parse(packageJson);
   assert.equal(pkg.scripts['test:acceptance-clicks'], 'node tools/acceptance_click_smoke.mjs');
+  assert.match(
+    toolSource,
+    /const targetLevelIds = \["level_1_1", "level_1_2", "level_1_3", "level_1_4", "level_1_5", "level_1_6", "level_1_7", "level_1_8", "level_1_9", "level_1_10"\];/u
+  );
 
   for (const requiredText of [
     'mock_ui_v11.html',

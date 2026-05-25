@@ -878,7 +878,7 @@ async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
         );
 
         const report = await evaluate(client, `(async () => {
-            const targetLevelIds = ["level_1_1", "level_1_2", "level_1_3", "level_1_4"];
+            const targetLevelIds = ["level_1_1", "level_1_2", "level_1_3", "level_1_4", "level_1_5", "level_1_6", "level_1_7", "level_1_8", "level_1_9", "level_1_10"];
             const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
             const visibleText = el => (el?.textContent || "").replace(/\\s+/g, " ").trim();
             const buttons = () => [...document.querySelectorAll("button")];
@@ -1080,14 +1080,14 @@ async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
             };
         })()`);
 
-        const expectedLevelIds = ["level_1_1", "level_1_2", "level_1_3", "level_1_4"];
+        const expectedLevelIds = ["level_1_1", "level_1_2", "level_1_3", "level_1_4", "level_1_5", "level_1_6", "level_1_7", "level_1_8", "level_1_9", "level_1_10"];
         assertCondition(
             JSON.stringify(report.targetLevelIds) === JSON.stringify(expectedLevelIds),
             `连续推进 smoke 目标关卡异常：${JSON.stringify(report.targetLevelIds)}`
         );
-        assertCondition(report.levelEntries.length === expectedLevelIds.length, "连续推进 smoke 没有进入 4 个关卡");
-        assertCondition(report.roundSnapshots.length === expectedLevelIds.length, "连续推进 smoke 没有记录 4 个回合执行");
-        assertCondition(report.settlementSnapshots.length === expectedLevelIds.length, "连续推进 smoke 没有记录 4 个结算");
+        assertCondition(report.levelEntries.length === expectedLevelIds.length, `连续推进 smoke 没有进入 ${expectedLevelIds.length} 个关卡`);
+        assertCondition(report.roundSnapshots.length === expectedLevelIds.length, `连续推进 smoke 没有记录 ${expectedLevelIds.length} 个回合执行`);
+        assertCondition(report.settlementSnapshots.length === expectedLevelIds.length, `连续推进 smoke 没有记录 ${expectedLevelIds.length} 个结算`);
         for (const levelId of expectedLevelIds) {
             const round = report.roundSnapshots.find(item => item.levelId === levelId);
             const settlement = report.settlementSnapshots.find(item => item.levelId === levelId);
@@ -1103,7 +1103,7 @@ async function runChapterOneProgressionSmoke(cdpEndpoint, mainUrl) {
         );
         assertCondition(
             expectedLevelIds.every(levelId => report.completedLevels.includes(levelId)),
-            "连续推进 smoke 最终 completedLevels 未覆盖第一章前四关"
+            "连续推进 smoke 最终 completedLevels 未覆盖第一章完整 10 关"
         );
         assertCondition(report.finalState === "BATTLE_SETTLEMENT", `连续推进 smoke 结束状态异常：${report.finalState}`);
         assertCondition(client.runtimeExceptions.length === 0, "连续推进 smoke 页面出现 Runtime exception");
