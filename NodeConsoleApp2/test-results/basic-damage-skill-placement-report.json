@@ -1,0 +1,352 @@
+{
+  "url": "http://127.0.0.1:3111/mock_ui_v11.html",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "devicePixelRatio": 1
+  },
+  "state": "BATTLE_LOOP",
+  "battlePhase": "EXECUTION",
+  "currentTurn": 1,
+  "selectedLevel": "level_1_1",
+  "checks": {
+    "slash": {
+      "skillId": "skill_double_thrust",
+      "skillName": "剑砍",
+      "selectionMode": "random_single",
+      "detailTargetText": "范围：敌方 · 部位 random_single（head, chest, abdomen, arm, leg）",
+      "highlightedSlots": [
+        {
+          "index": 0,
+          "targetType": "enemy",
+          "part": "head",
+          "slotIndex": "0",
+          "slotKey": "enemy:head:0"
+        },
+        {
+          "index": 1,
+          "targetType": "enemy",
+          "part": "head",
+          "slotIndex": "1",
+          "slotKey": "enemy:head:1"
+        },
+        {
+          "index": 2,
+          "targetType": "enemy",
+          "part": "head",
+          "slotIndex": "2",
+          "slotKey": "enemy:head:2"
+        },
+        {
+          "index": 3,
+          "targetType": "enemy",
+          "part": "chest",
+          "slotIndex": "0",
+          "slotKey": "enemy:chest:0"
+        },
+        {
+          "index": 4,
+          "targetType": "enemy",
+          "part": "chest",
+          "slotIndex": "1",
+          "slotKey": "enemy:chest:1"
+        },
+        {
+          "index": 5,
+          "targetType": "enemy",
+          "part": "chest",
+          "slotIndex": "2",
+          "slotKey": "enemy:chest:2"
+        },
+        {
+          "index": 6,
+          "targetType": "enemy",
+          "part": "abdomen",
+          "slotIndex": "0",
+          "slotKey": "enemy:abdomen:0"
+        },
+        {
+          "index": 7,
+          "targetType": "enemy",
+          "part": "abdomen",
+          "slotIndex": "1",
+          "slotKey": "enemy:abdomen:1"
+        },
+        {
+          "index": 8,
+          "targetType": "enemy",
+          "part": "abdomen",
+          "slotIndex": "2",
+          "slotKey": "enemy:abdomen:2"
+        }
+      ],
+      "placedSlot": "enemy:chest:0",
+      "draft": null
+    },
+    "punch": {
+      "skillId": "skill_hold_the_line",
+      "skillName": "重拳",
+      "selectionMode": "single",
+      "detailTargetText": "范围：敌方 · 部位 single（head, chest, abdomen, arm, leg）",
+      "highlightedSlots": [
+        {
+          "index": 0,
+          "targetType": "enemy",
+          "part": "head",
+          "slotIndex": "0",
+          "slotKey": "enemy:head:0"
+        },
+        {
+          "index": 1,
+          "targetType": "enemy",
+          "part": "head",
+          "slotIndex": "1",
+          "slotKey": "enemy:head:1"
+        },
+        {
+          "index": 2,
+          "targetType": "enemy",
+          "part": "head",
+          "slotIndex": "2",
+          "slotKey": "enemy:head:2"
+        },
+        {
+          "index": 3,
+          "targetType": "enemy",
+          "part": "chest",
+          "slotIndex": "1",
+          "slotKey": "enemy:chest:1"
+        },
+        {
+          "index": 4,
+          "targetType": "enemy",
+          "part": "chest",
+          "slotIndex": "2",
+          "slotKey": "enemy:chest:2"
+        },
+        {
+          "index": 5,
+          "targetType": "enemy",
+          "part": "abdomen",
+          "slotIndex": "0",
+          "slotKey": "enemy:abdomen:0"
+        },
+        {
+          "index": 6,
+          "targetType": "enemy",
+          "part": "abdomen",
+          "slotIndex": "1",
+          "slotKey": "enemy:abdomen:1"
+        },
+        {
+          "index": 7,
+          "targetType": "enemy",
+          "part": "abdomen",
+          "slotIndex": "2",
+          "slotKey": "enemy:abdomen:2"
+        }
+      ],
+      "placedSlot": "enemy:chest:1",
+      "draft": null
+    }
+  },
+  "before": {
+    "levelId": "level_1_1",
+    "playerQueue": [],
+    "enemies": [
+      {
+        "id": "enemy_c1_razor_runner_0_1779729470372",
+        "name": "剃叶奔袭者",
+        "hp": 58,
+        "bodyParts": {
+          "head": {
+            "current": 2,
+            "max": 2,
+            "weakness": 1.25,
+            "status": "NORMAL"
+          },
+          "chest": {
+            "current": 6,
+            "max": 6,
+            "weakness": 1,
+            "status": "NORMAL"
+          },
+          "abdomen": {
+            "current": 3,
+            "max": 3,
+            "weakness": 1.15,
+            "status": "NORMAL"
+          },
+          "arm": {
+            "current": 0,
+            "max": 0,
+            "weakness": 1,
+            "status": "NORMAL"
+          },
+          "leg": {
+            "current": 0,
+            "max": 0,
+            "weakness": 0.95,
+            "status": "NORMAL"
+          }
+        }
+      }
+    ]
+  },
+  "afterDraft": {
+    "levelId": "level_1_1",
+    "playerQueue": [],
+    "enemies": [
+      {
+        "id": "enemy_c1_razor_runner_0_1779729470372",
+        "name": "剃叶奔袭者",
+        "hp": 58,
+        "bodyParts": {
+          "head": {
+            "current": 2,
+            "max": 2,
+            "weakness": 1.25,
+            "status": "NORMAL"
+          },
+          "chest": {
+            "current": 6,
+            "max": 6,
+            "weakness": 1,
+            "status": "NORMAL"
+          },
+          "abdomen": {
+            "current": 3,
+            "max": 3,
+            "weakness": 1.15,
+            "status": "NORMAL"
+          },
+          "arm": {
+            "current": 0,
+            "max": 0,
+            "weakness": 1,
+            "status": "NORMAL"
+          },
+          "leg": {
+            "current": 0,
+            "max": 0,
+            "weakness": 0.95,
+            "status": "NORMAL"
+          }
+        }
+      }
+    ]
+  },
+  "afterCommit": {
+    "levelId": "level_1_1",
+    "playerQueue": [
+      {
+        "skillId": "skill_double_thrust",
+        "bodyPart": "chest",
+        "targetId": "enemy_c1_razor_runner_0_1779729470372",
+        "slotKey": "enemy:chest:0"
+      },
+      {
+        "skillId": "skill_hold_the_line",
+        "bodyPart": "chest",
+        "targetId": "enemy_c1_razor_runner_0_1779729470372",
+        "slotKey": "enemy:chest:1"
+      }
+    ],
+    "enemies": [
+      {
+        "id": "enemy_c1_razor_runner_0_1779729470372",
+        "name": "剃叶奔袭者",
+        "hp": 58,
+        "bodyParts": {
+          "head": {
+            "current": 2,
+            "max": 2,
+            "weakness": 1.25,
+            "status": "NORMAL"
+          },
+          "chest": {
+            "current": 6,
+            "max": 6,
+            "weakness": 1,
+            "status": "NORMAL"
+          },
+          "abdomen": {
+            "current": 3,
+            "max": 3,
+            "weakness": 1.15,
+            "status": "NORMAL"
+          },
+          "arm": {
+            "current": 0,
+            "max": 0,
+            "weakness": 1,
+            "status": "NORMAL"
+          },
+          "leg": {
+            "current": 0,
+            "max": 0,
+            "weakness": 0.95,
+            "status": "NORMAL"
+          }
+        }
+      }
+    ]
+  },
+  "afterExecute": {
+    "levelId": "level_1_1",
+    "playerQueue": [
+      {
+        "skillId": "skill_double_thrust",
+        "bodyPart": "chest",
+        "targetId": "enemy_c1_razor_runner_0_1779729470372",
+        "slotKey": "enemy:chest:0"
+      },
+      {
+        "skillId": "skill_hold_the_line",
+        "bodyPart": "chest",
+        "targetId": "enemy_c1_razor_runner_0_1779729470372",
+        "slotKey": "enemy:chest:1"
+      }
+    ],
+    "enemies": [
+      {
+        "id": "enemy_c1_razor_runner_0_1779729470372",
+        "name": "剃叶奔袭者",
+        "hp": 44,
+        "bodyParts": {
+          "head": {
+            "current": 2,
+            "max": 2,
+            "weakness": 1.25,
+            "status": "NORMAL"
+          },
+          "chest": {
+            "current": 0,
+            "max": 6,
+            "weakness": 1,
+            "status": "BROKEN"
+          },
+          "abdomen": {
+            "current": 3,
+            "max": 3,
+            "weakness": 1.15,
+            "status": "NORMAL"
+          },
+          "arm": {
+            "current": 0,
+            "max": 0,
+            "weakness": 1,
+            "status": "NORMAL"
+          },
+          "leg": {
+            "current": 0,
+            "max": 0,
+            "weakness": 0.95,
+            "status": "NORMAL"
+          }
+        }
+      }
+    ]
+  },
+  "title": ""
+}

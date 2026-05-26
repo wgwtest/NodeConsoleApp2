@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:3101/test/skill_editor_test_v3.html",
+  "screenshotPath": "/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/test-results/skill-growth-tree-v1-editor-1920x1080.png",
+  "skillPackPath": "assets/skill_packs/authoring/skills_melee_v4_5_growth_v1_20260526_000000.json",
+  "title": "技能编辑器原型",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "已加载 assets/skill_packs/authoring/skills_melee_v4_5_growth_v1_20260526_000000.json (36 skills)；Buff: assets/data/buffs_v2_7.json (19)",
+  "path": "assets/skill_packs/authoring/skills_melee_v4_5_growth_v1_20260526_000000.json",
+  "skillCount": 36,
+  "nodeCount": 36,
+  "connectionCount": 31,
+  "tracks": {
+    "sword": 7,
+    "hammer": 6,
+    "spell": 5,
+    "defense": 14,
+    "tempo": 4
+  },
+  "firstNodeTexts": [
+    "done 剑击 AP: 1",
+    "done 锯齿斩 AP: 1",
+    "done 撕裂伤口 AP: 1",
+    "done 血涌斩 AP: 3",
+    "done 饮血斩 AP: 3",
+    "done 猩红收割 AP: 2",
+    "done 血誓打击 AP: 1",
+    "done 锤击 AP: 2"
+  ],
+  "body": {
+    "width": 1920,
+    "height": 1080
+  }
+}

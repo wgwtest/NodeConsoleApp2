@@ -1206,6 +1206,241 @@
       "iconRef": ""
     }
   },
+  "enemy_c3_blood_rite_acolyte": {
+    "id": "enemy_c3_blood_rite_acolyte",
+    "name": "血礼侍从",
+    "race": "cultist",
+    "class": "acolyte",
+    "tags": [
+      "chapter_3",
+      "role_status",
+      "pressure_bleed",
+      "pressure_lifesteal_setup"
+    ],
+    "description": "第三章中段的流血铺垫敌人，用轻伤和流血提示玩家准备治疗、DOT 反制和吸血窗口。",
+    "stats": {
+      "hp": 118,
+      "maxHp": 118,
+      "ap": 4,
+      "speed": 12
+    },
+    "skills": [
+      "enemy_skill_blood_rite_cut",
+      "enemy_skill_rusty_shiv",
+      "enemy_skill_dirty_bandage"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 8,
+        "max": 8,
+        "weakness": 1.2
+      },
+      "chest": {
+        "current": 18,
+        "max": 18,
+        "weakness": 1
+      },
+      "abdomen": {
+        "current": 14,
+        "max": 14,
+        "weakness": 1.1
+      },
+      "arm": {
+        "current": 10,
+        "max": 10,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 8,
+        "max": 8,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_twilight_cultist",
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/敌人-003-状态001-正常状态.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_c3_mire_chain_jailer": {
+    "id": "enemy_c3_mire_chain_jailer",
+    "name": "泥链狱卒",
+    "race": "undead",
+    "class": "jailer",
+    "tags": [
+      "chapter_3",
+      "role_armor",
+      "role_status",
+      "pressure_slow",
+      "pressure_armor"
+    ],
+    "description": "第三章节奏压迫敌人，用护甲、破甲和减速检查玩家是否能管理速度与部位防御。",
+    "stats": {
+      "hp": 150,
+      "maxHp": 150,
+      "ap": 4,
+      "speed": 8
+    },
+    "skills": [
+      "enemy_skill_mire_chain_drag",
+      "enemy_skill_shield_tap",
+      "enemy_skill_bone_patch"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 16,
+        "max": 16,
+        "weakness": 1.15
+      },
+      "chest": {
+        "current": 36,
+        "max": 36,
+        "weakness": 0.9
+      },
+      "abdomen": {
+        "current": 24,
+        "max": 24,
+        "weakness": 1.05
+      },
+      "arm": {
+        "current": 24,
+        "max": 24,
+        "weakness": 0.95
+      },
+      "leg": {
+        "current": 22,
+        "max": 22,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_twilight_armor",
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/敌人-011-状态001-正常状态.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_c3_twilight_warden": {
+    "id": "enemy_c3_twilight_warden",
+    "name": "暮色看守",
+    "race": "undead",
+    "class": "elite_warden",
+    "tags": [
+      "chapter_3",
+      "role_elite",
+      "role_armor",
+      "role_repair",
+      "pressure_armor"
+    ],
+    "description": "第三章 Boss 前高压预演精英，用护甲修复和重压检查破甲、续航与爆发窗口。",
+    "stats": {
+      "hp": 188,
+      "maxHp": 188,
+      "ap": 4,
+      "speed": 7
+    },
+    "skills": [
+      "enemy_skill_twilight_warden_bulwark",
+      "enemy_skill_shield_tap",
+      "enemy_skill_twilight_gate_crush"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 24,
+        "max": 24,
+        "weakness": 1.1
+      },
+      "chest": {
+        "current": 58,
+        "max": 58,
+        "weakness": 0.82
+      },
+      "abdomen": {
+        "current": 36,
+        "max": 36,
+        "weakness": 1.05
+      },
+      "arm": {
+        "current": 42,
+        "max": 42,
+        "weakness": 0.86
+      },
+      "leg": {
+        "current": 32,
+        "max": 32,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_twilight_armor",
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/敌人-011-状态001-正常状态.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_c3_plague_standard_bearer": {
+    "id": "enemy_c3_plague_standard_bearer",
+    "name": "疫旗手",
+    "race": "cultist",
+    "class": "standard_bearer",
+    "tags": [
+      "chapter_3",
+      "role_status",
+      "role_repair",
+      "pressure_poison",
+      "pressure_vulnerable"
+    ],
+    "description": "第三章外环营垒的状态支援敌人，用毒、易伤和修复能力制造 Boss 前持续损耗。",
+    "stats": {
+      "hp": 142,
+      "maxHp": 142,
+      "ap": 4,
+      "speed": 9
+    },
+    "skills": [
+      "enemy_skill_plague_standard_wave",
+      "enemy_skill_plague_mist_burst",
+      "enemy_skill_dirty_bandage"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 12,
+        "max": 12,
+        "weakness": 1.2
+      },
+      "chest": {
+        "current": 28,
+        "max": 28,
+        "weakness": 1
+      },
+      "abdomen": {
+        "current": 18,
+        "max": 18,
+        "weakness": 1.1
+      },
+      "arm": {
+        "current": 14,
+        "max": 14,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 12,
+        "max": 12,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_twilight_cultist",
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/敌人-003-状态001-正常状态.png",
+      "iconRef": ""
+    }
+  },
   "enemy_c3_twilight_gate_elite": {
     "id": "enemy_c3_twilight_gate_elite",
     "name": "暮色门卫精英",

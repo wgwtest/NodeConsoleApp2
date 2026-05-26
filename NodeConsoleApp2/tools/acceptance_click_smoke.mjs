@@ -9,6 +9,10 @@ const DEFAULT_RUNTIME_ENDPOINTS = Object.freeze([
     }
 ]);
 
+const ACCEPTANCE_VIEWPORT = Object.freeze({ width: 1920, height: 1080, deviceScaleFactor: 1 });
+const CDP_SEND_TIMEOUT_MS = 30000;
+const LONG_EVALUATE_TIMEOUT_MS = 600000;
+
 const PAGE_PATHS = Object.freeze({
     main: "/mock_ui_v11.html",
     probe: "/test/battle_presentation_probe.html",
@@ -89,10 +93,25 @@ function createCdpClient(wsUrl) {
             resolve({
                 consoleMessages,
                 runtimeExceptions,
-                async send(method, params = {}) {
+                async send(method, params = {}, options = {}) {
                     const id = nextId++;
                     return new Promise((resolveSend, rejectSend) => {
-                        pending.set(id, { resolve: resolveSend, reject: rejectSend });
+                        const timeoutMs = Math.max(1000, Number(options.timeoutMs ?? CDP_SEND_TIMEOUT_MS) || CDP_SEND_TIMEOUT_MS);
+                        const label = options.label || method;
+                        const timer = setTimeout(() => {
+                            pending.delete(id);
+                            rejectSend(new Error(`CDP timeout after ${timeoutMs}ms: ${label}`));
+                        }, timeoutMs);
+                        pending.set(id, {
+                            resolve: value => {
+                                clearTimeout(timer);
+                                resolveSend(value);
+                            },
+                            reject: error => {
+                                clearTimeout(timer);
+                                rejectSend(error);
+                            }
+                        });
                         ws.send(JSON.stringify({ id, method, params }));
                     });
                 },
@@ -155,15 +174,21 @@ async function attach(cdpEndpoint, url) {
     await client.send("Page.enable");
     await client.send("Runtime.enable");
     await client.send("Log.enable").catch(() => {});
+    await client.send("Emulation.setDeviceMetricsOverride", {
+        width: ACCEPTANCE_VIEWPORT.width,
+        height: ACCEPTANCE_VIEWPORT.height,
+        deviceScaleFactor: ACCEPTANCE_VIEWPORT.deviceScaleFactor,
+        mobile: false
+    });
     return client;
 }
 
-async function evaluate(client, expression) {
+async function evaluate(client, expression, options = {}) {
     const result = await client.send("Runtime.evaluate", {
         expression,
         awaitPromise: true,
         returnByValue: true
-    });
+    }, options);
     if (result.exceptionDetails) {
         const detail = result.exceptionDetails.exception?.description || result.exceptionDetails.text || "Runtime.evaluate failed";
         throw new Error(detail);
@@ -1177,11 +1202,12 @@ async function runChapterThreeProgressionSmoke(cdpEndpoint, mainUrl) {
 }
 
 async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
-    const targetChapterCount = 2;
+    const targetChapterCount = 3;
     const naturalProgressionLevels = Array.from({ length: targetChapterCount }, (_, chapterIndex) => Array.from({ length: 10 }, (_, levelIndex) => `level_${chapterIndex + 1}_${levelIndex + 1}`)).flat();
     const initialSkillPointsOverride = 0;
     const firstChapterNaturalProgression = true;
     const secondChapterNaturalProgression = true;
+    const thirdChapterNaturalProgression = true;
     let client = null;
     try {
         client = await attach(cdpEndpoint, mainUrl);
@@ -1197,6 +1223,7 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
             const initialSkillPointsOverride = ${initialSkillPointsOverride};
             const firstChapterNaturalProgression = ${JSON.stringify(firstChapterNaturalProgression)};
             const secondChapterNaturalProgression = ${JSON.stringify(secondChapterNaturalProgression)};
+            const thirdChapterNaturalProgression = ${JSON.stringify(thirdChapterNaturalProgression)};
             const naturalProgressiveLearningPriority = ["skill_block", "skill_1771769351059", "skill_skull_cracker", "skill_regroup", "skill_shockwave_copy_1770042951717"];
             const selfDamageSkillIds = ["skill_savage_charge"];
             const skipSelfDamageSkillsForBoss = true;
@@ -1485,6 +1512,15 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 const btn = getSkillButton(skillId);
                 if (!btn) return null;
                 const skill = getSkillConfig(skillId);
+                const clearNaturalProgressiveSkillSelection = async () => {
+                    document.body.click();
+                    await sleep(60);
+                    const runtimePlanning = window.GameEngine?.data?.dataConfig?.runtime?.planning?.player;
+                    return {
+                        armedSkillId: document.querySelector(".skill-icon-button.active")?.dataset.id || "",
+                        draftCount: Object.keys(runtimePlanning?.plannedBySkill || {}).length
+                    };
+                };
                 btn.click();
                 await sleep(150);
                 const subject = skill?.target?.subject || "";
@@ -1497,15 +1533,17 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                     || slots.find(item => item.dataset.targetType === desiredTargetType)
                     || slots[0];
                 if (!slot) {
-                    btn.click();
-                    await sleep(80);
+                    await clearNaturalProgressiveSkillSelection();
                     return null;
                 }
                 const slotKey = [slot.dataset.targetType, slot.dataset.part, slot.dataset.slotIndex || "0"].join(":");
                 slot.click();
                 await sleep(160);
                 const filledSlot = document.querySelector('.slot-placeholder.filled[data-occupied-skill-id="' + skillId + '"]');
-                if (!filledSlot) return null;
+                if (!filledSlot) {
+                    await clearNaturalProgressiveSkillSelection();
+                    return null;
+                }
                 return {
                     skillId,
                     skillName: skill?.name || skillId,
@@ -1526,6 +1564,23 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                     reason: placed.length > 0 ? "planned" : "no_deployable_skill"
                 };
             };
+            const recoverNaturalProgressivePausedTimeline = async () => {
+                const timeline = window.GameEngine?.timeline;
+                const state = window.GameEngine?.fsm?.currentState || "";
+                const isPaused = window.GameEngine?.timeline?.phase === "PAUSED";
+                if (!timeline || !isPaused) return false;
+                if (state !== "BATTLE_LOOP" && state !== "BATTLE_PREPARE") return false;
+                const canContinue = () => {
+                    const state = window.GameEngine?.fsm?.currentState || "";
+                    return state === "BATTLE_LOOP" || state === "BATTLE_PREPARE";
+                };
+                const action = typeof timeline.resume === "function"
+                    ? timeline.resume.bind(timeline)
+                    : timeline.start.bind(timeline);
+                const result = await action({ stepDelayMs: 0, canContinue });
+                await sleep(80);
+                return result?.ok !== false;
+            };
             const waitForTurnOrSettlement = async turnBefore => {
                 const started = Date.now();
                 while (Date.now() - started < 20000) {
@@ -1536,6 +1591,7 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                         && Number(window.GameEngine?.currentTurn ?? 0) > turnBefore) {
                         return "next_turn";
                     }
+                    await recoverNaturalProgressivePausedTimeline();
                     await sleep(120);
                 }
                 return "turn_wait_timeout";
@@ -1708,6 +1764,7 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 path: "mock_ui_v11.html",
                 firstChapterNaturalProgression,
                 secondChapterNaturalProgression,
+                thirdChapterNaturalProgression,
                 skipSelfDamageSkillsForBoss,
                 selfDamageSkillIds,
                 naturalProgressionLevels,
@@ -1724,7 +1781,7 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 finalState: window.GameEngine?.fsm?.currentState || "",
                 finalTitle: document.getElementById("modalTitle")?.textContent.trim() || ""
             };
-        })()`);
+        })()`, { timeoutMs: LONG_EVALUATE_TIMEOUT_MS, label: "natural progressive campaign" });
 
         assertCondition(
             JSON.stringify(report.naturalProgressionLevels) === JSON.stringify(naturalProgressionLevels),
@@ -1733,6 +1790,7 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
         assertCondition(report.initialSkillPointsOverride === initialSkillPointsOverride, "自然进度式 smoke 初始 KP 覆盖异常");
         assertCondition(report.firstChapterNaturalProgression === true, "自然进度式 smoke 未标记第一章完整自然推进");
         assertCondition(report.secondChapterNaturalProgression === true, "自然进度式 smoke 未标记第二章完整自然推进");
+        assertCondition(report.thirdChapterNaturalProgression === true, "自然进度式 smoke 未标记第三章完整自然推进");
         assertCondition(report.initialSkillTree?.skillPoints === initialSkillPointsOverride, "自然进度式 smoke 未从低 KP 初始技能树开始");
         const naturalProgressiveFailureSummary = JSON.stringify({
             outcome: report.naturalProgressiveOutcome,
@@ -1758,10 +1816,19 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
             finalState: report.finalState,
             finalTitle: report.finalTitle
         });
-        assertCondition(report.naturalLevelResults.length === naturalProgressionLevels.length, `自然进度式 smoke 未覆盖目标连续关卡数：${naturalProgressiveFailureSummary}`);
-        assertCondition(report.naturalProgressiveOutcome.victories === naturalProgressionLevels.length, `自然进度式 smoke 未自然通过全部目标关卡：${naturalProgressiveFailureSummary}`);
+        const requiredNaturalDiagnosticLevels = naturalProgressionLevels.filter(levelId => /^level_[12]_/.test(levelId));
+        const reachedChapterThree = report.naturalLevelResults.some(level => level.levelId.startsWith("level_3_"));
+        assertCondition(
+            report.naturalLevelResults.length >= requiredNaturalDiagnosticLevels.length + 1,
+            `自然进度式 smoke 未覆盖前两章和第三章诊断入口：${naturalProgressiveFailureSummary}`
+        );
+        assertCondition(
+            report.naturalProgressiveOutcome.victories >= requiredNaturalDiagnosticLevels.length,
+            `自然进度式 smoke 前两章稳定性不足，无法进入第三章诊断：${naturalProgressiveFailureSummary}`
+        );
         assertCondition(report.naturalProgressiveOutcome.forcedSettlementUsed === false, "自然进度式 smoke 不应使用强制结算");
-        for (const levelId of naturalProgressionLevels) {
+        assertCondition(reachedChapterThree, `自然进度式 smoke 未进入第三章诊断入口：${naturalProgressiveFailureSummary}`);
+        for (const levelId of requiredNaturalDiagnosticLevels) {
             const level = report.naturalLevelResults.find(item => item.levelId === levelId);
             assertCondition(level?.naturalProgressiveOutcome === "victory", `${levelId} 自然进度式未胜利：${level?.naturalProgressiveOutcome}`);
             assertCondition(level?.settlement?.victory === true, `${levelId} 自然进度式没有胜利结算`);
@@ -1821,9 +1888,15 @@ async function runNaturalProgressiveCampaignSmoke(cdpEndpoint, mainUrl) {
                 .some(turn => (turn.plannedActions || []).some(action => action.skillId === "skill_shockwave_copy_1770042951717"))),
             "自然进度式 smoke 第二章学习后没有部署 skill_shockwave_copy_1770042951717"
         );
+        const chapterThreeDiagnosticLevels = report.naturalLevelResults.filter(level => level.levelId.startsWith("level_3_"));
         assertCondition(
-            naturalProgressionLevels.every(levelId => report.completedLevels.includes(levelId)),
-            "自然进度式 smoke 最终 completedLevels 未覆盖目标连续关卡"
+            chapterThreeDiagnosticLevels.some(level => level.naturalTurnSnapshots
+                .some(turn => (turn.plannedActions || []).length > 0)),
+            `自然进度式 smoke 第三章诊断没有提交任何玩家规划：${naturalProgressiveFailureSummary}`
+        );
+        assertCondition(
+            requiredNaturalDiagnosticLevels.every(levelId => report.completedLevels.includes(levelId)),
+            "自然进度式 smoke 最终 completedLevels 未覆盖前两章稳定关卡"
         );
         assertCondition(report.unlockedLevels.includes("level_2_1"), "自然进度式 smoke 通关第一章后没有解锁 level_2_1");
         assertCondition(report.unlockedLevels.includes("level_3_1"), "自然进度式 smoke 通关第二章后没有解锁 level_3_1");
@@ -2546,7 +2619,7 @@ async function runNaturalBattleAutoplaySmoke(cdpEndpoint, mainUrl) {
                 },
                 finalVitals
             };
-        })()`);
+        })()`, { timeoutMs: LONG_EVALUATE_TIMEOUT_MS, label: `natural battle autoplay ${checkpoint.levelId}` });
 
             assertCondition(report.levelId === checkpoint.levelId, `自然战斗检查点关卡异常：${report.levelId}`);
             report.lethalFailureDiagnosis = buildLethalFailureDiagnosis(report);

@@ -2386,6 +2386,303 @@
           }
         }
       ]
+    },
+    {
+      "id": "enemy_skill_blood_rite_cut",
+      "name": "血礼割痕",
+      "rarity": "Uncommon",
+      "description": "第三章血礼侍从专用技能，造成轻度生命伤害并叠加流血，作为吸血与续航反制的前置压力。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 3350,
+        "y": 240,
+        "group": "enemy_twilight",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_bleed",
+            "target": "enemy",
+            "chance": 0.55,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_blood_rite_cut",
+          "name": "血礼割痕",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_mire_chain_drag",
+      "name": "泥链拖拽",
+      "rarity": "Uncommon",
+      "description": "第三章泥链狱卒专用技能，削弱部位护甲并施加减速，检查玩家的补甲与速度管理。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 3490,
+        "y": 240,
+        "group": "enemy_twilight",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "leg",
+            "abdomen",
+            "chest"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_slow",
+            "target": "enemy",
+            "chance": 0.65,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_mire_chain_drag",
+          "name": "泥链拖拽",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 14
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_twilight_warden_bulwark",
+      "name": "暮卫筑垒",
+      "rarity": "Rare",
+      "description": "第三章暮色看守专用防御技能，快速补甲并制造高压预演中的破甲检查。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 3630,
+        "y": 240,
+        "group": "enemy_twilight",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 4,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_twilight_warden_bulwark",
+          "name": "暮卫筑垒",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amountType": "ABS",
+            "amount": 18
+          }
+        }
+      ]
+    },
+    {
+      "id": "enemy_skill_plague_standard_wave",
+      "name": "疫旗挥散",
+      "rarity": "Rare",
+      "description": "第三章疫旗手专用状态技能，造成毒雾伤害并施加中毒与易伤，检查治疗、速杀和状态处理。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 0
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "enemy"
+        }
+      },
+      "editorMeta": {
+        "x": 3770,
+        "y": 240,
+        "group": "enemy_twilight",
+        "locked": false,
+        "editState": "done",
+        "hiddenInSkillTree": true
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_poison",
+            "target": "enemy",
+            "chance": 0.6,
+            "duration": 2
+          },
+          {
+            "buffId": "buff_vulnerable",
+            "target": "enemy",
+            "chance": 0.45,
+            "duration": 1
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_plague_standard_wave",
+          "name": "疫旗挥散",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 9
+          }
+        }
+      ]
     }
   ]
 }

@@ -1001,7 +1001,11 @@
         "selection": {
           "mode": "single",
           "candidateParts": [
-            "arm"
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
           ],
           "selectedParts": [],
           "selectCount": 1

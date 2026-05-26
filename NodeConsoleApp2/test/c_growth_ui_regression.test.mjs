@@ -40,6 +40,11 @@ function cleanupDomGlobals() {
   delete global.Node;
 }
 
+async function loadDataJson(relativePath) {
+  const raw = await fs.readFile(path.join(projectRoot, relativePath), 'utf8');
+  return JSON.parse(raw);
+}
+
 function createSystemModalFixture() {
   const dom = new JSDOM(`
     <!DOCTYPE html>
@@ -82,6 +87,16 @@ function createSkillPanelFixture() {
           <div class="matrix-row" data-row-part="abdomen">
             <div class="enemy-zone">
               <button class="slot-placeholder" data-part="abdomen" data-target-type="enemy" data-slot-index="0"></button>
+            </div>
+          </div>
+          <div class="matrix-row" data-row-part="arm">
+            <div class="enemy-zone">
+              <button class="slot-placeholder" data-part="arm" data-target-type="enemy" data-slot-index="0"></button>
+            </div>
+          </div>
+          <div class="matrix-row" data-row-part="leg">
+            <div class="enemy-zone">
+              <button class="slot-placeholder" data-part="leg" data-target-type="enemy" data-slot-index="0"></button>
             </div>
           </div>
         </div>
@@ -502,6 +517,110 @@ test('UI_SkillPanel 会显示最近学习带来的本局新增技能提示', asy
     assert.match(text, /本局新增技能/);
     assert.match(text, /投石/);
     assert.match(text, /自动加入技能池/);
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
+
+test('UI_SkillPanel 会把剑砍的 random_single 视为可落槽的单目标模式', async () => {
+  const dom = createSkillPanelFixture();
+  try {
+    const [{ default: UI_SkillPanel }, skillsData, enemiesData] = await Promise.all([
+      importSourceModule('script/ui/UI_SkillPanel.js'),
+      loadDataJson('assets/data/skills_melee_v4_5.json'),
+      loadDataJson('assets/data/enemies.json')
+    ]);
+    const slash = skillsData.skills.find(skill => skill.id === 'skill_double_thrust');
+    assert.ok(slash, '缺少剑砍技能配置');
+
+    const panel = new UI_SkillPanel({
+      eventBus: createMiniEventBus(),
+      data: {
+        playerData: { id: 'player_1', stats: { ap: 6, maxAp: 6 }, skills: { learned: ['skill_double_thrust'] } },
+        dataConfig: {},
+        getSkillConfig(id) {
+          return id === slash.id ? slash : null;
+        }
+      },
+      playerSkillQueue: [],
+      turnPlanner: {
+        getApBudgetState() {
+          return {
+            phase: 'AP_BUDGET_READY',
+            availableAp: 6,
+            plannedCost: 0,
+            remaining: 6,
+            ok: true
+          };
+        }
+      }
+    });
+
+    const target = panel.getSkillTarget(slash);
+    assert.ok(target, '剑砍不应被 UI 判为目标配置错误');
+    assert.equal(target.selection.mode, 'random_single');
+    assert.notEqual(panel.formatTargetText(slash), '目标配置错误');
+
+    panel.selectedSkill = slash;
+    panel.initMatrixRows(enemiesData.enemy_c1_razor_runner);
+    panel.highlightValidSlots();
+
+    const highlighted = [...document.querySelectorAll('.slot-placeholder.highlight-valid')]
+      .map(slot => `${slot.dataset.targetType}:${slot.dataset.part}`);
+    assert.ok(highlighted.includes('enemy:head'), '剑砍应能选择第一关敌人的头部落点');
+    assert.ok(highlighted.includes('enemy:chest'), '剑砍应能选择第一关敌人的胸部落点');
+    assert.ok(highlighted.includes('enemy:abdomen'), '剑砍应能选择第一关敌人的腹部落点');
+  } finally {
+    dom.window.close();
+    cleanupDomGlobals();
+  }
+});
+
+test('UI_SkillPanel 会让重拳在第一关敌人身上至少有一个可用敌方落点', async () => {
+  const dom = createSkillPanelFixture();
+  try {
+    const [{ default: UI_SkillPanel }, skillsData, enemiesData] = await Promise.all([
+      importSourceModule('script/ui/UI_SkillPanel.js'),
+      loadDataJson('assets/data/skills_melee_v4_5.json'),
+      loadDataJson('assets/data/enemies.json')
+    ]);
+    const punch = skillsData.skills.find(skill => skill.id === 'skill_hold_the_line');
+    assert.ok(punch, '缺少重拳技能配置');
+
+    const panel = new UI_SkillPanel({
+      eventBus: createMiniEventBus(),
+      data: {
+        playerData: { id: 'player_1', stats: { ap: 6, maxAp: 6 }, skills: { learned: ['skill_hold_the_line'] } },
+        dataConfig: {},
+        getSkillConfig(id) {
+          return id === punch.id ? punch : null;
+        }
+      },
+      playerSkillQueue: [],
+      turnPlanner: {
+        getApBudgetState() {
+          return {
+            phase: 'AP_BUDGET_READY',
+            availableAp: 6,
+            plannedCost: 0,
+            remaining: 6,
+            ok: true
+          };
+        }
+      }
+    });
+
+    panel.selectedSkill = punch;
+    panel.initMatrixRows(enemiesData.enemy_c1_razor_runner);
+    panel.highlightValidSlots();
+
+    const highlighted = [...document.querySelectorAll('.slot-placeholder.highlight-valid')]
+      .map(slot => `${slot.dataset.targetType}:${slot.dataset.part}`);
+    assert.ok(
+      highlighted.some(slotKey => slotKey.startsWith('enemy:')),
+      `重拳在第一关敌人身上没有敌方可落点：${JSON.stringify(highlighted)}`
+    );
   } finally {
     dom.window.close();
     cleanupDomGlobals();

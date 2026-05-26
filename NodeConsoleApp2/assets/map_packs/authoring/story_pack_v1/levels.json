@@ -281,7 +281,7 @@
       "name": "暮色古道 5 敌人池",
       "members": [
         {
-          "templateId": "skeleton_guard_lvl4",
+          "templateId": "enemy_c3_blood_rite_acolyte",
           "position": 1
         }
       ]
@@ -291,7 +291,7 @@
       "name": "暮色古道 6 敌人池",
       "members": [
         {
-          "templateId": "skeleton_story_repair_guard",
+          "templateId": "enemy_c3_mire_chain_jailer",
           "position": 1
         }
       ]
@@ -301,7 +301,7 @@
       "name": "暮色古道 7 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_medic",
+          "templateId": "enemy_c3_twilight_warden",
           "position": 1
         }
       ]
@@ -311,7 +311,7 @@
       "name": "暮色古道 8 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_plague_caller",
+          "templateId": "enemy_c3_plague_standard_bearer",
           "position": 1
         }
       ]
@@ -1576,7 +1576,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_guard_lvl4"
+        "templateId": "enemy_c3_blood_rite_acolyte"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1624,7 +1624,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_story_repair_guard"
+        "templateId": "enemy_c3_mire_chain_jailer"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1672,7 +1672,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_medic"
+        "templateId": "enemy_c3_twilight_warden"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1720,7 +1720,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c3_plague_caller"
+        "templateId": "enemy_c3_plague_standard_bearer"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",

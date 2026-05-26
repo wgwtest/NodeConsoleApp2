@@ -710,7 +710,7 @@ export default class UI_SkillPanel {
         const mode = String(targetInfo?.selection?.mode || 'single');
      let sc = Number(targetInfo?.selection?.selectCount ?? 1);
         if (!Number.isFinite(sc) || sc <= 0) sc = 1;
-        const isSingle = (mode === 'single') || (sc <= 1);
+        const isSingle = (mode === 'single') || (mode === 'random_single') || (sc <= 1);
 
         let nextSlots = [];
         if (isSingle) {
@@ -1170,7 +1170,8 @@ export default class UI_SkillPanel {
             return null;
         }
 
-        if (selection.mode && selection.mode !== 'single' && selection.mode !== 'multiple') {
+        const validSelectionModes = new Set(['single', 'multiple', 'random_single', 'random_multiple']);
+        if (selection.mode && !validSelectionModes.has(selection.mode)) {
             console.error('[UI_SkillPanel] Invalid skill target config: invalid selection.mode.', skill);
             return null;
         }
