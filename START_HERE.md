@@ -1,78 +1,63 @@
-# NodeConsoleApp2 Worktree Startup
+# NodeConsoleApp2 Engine Selection Worktree
 
-Purpose: keep the map, skill, and enemy design worktrees easy to start from the project-local `.worktree` directory.
+Purpose: isolate real implementation technology selection work for the main game runtime.
 
 ## Workspace
 
-- Main branch: `master`
-- Map worktree: `/home/wgw/CodexProject/NodeConsoleApp2/.worktree/map-optimization-20260518`
-- Skill worktree: `/home/wgw/CodexProject/NodeConsoleApp2/.worktree/skill-optimization-20260518`
-- Enemy worktree: `/home/wgw/CodexProject/NodeConsoleApp2/.worktree/enemy-design-20260522`
+- Branch: `codex/engine-selection-20260527`
+- Worktree: `/home/wgw/CodexProject/NodeConsoleApp2/.worktree/engine-selection-20260527`
+- Base branch: `master`
+- Starting commit: `cf6746c`
 
-## Map Startup
+This branch is for validating whether the current browser-front-end runtime should remain the main implementation target, or whether the project should move toward a game engine such as Unity, Unreal Engine, Godot, Phaser, PixiJS, Cocos Creator, or another runtime.
+
+## Startup
 
 ```bash
-cd /home/wgw/CodexProject/NodeConsoleApp2/.worktree/map-optimization-20260518/NodeConsoleApp2
+cd /home/wgw/CodexProject/NodeConsoleApp2/.worktree/engine-selection-20260527/NodeConsoleApp2
 npm install --package-lock=false --no-audit --no-fund --prefer-offline --progress=false
 npm install --package-lock=false --no-save --no-audit --no-fund --prefer-offline --progress=false jsdom
-PORT=3121 node app.js
+PORT=3124 node app.js
 ```
 
 Open:
 
-- Main flow: `http://127.0.0.1:3121/mock_ui_v11.html`
-- Map editor: `http://127.0.0.1:3121/test/level_map_editor_v1.html`
-- Map preview: `http://127.0.0.1:3121/test/level_map_preview_v1.html`
+- Main flow: `http://127.0.0.1:3124/mock_ui_v11.html`
+- Shared regression runner: `http://127.0.0.1:3124/test/codex_regression_runner.html`
+- Battle presentation probe: `http://127.0.0.1:3124/test/battle_presentation_probe.html`
+- Skill editor probe: `http://127.0.0.1:3124/test/skill_editor_test_v3.html`
+- Level map editor: `http://127.0.0.1:3124/test/level_map_editor_v1.html`
 
-## Skill Startup
+## Selection Questions
 
-```bash
-cd /home/wgw/CodexProject/NodeConsoleApp2/.worktree/skill-optimization-20260518/NodeConsoleApp2
-npm install --package-lock=false --no-audit --no-fund --prefer-offline --progress=false
-npm install --package-lock=false --no-save --no-audit --no-fund --prefer-offline --progress=false jsdom
-PORT=3122 node app.js
-```
+Use this branch to answer these questions with evidence, not preference:
 
-Open:
+1. Can the current web runtime meet the expected stability, animation, effect, and tooling needs with reasonable effort?
+2. If not, which engine reduces production risk most: Unity, Unreal Engine, Godot, Phaser/PixiJS, Cocos Creator, or another option?
+3. Which parts of the current data model, editors, map tooling, skill tooling, buff tooling, and battle logic can be reused?
+4. What is the migration cost for gameplay runtime, authoring tools, asset pipeline, testing, save data, and deployment?
+5. What proof should be built before committing to a full migration?
 
-- Main flow: `http://127.0.0.1:3122/mock_ui_v11.html`
-- Shared regression runner: `http://127.0.0.1:3122/test/codex_regression_runner.html`
-- Skill contract probe: `http://127.0.0.1:3122/test/skill_contract_probe.html`
+## Recommended Document Targets
 
-## Enemy Startup
-
-```bash
-cd /home/wgw/CodexProject/NodeConsoleApp2/.worktree/enemy-design-20260522/NodeConsoleApp2
-npm install --package-lock=false --no-audit --no-fund --prefer-offline --progress=false
-npm install --package-lock=false --no-save --no-audit --no-fund --prefer-offline --progress=false jsdom
-PORT=3123 node app.js
-```
-
-Open:
-
-- Main flow: `http://127.0.0.1:3123/mock_ui_v11.html`
-- Shared regression runner: `http://127.0.0.1:3123/test/codex_regression_runner.html`
-- Battle presentation probe: `http://127.0.0.1:3123/test/battle_presentation_probe.html`
-
-Primary enemy fact sources:
-
-- `NodeConsoleApp2/assets/data/enemies.json`
-- `NodeConsoleApp2/script/engine/EnemyActionPlanner.js`
-- `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S2_战斗运行时/11-敌人系统(enemy_design)-设计说明.md`
+- Selection analysis:
+  `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/00_总纲/04-真实实现技术选型(engine_selection)-分析文档.md`
+- Execution plan:
+  `NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/27-WBS-实现技术选型验证.md`
+- Prototype notes or screenshots:
+  `NodeConsoleApp2/DOC/CODEX_DOC/08_原型与附图/2026-05-27-真实实现技术选型验证/`
 
 ## Baseline Checks
 
 ```bash
-cd /home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2
-node --test test/level_map_pack_io.test.mjs test/level_map_workspace.test.mjs test/level_map_editor_page.test.mjs test/level_map_preview_page.test.mjs test/level_select_map_runtime.test.mjs test/level_select_map_view.test.mjs test/d1_information_priority.test.mjs test/c_growth_ui_regression.test.mjs
-node --test test/skill_tree_visual_redesign.test.mjs test/skill_legacy_field_retirement.test.mjs test/c_growth_ui_regression.test.mjs test/d1_ui_modal_semantics.test.mjs test/c3_skill_contract_remediation.test.mjs test/skill_id_copy_rule.test.mjs
-node --test test/skill_buff_battle_robot.test.mjs test/d3_battle_presentation_contract.test.mjs test/level_select_map_runtime.test.mjs
+cd /home/wgw/CodexProject/NodeConsoleApp2/.worktree/engine-selection-20260527/NodeConsoleApp2
+npm test
+node --test test/campaign_balance_content.test.mjs test/acceptance_click_smoke_contract.test.mjs test/skill_growth_tree_authoring_pack.test.mjs
 ```
 
 ## Notes
 
-- Keep map-specific changes in the map worktree and skill-specific changes in the skill worktree until they are intentionally merged.
-- Keep enemy-specific data, AI, battle-runtime, and enemy-design document work in the enemy worktree until it is intentionally merged.
+- Keep this branch focused on engine selection, migration feasibility, runtime prototype spikes, and decision evidence.
+- Do not mix map-only, skill-only, or enemy-only content work into this branch unless it is needed to evaluate engine fit.
 - Keep `.worktree/` project-local and ignored by Git.
-- `npm ci` currently fails because `package.json` and `package-lock.json` are not synchronized for the Spine dependency set. Use the startup install commands above until the lockfile is intentionally repaired.
-- Before adding or adjusting formal skills, read `NodeConsoleApp2/DOC/CODEX_DOC/04_研发文档/18-技能新增Codex护栏与排布检查规程.md` and run `node tools/validate_skill_authoring_guard.mjs <skill-json> assets/data/buffs_v2_7.json`.
+- `npm ci` may fail if `package.json` and `package-lock.json` drift. Use the startup install commands above unless the lockfile is intentionally repaired.
