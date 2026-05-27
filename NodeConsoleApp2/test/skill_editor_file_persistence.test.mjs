@@ -619,6 +619,82 @@ test('SkillEditor refreshes and loads recent skill JSON versions from the toolba
   assert.equal(editor.loadedPath, 'assets/skill_packs/authoring/skills_melee_v4_5_20260522_010203.json');
 });
 
+test('SkillEditor draws editor connections with only horizontal and vertical segments', async () => {
+  const { SkillEditor } = await importSkillEditorModule();
+  const appended = [];
+  const originalDocument = global.document;
+  global.document = {
+    createElementNS(namespace, tagName) {
+      assert.equal(namespace, 'http://www.w3.org/2000/svg');
+      assert.equal(tagName, 'polyline');
+      const attrs = new Map();
+      return {
+        setAttribute(name, value) {
+          attrs.set(name, String(value));
+        },
+        getAttribute(name) {
+          return attrs.get(name) || '';
+        },
+        addEventListener() {}
+      };
+    }
+  };
+
+  try {
+    const editor = Object.create(SkillEditor.prototype);
+    editor.GRID_SIZE = 100;
+    editor.NODE_SIZE = 72;
+    editor.NODE_HALF = 36;
+    editor.CONNECTION_MARGIN = 12;
+    editor.ANCHOR_HYSTERESIS_PX = 14;
+    editor.selectedConnection = null;
+    editor.elSvgLayer = {
+      appendChild(node) {
+        appended.push(node);
+      }
+    };
+
+    const sourceMeta = { x: 614, y: 614 };
+    const targetMeta = { x: 514, y: 814 };
+    editor.drawConnection(
+      { id: 'skill_parent', editorMeta: sourceMeta },
+      { id: 'skill_child', editorMeta: targetMeta }
+    );
+
+    assert.equal(appended.length, 1);
+    const points = appended[0].getAttribute('points')
+      .trim()
+      .split(/\s+/u)
+      .map(point => point.split(',').map(Number));
+
+    assert(points.length >= 2, 'connection should include multiple polyline points');
+    for (let i = 1; i < points.length; i += 1) {
+      const [prevX, prevY] = points[i - 1];
+      const [x, y] = points[i];
+      assert(
+        prevX === x || prevY === y,
+        `segment ${i} should be orthogonal: ${prevX},${prevY} -> ${x},${y}`
+      );
+    }
+
+    const horizontalSegments = [];
+    for (let i = 1; i < points.length; i += 1) {
+      const [prevX, prevY] = points[i - 1];
+      const [x, y] = points[i];
+      if (prevX !== x && prevY === y) horizontalSegments.push({ y });
+    }
+    const expectedMidY = (sourceMeta.y + editor.NODE_SIZE + targetMeta.y) / 2;
+    assert.equal(horizontalSegments.length, 1);
+    assert.equal(horizontalSegments[0].y, expectedMidY);
+  } finally {
+    if (originalDocument === undefined) {
+      delete global.document;
+    } else {
+      global.document = originalDocument;
+    }
+  }
+});
+
 test('SkillEditor loads the newest sibling buffs pack after loading a project skill pack', async () => {
   const { SkillEditor } = await importSkillEditorModule();
   const editor = Object.create(SkillEditor.prototype);

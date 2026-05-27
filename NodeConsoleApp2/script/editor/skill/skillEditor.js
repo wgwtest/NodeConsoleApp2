@@ -824,11 +824,11 @@ export class SkillEditor {
         const margin = this.CONNECTION_MARGIN;
         const leaveY = start.dir === 'bottom' ? start.y + margin : start.y - margin;
         const enterY = end.dir === 'top' ? end.y - margin : end.y + margin;
-        let midY = (leaveY + enterY) / 2;
-        midY = this.snapToGridLine(midY);
+        const midY = (start.y + end.y) / 2;
         const points = [
             [start.x, start.y],
             [start.x, leaveY],
+            [start.x, midY],
             [end.x, midY],
             [end.x, enterY],
             [end.x, end.y],
