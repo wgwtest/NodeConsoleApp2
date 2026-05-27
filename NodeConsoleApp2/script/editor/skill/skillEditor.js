@@ -825,7 +825,16 @@ export class SkillEditor {
         const parents = Array.isArray(targetNode.prerequisites) ? targetNode.prerequisites : [];
         if (parents.length <= 1) return centerX;
 
-        const sourceIndex = parents.indexOf(sourceNode.id);
+        const orderedParents = parents
+            .map((parentId, index) => ({ parentId, index, node: this.getSkillById(parentId) }))
+            .sort((a, b) => {
+                const ax = a.node?.editorMeta?.x ?? 0;
+                const bx = b.node?.editorMeta?.x ?? 0;
+                if (ax !== bx) return ax - bx;
+                return a.index - b.index;
+            })
+            .map(item => item.parentId);
+        const sourceIndex = orderedParents.indexOf(sourceNode.id);
         if (sourceIndex < 0) return centerX;
 
         const spread = Math.min(this.NODE_HALF - 10, 16);

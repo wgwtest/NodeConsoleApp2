@@ -804,6 +804,27 @@ test('SkillEditor offsets incoming endpoints for targets with multiple prerequis
   }
 });
 
+test('SkillEditor assigns incoming endpoint order by source node position instead of prerequisite order', async () => {
+  const { SkillEditor } = await importSkillEditorModule();
+  const editor = Object.create(SkillEditor.prototype);
+  editor.NODE_SIZE = 72;
+  editor.NODE_HALF = 36;
+  editor.skills = [
+    { id: 'right_parent', editorMeta: { x: 814, y: 814 } },
+    { id: 'left_parent', editorMeta: { x: 614, y: 814 } },
+    {
+      id: 'merged_child',
+      prerequisites: ['right_parent', 'left_parent'],
+      editorMeta: { x: 814, y: 1014 }
+    }
+  ];
+
+  const rightEndpointX = editor.getIncomingAnchorX(editor.skills[0], editor.skills[2]);
+  const leftEndpointX = editor.getIncomingAnchorX(editor.skills[1], editor.skills[2]);
+
+  assert(leftEndpointX < rightEndpointX, 'left source should land on the left target endpoint even when listed second');
+});
+
 test('sword rework descriptions are player-facing summaries with costs and effects', async () => {
   const packPath = path.join(projectRoot, 'assets', 'skill_packs', 'authoring', 'skills_melee_v4_5_sword_rework_20260527_230444.json');
   const pack = JSON.parse(await fs.readFile(packPath, 'utf8'));
