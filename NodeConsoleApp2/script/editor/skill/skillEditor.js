@@ -810,13 +810,31 @@ export class SkillEditor {
         if (verticalDir === 'down') {
             return [
                 { x: s.x + this.NODE_HALF, y: s.y + this.NODE_SIZE, dir: 'bottom' },
-                { x: t.x + this.NODE_HALF, y: t.y, dir: 'top' },
+                { x: this.getIncomingAnchorX(sourceNode, targetNode), y: t.y, dir: 'top' },
             ];
         }
         return [
             { x: s.x + this.NODE_HALF, y: s.y, dir: 'top' },
-            { x: t.x + this.NODE_HALF, y: t.y + this.NODE_SIZE, dir: 'bottom' },
+            { x: this.getIncomingAnchorX(sourceNode, targetNode), y: t.y + this.NODE_SIZE, dir: 'bottom' },
         ];
+    }
+
+    getIncomingAnchorX(sourceNode, targetNode) {
+        const t = targetNode.editorMeta || { x: 0 };
+        const centerX = t.x + this.NODE_HALF;
+        const parents = Array.isArray(targetNode.prerequisites) ? targetNode.prerequisites : [];
+        if (parents.length <= 1) return centerX;
+
+        const sourceIndex = parents.indexOf(sourceNode.id);
+        if (sourceIndex < 0) return centerX;
+
+        const spread = Math.min(this.NODE_HALF - 10, 16);
+        if (parents.length === 2) {
+            return centerX + (sourceIndex === 0 ? -spread : spread);
+        }
+
+        const step = Math.min(14, Math.max(8, (this.NODE_SIZE - 24) / (parents.length - 1)));
+        return centerX + (sourceIndex - ((parents.length - 1) / 2)) * step;
     }
 
     drawConnection(sourceNode, targetNode) {
@@ -834,21 +852,28 @@ export class SkillEditor {
             [end.x, end.y],
         ];
         const pathStr = points.map(p => `${p[0]},${p[1]}`).join(' ');
-        const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-        polyline.setAttribute('points', pathStr);
-        polyline.setAttribute('class', 'connection-line');
-        polyline.setAttribute('marker-end', 'url(#arrowhead)');
-        if (this.selectedConnection && this.selectedConnection.source === sourceNode.id && this.selectedConnection.target === targetNode.id) {
-            polyline.setAttribute('stroke', '#ff0000');
-            polyline.setAttribute('stroke-width', '4');
-        }
-        polyline.addEventListener('click', (ev) => {
+        const handleConnectionClick = (ev) => {
             ev.stopPropagation();
             this.selectedConnection = { source: sourceNode.id, target: targetNode.id };
             this.clearSelection();
             this.renderNodes();
             this.renderConnections();
-        });
+        };
+        const hitLine = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        hitLine.setAttribute('points', pathStr);
+        hitLine.setAttribute('class', 'connection-hit-line');
+        hitLine.setAttribute('stroke', 'transparent');
+        hitLine.setAttribute('stroke-width', '8');
+        hitLine.setAttribute('pointer-events', 'stroke');
+        hitLine.addEventListener('click', handleConnectionClick);
+        this.elSvgLayer.appendChild(hitLine);
+
+        const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        polyline.setAttribute('points', pathStr);
+        const isSelected = this.selectedConnection && this.selectedConnection.source === sourceNode.id && this.selectedConnection.target === targetNode.id;
+        polyline.setAttribute('class', isSelected ? 'connection-line is-selected' : 'connection-line');
+        polyline.setAttribute('marker-end', 'url(#arrowhead)');
+        polyline.addEventListener('click', handleConnectionClick);
         this.elSvgLayer.appendChild(polyline);
     }
 

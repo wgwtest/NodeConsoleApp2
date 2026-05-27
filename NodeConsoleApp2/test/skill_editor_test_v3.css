@@ -455,8 +455,21 @@
 	cursor: pointer;
 }
 
-.skill-editor-v3 .connection-line:hover {
+.skill-editor-v3 .connection-hit-line {
+	fill: none;
+	stroke: transparent;
+	stroke-width: 8;
+	cursor: pointer;
+}
+
+.skill-editor-v3 .connection-line:hover,
+.skill-editor-v3 .connection-hit-line:hover + .connection-line {
 	stroke: #ff9900;
+	stroke-width: 4;
+}
+
+.skill-editor-v3 .connection-line.is-selected {
+	stroke: #ff0000;
 	stroke-width: 4;
 }
 

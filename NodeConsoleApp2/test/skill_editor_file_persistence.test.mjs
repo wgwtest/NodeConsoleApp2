@@ -628,6 +628,7 @@ test('SkillEditor draws editor connections with only horizontal and vertical seg
       assert.equal(namespace, 'http://www.w3.org/2000/svg');
       assert.equal(tagName, 'polyline');
       const attrs = new Map();
+      const listeners = new Map();
       return {
         setAttribute(name, value) {
           attrs.set(name, String(value));
@@ -635,7 +636,12 @@ test('SkillEditor draws editor connections with only horizontal and vertical seg
         getAttribute(name) {
           return attrs.get(name) || '';
         },
-        addEventListener() {}
+        addEventListener(name, handler) {
+          listeners.set(name, handler);
+        },
+        dispatch(name, event) {
+          listeners.get(name)?.(event);
+        }
       };
     }
   };
@@ -648,6 +654,15 @@ test('SkillEditor draws editor connections with only horizontal and vertical seg
     editor.CONNECTION_MARGIN = 12;
     editor.ANCHOR_HYSTERESIS_PX = 14;
     editor.selectedConnection = null;
+    editor.clearSelection = () => {
+      editor.didClearSelection = true;
+    };
+    editor.renderNodes = () => {
+      editor.renderNodeCalls = (editor.renderNodeCalls || 0) + 1;
+    };
+    editor.renderConnections = () => {
+      editor.renderConnectionCalls = (editor.renderConnectionCalls || 0) + 1;
+    };
     editor.elSvgLayer = {
       appendChild(node) {
         appended.push(node);
@@ -661,8 +676,16 @@ test('SkillEditor draws editor connections with only horizontal and vertical seg
       { id: 'skill_child', editorMeta: targetMeta }
     );
 
-    assert.equal(appended.length, 1);
-    const points = appended[0].getAttribute('points')
+    assert.equal(appended.length, 2);
+    const [hitLine, visibleLine] = appended;
+    assert.equal(hitLine.getAttribute('class'), 'connection-hit-line');
+    assert.equal(hitLine.getAttribute('stroke'), 'transparent');
+    assert.equal(hitLine.getAttribute('stroke-width'), '8');
+    assert.equal(hitLine.getAttribute('pointer-events'), 'stroke');
+    assert.equal(visibleLine.getAttribute('class'), 'connection-line');
+    assert.equal(hitLine.getAttribute('points'), visibleLine.getAttribute('points'));
+
+    const points = visibleLine.getAttribute('points')
       .trim()
       .split(/\s+/u)
       .map(point => point.split(',').map(Number));
@@ -686,6 +709,24 @@ test('SkillEditor draws editor connections with only horizontal and vertical seg
     const expectedMidY = (sourceMeta.y + editor.NODE_SIZE + targetMeta.y) / 2;
     assert.equal(horizontalSegments.length, 1);
     assert.equal(horizontalSegments[0].y, expectedMidY);
+
+    let stopped = false;
+    hitLine.dispatch('click', { stopPropagation: () => { stopped = true; } });
+    assert.equal(stopped, true);
+    assert.deepEqual(editor.selectedConnection, { source: 'skill_parent', target: 'skill_child' });
+    assert.equal(editor.didClearSelection, true);
+    assert.equal(editor.renderNodeCalls, 1);
+    assert.equal(editor.renderConnectionCalls, 1);
+
+    appended.length = 0;
+    editor.selectedConnection = { source: 'skill_parent', target: 'skill_child' };
+    editor.drawConnection(
+      { id: 'skill_parent', editorMeta: sourceMeta },
+      { id: 'skill_child', editorMeta: targetMeta }
+    );
+    assert.equal(appended[1].getAttribute('class'), 'connection-line is-selected');
+    assert.equal(appended[1].getAttribute('stroke'), '');
+    assert.equal(appended[1].getAttribute('stroke-width'), '');
   } finally {
     if (originalDocument === undefined) {
       delete global.document;
@@ -693,6 +734,101 @@ test('SkillEditor draws editor connections with only horizontal and vertical seg
       global.document = originalDocument;
     }
   }
+});
+
+test('SkillEditor offsets incoming endpoints for targets with multiple prerequisites', async () => {
+  const { SkillEditor } = await importSkillEditorModule();
+  const appended = [];
+  const originalDocument = global.document;
+  global.document = {
+    createElementNS(namespace, tagName) {
+      assert.equal(namespace, 'http://www.w3.org/2000/svg');
+      assert.equal(tagName, 'polyline');
+      const attrs = new Map();
+      return {
+        setAttribute(name, value) {
+          attrs.set(name, String(value));
+        },
+        getAttribute(name) {
+          return attrs.get(name) || '';
+        },
+        addEventListener() {}
+      };
+    }
+  };
+
+  try {
+    const editor = Object.create(SkillEditor.prototype);
+    editor.GRID_SIZE = 100;
+    editor.NODE_SIZE = 72;
+    editor.NODE_HALF = 36;
+    editor.CONNECTION_MARGIN = 12;
+    editor.ANCHOR_HYSTERESIS_PX = 14;
+    editor.selectedConnection = null;
+    editor.clearSelection = () => {};
+    editor.renderNodes = () => {};
+    editor.renderConnections = () => {};
+    editor.skills = [
+      { id: 'left_parent', editorMeta: { x: 414, y: 1014 } },
+      { id: 'right_parent', editorMeta: { x: 614, y: 1014 } },
+      { id: 'merged_child', prerequisites: ['left_parent', 'right_parent'], editorMeta: { x: 514, y: 1214 } }
+    ];
+    editor.elSvgLayer = {
+      appendChild(node) {
+        appended.push(node);
+      }
+    };
+
+    editor.drawConnection(editor.skills[0], editor.skills[2]);
+    editor.drawConnection(editor.skills[1], editor.skills[2]);
+
+    const visibleLines = appended.filter(node => node.getAttribute('class').startsWith('connection-line'));
+    assert.equal(visibleLines.length, 2);
+    const endpoints = visibleLines.map(line => {
+      const points = line.getAttribute('points').trim().split(/\s+/u);
+      return points.at(-1).split(',').map(Number);
+    });
+
+    assert.notEqual(endpoints[0][0], endpoints[1][0], 'incoming endpoints should not share the same x coordinate');
+    assert.deepEqual(
+      endpoints.map(point => point[1]),
+      [1214, 1214],
+      'incoming endpoints should still land on the target top edge'
+    );
+  } finally {
+    if (originalDocument === undefined) {
+      delete global.document;
+    } else {
+      global.document = originalDocument;
+    }
+  }
+});
+
+test('sword rework descriptions are player-facing summaries with costs and effects', async () => {
+  const packPath = path.join(projectRoot, 'assets', 'skill_packs', 'authoring', 'skills_melee_v4_5_sword_rework_20260527_230444.json');
+  const pack = JSON.parse(await fs.readFile(packPath, 'utf8'));
+  const swordSkills = pack.skills.filter(skill => (
+    skill.editorMeta?.groupLabel === '剑系'
+    || skill.editorMeta?.group === '剑系'
+    || String(skill.editorMeta?.growthTrack || '').startsWith('sword')
+  ));
+  const forbidden = /低\s*KP|低\s*AP|基准|启动器|加深器|兑现|当前运行时|设计上|不强制|不消耗|后续支持|高约束/u;
+
+  assert(swordSkills.length > 0, 'expected sword skills in sword rework pack');
+  for (const skill of swordSkills) {
+    assert.doesNotMatch(skill.description || '', forbidden, `${skill.name} description leaks design language`);
+    assert.match(skill.description || '', /学习\s*\d+\s*KP/u, `${skill.name} description should include learning KP`);
+    assert.match(skill.description || '', /消耗\s*\d+\s*AP/u, `${skill.name} description should include AP cost`);
+    assert.match(skill.description || '', /(造成|回复|施加|获得|进入)/u, `${skill.name} description should summarize player-visible effect`);
+  }
+});
+
+test('skill editor stylesheet gives transparent connection hit lines an 8px response area', async () => {
+  const css = await fs.readFile(path.join(projectRoot, 'test', 'skill_editor_test_v3.css'), 'utf8');
+  assert.match(css, /\.skill-editor-v3 \.connection-hit-line\s*\{[\s\S]*stroke-width:\s*8/u);
+  assert.match(css, /\.skill-editor-v3 \.connection-hit-line:hover \+ \.connection-line\s*\{[\s\S]*stroke:\s*#ff9900/u);
+  assert.match(css, /\.skill-editor-v3 \.connection-line\.is-selected\s*\{[\s\S]*stroke:\s*#ff0000/u);
+  assert.match(css, /\.skill-editor-v3 \.connection-line\.is-selected\s*\{[\s\S]*stroke-width:\s*4/u);
 });
 
 test('SkillEditor loads the newest sibling buffs pack after loading a project skill pack', async () => {

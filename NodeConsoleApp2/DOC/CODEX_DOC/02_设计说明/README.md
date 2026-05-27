@@ -18,14 +18,15 @@
 
 1. [00_总纲/00-NodeConsoleApp2游戏系统总体设计](./00_总纲/00-NodeConsoleApp2游戏系统总体设计.md)
 2. [00_总纲/01-设计说明文档治理与粒度规则](./00_总纲/01-设计说明文档治理与粒度规则.md)
-3. [S1_主游戏流程/README](./S1_主游戏流程/README.md)
-4. [S2_战斗运行时/README](./S2_战斗运行时/README.md)
-5. [S3_关卡地图与编辑器/README](./S3_关卡地图与编辑器/README.md)
-6. [S4_技能系统与编辑器/README](./S4_技能系统与编辑器/README.md)
-7. [S5_Buff系统与编辑器/README](./S5_Buff系统与编辑器/README.md)
-8. [S6_敌人系统与编辑器/README](./S6_敌人系统与编辑器/README.md)
-9. [S7_数据存档与内容契约/README](./S7_数据存档与内容契约/README.md)
-10. [S8_UI与交互基线/README](./S8_UI与交互基线/README.md)
+3. [00_总纲/03-战斗数值基准模型](./00_总纲/03-战斗数值基准模型(combat_numeric_baseline)-设计说明.md)
+4. [S1_主游戏流程/README](./S1_主游戏流程/README.md)
+5. [S2_战斗运行时/README](./S2_战斗运行时/README.md)
+6. [S3_关卡地图与编辑器/README](./S3_关卡地图与编辑器/README.md)
+7. [S4_技能系统与编辑器/README](./S4_技能系统与编辑器/README.md)
+8. [S5_Buff系统与编辑器/README](./S5_Buff系统与编辑器/README.md)
+9. [S6_敌人系统与编辑器/README](./S6_敌人系统与编辑器/README.md)
+10. [S7_数据存档与内容契约/README](./S7_数据存档与内容契约/README.md)
+11. [S8_UI与交互基线/README](./S8_UI与交互基线/README.md)
 
 ## 3. 子系统目录
 
@@ -49,6 +50,7 @@
 | --- | --- |
 | [00-NodeConsoleApp2游戏系统总体设计](./00_总纲/00-NodeConsoleApp2游戏系统总体设计.md) | 游戏系统总体结构与子系统关系 |
 | [01-设计说明文档治理与粒度规则](./00_总纲/01-设计说明文档治理与粒度规则.md) | 设计文档分层、命名、粒度和迁移规则 |
+| [03-战斗数值基准模型(combat_numeric_baseline)-设计说明](./00_总纲/03-战斗数值基准模型(combat_numeric_baseline)-设计说明.md) | 技能、Buff、敌人和关卡平衡共用的 AP 与伤害基准 |
 
 ### 4.2 S1 主游戏流程
 
