@@ -147,7 +147,7 @@
     "buff_bleed": {
       "id": "buff_bleed",
       "name": "流血",
-      "description": "持续伤害：每回合开始时对自身造成 5 点流血伤害（可叠加，刷新持续时间）。",
+      "description": "持续伤害：每回合结束时对自身造成 5 点流血伤害；重复施加会增加持续回合数，不叠加伤害层数。",
       "type": "debuff",
       "tags": [
         "physical",
@@ -155,13 +155,13 @@
       ],
       "lifecycle": {
         "duration": "${buff_duration}",
-        "maxStacks": "${maxVal}",
-        "stackStrategy": "add",
+        "maxStacks": 1,
+        "stackStrategy": "extend",
         "removeOnBattleEnd": true
       },
       "effects": [
         {
-          "trigger": "onTurnStart",
+          "trigger": "onTurnEnd",
           "action": "DAMAGE_HP",
           "target": "self",
           "payload": {
@@ -177,12 +177,6 @@
           "type": "number",
           "default": 2,
           "labelCn": "持续时间",
-          "overrideable": true
-        },
-        "maxVal": {
-          "type": "number",
-          "default": 5,
-          "labelCn": "堆叠层数",
           "overrideable": true
         }
       }
@@ -623,7 +617,7 @@
     "buff_tear_wound": {
       "id": "buff_tear_wound",
       "name": "撕裂伤口",
-      "description": "撕裂状态：持有者行动前给自己增加 1 层流血。",
+      "description": "撕裂状态：持有者行动前给自己增加 2 回合流血。",
       "icon": "",
       "type": "debuff",
       "tags": [
@@ -645,10 +639,11 @@
           "payload": {
             "value": "buff_bleed",
             "params": {
-              "buff_duration": 2,
-              "maxVal": 5
+              "buff_duration": 2
             },
-            "stacks": 1
+            "duration": 2,
+            "stackStrategy": "extend",
+            "extendBy": 2
           },
           "_payloadJson": ""
         }

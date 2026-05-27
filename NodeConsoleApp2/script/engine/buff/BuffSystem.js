@@ -287,7 +287,8 @@ export default class BuffSystem {
 			stacks: options.stacks,
 			duration: options.duration,
 			stackStrategy: options.stackStrategy,
-			maxStacks: options.maxStacks
+			maxStacks: options.maxStacks,
+			extendBy: options.extendBy
 		});
 	}
 

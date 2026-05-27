@@ -1407,6 +1407,15 @@ class CoreEngine {
             const multiplier = Number(source.multiplier ?? amount ?? 1) || 0;
             return (Number(stacks) || 0) * multiplier;
         }
+        if (amountType === 'BUFF_REMAINING') {
+            const source = effect?.amountSource || {};
+            const owner = source.owner === 'actor' || source.owner === 'self'
+                ? actor
+                : (source.owner === 'skillTarget' ? skillTarget : target);
+            const remaining = owner?.buffs?.getRemaining && source.buffId ? owner.buffs.getRemaining(source.buffId) : Number(source.missingAs ?? 0);
+            const multiplier = Number(source.multiplier ?? amount ?? 1) || 0;
+            return (Number(remaining) || 0) * multiplier;
+        }
         let base = 0;
         if (effect?.effectType === 'DMG_ARMOR' || effect?.effectType === 'ARMOR_ADD') {
             base = Number(part?.current ?? part?.max ?? 0) || 0;
@@ -1623,7 +1632,11 @@ class CoreEngine {
             if (Number.isFinite(chance) && chance < 1 && Math.random() > chance) continue;
             const buffInst = target.buffs.add(row.buffId, {
                 duration: row.duration,
-                params: row.params
+                params: row.params,
+                stacks: row.stacks,
+                stackStrategy: row.stackStrategy,
+                maxStacks: row.maxStacks,
+                extendBy: row.extendBy
             });
             applied.push({
                 kind: 'apply',

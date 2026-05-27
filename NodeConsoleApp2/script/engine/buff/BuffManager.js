@@ -26,6 +26,11 @@ export default class BuffManager {
 		return b ? b.stacks : 0;
 	}
 
+	getRemaining(buffId) {
+		const b = this._byId.get(buffId);
+		return b ? b.remaining : 0;
+	}
+
 	add(buffId, options = {}) {
 		const def = this.registry.getDefinition(buffId, options);
 		if (!def) {
@@ -165,7 +170,10 @@ export default class BuffManager {
 
 		if (strategy === 'extend') {
 			if (!existing.isPermanent()) {
-				existing.remaining += ((options.extendBy !== undefined) ? options.extendBy : 1);
+				const extendBy = (options.extendBy !== undefined)
+					? options.extendBy
+					: (options.duration !== undefined ? options.duration : (lc.duration !== undefined ? lc.duration : existing.duration));
+				existing.remaining += (Number(extendBy) || 0);
 			}
 			return;
 		}

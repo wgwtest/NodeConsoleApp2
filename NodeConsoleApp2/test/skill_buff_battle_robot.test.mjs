@@ -323,7 +323,7 @@ function findTimelineResult(eventBus, skillId) {
     ?.result || null;
 }
 
-test('战斗机器人按真实回合流验证撕裂伤口、迸发、吸血与 Buff 层数结算', async () => {
+test('战斗机器人按真实回合流验证撕裂伤口、迸发、吸血与流血持续回合结算', async () => {
   const { driver, eventBus, player, enemy } = await buildBattleRobotHarness();
 
   driver.startBattle();
@@ -341,6 +341,7 @@ test('战斗机器人按真实回合流验证撕裂伤口、迸发、吸血与 B
   });
   assert.equal(enemy.buffs.has('buff_tear_wound'), true);
   assert.equal(enemy.buffs.getStacks('buff_bleed'), 1);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 1);
   assert.equal(enemy.hp, 95);
   assert.equal(enemy.stats.hp, 95);
 
@@ -353,7 +354,8 @@ test('战斗机器人按真实回合流验证撕裂伤口、迸发、吸血与 B
   const burstResult = findTimelineResult(eventBus, 'skill_execute_copy_1770043820577');
   assert.equal(burstResult?.actions?.[0]?.damage, 5);
   assert.equal(burstResult?.actions?.[0]?.targetHpRemaining, 90);
-  assert.equal(enemy.buffs.getStacks('buff_bleed'), 2);
+  assert.equal(enemy.buffs.getStacks('buff_bleed'), 1);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 2);
   assert.equal(enemy.hp, 85);
   assert.equal(enemy.stats.hp, 85);
 
@@ -366,9 +368,11 @@ test('战斗机器人按真实回合流验证撕裂伤口、迸发、吸血与 B
   const drainResult = findTimelineResult(eventBus, 'skill_execute_copy_1770044052832');
   assert.equal(drainResult?.actions?.[0]?.heal, 8);
   assert.equal(player.stats.hp, 78);
-  assert.equal(enemy.hp, 85);
-  assert.equal(enemy.stats.hp, 85);
-  assert.equal(enemy.buffs.has('buff_bleed'), false);
+  assert.equal(enemy.hp, 80);
+  assert.equal(enemy.stats.hp, 80);
+  assert.equal(enemy.buffs.has('buff_bleed'), true);
+  assert.equal(enemy.buffs.getStacks('buff_bleed'), 1);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 1);
 
   const history = driver.data.dataConfig.runtime.history;
   assert.equal(history[0].actions.length, 2);

@@ -107,7 +107,8 @@
         "ABS",
         "PCT_MAX",
         "PCT_CURRENT",
-        "BUFF_STACKS"
+        "BUFF_STACKS",
+        "BUFF_REMAINING"
       ],
       "buffRefTargets": [
         "self",
@@ -2212,7 +2213,7 @@
       "id": "skill_shockwave_copy_1770042951717",
       "name": "撕裂伤口",
       "rarity": "Rare",
-      "description": "使对方获得buff，撕裂伤口，在撕裂伤口情况下，每次行动，流血+1\n【问题：需要补充流血buff】",
+      "description": "学习 3 KP；消耗 1 AP。对目标护甲造成 5 点伤害，并施加 2 回合撕裂伤口；目标行动前会增加 2 回合流血。",
       "prerequisites": [
         "skill_1771769351059"
       ],
@@ -2306,7 +2307,7 @@
       "id": "skill_execute_copy_1770043820577",
       "name": "迸发",
       "rarity": "Epic",
-      "description": "对指定部位的护甲，造成5倍流血的伤害",
+      "description": "按目标流血剩余回合造成生命伤害，每回合造成 5 点。",
       "prerequisites": [
         "skill_shockwave_copy_1770042951717"
       ],
@@ -2372,14 +2373,14 @@
           "effect": {
             "effectType": "DMG_HP",
             "amount": 5,
-            "amountType": "BUFF_STACKS",
+            "amountType": "BUFF_REMAINING",
             "amountSource": {
               "owner": "skillTarget",
               "buffId": "buff_bleed",
               "multiplier": 5,
               "missingAs": 0
             },
-            "note": "按目标流血层数造成伤害；当前不消耗流血层数。"
+            "note": "按目标流血剩余回合造成伤害；当前不消耗流血剩余回合。"
           }
         }
       ]
@@ -2388,7 +2389,7 @@
       "id": "skill_execute_copy_1770044052832",
       "name": "吸血",
       "rarity": "Epic",
-      "description": "获取流血层数*4的血量",
+      "description": "按目标流血剩余回合回复自身生命，每回合回复 4 点。",
       "prerequisites": [
         "skill_shockwave_copy_1770042951717"
       ],
@@ -2463,14 +2464,14 @@
           "effect": {
             "effectType": "HEAL",
             "amount": 2,
-            "amountType": "BUFF_STACKS",
+            "amountType": "BUFF_REMAINING",
             "amountSource": {
               "owner": "skillTarget",
               "buffId": "buff_bleed",
               "multiplier": 4,
               "missingAs": 0
             },
-            "note": "按目标流血层数回复自身 HP；当前不消耗流血层数。"
+            "note": "按目标流血剩余回合回复自身 HP；当前不消耗流血剩余回合。"
           }
         }
       ]
@@ -2720,9 +2721,11 @@
             "buffId": "buff_bleed",
             "target": "enemy",
             "params": {
-              "buff_duration": 2,
-              "maxVal": 5
-            }
+              "buff_duration": 2
+            },
+            "duration": 2,
+            "stackStrategy": "extend",
+            "extendBy": 2
           }
         ],
         "remove": []
