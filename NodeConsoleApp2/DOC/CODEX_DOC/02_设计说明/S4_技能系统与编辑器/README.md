@@ -1,6 +1,6 @@
 # S4 技能系统与编辑器设计说明
 
-最后整理时间：2026-05-25
+最后整理时间：2026-05-28
 
 状态：`当前有效`
 
@@ -14,7 +14,7 @@
 
 | 文件 | 主题 |
 | --- | --- |
-| [03-技能系统(skill_design)-设计说明](./03-技能系统(skill_design)-设计说明.md) | 技能体系设计 |
+| [03-技能系统(skill_design)-设计说明](./03-技能系统(skill_design)-设计说明.md) | 技能系统与技能树软件设计：系统边界、分层结构、数据契约、运行内核、Skill/Buff 边界和验证口径 |
 | [04-技能编辑器(skill_editor_design)-设计说明](./04-技能编辑器(skill_editor_design)-设计说明.md) | 技能编辑器设计 |
 | [05-技能规划(skill_planning_design)-设计说明](./05-技能规划(skill_planning_design)-设计说明.md) | 技能规划设计 |
 | [06-技能平衡(skill_balance_design)-设计说明](./06-技能平衡(skill_balance_design)-设计说明.md) | 技能平衡设计 |
