@@ -2,7 +2,7 @@
 
 > 目标：解决“如何制作出一套合理技能”的方法论问题。
 >
-> 本文不直接给出所有技能清单，而是提供：设计原则、可量化的平衡维度、标签体系（可作为 `skills.json` / skill editor 的元数据字段），以及落地流程。
+> 本文不直接给出所有技能清单，而是提供：设计原则、可量化的平衡维度、派生分析维度，以及落地流程。派生分析维度只用于工具统计和设计讨论，不写回活动 skill schema。
 
 数值基准：技能伤害、治疗、流血、Buff 层数/持续时间兑现和 AP 成本讨论，优先遵循 [战斗数值基准模型](../00_总纲/03-战斗数值基准模型(combat_numeric_baseline)-设计说明.md)。
 
@@ -189,7 +189,7 @@
    - `hp.max`: 增加最大 HP（通常是长期 buff）
 
 4. **行动类（Action / Tempo）**
-   - `ap.cost`: 技能自身 AP 成本（配置项）
+   - `costs.ap`: 技能自身 AP 成本（配置项）
    - `ap.gain`: 返还/获得 AP（例如“专注”类技能）
    - `speed.delta`: 改变行动速度（加速/减速）
    - `turn.extra`: 额外行动/插队（若实现难度高，可作为高阶效果受限使用）
@@ -243,9 +243,11 @@
 ### 3.2 推荐维度词表
 
 1. 作用属性
-   - DMG_HP / DMG_ARMOR / PIERCE / HEAL / ARMOR_ADD / AP_GAIN / SPEED / BUFF_APPLY / BUFF_REMOVE
+   - 当前可执行 action：DMG_HP / DMG_ARMOR / HEAL / ARMOR_ADD / AP_GAIN / BUFF_REMOVE
+   - 由 `buffRefs.apply` 派生的分析维度：BUFF_APPLY
+   - 未来或非当前执行器字段：PIERCE / SPEED，不能写成当前 `actions[].effect.effectType` 事实
 2. 数值类型
-   - ABS / PCT_MAX / PCT_CURRENT / SCALING
+   - ABS / PCT_MAX / PCT_CURRENT / BUFF_STACKS / BUFF_REMAINING
 3. 生效时间点
    - INSTANT / DELAYED / ON_EVENT
 4. 持续周期
@@ -261,7 +263,7 @@
 ### 3.3 派生规则
 
 - 作用属性：从 actions[].effect.effectType 与 buffRefs 推导
-- 数值类型：从 amountType、scaling、legacy valueType 推导
+- 数值类型：从 `actions[].effect.amountType` 推导；已退役的旧读数字段不再作为当前活动口径
 - 目标与范围：从 target.subject / target.scope / target.selection 推导
 - 资源与限制：从 costs、requirements、perTurnLimit 推导
 
@@ -285,7 +287,7 @@
 
 > 目的：补齐“释放技能需要消耗什么资源、消耗多少、是否受部位与技能槽限制”的描述能力。
 >
-> 背景：当前战斗输入是“**一回合选择多个技能进行组合释放**”，因此仅用 `cost/AP` 很难完整表达约束。
+> 背景：当前战斗输入是“**一回合选择多个技能进行组合释放**”，因此仅用 `costs.ap` 很难完整表达约束。
 > 例如：
 >
 > - 同回合能否重复使用某种类型技能？
@@ -336,14 +338,14 @@
 
 注意区分两个概念：
 
-- `targetParts`：技能作用到对方哪个部位（目标维度）
-- `castParts`：技能释放依赖自身哪个部位（来源维度）
+- 目标部位：技能作用到对方哪个部位，来自 `target.selection` 或 action 级 `partOverride`。
+- 来源部位：技能释放依赖自身哪个部位，来自 `requirements.selfPart` 或 `costs.partSlot`。
 
 例：
 
-- “挥砍”可能要求 `castParts=["right_arm","left_arm"]`（任一手臂可用）
-- “盾击”要求 `castParts=["left_arm"]`（必须持盾的手臂）
-- “圣光祷言”可为 `castParts=[]`（不依赖部位，属于全身/精神类技能）
+- “挥砍”可能要求 `requirements.selfPart.parts=["right_arm","left_arm"]` 且 `mode="ANY"`（任一手臂可用）
+- “盾击”要求 `requirements.selfPart.parts=["left_arm"]`（必须持盾的手臂）
+- “圣光祷言”可不配置 `requirements.selfPart`（不依赖部位，属于全身/精神类技能）
 
 #### 5.3.3 槽位消耗（slotCost）
 
@@ -358,13 +360,14 @@
 
 ### 5.4 可落地的 Schema 建议（MVP）
 
-在不修改引擎代码的前提下，先把字段写进数据与设计文档，供编辑器与平衡工具使用：
+当前活动技能包已经采用 `requirements` 与 `costs` 表达释放门槛和资源消耗；编辑器与平衡工具应围绕这些正式字段工作。
 
-#### 5.4.1 技能侧字段（`skills.json`）
+实现状态必须单独说明：当前运行时只有 `costs.ap` 已成为 CoreEngine/TurnPlanner 的硬成本；`requirements.selfPart`、`costs.partSlot.slotCost`、`costs.perTurnLimit` 当前主要用于数据契约、编辑器展示、平衡统计和测试摘要，尚未作为 Planner/CoreEngine 的硬释放规则。任何依赖这些字段控制强度的技能，在补齐运行时校验前都只能视为设计约束，不能视为真实战斗约束。
 
-建议新增：
+#### 5.4.1 技能侧字段（`skills_melee_v4_5.json` / `skills_enemy_v1.json`）
 
-- `cost`：AP 消耗（现有）
+当前字段：
+
 - `requirements?: { ... }`：门槛
 - `costs?: { ... }`：消耗
 
@@ -374,7 +377,6 @@ MVP 示例：
 {
   "id": "skill_shield_bash",
   "name": "盾牌猛击",
-  "cost": 3,
   "speed": 0,
 
   "requirements": {
@@ -397,8 +399,8 @@ MVP 示例：
 
 说明：
 
-- `requirements.selfPart` 用于表达“依赖自身部位”；`mode` 表达 `ANY/ALL`。
-- `costs.partSlot` 用于表达“占用哪个部位的槽位”。
+- `requirements.selfPart` 用于表达“依赖自身部位”；`mode` 表达 `ANY/ALL`。当前这是内容契约，不是已执行的硬门槛。
+- `costs.partSlot` 用于表达“占用哪个部位的槽位”。当前这是内容契约，不是已执行的 `slotCost` 扣槽逻辑。
 
 #### 5.4.2 角色侧字段（Player/Enemy Template）
 
@@ -429,10 +431,10 @@ MVP 示例：
 
 这些维度不应存回技能数据，而应从正式字段实时派生，例如：
 
-- costs.ap -> RES_AP
-- costs.partSlot.slotCost > 0 -> RES_SLOT
-- requirements.selfPart 存在 -> REQ_SELF_PART
-- costs.perTurnLimit > 0 -> LIMIT_PER_TURN
+- `costs.ap` -> RES_AP
+- `costs.partSlot.slotCost > 0` -> RES_SLOT
+- `requirements.selfPart` 存在 -> REQ_SELF_PART
+- `costs.perTurnLimit > 0` -> LIMIT_PER_TURN
 
 ### 5.6 平衡性风险提示（与“一回合多技能组合”强相关）
 
@@ -453,7 +455,8 @@ MVP 示例：
 
 - `id` / `name` / `rarity` / `arch` / `derived dimensions`
 - `AP cost` / `speed`
-- `targetType` / `requiredPart`
+- `target.subject` / `target.scope` / `target.selection`
+- `requirements` / `costs.partSlot`
 - `buffRefs` 摘要（施加了哪些 buff）
 - 预期定位（输出/破甲/续航/节奏）
 - 评估指标（AP 效率、确定性、反制性、组合风险）
@@ -476,8 +479,8 @@ MVP 示例：
 
 若要快速落地，建议先稳定以下 MVP 分析维度：
 
-- 作用属性：DMG_HP / DMG_ARMOR / HEAL / ARMOR_ADD / BUFF_APPLY / BUFF_REMOVE
-- 数值类型：ABS / PCT_MAX / PCT_CURRENT
+- 作用属性：DMG_HP / DMG_ARMOR / HEAL / ARMOR_ADD / AP_GAIN / BUFF_REMOVE / BUFF_APPLY（其中 BUFF_APPLY 由 `buffRefs.apply` 派生）
+- 数值类型：ABS / PCT_MAX / PCT_CURRENT / BUFF_STACKS / BUFF_REMAINING
 - 时间点：INSTANT / ON_EVENT
 - 周期：ONE_SHOT / ONE_TURN / MULTI_TURN
 - 释放对象：SUBJECT_SELF / SUBJECT_ENEMY + SCOPE_ENTITY / SCOPE_PART / SCOPE_MULTI_PARTS

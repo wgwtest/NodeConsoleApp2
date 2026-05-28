@@ -1,268 +1,1540 @@
-# Buff/Debuff 系统设计文档 (Buff/Debuff System Design)
+# S5 Buff 系统与编辑器软件设计说明
 
-> 目标：基于 `03-技能系统(skill_design)-设计说明.md` 的理念（数据驱动、结构化约束、可演进 schema、编辑器友好），升级 Buff 体系文档与 `buffs.json` 的推荐结构。
+> 本文件是 `NodeConsoleApp2` 中 `S5 Buff 系统与编辑器` 的主软件设计说明文档。本文描述本阶段认可的目标态系统设计：系统边界、分层结构、数据契约、运行内核、编辑展示工具、验证探针、关键流程和验收口径。
 >
-> 重要原则：
-> 1) 技能只“施加/移除/引用”Buff，不内嵌 Buff 逻辑；Buff 负责自身生命周期与结算。
-> 2) Buff 数据必须具备“自解释层”（meta/枚举/字段说明），以支撑编辑器下拉、校验、迁移。
-> 3) Buff 效果模型需要“动作枚举 + payload 规范”，避免自由字符串漂移。
+> 本文不把本项目强行拆成传统前端/后端。`NodeConsoleApp2` 的技能、Buff、敌人等系统大多由前端语言和静态/本地 JSON 共同实现，因此本文采用更贴近当前工程的分层口径：数据契约层、内容装载层、运行内核层、编辑展示层、验证探针层。
+>
+> `10-Buff编辑器(buff_editor_design)-设计说明.md` 是本文的子设计文档，专门描述 Buff 编辑器的信息架构、交互、导入导出、校验面板和模拟器形态。
 
+**日期：** 2026-05-28
 
-## 0.1 当前状态规则补充：持续时间型状态与层数型状态
+**对应范围：**
 
-Buff 系统需要同时支持两类状态，但两者不能混用：
+- `S5` Buff 系统与编辑器
+- Buff 数据包：`assets/data/buffs_v2_7.json`
+- Buff 运行内核：`script/engine/buff/*`
+- Buff 编辑工具：`test/buff_editor_v4.html` 及历史编辑器页
+- Buff 运行时探针：`test/buff_runtime_probe.html`
+- 技能编辑器中的 Buff 引用能力：`test/skill_editor_test_v3.html`
 
-1. **持续时间型状态**：核心读数是 `remaining`，重复施加时增加剩余回合数，不表达“层数越高每回合伤害越高”。
-2. **层数型状态**：核心读数是 `stacks`，重复施加时增加层数，伤害或效果可以随层数变化。
+## 1. 文档目的与设计口径
 
-`流血 buff_bleed` 固定为持续时间型状态：
+### 1.1 文档目的
 
-- `buff_bleed` 没有可累加伤害层数，`stacks` 只保留为兼容字段，正常应为 1。
-- 每次施加流血，增加的是流血剩余回合数；例如施加 2 回合流血，就是在现有 `remaining` 上加 2。
-- 流血在 `onTurnEnd` 结算，固定造成 5 点 HP 伤害，然后 BuffManager 统一执行 `tickTurn()`，`remaining -= 1`。
-- 施加 1 回合流血：本回合结束时造成 5 点伤害，随后 `remaining` 归 0 并移除。
-- 施加 2 回合流血：本回合结束时造成 5 点伤害并变为 1，下回合结束再造成 5 点伤害并移除。
-- 重复施加流血不能刷新持续时间，也不能取最大值；必须是“增加持续时间”。
+本文用于回答以下设计问题：
 
-未来若设计 `中毒`，它应作为层数型状态处理：
+1. Buff 系统是什么，边界在哪里。
+2. Buff 数据、技能数据、战斗引擎、编辑器之间如何解耦。
+3. Buff 的核心对象、生命周期、状态机和事件触发规则是什么。
+4. 哪些逻辑属于 Buff 运行内核，哪些只属于编辑展示工具。
+5. `buffs_v2_7.json` 应如何组织，如何被加载、校验、编辑和运行时消费。
+6. 技能如何引用 Buff，但不内嵌 Buff 运行逻辑。
+7. Buff 系统如何测试，怎样证明某个 Buff 真的被运行时消费。
 
-- 中毒伤害可以按 `stacks` 计算。
-- 中毒每回合可按规则衰减层数。
-- 不要把中毒的层数模型套到流血上。
+### 1.2 设计口径
 
-实现边界：
+本文采用目标态软件设计说明口径：
 
-- CoreEngine 不允许写 `if buffId === "buff_bleed"` 这类专用逻辑。
-- 技能若需要读取流血资源，应通过通用 `BUFF_REMAINING` 读取指定 Buff 的 `remaining`。
-- 技能若需要读取中毒这类层数资源，应通过通用 `BUFF_STACKS` 读取指定 Buff 的 `stacks`。
-- 技能只声明施加、移除、读取哪个 `buffId`；生命周期、回合结算、持续时间递减由 Buff 系统负责。
+- 描述系统应该如何设计，不把历史争论、临时问答和一次性修补散落在正文中。
+- 描述分层职责、对象模型、状态机、运行流程和验收口径，而不只描述 JSON 字段。
+- 允许保留当前实现事实，但实现事实必须服务于架构边界说明。
+- 不采用传统“前端/后端”二分，而采用本项目实际更合适的“数据契约 / 运行内核 / 编辑展示 / 验证探针”分层。
 
-## 1. 系统综述 (System Overview)
+### 1.3 术语使用规则
 
-Buff (增益) 与 Debuff (减益) 系统是本游戏战斗逻辑的核心底层机制。它不仅用于处理战斗中的临时状态（如眩晕、中毒），也作为装备属性、被动技能、场地效果的统载体。本设计文档基于 `03-技能系统(skill_design)-设计说明.md` 和 `13-道具系统(item_design)-设计说明.md` 中定义的技能与装备，抽象出核心的 Buff 对象库。
+本文面向设计评审，优先使用中文概念名。英文名只在第一次出现时作为实现命名对照，或在文件名、类名、字段名中使用。
 
-*   **核心目标**:
-    1.  **统一性 (Unification)**: 将装备静态属性、技能持续效果、临时状态统一为“Buff对象”进行管理。
-    2.  **解耦 (Decoupling)**: 技能和装备只负责“施加”Buff，而Buff的具体效果逻辑由Buff系统独立处理。
-    3.  **数据驱动 (Data-Driven)**: 所有Buff通过JSON配置定义，支持热更新和编辑器扩展。
+核心术语：
 
----
+| 中文名 | 实现名 | 说明 |
+| --- | --- | --- |
+| Buff 定义 | `BuffDef` | JSON 中声明的 Buff 模板，不代表运行中实例 |
+| Buff 实例 | `Buff` | 战斗中挂在某个 actor 身上的状态实例 |
+| Buff 注册表 | `BuffRegistry` | 管理 Buff 定义、别名、参数默认值与模板替换 |
+| Buff 管理器 | `BuffManager` | 挂在角色/战斗对象上，负责本对象的 Buff 增删查、层数和持续时间 |
+| Buff 系统 | `BuffSystem` | 订阅战斗事件，按 trigger 分发并执行 Buff effect |
+| 动作库 | `ActionLibrary` | `BuffSystem` 内部 action 字符串到确定性函数的映射 |
+| 内容包 | `buffs_v2_7.json` | Buff 数据契约与 Buff 定义库 |
+| Buff 引用 | `buffRefs` | 技能数据中对 Buff 的施加、移除、读取声明 |
 
-## 1.2 与技能系统的边界与对齐（Alignment with Skill System）
+### 1.4 系统主路径
 
-Buff 与 Skill 的职责边界应当与 `03-技能系统(skill_design)-设计说明.md` 的“组合/约束/数据化”思路一致：
+Buff 系统的主路径是：
 
-- Skill（主动技能）负责：选择目标（含部位选择）、资源与频率约束（AP、槽位、每回合限制）、以及“施加/移除 Buff”的指令。
-- Buff（状态对象）负责：自身生命周期（duration/stack/remove）、以及在特定触发点（trigger）对战斗上下文（context）进行修改。
+```text
+Buff 数据包维护
+  -> 编辑器加载 buffs_v2_7.json
+    -> 编辑器基于 meta.enums / fieldNotes 渲染表单和校验
+      -> 技能编辑器通过 buffRefs 引用 buffId
+        -> DataManagerV2 装载 Buff 内容包
+          -> BuffRegistry 解析定义、alias、paramsSchema 和占位符
+            -> Skill / Battle 在运行中调用 BuffManager.add/remove
+              -> BuffSystem 监听战斗事件并执行 effects
+                -> BuffManager 维护 stacks / remaining / statModifiers
+                  -> 战斗运行时读取通用上下文和通用 Buff 读数
+```
 
-部位相关的 Buff 目标选择与作用范围需与技能系统保持一致，统一使用简化后的 5 部位枚举：`head` / `chest` / `abdomen` / `arm` / `leg`，不再区分左右。
+运行时验证路径是：
 
-因此，`buffs.json` 的目标不是“列一堆对象”，而是成为一个可维护、可校验、可扩展的“效果库”。
+```text
+保存或替换 Buff 数据
+  -> 独立运行时探针重新加载 DataManagerV2
+    -> 重建 BuffRegistry / BuffSystem / Probe Actor
+      -> 实际 add Buff 并触发事件
+        -> 检查 active buffs、remaining、stacks、context diff 和日志
+```
 
----
+## 2. 系统定位
 
-## 1.3 基于测试结论的改动决策（Test-driven Change Decisions）
+### 2.1 一句话定位
 
-> 来源：`test/test_doc/buff_editor_test_doc_v2.md` 第三章（Per-Buff）的“结论”条目。
-> 目标：把“本轮测试达成的取舍”固化为 Buff 体系的设计约束，避免后续数据继续沿用不可测/未落地的字段与语义。
+`S5 Buff 系统与编辑器` 是战斗状态效果的统一数据契约与运行内核。它把技能、装备、敌人、关卡可能施加的持续状态、属性修正、回合结算和事件反应统一抽象为可编辑、可校验、可运行时消费的 Buff 对象。
 
-### 1.2.1 原子性原则（Atomic Buff）
+### 2.2 正面工作对象
 
-- Buff 是“效果原子对象”，Buff 内部尽量只表达**单一机制**。
-- 若需要复合作用（例如“冻结=硬控+减速”），优先由技能/装备在施加阶段组合多个 Buff，而不是一个 Buff 内塞多个 effect/stat。
+本系统的正面工作对象是：
 
+```text
+可被运行时消费的 Buff 内容包
+```
 
----
+不是：
 
-## 1.4 设计改版说明：从“对象清单”转为“需求/类型驱动”
+- 写在技能里的临时效果脚本。
+- 写在主战斗引擎里的某个具体 Buff 特判。
+- 只供编辑器展示、运行时不消费的说明文本。
+- 一份孤立的 Buff 清单。
 
-当前版本的 `09-Buff系统(buff_design)-设计说明.md` 已经罗列了很多 Buff 对象，并且建立了追溯表。但从可维护性与后续实现（尤其是数据驱动实现）角度，现有结构存在一个痛点：
+Buff 内容包既是策划编辑对象，也是运行时事实来源。编辑器、技能编辑器、DataManager、BuffRegistry、BuffSystem 和测试探针都应围绕同一份内容包工作。
 
-* Buff 的组织方式偏“从技能/装备推导出来的列表”，而不是“从引擎需要解决的问题（需求域）”出发。
-* 这样会导致：
-  1) 同一类需求（例如伤害修正）在文档中被分散、命名不统一（如 `debuff_weak` 与 `buff_weakness`）。
-  2) 当实现 BuffSystem 时，难以直接映射到“伤害结算管线/回合钩子/技能可用性判定”等关键结算点。
+### 2.3 设计原则
 
-因此本文档在不推翻既有 Buff 设计与数据结构基础上，补充一套**按 Buff 需求与类型（效果域）**的分类体系，并将所有已有 Buff 放入该分类体系中。
+1. **技能只引用 Buff，不内嵌 Buff 逻辑。** 技能负责“何时、对谁、以什么参数施加/移除哪个 Buff”，Buff 自己负责生命周期与结算。
+2. **Buff 是效果原子对象。** 单个 Buff 尽量表达一个清晰机制；复杂技能通过组合多个 Buff 或多个 effect 实现。
+3. **数据契约先于展示形态。** 编辑器 UI 来自 `meta.enums`、`meta.fieldNotes`、schema 和校验规则，不在 UI 里复制一套隐形枚举。
+4. **运行内核不写具体 Buff 特判。** 例如 `buff_bleed` 的结算必须由通用 `effects`、`remaining`、`stackStrategy` 实现，不能在 `CoreEngine` 中写 `if buffId === "buff_bleed"`。
+5. **展示工具不等于运行时。** 编辑器可以有模拟器，但是否真正生效必须通过独立运行时探针或战斗机器人测试证明。
 
-同时补充一套与 `skills_melee_v4_2.json` 类似的**数据文件 meta 头部规范**，用于让 `buffs.json` 具备可演进性与编辑器友好性。
+## 3. 业务目标与边界
 
----
+### 3.1 本阶段负责
 
-## 2. 基础Buff对象设计 (Base Buff Object Design)
+本阶段 `S5` 负责：
 
-Buff对象是所有效果的最小单元。一个标准的 Buff 对象包含**基础信息**、**生命周期控制**、**效果行为**三大模块。
+- 定义 Buff 内容包顶层结构、meta、枚举、字段说明和默认值。
+- 定义单个 Buff 的基础信息、生命周期、effect、statModifier、alias 和动态参数。
+- 定义 `remaining` 与 `stacks` 的不同语义，避免持续时间型状态和层数型状态混用。
+- 定义 `BuffRegistry / BuffManager / BuffSystem / Buff` 的运行职责。
+- 定义 Buff action、trigger、target、payload 的最小可运行集合。
+- 定义技能系统通过 `buffRefs` 与 Buff 系统对接的边界。
+- 定义 Buff 编辑器与运行时探针的职责分工。
+- 定义可回归的测试入口和验收标准。
 
-### 2.1 数据结构 (Data Structure)
+### 3.2 本阶段不负责
+
+本阶段 `S5` 不负责：
+
+- 技能树排布、KP 消耗、技能学习路径设计。这些归入 `S4`。
+- 敌人 AI 如何选择技能。这些归入 `S6`。
+- 地图节点、关卡生成、地图编辑器发布策略。这些归入 `S3`。
+- 完整战斗公式和部位伤害总设计。这些归入 `S2`。
+- 把编辑器模拟器做成完整战斗系统复刻。
+
+### 3.3 上下游边界
+
+```text
+S4 技能系统
+  -> 通过 buffRefs.apply / remove / amountSource 引用 Buff
+    -> S5 Buff 系统
+      -> 通过事件、上下文、statModifiers 和 Buff 读数影响 S2 战斗运行时
+```
+
+`S4` 可以声明：
+
+- 施加哪个 `buffId`。
+- 施加给 `self` 还是 `enemy`。
+- 持续时间、层数、叠加策略或动态参数。
+- 读取指定 Buff 的 `remaining` 或 `stacks` 作为技能数值来源。
+
+`S4` 不应声明：
+
+- 该 Buff 在回合末如何掉血。
+- 该 Buff 如何递减持续时间。
+- 该 Buff 的 `onTakeDamagePre` 如何修改上下文。
+- 针对某个 `buffId` 的专用执行代码。
+
+`S2` 可以消费：
+
+- `BuffManager.getEffectiveStat(statKey, baseValue)` 的结果。
+- `BuffSystem` 写入战斗上下文的通用字段，例如 `preventHpDamage`、`preventArmorDamage`、`damageTakenMult`、`tempModifiers`。
+- `BUFF_REMAINING`、`BUFF_STACKS` 这类通用读数。
+
+`S2` 不应消费：
+
+- 某个具体 Buff 的显示名。
+- 某个具体 Buff 的专用字段名。
+- 编辑器内部状态。
+
+## 4. 总体架构
+
+### 4.1 分层结构
+
+```text
+编辑展示层
+  - buff_editor_v4.html
+  - skill_editor_test_v3.html 的 Buff 引用面板
+  - 编辑器校验面板、筛选、表单、导入导出
+
+验证探针层
+  - buff_runtime_probe.html
+  - buff_editor_io_test.html
+  - skill_buff_battle_robot.test.mjs
+  - skill_buff_decoupled_runtime.test.mjs
+
+内容装载层
+  - DataManagerV2
+  - ContentPackOverrideStore
+  - buffs_v2_7.json 解析与归一化
+
+数据契约层
+  - buffs_v2_7.json
+  - meta.enums / meta.fieldNotes / meta.defaults
+  - BuffDef / lifecycle / effects / statModifiers / paramsSchema
+
+运行内核层
+  - BuffRegistry
+  - BuffManager
+  - BuffSystem
+  - Buff
+  - EventBus / battle context integration
+```
+
+### 4.2 分层职责矩阵
+
+| 层次 | 负责 | 不负责 |
+| --- | --- | --- |
+| 数据契约层 | 定义 Buff 数据结构、枚举、字段说明、默认值、对象规范 | 直接执行战斗逻辑 |
+| 内容装载层 | 加载、归一化、版本检查、覆盖源选择 | 判断 Buff 是否平衡 |
+| 运行内核层 | Buff 实例生命周期、事件分发、action 执行、stat 汇总 | 编辑器布局、表单交互 |
+| 编辑展示层 | 表单编辑、校验呈现、搜索筛选、引用选择 | 作为运行时生效证据 |
+| 验证探针层 | 独立重建运行时并验证内容包消费 | 替代正式战斗回归 |
+
+### 4.3 模块权威状态矩阵
+
+| 状态 / 信息 | 权威归属 | 消费方 |
+| --- | --- | --- |
+| Buff id/name/description/type/tags | `buffs_v2_7.json` | 编辑器、运行时、技能编辑器 |
+| trigger/action/target 枚举 | `buffs_v2_7.json.meta.enums` | Buff 编辑器、校验器、作者护栏 |
+| 当前 actor 身上的 Buff 实例 | `BuffManager` | BuffSystem、战斗运行时、探针 |
+| `remaining` / `stacks` | `Buff` + `BuffManager` | 技能数值读取、UI、日志 |
+| action 执行函数 | `BuffSystem._actionLibrary` | BuffSystem |
+| 编辑器选择状态、展开状态 | 编辑器页面内存 | 仅编辑器 |
+| 运行时内容包来源 | `DataManagerV2` | BuffRegistry、探针、主流程 |
+
+## 5. 核心对象模型
+
+### 5.1 BuffDef
+
+`BuffDef` 是数据包中的 Buff 定义模板。推荐结构：
 
 ```json
 {
-  "id": "buff_bleed_01",              // 唯一标识符
-  "name": "流血 I",                   // 显示名称
-  "description": "每回合受到5点伤害", // 显示描述
-  "icon": "icon_bleed",               // 图标资源ID
-  "type": "debuff",                   // 类型: buff (增益) | debuff (减益) | hidden (隐藏/系统)
-  "tags": ["physical", "dot"],        // 标签: 用于驱散、免疫判断 (如: "magic", "control", "fire")
-  
+  "id": "buff_bleed",
+  "name": "流血",
+  "description": "回合结束时受到固定生命伤害。",
+  "type": "debuff",
+  "tags": ["physical", "dot"],
   "lifecycle": {
-    "duration": 3,                    // 持续回合数 (-1 表示永久，如装备属性)
-    "maxStacks": 5,                   // 最大叠加层数
-    "stackStrategy": "refresh",       // 叠加策略: refresh (刷新时间) | independent (独立计算) | extend (延长) | replace (替换强度)
-    "removeOnBattleEnd": true         // 战斗结束是否清除
+    "duration": 1,
+    "maxStacks": 1,
+    "stackStrategy": "extend",
+    "removeOnBattleEnd": true
   },
-  
-  "effects": [                        // 效果列表 (核心Payload)
+  "effects": [
     {
-      "trigger": "onTurnStart",       // 触发时机
-      "action": "damage",             // 行为类型
-      "value": 5,                     // 基础数值
-      "valueType": "flat",             // 数值类型: flat (固定值) | percent (百分比) | formula (公式)
-      "target": "self"                // 作用目标: self (持有者) | attacker (攻击者 - 用于反伤)
+      "trigger": "onTurnEnd",
+      "action": "DAMAGE_HP",
+      "target": "self",
+      "payload": { "value": 5, "valueType": "flat" }
     }
   ],
-  
-  "statModifiers": {                  // 属性修正 (被动生效)
-    "atk": { "value": 10, "type": "percent" },  // 攻击力 +10%
-    "def": { "value": -5, "type": "flat" }      // 防御力 -5
-  },
-  
-  "scriptId": null                    // (可选) 复杂逻辑挂载的脚本ID
+  "statModifiers": [],
+  "paramsSchema": {}
 }
 ```
 
----
+### 5.2 Buff 实例
 
-## 3. Buff 效果类型与触发机制 (Effects & Triggers)
+`Buff` 是运行时挂在 actor 身上的实例，至少包含：
 
-Buff 的效果分为**静态属性修正**和**动态触发行为**两类。
+- `definition`
+- `id`
+- `instanceId`
+- `ownerId`
+- `duration`
+- `remaining`
+- `stacks`
+- `maxStacks`
+- `stackStrategy`
+- `tags`
+- trigger 计数
 
-### 3.1 静态属性修正 (Stat Modifiers)
-当 Buff 存在时，被动修改角色的面板属性。
-*   **支持属性**: `maxHp`, `atk`, `def`, `speed`, `critRate`, `hitRate`, `dodgeRate`, `actionPoints` (上限), `damageDealtMult`, `damageTakenMult`, `armorMitigationMult`.
-*   **计算方式**: `Final = (Base + Flat_Sum) * (1 + Percent_Sum)`
+`Buff` 只表达实例状态，不负责遍历战斗对象，也不直接订阅事件。
 
-#### 3.1.1 `statModifiers.type` 支持范围（与当前引擎对齐）
+### 5.3 BuffRegistry
 
-为保证回归可测与可定位，`statModifiers` 的 `type` 需要明确支持范围，并规定“未支持时必须告警”。
+`BuffRegistry` 的职责：
 
-- **MVP 支持**（与现有 `BuffManager.getEffectiveStat` 对齐）：
-  - `flat`
-  - `percent` / `percent_base`
-  - `overwrite`
-- **预留但不保证实现**（占位 type，允许出现在数据中，但需要日志提示）：
-  - `percent_current`
-  - `formula`
-  - `mult` / `multi`
+- 保存当前 Buff 定义库。
+- 根据 `buffId` 获取定义。
+- 支持 `aliasOf`。
+- 合并 `paramsSchema` 默认值与 Skill 传入参数。
+- 递归替换 `${paramName}` 占位符。
 
-未支持 type 的统一策略：
+`BuffRegistry` 不负责：
 
-- 不允许静默忽略。
-- 建议统一发出 `BUFF:WARN`：`{ ownerId, buffId, statKey, type, value, reason: 'statModifier_type_not_supported' }`
+- 判断目标是谁。
+- 执行 action。
+- 递减持续时间。
+- 编辑器 UI 渲染。
 
-### 3.2 动态触发行为 (Triggered Actions)
-通过监听战斗事件总线 (EventBus) 触发特定效果。
+### 5.4 BuffManager
 
-| 触发时机 (Trigger) | 描述 | 典型应用 |
-| :--- | :--- | :--- |
-| `onTurnStart` | 回合开始时 | 持续伤害(DoT)、持续治疗(HoT)、减少CD |
-| `onTurnEnd` | 回合结束时 | Buff 持续时间递减、清除标记 |
-| `onAttackPre` | 攻击结算前 | 命中率修正、伤害加成计算 |
-| `onAttackPost` | 攻击结算后 | 吸血、施加攻击特效(如中毒) |
-| `onDefendPre` | 防御结算前 | 闪避判断、格挡减免 |
-| `onDefendPost` | 防御结算后 | 反伤(Thorns)、受击回能 |
-| `onDeath` | 死亡时 | 复活、亡语爆炸 |
+`BuffManager` 挂在单个 actor 上，负责：
 
-#### 3.2.1 行动尝试事件（用于控制类 Buff 可测性）
+- `add(buffId, options)`
+- `remove(buffId, reason)`
+- `removeByTag(tag)`
+- `removeByType(type)`
+- `has(buffId)`
+- `getStacks(buffId)`
+- `getRemaining(buffId)`
+- `tickTurn()`
+- `getEffectiveStat(statKey, baseValue)`
+- `toJSON()` / `fromJSON()`
 
-（本节已迁移至 `DOC/CODEX_DOC/02_设计说明/S5_Buff系统与编辑器/10-Buff编辑器(buff_editor_design)-设计说明.md`，作为“测试工具需要提供的行动模拟入口/事件”。）
+`BuffManager` 是 Buff 实例状态的权威来源。
 
----
+### 5.5 BuffSystem
 
-## 4. Buff 类型体系（按需求域分类）
+`BuffSystem` 是事件驱动执行器，负责：
 
-> 本节保留“按需求域分类”的结构作为设计索引（帮助内容生产与实现映射）。
-> 具体 Buff 对象是否存在/是否纳入主数据，以 `assets/data/buffs_v2_3.json` 为准。
+- 注册/注销多个 `BuffManager`。
+- 订阅战斗事件。
+- 根据 trigger 分发每个 Buff 的 effects。
+- 通过 action library 执行确定性动作。
+- 将效果写回 actor 或战斗上下文。
+- 对不支持的 action/type 产生 `BUFF:WARN`，对执行异常产生 `BUFF:ERROR`。
 
-- A 类：伤害结算管线类（Damage Pipeline）
-- B 类：回合周期结算类（Periodic）
-- C 类：控制与行动限制类（Control / Action Gating）
-- D 类：面板属性修正类（Stat Modifiers）
-- E 类：防御机制类（Defensive Mechanics）
-- F 类：反应/反制类（Reactive Effects）
-- G 类：被动/系统类（Passives & Meta Buffs）
+`BuffSystem` 不应根据具体 `buffId` 分支执行。
 
-## 5. Buff 数据规范（Data Spec / Schema）
+## 6. 生命周期与状态机
 
-本章节给出 Buff 数据结构的落地规范：如何在 `assets/data/buffs.json` 中组织 Buff 对象，使其能被引擎、编辑器、测试工具共同使用，并具备可演进性。
+### 6.1 当前实现对齐口径
 
-> 本章风格与 `03-技能系统(skill_design)-设计说明.md` 第 5 章对齐：先明确与其他系统的对接边界，再给出推荐 schema（含 meta/enums/fieldNotes），最后给出校验与兼容策略。
+本章只描述当前代码已经实现的状态机，不混入目标态、建议态或未接入的枚举项。对齐范围如下：
 
-### 5.1 Buff 与 Skill 系统的对接规范（重要）
+- `script/engine/CoreEngine.js`：回合开始、规划、时间线执行、伤害管线、技能 `buffRefs`、反击桥接。
+- `script/engine/TimelineManager.js`：时间线 entry 执行与 `TIMELINE_FINISHED`。
+- `script/engine/buff/BuffSystem.js`：事件订阅、trigger 分发、effect action 执行。
+- `script/engine/buff/BuffManager.js`：Buff 添加、合并、移除、回合递减、属性修正聚合。
+- `script/engine/buff/Buff.js`：单个 Buff 实例的 `duration / remaining / stacks`。
 
-#### 5.1.1 设计原则
+当前状态机遵循三个事实：
 
-1) **Skill 只引用 Buff，不定义 Buff 的运行逻辑**
+1. Buff 不主动轮询引擎；它只响应 `BuffSystem.start()` 已订阅的 `EventBus` 事件。
+2. Buff 实例是否存在、如何合并、何时过期，由 `BuffManager` 管理。
+3. Buff 对战斗的影响要么写入 actor，要么写入当前事件共享 context；完整护甲/生命伤害结算仍由 `CoreEngine` 完成。
 
-- Skill 的职责是“在何时、对谁施加/移除/刷新哪个 buff”。
-- Buff 的职责是“这个 buff 在生命周期内如何结算”。
+`buffs_v2_7.json` 的 `meta.enums` 中存在部分历史或预留值，例如 `onTakeDamagePost`、`onDefendPre`、`onDeath`、`max`、`independent`。这些值可以存在于数据契约中，但只要当前代码没有订阅或没有专门分支，就不属于本章的运行时状态机。
 
-2) **Atomic Buff 优先（原子 Buff）**
+### 6.2 一回合事件流
 
-- 单个 `buffId` 尽量只表达一个清晰机制。
-- 复杂技能通过同时施加多个 `buffId` 来组合。
+```text
+startTurn()
+  -> reset AP
+  -> _resetTurnFlags()
+  -> emit TURN_START
+  -> PLANNING
+  -> commitPlanning() builds timeline
+  -> commitTurn()
+  -> EXECUTION / TimelineManager.start()
+    -> for each timeline entry
+      -> _executeTimelineEntry()
+        -> if actor._skipTurn: clear flag and skip, no BATTLE_ACTION_PRE
+        -> else executePlayerSkill() / executeEnemySkill()
+          -> _executeSkillActions()
+            -> emit BATTLE_ACTION_PRE
+            -> if cancelled / skipTurn: skip
+            -> execute skill actions
+            -> apply skill.buffRefs
+          -> deduct AP if not skipped
+    -> TIMELINE_FINISHED
+      -> CoreEngine emits TURN_END
+        -> BuffSystem dispatches onTurnEnd
+        -> BuffSystem calls BuffManager.tickTurn()
+      -> startTurn()
+```
 
-3) **触发器/动作以 Buff 为主，Skill 只负责施加时机与目标**
+```mermaid
+flowchart TB
+  A["CoreEngine.startTurn"] --> B["重置 AP"]
+  B --> C["_resetTurnFlags"]
+  C --> D["emit TURN_START"]
+  D --> E["规划阶段 PLANNING"]
+  E --> F["commitPlanning 构建时间线"]
+  F --> G["commitTurn 进入 EXECUTION"]
+  G --> H["TimelineManager.start"]
+  H --> I["Timeline entry"]
+  I --> J{"actor._skipTurn?"}
+  J -- yes --> K["清除 _skipTurn 并跳过行动"]
+  J -- no --> L["executePlayerSkill 或 executeEnemySkill"]
+  L --> M["_executeSkillActions"]
+  M --> N["emit BATTLE_ACTION_PRE"]
+  N --> O{"cancelled 或 skipTurn?"}
+  O -- yes --> P["返回 skipped"]
+  O -- no --> Q["执行 skill.actions"]
+  Q --> R["执行 skill.buffRefs apply/remove"]
+  R --> S["调用方扣 AP"]
+  Q --> T{"动作产生伤害?"}
+  T -- yes --> U["伤害管线事件序列"]
+  U --> V["BATTLE_ATTACK_PRE"]
+  V --> W["BATTLE_TAKE_DAMAGE_PRE"]
+  W --> X["护甲/生命结算"]
+  X --> Y["BATTLE_TAKE_DAMAGE"]
+  Y --> Z["BATTLE_ATTACK_POST"]
+  Z --> AA["BATTLE_DEFEND_POST"]
+  T -- no --> I
+  K --> AB{"Timeline finished?"}
+  P --> AB
+  S --> AB
+  AA --> AB
+  AB -- no --> I
+  AB -- yes --> AC["TIMELINE_FINISHED"]
+  AC --> AD["CoreEngine emit TURN_END"]
+  AD --> AE["BuffSystem onTurnEnd effects"]
+  AE --> AF["BuffManager.tickTurn"]
+  AF --> A
+```
 
-- Buff 的 tick 与事件触发由 Buff 自身定义（`effects[].trigger`）。
+当前已经存在的事件：
 
-#### 5.1.2 Buff 引用约定（文档层面）
+| 引擎事件 | 触发位置 | BuffSystem 入口 | Buff trigger | 当前分发范围 |
+| --- | --- | --- | --- | --- |
+| `TURN_START` | `CoreEngine.startTurn()` | `_onTurnStart` | `onTurnStart` | 所有已注册 manager |
+| `BATTLE_ACTION_PRE` | `CoreEngine._executeSkillActions()` | `_onActionPre` | `onActionPre` | 当前行动者 manager |
+| `BATTLE_ATTACK_PRE` | `_applyBattleDamage()` / `_applyArmorOnlyDamage()` | `_onAttackPre` | `onAttackPre` | attacker/source 与 target |
+| `BATTLE_TAKE_DAMAGE_PRE` | `_applyBattleDamage()` / `_applyArmorOnlyDamage()` | `_onTakeDamagePre` | `onTakeDamagePre` | attacker/source 与 target；先汇入 statModifiers |
+| `BATTLE_TAKE_DAMAGE` | `_applyBattleDamage()` / `_applyArmorOnlyDamage()` | `_onTakeDamage` | `onTakeDamage` | attacker/source 与 target |
+| `BATTLE_ATTACK_POST` | `_applyBattleDamage()` / `_applyArmorOnlyDamage()` | `_onAttackPost` | `onAttackPost` | attacker/source 与 target |
+| `BATTLE_DEFEND_POST` | `_applyBattleDamage()` / `_applyArmorOnlyDamage()` | `_onDefendPost` | `onDefendPost` | attacker/source 与 target |
+| `TURN_END` | `CoreEngine._bindTimelineEvents()` 的 `TIMELINE_FINISHED` 回调 | `_onTurnEnd` | `onTurnEnd` | 所有已注册 manager；effects 后执行 `tickTurn()` |
 
-`skills.json` 推荐使用 `buffRefs.apply/applySelf/remove` 引用 Buff（见 `03-技能系统(skill_design)-设计说明.md 5.1`）。Buff 数据侧需保证：
+当前没有独立的“技能扣费前事件”。`AP_COST_ADD / AP_COST_REDUCE` 只能作为普通 Buff action 在某个已订阅 trigger 中执行，当前数据里实际用法是 `onTurnStart` 写入 actor 的 `_planningApCostFlatDelta`，随后 `CoreEngine._getSkillApCostStrict()` 读取这个字段。
 
-- `buffId` 稳定（不随显示名变更）
-- 显示名为 UI 属性，不作为引用主键
+### 6.3 BuffSystem 监听与分发
 
----
+`BuffSystem.start()` 订阅核心引擎事件，并把引擎事件转换为 Buff trigger。转换关系如下：
 
-### 5.2 `buffs.json` 顶层结构与版本化（Schema Versioning）
+```mermaid
+flowchart LR
+  CE["CoreEngine / TimelineManager / EventBus"] -->|TURN_START| BS1["BuffSystem._onTurnStart"]
+  CE -->|BATTLE_ACTION_PRE| BS2["BuffSystem._onActionPre"]
+  CE -->|BATTLE_ATTACK_PRE| BS3["BuffSystem._onAttackPre"]
+  CE -->|BATTLE_TAKE_DAMAGE_PRE| BS4["BuffSystem._onTakeDamagePre"]
+  CE -->|BATTLE_TAKE_DAMAGE| BS5["BuffSystem._onTakeDamage"]
+  CE -->|BATTLE_ATTACK_POST| BS6["BuffSystem._onAttackPost"]
+  CE -->|BATTLE_DEFEND_POST| BS7["BuffSystem._onDefendPost"]
+  CE -->|TURN_END| BS8["BuffSystem._onTurnEnd"]
 
-#### 5.2.1 推荐顶层容器结构
+  BS1 --> D1["dispatch onTurnStart to all managers"]
+  BS2 --> D2["dispatch onActionPre to actor manager"]
+  BS3 --> D3["dispatch onAttackPre to attacker/target managers"]
+  BS4 --> D4["apply stat modifiers, dispatch onTakeDamagePre"]
+  BS5 --> D5["dispatch onTakeDamage"]
+  BS6 --> D6["dispatch onAttackPost"]
+  BS7 --> D7["dispatch onDefendPost"]
+  BS8 --> D8["dispatch onTurnEnd, then tickTurn"]
+```
 
-为对齐 `skills_melee_v4_2.json` 的可维护性，建议 `assets/data/buffs.json` 顶层使用容器结构：
+分发规则：
+
+- 回合事件 `TURN_START / TURN_END` 分发给所有已注册的 `BuffManager`。
+- 行动尝试事件 `BATTLE_ACTION_PRE` 只分发给当前行动者的 `BuffManager`。
+- 攻击、受击、防御事件分发给本次上下文中的 attacker/source 和 target。
+- `BATTLE_TAKE_DAMAGE_PRE` 在 trigger 分发前会先把 `damageDealtMult / damageTakenMult` 等 `statModifiers` 汇入上下文。
+- `TURN_END` 的顺序是先执行 `onTurnEnd` effects，再由所有 manager 执行 `tickTurn()`。
+- `EventBus.emit()` 是同步调用，所以同一事件内的 context 修改会被后续代码直接读取。
+- `BuffSystem._processManager()` 只匹配 `effect.trigger === triggerName` 的 effect。
+- 不存在 action key 会发出 `BUFF:WARN`；action 执行抛异常会发出 `BUFF:ERROR`。
+- `BuffSystem` 当前没有订阅 `onTakeDamagePost`、`onDefendPre`、`onDeath` 对应事件。
+
+### 6.4 Buff 实例生命周期
+
+```mermaid
+stateDiagram-v2
+  [*] --> NotOwned: manager 没有该 buffId
+  NotOwned --> AddCalled: BuffManager.add(buffId, options)
+  AddCalled --> MissingDefinition: registry.getDefinition 返回空
+  MissingDefinition --> NotOwned: emit BUFF:WARN
+  AddCalled --> Active: new Buff(def, options)
+  Active --> Active: trigger 匹配并执行 effect
+  Active --> StackCalled: 再次 add 同 buffId
+  StackCalled --> Active: _applyStack 合并 stacks/remaining
+  Active --> TickTurn: BuffSystem._onTurnEnd 后 tickTurn
+  TickTurn --> Active: remaining != 0
+  TickTurn --> Expired: remaining == 0
+  Active --> Removed: remove/removeByType/REMOVE_SELF
+  Expired --> Removed: remove(reason=expired)
+  Removed --> [*]
+```
+
+Buff 获得来源：
+
+| 来源 | 入口 | 说明 |
+| --- | --- | --- |
+| 技能施加 | `CoreEngine._applySkillBuffRefs()` -> `target.buffs.add()` | 读取 `skillConfig.buffRefs.apply` |
+| Buff 连锁施加 | `BuffSystem._act_applyBuff()` -> `target.buffs.add()` | 读取 effect 的 `payload.value` 和 `payload` 剩余参数 |
+| 存档恢复 | `CoreEngine._ensureBuffManager()` -> `BuffManager.fromJSON()` | 当 entity 原有 `buffs` 是数组时恢复 |
+| 测试/工具直接调用 | `BuffManager.add()` | 运行时允许，但不属于主战斗流程入口 |
+
+Buff 移除来源：
+
+| 来源 | 入口 | 说明 |
+| --- | --- | --- |
+| 持续时间耗尽 | `TURN_END` -> `BuffSystem._onTurnEnd()` -> `BuffManager.tickTurn()` | `Buff.isExpired()` 为 `remaining === 0` 时移除 |
+| 技能引用移除 | `CoreEngine._applySkillBuffRefs()` -> `target.buffs.remove()` | 读取 `skillConfig.buffRefs.remove` |
+| 技能动作移除 | `CoreEngine._removeBuffsBySkillEffect()` | 当前仅 `BUFF_REMOVE` 且 `amount >= 100` 时 `removeByType('debuff')` |
+| Buff 自我消耗 | effect `REMOVE_SELF` | 一次性反应、一次性破甲、触发后消耗 |
+| API 直接调用 | `remove()` / `removeByTag()` / `removeByType()` | `BuffManager` 公开能力 |
+
+当前实现没有扫描 `removeOnBattleEnd` 的战斗结束清理路径；`removeOnBattleEnd` 是数据字段，不是当前生命周期状态机的一条边。
+
+### 6.5 持续时间型状态与层数型状态
+
+当前 `Buff` 实例同时持有 `remaining` 和 `stacks`，代码不会强制区分“持续时间型”和“层数型”。这两个概念由数据和技能设计约束来区分。
+
+| 读数 | 代码来源 | 当前语义 |
+| --- | --- | --- |
+| `remaining` | `Buff.remaining` / `BuffManager.getRemaining()` | 非永久 Buff 的剩余回合数；`tickTurn()` 在回合末递减 |
+| `stacks` | `Buff.stacks` / `BuffManager.getStacks()` | 层数；`stackStrategy='add'` 会增加；默认新实例为 1 |
+| `statModifiers` 强度 | `BuffManager._getModifierTotals()` | `flat` 和 `percent/percent_base` 都会乘以 `b.stacks` |
+| Buff effect 数值 | `BuffSystem._resolveValue()` | 不自动乘以 `stacks` 或 `remaining` |
+| Skill action 数值 | `CoreEngine._computeEffectAmount()` | 支持 `BUFF_STACKS` 和 `BUFF_REMAINING` 读取指定 Buff |
+
+因此，持续时间型 Buff 若不希望属性强度叠加，当前数据必须保持 `stacks=1`。流血类技能读取持续时间时应使用 `BUFF_REMAINING`；未来若设计中毒这类层数型状态，再使用 `BUFF_STACKS`。
+
+### 6.6 Buff 逐项状态机
+
+本节按 `assets/data/buffs_v2_7.json` 当前 19 个 Buff 逐项列出状态机。标题使用业务名称；当前 JSON key 只作为追溯字段出现，因为 `new_buff_...` 这类 key 具有历史随机性，不能作为设计概念名。
+
+统一阅读口径：
+
+- **进入**：所有 Buff 都通过 `BuffManager.add(buffId, options)` 进入；如果同 id 已存在，按 6.7 的 `stackStrategy` 合并。
+- **触发**：有 `effects` 的 Buff 只在 `BuffSystem` 收到对应 trigger 时响应；无 `effects` 的 Buff 不监听事件，只在 `getEffectiveStat()` 或专门桥接逻辑读取时生效。
+- **响应**：响应结果必须落到 actor、BuffManager 或当前事件 context 上。
+- **退出**：除 `REMOVE_SELF` 或显式 `remove()` 外，当前统一在 `TURN_END -> BuffSystem._onTurnEnd() -> BuffManager.tickTurn()` 后按 `remaining === 0` 移除。
+- **图示规则**：每个状态机图中的事件名、函数名、字段名都对应当前代码路径；没有代码实现的效果不会画成已实现状态。
+
+#### 6.6.1 当前 Buff 类型总表
+
+按数据 `type` 统计：
+
+| 数据类型 | 数量 | Buff |
+| --- | ---: | --- |
+| `buff` | 11 | 减伤、反伤、反击、吸血、护甲回复、护甲免伤、HP 免伤、攻击获甲、受击获甲、开销降低、加速 |
+| `debuff` | 8 | 中毒、晕眩、流血、减速、虚弱、增伤、开销增多、撕裂伤口 |
+| `hidden` | 0 | 无 |
+
+按当前运行状态机类型统计：
+
+| 状态机类型 | Buff | 实际触发/读取点 |
+| --- | --- | --- |
+| 回合末直接 HP 伤害 | 中毒、流血 | `TURN_END -> onTurnEnd -> DAMAGE_HP` |
+| 回合开始跳过行动 | 晕眩 | `TURN_START -> onTurnStart -> SKIP_TURN`，随后 `_executeTimelineEntry()` 读取 `_skipTurn` |
+| 被动速度修正 | 减速、加速 | `CoreEngine._getEffectiveActorSpeed()` 读取 `speed` |
+| 被动攻击/闪避修正 | 虚弱、反击的闪避修正 | `BuffManager.getEffectiveStat()` 可计算；当前主战斗伤害/闪避流程未消费 |
+| 受击伤害倍率修正 | 增伤、减伤 | `BATTLE_TAKE_DAMAGE_PRE -> _applyStatModifiersToContext()` |
+| 防御后伤害/反击 | 反伤、反击 | `BATTLE_DEFEND_POST -> onDefendPost` |
+| 攻击后吸血 | 吸血 | `BATTLE_ATTACK_POST -> onAttackPost -> HEAL_HP` |
+| 护甲回复 | 护甲回复、攻击获甲、受击获甲 | `onTurnStart` / `onAttackPre` / `onTakeDamagePre` -> `HEAL_ARMOR` |
+| 受击前免伤标记 | 护甲免伤、HP 免伤 | `BATTLE_TAKE_DAMAGE_PRE -> PREVENT_DAMAGE_ARMOR/HP` |
+| AP 成本修正 | 开销降低、开销增多 | `TURN_START -> AP_COST_REDUCE/ADD`，规划成本读取 `_planningApCostFlatDelta` |
+| 行动前施加另一个 Buff | 撕裂伤口 | `BATTLE_ACTION_PRE -> onActionPre -> APPLY_BUFF` |
+
+#### 6.6.2 中毒
+
+当前 JSON key：`buff_poison`。基础信息：`debuff`，`duration=3`，`maxStacks=5`，`stackStrategy=refresh`，参数 `damageVal` 默认 5。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：中毒可以被技能添加，但不在添加瞬间结算
+  CE->>Skill: 行动执行 _executeSkillActions
+  Skill->>BM: add(buff_poison, options)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 3
+  else 已有中毒
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 duration
+  end
+
+  Note over CE,Holder: 同一回合的开始、规划、行动阶段
+  CE->>BS: TURN_START / BATTLE_ACTION_PRE 等事件
+  BS-->>BM: 不匹配 onTurnEnd
+  BM-->>Holder: HP 不变化，remaining 不变化
+
+  Note over CE,Holder: 回合 N 结束：中毒唯一结算点
+  CE->>BS: emit TURN_END
+  BS->>BM: _processManager(onTurnEnd)
+  BM-->>BS: 匹配 buff_poison.effects[0]
+  BS->>Holder: DAMAGE_HP self damageVal
+  BS->>BM: tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(buff_poison, expired)
+  else remaining > 0
+    BM-->>BM: 保留到下一回合，等待下次 TURN_END
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_poison', options)` 创建实例；`BuffRegistry` 用 `params.damageVal` 或默认值替换 `${damageVal}`。
+2. 合并：再次添加时走 `refresh`，当前实现刷新 `remaining`，不增加 `stacks`。
+3. 触发：`TURN_END` 进入 `BuffSystem._onTurnEnd()`，匹配 `onTurnEnd`。
+4. 响应：执行 `DAMAGE_HP`，`target=self`，`_act_damage()` 直接扣持有者 HP `damageVal`，不进入护甲/部位伤害管线。
+5. 退出：同一个 `TURN_END` 事件的 effects 完成后执行 `tickTurn()`；`remaining -= 1`，归 0 后 `remove(reason='expired')`。
+
+当前代码事实：虽然描述写“可叠加”，但 `refresh` 不会增加层数；除非首次添加时显式传入 `stacks`，否则当前伤害不会随 `maxStacks=5` 增长。
+
+#### 6.6.3 晕眩
+
+当前 JSON key：`buff_stun`。基础信息：`debuff`，`duration=1`，`maxStacks=1`，`stackStrategy=replace`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant TL as Timeline
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：眩晕通常由技能或效果添加，添加瞬间不直接跳过行动
+  Skill->>BM: add(buff_stun)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 1
+  else 已有眩晕
+    BM-->>BM: stackStrategy replace<br/>stacks 和 remaining 重置
+  end
+
+  Note over CE,Holder: 回合开始：眩晕响应 TURN_START
+  CE->>BS: emit TURN_START
+  BS->>BM: _processManager(onTurnStart)
+  BM-->>BS: 匹配 buff_stun.effects[0]
+  BS->>Holder: SKIP_TURN target=self<br/>owner._skipTurn = true
+
+  Note over CE,Holder: 时间线执行：真正跳过行动发生在 entry 执行前
+  TL->>CE: 执行该 actor 的 timeline entry
+  CE->>Holder: 检查 _skipTurn
+  CE->>Holder: 清除 _skipTurn，并跳过本次行动
+
+  Note over CE,Holder: 回合结束：统一递减并移除
+  CE->>BS: emit TURN_END
+  BS->>BM: tickTurn()
+  BM-->>BM: remaining -= 1
+  BM-->>BM: remaining == 0 时 remove expired
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_stun')` 创建实例。
+2. 合并：再次添加时走 `replace`，重置 `stacks` 和 `remaining`。
+3. 触发：`CoreEngine.startTurn()` 在 `_resetTurnFlags()` 之后 emit `TURN_START`，`BuffSystem._onTurnStart()` 匹配 `onTurnStart`。
+4. 响应：执行 `SKIP_TURN`，`_act_skipTurn()` 写入当前 context 的 `skipTurn=true`，并写入持有者 `owner._skipTurn=true`。
+5. 行动跳过：时间线执行到该 actor 时，`CoreEngine._executeTimelineEntry()` 在发出 `BATTLE_ACTION_PRE` 之前检查 `_skipTurn`；若为 true，则清除 `_skipTurn` 并跳过该行动。
+6. 退出：回合结束时 `tickTurn()` 递减并移除。
+
+当前代码事实：`TURN_START` context 上的 `skipTurn` 字段不会被规划阶段直接消费；真正让行动跳过的是 actor 上的 `_skipTurn`。
+
+#### 6.6.4 流血
+
+当前 JSON key：`buff_bleed`。基础信息：`debuff`，`duration=${buff_duration}`，`maxStacks=1`，`stackStrategy=extend`，参数 `buff_duration` 默认 2。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：流血被施加时只增加持续回合，不立即扣血
+  CE->>Skill: 行动执行 _executeSkillActions
+  Skill->>BM: add(buff_bleed, options)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = buff_duration
+  else 已有流血
+    BM-->>BM: stackStrategy extend<br/>remaining += extendBy / duration
+  end
+
+  Note over CE,Holder: 回合开始、规划、行动阶段
+  CE->>BS: TURN_START / BATTLE_ACTION_PRE 等事件
+  BS-->>BM: 不匹配 onTurnEnd
+  BM-->>Holder: HP 不变化，remaining 不变化
+
+  Note over CE,Holder: 回合结束：流血唯一结算点
+  CE->>BS: emit TURN_END
+  BS->>BM: _processManager(onTurnEnd)
+  BM-->>BS: 匹配 buff_bleed.effects[0]
+  BS->>Holder: DAMAGE_HP self 5
+  BS->>BM: tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(buff_bleed, expired)
+  else remaining > 0
+    BM-->>BM: 保留到下一回合，等待下次 TURN_END
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_bleed', options)` 创建实例；首次 `remaining = options.duration ?? lifecycle.duration`。
+2. 合并：再次添加时走 `extend`，`remaining += options.extendBy ?? options.duration ?? lifecycle.duration ?? existing.duration`。
+3. 触发：`TURN_END -> BuffSystem._onTurnEnd()` 匹配 `onTurnEnd`。
+4. 响应：执行 `DAMAGE_HP`，固定直接扣持有者 HP 5 点。
+5. 退出：effect 后 `tickTurn()` 递减，`remaining === 0` 时移除。
+
+状态规则：流血是持续时间型状态，重复施加增加的是 `remaining`，不是刷新时间，也不是增加伤害层数。`stacks` 正常保持 1。
+
+#### 6.6.5 减速
+
+当前 JSON key：`buff_slow`。基础信息：`debuff`，`duration=2`，`maxStacks=3`，`stackStrategy=refresh`，`statModifiers.speed flat ${buff_speedVal}`，默认 -5。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：减速被添加后，不监听 EventBus 事件
+  Skill->>BM: add(buff_slow, params.buff_speedVal)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 2
+  else 已有减速
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 2
+  end
+
+  Note over CE,Holder: 规划/放置技能时：玩家速度读取会消费 statModifiers
+  CE->>BM: _getEffectiveActorSpeed -> getEffectiveStat(speed, baseSpeed)
+  BM-->>CE: baseSpeed + speed flat * stacks
+  CE-->>Holder: 使用修正后的速度参与规划/时间线
+
+  Note over CE,Holder: 回合结束：没有 effect，只有统一持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(buff_slow, expired)
+  else remaining > 0
+    BM-->>BM: 保留速度修正
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_slow', options)` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`，不增加 `stacks`。
+3. 触发：无 `effects`，不响应 EventBus trigger。
+4. 响应：当代码调用 `holder.buffs.getEffectiveStat('speed', baseSpeed)` 时，`BuffManager._getModifierTotals()` 汇总 `speed` 修正，当前公式为 `base + value * stacks`。
+5. 当前消费点：玩家规划/放置技能时 `CoreEngine._getEffectiveActorSpeed()` 会读取玩家 `speed`；敌人规划器当前直接使用 `enemy.speed ?? enemy.stats.speed`，不读取敌人 Buff 速度修正。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+#### 6.6.6 虚弱
+
+当前 JSON key：`debuff_weak`。基础信息：`debuff`，`duration=2`，`maxStacks=1`，`stackStrategy=refresh`，`statModifiers.atk percent_base -0.2`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：虚弱被添加后，只提供 atk statModifier
+  Skill->>BM: add(debuff_weak)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 2
+  else 已有虚弱
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 2
+  end
+
+  Note over CE,Holder: 当前主伤害流程不会自动消费 atk 修正
+  CE->>CE: _computeEffectAmount / _applyBattleDamage
+  CE-->>BM: 不调用 getEffectiveStat(atk)
+  BM-->>Holder: 可查询 atk 修正，但主流程不自动降伤
+
+  Note over CE,Holder: 回合结束：没有 effect，只有统一持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(debuff_weak, expired)
+  else remaining > 0
+    BM-->>BM: 保留 atk 修正
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('debuff_weak')` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：无 `effects`，不响应 EventBus trigger。
+4. 响应：`BuffManager.getEffectiveStat('atk', baseAtk)` 可以计算攻击力修正。
+5. 当前消费点：主伤害管线 `_computeEffectAmount()` / `_applyBattleDamage()` 当前不读取 `atk`，因此主流程里它只存在于 BuffManager 可查询结果中，不会自动降低伤害。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+#### 6.6.7 增伤
+
+当前 JSON key：`buff_vulnerable`。基础信息：`debuff`，`duration=2`，`maxStacks=3`，`stackStrategy=refresh`，`statModifiers.damageTakenMult flat 0.2`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Ctx as 伤害上下文
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：增伤添加后等待受击前事件
+  Skill->>BM: add(buff_vulnerable)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 2
+  else 已有增伤
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 2
+  end
+
+  Note over CE,Holder: 伤害管线：目标受击前统一汇入 damageTakenMult
+  CE->>BS: emit BATTLE_TAKE_DAMAGE_PRE(context)
+  BS->>BM: target.buffs.getEffectiveStat(damageTakenMult, 0)
+  BM-->>BS: 0.2 * stacks
+  BS->>Ctx: context.damageTakenMult = base * (1 + takenMult)
+  CE->>Ctx: _applyBattleDamage 读取 damageTakenMult
+  CE->>Holder: HP 伤害按倍率提高
+
+  Note over CE,Holder: 回合结束：持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(buff_vulnerable, expired)
+  else remaining > 0
+    BM-->>BM: 保留到下一回合
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_vulnerable')` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`；当前不因 `maxStacks=3` 自动加层。
+3. 触发：伤害管线 emit `BATTLE_TAKE_DAMAGE_PRE`，`BuffSystem._onTakeDamagePre()` 先执行 `_applyStatModifiersToContext()`。
+4. 响应：如果持有者是本次 `target`，读取 `target.buffs.getEffectiveStat('damageTakenMult', 0)`，写入 `context.damageTakenMult = base * (1 + takenMult)`。
+5. 消费：`CoreEngine._applyBattleDamage()` 在护甲处理之后、HP 扣减之前按 `context.damageTakenMult` 修正生命伤害。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+#### 6.6.8 减伤
+
+当前 JSON key：`buff_pain_sup`。基础信息：`buff`，`duration=2`，`maxStacks=1`，`stackStrategy=refresh`，`statModifiers.damageTakenMult flat -0.3`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Ctx as 伤害上下文
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：减伤添加后等待受击前事件
+  Skill->>BM: add(buff_pain_sup)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 2
+  else 已有减伤
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 2
+  end
+
+  Note over CE,Holder: 伤害管线：目标受击前统一汇入 damageTakenMult
+  CE->>BS: emit BATTLE_TAKE_DAMAGE_PRE(context)
+  BS->>BM: target.buffs.getEffectiveStat(damageTakenMult, 0)
+  BM-->>BS: -0.3
+  BS->>Ctx: context.damageTakenMult = base * (1 + takenMult)
+  CE->>Ctx: _applyBattleDamage 读取 damageTakenMult
+  CE->>Holder: HP 伤害按倍率降低
+
+  Note over CE,Holder: 回合结束：持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(buff_pain_sup, expired)
+  else remaining > 0
+    BM-->>BM: 保留到下一回合
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_pain_sup')` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：伤害管线 emit `BATTLE_TAKE_DAMAGE_PRE`，`BuffSystem._onTakeDamagePre()` 汇入 statModifiers。
+4. 响应：如果持有者是本次 `target`，写入 `context.damageTakenMult = 0.7` 的等价倍率。
+5. 消费：`CoreEngine._applyBattleDamage()` 在 HP 扣减前应用该倍率。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+#### 6.6.9 反伤
+
+当前 JSON key：`buff_thorns`。基础信息：`buff`，`duration=3`，`maxStacks=1`，`stackStrategy=refresh`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Ctx as 伤害上下文
+  participant Holder as 持有者
+  participant Attacker as 攻击者
+
+  Note over CE,Attacker: 回合 N：反伤添加后等待防御后事件
+  Skill->>BM: add(buff_thorns)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 3
+  else 已有反伤
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 3
+  end
+
+  Note over CE,Attacker: 伤害结算完成后：CoreEngine 发出 BATTLE_DEFEND_POST
+  CE->>BS: emit BATTLE_DEFEND_POST(context)
+  BS->>BM: _processManager(onDefendPost)
+  BM-->>BS: 匹配 buff_thorns.effects[0]
+  BS->>Ctx: 读取 damageTaken
+  BS->>Attacker: DAMAGE_HP attacker damageTaken * 0.3
+
+  Note over CE,Attacker: 回合结束：持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(buff_thorns, expired)
+  else remaining > 0
+    BM-->>BM: 保留到下一次受击后
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_thorns')` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：`CoreEngine._applyBattleDamage()` 或 `_applyArmorOnlyDamage()` 末尾 emit `BATTLE_DEFEND_POST`，`BuffSystem._onDefendPost()` 分发到 attacker/source 与 target。
+4. 响应：持有者匹配 `onDefendPost` 后执行 `DAMAGE_HP`，`target=attacker`，公式 `damageTaken * 0.3`。
+5. 写入：`_act_damage()` 直接扣攻击者 HP，不进入护甲/部位伤害管线。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+当前代码事实：公式里的 `damageTaken` 是 context 中最终生命伤害；如果本次只造成护甲伤害或 HP 伤害为 0，反伤值会是 0 并被 `_act_damage()` 忽略。
+
+#### 6.6.10 反击
+
+当前 JSON key：`buff_counter`。基础信息：`buff`，`duration=1`，`maxStacks=1`，`stackStrategy=refresh`，`statModifiers.dodgeRate flat 1`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Holder as 持有者
+  participant Attacker as 攻击者
+
+  Note over CE,Attacker: 回合 N：反击添加后，闪避修正可查询但当前主流程不消费
+  Skill->>BM: add(buff_counter)
+  BM-->>BM: remaining = 1，statModifier dodgeRate = 1
+  CE-->>BM: 当前主战斗流程不调用 getEffectiveStat(dodgeRate)
+
+  Note over CE,Attacker: 伤害结算完成后：防御后触发反击请求
+  CE->>BS: emit BATTLE_DEFEND_POST(context)
+  BS->>BM: _processManager(onDefendPost)
+  BM-->>BS: 匹配 buff_counter.effects[0]
+  alt context.isReactionAttack == true
+    BS-->>BS: _act_attack 直接返回，防止递归
+  else 普通受击后
+    BS->>CE: emit BUFF_ATTACK_REQUEST
+    CE->>Attacker: _handleBuffAttackRequest 校验目标和存活
+    CE->>Attacker: _applyBattleDamage(isReactionAttack = true)
+  end
+
+  Note over CE,Attacker: 回合结束：持续时间递减并移除
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  BM-->>BM: remaining == 0 时 remove expired
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_counter')` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 被动修正：`BuffManager.getEffectiveStat('dodgeRate', base)` 可以计算闪避修正；当前主战斗流程没有消费 `dodgeRate`。
+4. 触发：伤害管线末尾 emit `BATTLE_DEFEND_POST`，BuffSystem 分发到参与者。
+5. 响应：执行 `ATTACK`，`_act_attack()` 以持有者为 `source`、`attacker` 为目标，emit `BUFF_ATTACK_REQUEST`。
+6. 桥接：`CoreEngine._handleBuffAttackRequest()` 检查战斗状态、双方存活、目标合法后调用 `_applyBattleDamage({ isReactionAttack: true })`。
+7. 防递归：若当前 context 已是 `isReactionAttack=true`，`_act_attack()` 直接返回。
+8. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+当前代码事实：反击请求没有显式伤害时，CoreEngine 会从原始 context 中优先取 `rawDamage`，再取 `damageTaken` / `damageDealt`，最后至少造成 1 点反应攻击伤害。
+
+#### 6.6.11 吸血
+
+当前 JSON key：`buff_lifesteal`。基础信息：`buff`，`duration=3`，`maxStacks=1`，`stackStrategy=refresh`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Ctx as 伤害上下文
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：吸血添加后等待攻击后事件
+  Skill->>BM: add(buff_lifesteal)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 3
+  else 已有吸血
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 3
+  end
+
+  Note over CE,Holder: 本次攻击结算完成后：按最终 HP 伤害回血
+  CE->>BS: emit BATTLE_ATTACK_POST(context)
+  BS->>BM: _processManager(onAttackPost)
+  BM-->>BS: 匹配 buff_lifesteal.effects[0]
+  BS->>Ctx: 读取 damageDealt
+  BS->>Holder: HEAL_HP self damageDealt<br/>HP 不超过 maxHp
+
+  Note over CE,Holder: 回合结束：持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(buff_lifesteal, expired)
+  else remaining > 0
+    BM-->>BM: 保留到下一次攻击后
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_lifesteal')` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：伤害管线完成 HP/护甲结算后 emit `BATTLE_ATTACK_POST`。
+4. 响应：执行 `HEAL_HP`，`target=self`，公式 `damageDealt`。
+5. 写入：`_act_heal()` 直接回复持有者 HP，受最大 HP 限制。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+当前代码事实：`damageDealt` 是本次最终 HP 伤害，不包含护甲伤害。
+
+#### 6.6.12 护甲回复
+
+当前 JSON key：`buff_ap_regen`。基础信息：`buff`，`duration=${buffDuration}`，`maxStacks=1`，`stackStrategy=refresh`，参数 `ArmorGetVal` 默认 20，`buffDuration` 默认 2。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：护甲回复添加后，等待回合开始触发
+  Skill->>BM: add(buff_ap_regen, params)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = buffDuration
+  else 已有护甲回复
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 buffDuration
+  end
+
+  Note over CE,Holder: 下一次回合开始：选择部位并回复护甲
+  CE->>BS: emit TURN_START
+  BS->>BM: _processManager(onTurnStart)
+  BM-->>BS: 匹配 buff_ap_regen.effects[0]
+  BS->>Holder: HEAL_ARMOR self ArmorGetVal
+  Holder-->>Holder: _act_healArmor 选择指定部位或最受损部位
+
+  Note over CE,Holder: 回合结束：持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(buff_ap_regen, expired)
+  else remaining > 0
+    BM-->>BM: 保留下回合继续回复
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_ap_regen', options)` 创建实例，参数替换护甲回复值与持续时间。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：`TURN_START -> onTurnStart`。
+4. 响应：执行 `HEAL_ARMOR`，`target=self`，回复 `ArmorGetVal`。
+5. 部位选择：`_act_healArmor()` 优先使用 effect 参数部位或 context 部位；`TURN_START` 通常没有部位，因此选择当前最受损且 `max > 0` 的部位。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+#### 6.6.13 护甲免伤
+
+当前 JSON key：`new_buff_1771481773827`。基础信息：`buff`，`duration=${buffDuration}`，`maxStacks=${stackNum}`，`stackStrategy=refresh`，默认 `buffDuration=2`，`stackNum=3`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Ctx as 伤害上下文
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：护甲免伤添加后等待受击前事件
+  Skill->>BM: add(护甲免伤, params)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = buffDuration
+  else 已有护甲免伤
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 buffDuration
+  end
+
+  Note over CE,Holder: 伤害管线：受击前写入免护甲伤害标记
+  CE->>BS: emit BATTLE_TAKE_DAMAGE_PRE(context)
+  BS->>BM: _processManager(onTakeDamagePre)
+  BM-->>BS: 匹配 PREVENT_DAMAGE_ARMOR target=self
+  BS->>Ctx: context.preventArmorDamage = true
+  CE->>Ctx: _applyBattleDamage / _applyArmorOnlyDamage 检查标记
+  CE->>Holder: 本次不扣护甲
+
+  Note over CE,Holder: 回合结束：持续时间递减，不按 stackNum 消耗次数
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(护甲免伤, expired)
+  else remaining > 0
+    BM-->>BM: 下一次受击前仍可写入标记
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('new_buff_1771481773827', options)` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`；`maxStacks` 不代表当前已实现的“免伤次数”。
+3. 触发：伤害管线 emit `BATTLE_TAKE_DAMAGE_PRE`。
+4. 响应：执行 `PREVENT_DAMAGE_ARMOR`，写入共享 `context.preventArmorDamage = true`。
+5. 消费：`CoreEngine._applyBattleDamage()` / `_applyArmorOnlyDamage()` 在扣护甲时检查该字段；为 true 时不降低护甲。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+当前代码事实：`PREVENT_DAMAGE_ARMOR` 不消耗层数，也不按 `stackNum` 计次；只要 Buff 持续存在，每次对应伤害上下文都会写入免护甲伤害标记。
+
+#### 6.6.14 HP 免伤
+
+当前 JSON key：`new_buff_1771481936095`。基础信息：`buff`，`duration=3`，`maxStacks=1`，`stackStrategy=refresh`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Ctx as 伤害上下文
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：HP 免伤添加后等待受击前事件
+  Skill->>BM: add(HP免伤)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 3
+  else 已有 HP 免伤
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 3
+  end
+
+  Note over CE,Holder: 伤害管线：受击前写入免 HP 伤害标记
+  CE->>BS: emit BATTLE_TAKE_DAMAGE_PRE(context)
+  BS->>BM: _processManager(onTakeDamagePre)
+  BM-->>BS: 匹配 PREVENT_DAMAGE_HP target=self
+  BS->>Ctx: context.preventHpDamage = true
+  CE->>Ctx: _applyBattleDamage 最终 HP 扣减前检查标记
+  CE->>Holder: 本次 HP 伤害置为 0
+
+  Note over CE,Holder: 回合结束：持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(HP免伤, expired)
+  else remaining > 0
+    BM-->>BM: 下一次受击前仍可写入标记
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('new_buff_1771481936095')` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：伤害管线 emit `BATTLE_TAKE_DAMAGE_PRE`。
+4. 响应：执行 `PREVENT_DAMAGE_HP`，写入共享 `context.preventHpDamage = true`。
+5. 消费：`CoreEngine._applyBattleDamage()` 在最终 HP 扣减前检查该字段；为 true 时 `context.damageTaken = 0`。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+当前代码事实：该 Buff 只阻止 HP 伤害，不阻止护甲伤害。
+
+#### 6.6.15 攻击获甲
+
+当前 JSON key：`new_buff_1771482673293`。基础信息：`buff`，`duration=1`，`maxStacks=1`，`stackStrategy=refresh`，参数 `ArmorGetVal` 默认 5。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：攻击获甲添加后等待攻击前事件
+  Skill->>BM: add(攻击获甲, params.ArmorGetVal)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 1
+  else 已有攻击获甲
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 1
+  end
+
+  Note over CE,Holder: 伤害管线开始：攻击前回复自身护甲
+  CE->>BS: emit BATTLE_ATTACK_PRE(context)
+  BS->>BM: _processManager(onAttackPre)
+  BM-->>BS: 匹配 HEAL_ARMOR
+  BS->>Holder: HEAL_ARMOR self ArmorGetVal
+  Holder-->>Holder: _act_healArmor 选择 context 部位或最受损部位
+
+  Note over CE,Holder: 回合结束：持续时间递减并移除
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  BM-->>BM: remaining == 0 时 remove expired
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('new_buff_1771482673293', options)` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：伤害管线开始时 emit `BATTLE_ATTACK_PRE`。
+4. 响应：执行 `HEAL_ARMOR`，`target=self`，给持有者回复 `ArmorGetVal` 护甲。
+5. 部位选择：优先使用 context 的 `bodyPart` / `targetPart`；若持有者没有该部位，则回退到最受损部位。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+当前代码事实：`BATTLE_ATTACK_PRE` 会分发给 attacker/source 与 target；如果双方都持有这个 Buff，双方各自都会以 `self` 为目标执行一次。
+
+#### 6.6.16 受击获甲
+
+当前 JSON key：`new_buff_1771485041778`。基础信息：`buff`，`duration=3`，`maxStacks=1`，`stackStrategy=refresh`，参数 `healArmorVal` 默认 5。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Ctx as 伤害上下文
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：受击获甲添加后等待受击前事件
+  Skill->>BM: add(受击获甲, params.healArmorVal)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 3
+  else 已有受击获甲
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 3
+  end
+
+  Note over CE,Holder: 伤害管线：受击前先回复护甲，再继续结算
+  CE->>BS: emit BATTLE_TAKE_DAMAGE_PRE(context)
+  BS->>BM: _processManager(onTakeDamagePre)
+  BM-->>BS: 匹配 HEAL_ARMOR
+  BS->>Holder: HEAL_ARMOR self healArmorVal
+  Holder-->>Ctx: 回复后的护甲留在 bodyParts
+  CE->>Holder: 后续 _applyBattleDamage 使用更新后的护甲抵扣
+
+  Note over CE,Holder: 回合结束：持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(受击获甲, expired)
+  else remaining > 0
+    BM-->>BM: 下次受击前仍可触发
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('new_buff_1771485041778', options)` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：伤害管线 emit `BATTLE_TAKE_DAMAGE_PRE`。
+4. 响应：执行 `HEAL_ARMOR`，`target=self`，在伤害真正结算前给持有者回复护甲。
+5. 消费：回复后的护甲会立即参与本次 `_applyBattleDamage()` 的护甲抵扣。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+当前代码事实：与其他 `onTakeDamagePre` effect 一样，只要持有者是本次 attacker/source 或 target，都会被分发；设计上应把该 Buff 加给受击方。
+
+#### 6.6.17 开销降低
+
+当前 JSON key：`new_buff_1771485482007`。基础信息：`buff`，`duration=3`，`maxStacks=1`，`stackStrategy=refresh`，参数 `apReduceVal` 默认 1。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：开销降低添加后，等待回合开始写入临时成本修正
+  Skill->>BM: add(开销降低, params.apReduceVal)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 3
+  else 已有开销降低
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 3
+  end
+
+  Note over CE,Holder: 回合开始：先清空临时字段，再由 Buff 写入本回合成本修正
+  CE->>Holder: _resetTurnFlags<br/>_planningApCostFlatDelta = 0
+  CE->>BS: emit TURN_START
+  BS->>BM: _processManager(onTurnStart)
+  BM-->>BS: 匹配 AP_COST_REDUCE target=self
+  BS->>Holder: _planningApCostFlatDelta -= apReduceVal
+
+  Note over CE,Holder: 规划阶段：技能成本读取临时字段
+  CE->>Holder: _getSkillApCostStrict()
+  Holder-->>CE: baseAp + _planningApCostFlatDelta<br/>Math.max(0, cost)
+
+  Note over CE,Holder: 回合结束：持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(开销降低, expired)
+  else remaining > 0
+    BM-->>BM: 下回合开始重新写入成本修正
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('new_buff_1771485482007', options)` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：`CoreEngine.startTurn()` 先 `_resetTurnFlags()`，再 emit `TURN_START`；BuffSystem 匹配 `onTurnStart`。
+4. 响应：执行 `AP_COST_REDUCE`，`_act_modifyApCost()` 写入持有者 `_planningApCostFlatDelta -= apReduceVal`。
+5. 消费：规划阶段 `CoreEngine._getSkillApCostStrict()` 返回 `baseAp + _planningApCostFlatDelta`，并用 `Math.max(0, ...)` 保底。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+当前代码事实：没有独立“技能扣费前事件”；AP 成本修正靠回合开始写 actor 临时字段实现。
+
+#### 6.6.18 开销增多
+
+当前 JSON key：`new_buff_1771487055554`。基础信息：`debuff`，`duration=3`，`maxStacks=1`，`stackStrategy=refresh`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：开销增多添加后，等待回合开始写入临时成本修正
+  Skill->>BM: add(开销增多)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 3
+  else 已有开销增多
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 3
+  end
+
+  Note over CE,Holder: 回合开始：先清空临时字段，再由 Buff 写入本回合成本修正
+  CE->>Holder: _resetTurnFlags<br/>_planningApCostFlatDelta = 0
+  CE->>BS: emit TURN_START
+  BS->>BM: _processManager(onTurnStart)
+  BM-->>BS: 匹配 AP_COST_ADD target=self
+  BS->>Holder: _planningApCostFlatDelta += 1
+
+  Note over CE,Holder: 规划阶段：技能成本读取临时字段
+  CE->>Holder: _getSkillApCostStrict()
+  Holder-->>CE: baseAp + _planningApCostFlatDelta
+
+  Note over CE,Holder: 回合结束：持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(开销增多, expired)
+  else remaining > 0
+    BM-->>BM: 下回合开始重新写入成本修正
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('new_buff_1771487055554')` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：`TURN_START -> onTurnStart`。
+4. 响应：执行 `AP_COST_ADD`，写入持有者 `_planningApCostFlatDelta += 1`。
+5. 消费：规划阶段 `CoreEngine._getSkillApCostStrict()` 读取该临时字段，提高技能 AP 成本。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+#### 6.6.19 撕裂伤口
+
+当前 JSON key：`buff_tear_wound`。基础信息：`debuff`，`duration=2`，`maxStacks=1`，`stackStrategy=refresh`。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant BS as BuffSystem
+  participant Holder as 行动者
+
+  Note over CE,Holder: 回合 N：撕裂伤口添加后，等待持有者行动前触发
+  Skill->>BM: add(buff_tear_wound)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 2
+  else 已有撕裂伤口
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 2
+  end
+
+  Note over CE,Holder: 持有者准备执行技能：行动前事件只分发给当前 actor
+  CE->>BS: emit BATTLE_ACTION_PRE(actionContext)
+  BS->>BM: _onActionPre 仅处理 actor manager
+  BM-->>BS: 匹配 APPLY_BUFF
+  BS->>Holder: target=self<br/>add(buff_bleed, extendBy=2)
+  Holder-->>BM: 流血 remaining 增加 2
+  BM-->>CE: 不写 skipTurn / cancelled，本次行动继续执行
+
+  Note over CE,Holder: 回合结束：撕裂伤口自身持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: buff_tear_wound.remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(buff_tear_wound, expired)
+  else remaining > 0
+    BM-->>BM: 下次行动前仍可触发
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('buff_tear_wound')` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：`CoreEngine._executeSkillActions()` emit `BATTLE_ACTION_PRE`；`BuffSystem._onActionPre()` 只分发给当前行动者 manager。
+4. 响应：执行 `APPLY_BUFF`，`target=self`，给当前行动者自己添加 `buff_bleed`。
+5. 连锁参数：`_act_applyBuff()` 传入 `params.buff_duration=2`、`duration=2`、`stackStrategy=extend`、`extendBy=2`，因此流血增加 2 回合持续时间。
+6. 行动影响：该 Buff 不写 `skipTurn` 或 `cancelled`，不会阻止本次技能继续执行。
+7. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+#### 6.6.20 加速
+
+当前 JSON key：`new_buff_1771487521271`。基础信息：`buff`，`duration=3`，`maxStacks=1`，`stackStrategy=refresh`，`statModifiers.speed flat ${speedUpVal}`，默认 2。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CE as CoreEngine
+  participant Skill as Skill / buffRefs
+  participant BM as BuffManager
+  participant Holder as 持有者
+
+  Note over CE,Holder: 回合 N：加速被添加后，不监听 EventBus 事件
+  Skill->>BM: add(加速, params.speedUpVal)
+  alt 首次添加
+    BM-->>BM: new Buff remaining = 3
+  else 已有加速
+    BM-->>BM: stackStrategy refresh<br/>remaining 刷新为 3
+  end
+
+  Note over CE,Holder: 规划/放置技能时：玩家速度读取会消费 statModifiers
+  CE->>BM: _getEffectiveActorSpeed -> getEffectiveStat(speed, baseSpeed)
+  BM-->>CE: baseSpeed + speed flat * stacks
+  CE-->>Holder: 使用修正后的速度参与规划/时间线
+
+  Note over CE,Holder: 回合结束：没有 effect，只有统一持续时间递减
+  CE->>BM: TURN_END 后 tickTurn()
+  BM-->>BM: remaining -= 1
+  alt remaining == 0
+    BM-->>BM: remove(加速, expired)
+  else remaining > 0
+    BM-->>BM: 保留速度修正
+  end
+```
+
+状态机：
+
+1. 进入：`BuffManager.add('new_buff_1771487521271', options)` 创建实例。
+2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
+3. 触发：无 `effects`，不响应 EventBus trigger。
+4. 响应：当代码调用 `holder.buffs.getEffectiveStat('speed', baseSpeed)` 时，返回加速后的速度。
+5. 当前消费点：玩家规划/放置技能时 `CoreEngine._getEffectiveActorSpeed()` 会读取玩家速度修正；敌人规划器当前不读取敌人 Buff 速度修正。
+6. 退出：`TURN_END -> tickTurn()` 递减并移除。
+
+### 6.7 stackStrategy 语义
+
+| 策略 | `BuffManager._applyStack()` 当前行为 |
+| --- | --- |
+| `refresh` | 默认分支。保持 `stacks` 不变；如果不是永久 Buff，则 `remaining = def.lifecycle.duration ?? existing.duration`。 |
+| `extend` | 如果不是永久 Buff，则 `remaining += options.extendBy ?? options.duration ?? def.lifecycle.duration ?? existing.duration`。 |
+| `add` | `stacks = min(maxStacks, existing.stacks + (options.stacks || 1))`；如果不是永久 Buff，则刷新 `remaining`。 |
+| `replace` | `stacks = min(maxStacks, options.stacks || 1)`；如果不是永久 Buff，则刷新 `remaining`。 |
+| `max` | 没有专门分支；当前会落入 `refresh` 默认分支。 |
+| `independent` | 没有专门分支；当前不会创建同 id 多实例，会落入 `refresh` 默认分支。 |
+| 其他未知值 | 没有专门分支；当前会落入 `refresh` 默认分支。 |
+
+新建 Buff 实例时，`Buff` 构造函数使用 `options.duration ?? definition.lifecycle.duration ?? 0` 作为 `duration` 和初始 `remaining`；`options.stacks || 1` 作为初始 `stacks`。永久 Buff 的判断是 `duration === -1`。
+
+## 7. 数据契约
+
+### 7.1 顶层结构
+
+当前 `assets/data/buffs_v2_7.json` 使用容器结构：
 
 ```json
 {
   "$schemaVersion": "buffs_v2_1_wrapped",
   "meta": {
     "title": "Buff 库",
-    "source": "",
     "notes": [],
     "fieldNotes": {},
     "defaults": {
-      "lifecycle": { "duration": 1, "maxStacks": 1, "stackStrategy": "replace", "removeOnBattleEnd": true }
+      "lifecycle": {
+        "duration": 1,
+        "maxStacks": 1,
+        "stackStrategy": "replace",
+        "removeOnBattleEnd": true
+      }
     },
     "enums": {
       "buffTypes": ["buff", "debuff", "hidden"],
       "stackStrategies": ["refresh", "extend", "add", "max", "replace", "independent"],
       "triggers": ["onTurnStart", "onTurnEnd", "onAttackPre", "onAttackPost", "onTakeDamagePre", "onTakeDamagePost", "onDefendPre", "onDefendPost", "onDeath"],
       "targets": ["self", "target", "attacker"],
-      "tags": ["dot", "control", "stat_up", "stat_down", "defense", "offensive", "poison", "physical"],
-      "stats": ["maxHp", "atk", "def", "speed", "critRate", "hitRate", "dodgeRate", "damageDealtMult", "damageTakenMult", "armorMitigationMult", "ap", "maxAp"],
-      "statModifierTypes": ["flat", "percent_base", "percent_current", "overwrite", "formula"],
-      "effectActions": [
-        "DAMAGE_HP",
-        "DAMAGE_ARMOR",
-        "HEAL_HP",
-        "HEAL_ARMOR",
-        "SKIP_TURN",
-        "PREVENT_DAMAGE_HP",
-        "PREVENT_DAMAGE_ARMOR",
-        "AP_COST_ADD",
-        "AP_COST_REDUCE",
-
-        "MODIFY_AP",
-        "ATTACK"
-      ]
+      "effectActions": ["DAMAGE_HP", "DAMAGE_ARMOR", "HEAL_HP", "HEAL_ARMOR", "APPLY_BUFF", "SKIP_TURN", "PREVENT_DAMAGE_HP", "PREVENT_DAMAGE_ARMOR", "AP_COST_ADD", "AP_COST_REDUCE"]
     }
   },
   "buffs": {}
@@ -271,471 +1543,387 @@ Buff 的效果分为**静态属性修正**和**动态触发行为**两类。
 
 说明：
 
-- `meta.enums` 用于编辑器下拉与数据校验。
-- `meta.fieldNotes` 用于把“字段含义”固定下来，避免团队记忆依赖。
-- `meta.defaults` 用于提供缺省值（编辑器自动补齐、加载时合并）。
+- `BuffRegistry.setDefinitions()` 当前接收的是已经归一化后的 buff 字典；容器结构由内容加载层拆出。
+- `meta.enums` 是编辑器和数据包的枚举来源，不等于运行时全部已订阅或已实现。
+- 当前运行时实际订阅的 trigger 以 6.2 和 6.3 为准；`onTakeDamagePost`、`onDefendPre`、`onDeath` 目前没有事件入口。
+- 当前数据中 `buff_tear_wound` 使用 `onActionPre`，运行时也订阅 `BATTLE_ACTION_PRE -> onActionPre`，但 `buffs_v2_7.json` 的 `meta.enums.triggers` 尚未列出 `onActionPre`。这是数据契约与运行时枚举未同源的现状。
+- 当前运行时 action library 比 `meta.enums.effectActions` 更宽，见 7.4。
 
-约定：
+### 7.2 单个 Buff 必填字段
 
-- `meta.enums.stats` 为 `statModifiers[].stat` 的枚举来源。
-- `meta.enums.effectActions` 必须覆盖数据中实际出现的 action；其中 MVP 动作库见 5.4.2，其余 action 需要在文档中明确为“实验/待实现”并要求编辑器提供兜底 JSON 编辑入口（避免静默失败）。
-
-#### 5.2.2 兼容旧版结构
-
-迁移期可兼容两种形态：
-
-- 旧版：顶层直接是 `buffId -> buffObject`
-- 新版：顶层含 `buffs` 容器
-
-加载层应做归一化：若未发现 `buffs` 字段，则视整个对象为 `buffs`。
-
----
-
-### 5.3 单个 Buff 对象规范（Object Spec）
-
-#### 5.3.1 必填字段（MVP）
-
-- `id: string`（建议与 key 一致）
+- `id: string`
 - `name: string`
 - `description: string`
-- `type: buff | debuff | hidden`（来自 `meta.enums.buffTypes`）
-- `tags: string[]`（来自 `meta.enums.tags`，允许扩展但需逐步收敛）
-- `lifecycle: { duration, maxStacks, stackStrategy, removeOnBattleEnd }`
+- `type: "buff" | "debuff" | "hidden"`
+- `tags: string[]`
+- `lifecycle`
+- `effects: Effect[]`
+- `statModifiers: StatModifier[]`
 
-#### 5.3.2 可维护性字段（推荐）
+推荐字段：
 
-- `status?: active | deprecated | experimental`
-- `aliasOf?: string`（指向另一个 `buffId`，表示语义入口保留但复用实现）
+- `status?: "active" | "deprecated" | "experimental"`
+- `aliasOf?: string`
 - `version?: string`
 - `icon?: string`
+- `paramsSchema?: Record<string, ParamSpec>`
 
-#### 5.3.3 lifecycle 语义
+### 7.3 Effect 结构
 
-- `duration: number`
-  - `-1` 表示永久（常用于装备被动/系统 Buff）
-- `maxStacks: number`
-- `stackStrategy: enum`
-  - `refresh`: 刷新持续时间
-  - `extend`: 延长持续时间
-  - `add`: 叠层（强度累计）
-  - `max`: 同类只取最高强度（可用于“同 tag 互斥取最大”）
-  - `replace`: 完全覆盖
-  - `independent`: 独立实例并行（必要时才用）
-- `removeOnBattleEnd: boolean`
-
-> 建议：只在确有需求时使用 `independent`，否则会显著增加结算与 UI 可视化复杂度。
-
----
-
-### 5.4 effects 规范（Trigger + Action + Target + Payload）
-
-#### 5.4.1 统一结构
-
-推荐统一使用：
+标准 effect 结构：
 
 ```json
 {
   "trigger": "onTurnEnd",
   "action": "DAMAGE_HP",
   "target": "self",
-  "payload": { "value": "maxHp * 0.05", "valueType": "formula" }
+  "payload": {
+    "value": 5,
+    "valueType": "flat",
+    "reason": "bleed_tick"
+  }
 }
 ```
 
-约束：
+当前实现事实：
 
-- `trigger/action/target` 均来自 `meta.enums`。
-- action 专用字段只允许出现在 `payload`（避免 `value/valueType/params` 混用）。
+- `BuffSystem._processManager()` 只要求 `effect.trigger` 与当前 trigger 字符串相等，不会校验它是否存在于 `meta.enums.triggers`。
+- `BuffSystem._actionLibrary` 按 action key 查找实现；不存在 key 会发出 `BUFF:WARN`。
+- `target` 由 `_resolveTarget()` 解析：`self` 指持有者，`attacker` 指 `context.attacker || context.source`，`target` 指 `context.target`，其他值默认回到持有者。
+- `_normalizeEffect()` 会把 `payload.value / payload.valueType / payload.reason` 提升到运行时 effect 顶层，并把 payload 剩余字段合并到 `effect.params`。
+- 运行时兼容历史 `value/valueType/params`，但新数据应向 `payload` 收敛。
 
-#### 5.4.2 动作库最小集合（MVP）
+### 7.4 当前 action library
 
-建议 MVP 支持：
+`BuffSystem._actionLibrary` 当前实际注册的 action 如下。大小写别名会进入同一个实现。
 
-- `DAMAGE_HP`：对生命值造成伤害
-  - `payload.value/valueType`
-- `DAMAGE_ARMOR`：对护甲造成伤害
-  - `payload.value/valueType`
-- `HEAL_HP`：恢复生命值
-  - `payload.value/valueType`
-- `HEAL_ARMOR`：恢复护甲
-  - `payload.value/valueType`
-- `SKIP_TURN`：跳过本回合行动
-  - 无 payload 或 `payload.reason`
-- `PREVENT_DAMAGE_HP`：阻止本次对生命值的伤害（一次性免伤/抵挡）
-  - 无 payload（MVP：阻止全部伤害）或 `payload.reason`
-  - 约束建议：仅允许在 `onTakeDamagePre` 触发器使用
-- `PREVENT_DAMAGE_ARMOR`：阻止本次对护甲的伤害（一次性免伤/抵挡）
-  - 无 payload（MVP：阻止全部伤害）或 `payload.reason`
-  - 约束建议：仅允许在 `onTakeDamagePre` 触发器使用
-- `AP_COST_ADD`：增加技能 AP 消耗（疲劳/缠绕/负重等）
-  - `payload.value/valueType`
-  - 约束建议：仅允许在“技能扣费前”的触发器使用（建议新增/采用 `onSkillCostCalc` / `onBeforePayCost` 语义）
-- `AP_COST_REDUCE`：减少技能 AP 消耗（专注/连击窗口/加速施法等）
-  - `payload.value/valueType`
-  - 约束建议：仅允许在“技能扣费前”的触发器使用（建议新增/采用 `onSkillCostCalc` / `onBeforePayCost` 语义）
+| action key | 实现函数 | 当前行为 |
+| --- | --- | --- |
+| `damage` / `DAMAGE_HP` | `_act_damage` | 直接修改目标 HP，不进入护甲/部位伤害管线。 |
+| `heal` / `HEAL_HP` | `_act_heal` | 直接回复目标 HP。 |
+| `HEAL_ARMOR` | `_act_healArmor` | 选择指定或受损部位回复护甲。 |
+| `applyBuff` / `APPLY_BUFF` | `_act_applyBuff` | 对目标 `target.buffs.add()`。 |
+| `skipTurn` / `SKIP_TURN` | `_act_skipTurn` | 写入 `context.skipTurn = true` 和 `owner._skipTurn = true`。 |
+| `modifyAP` / `MODIFY_AP` | `_act_modifyAP` | 修改目标 `stats.ap`。 |
+| `absorbDamage` | `_act_absorbDamage` | 向 `context.shieldPool` 增加吸收量。 |
+| `modifyDamageTaken` | `_act_modifyDamageTaken` | 乘法写入 `context.damageTakenMult`。 |
+| `setDamageTaken` | 缺失 `_act_setDamageTaken` | 当前注册了 key，但实现函数不存在；触发会进入 `BUFF:ERROR`。 |
+| `attack` / `ATTACK` | `_act_attack` | 发出 `BUFF_ATTACK_REQUEST`，由 CoreEngine 桥接反应攻击。 |
+| `absorbToHeal` | `_act_absorbToHeal` | 空实现。 |
+| `revive` | `_act_revive` | 空实现。 |
+| `REMOVE_SELF` | `_act_removeSelf` | `manager.remove(ctx.buff.id, 'consume')`。 |
+| `MODIFY_STAT_TEMP` | `_act_modifyStatTemp` | 写入 `context.tempModifiers[stat]`。 |
+| `PREVENT_DAMAGE_HP` | `_act_preventDamageHp` | 写入 `context.preventHpDamage = true`。 |
+| `PREVENT_DAMAGE_ARMOR` | `_act_preventDamageArmor` | 写入 `context.preventArmorDamage = true`。 |
+| `AP_COST_ADD` | `_act_modifyApCost` | 写入目标 `_planningApCostFlatDelta += value`。 |
+| `AP_COST_REDUCE` | `_act_modifyApCost` | 写入目标 `_planningApCostFlatDelta -= value`。 |
 
+数据包 `meta.enums.effectActions` 当前只列出一部分 action，编辑器展示和运行时 action library 尚未完全同源。若后续要做到“数据契约即运行时契约”，需要把 `meta.enums.effectActions` 与 `_actionLibrary` 对齐，并删除或补全 `setDamageTaken`、`absorbToHeal`、`revive` 这类不完整项。
 
-### 5.5 statModifiers 规范（Passive Modifiers）
+### 7.5 statModifiers
 
-#### 5.5.1 结构
+标准结构：
 
 ```json
 "statModifiers": [
-  { "stat": "atk", "type": "flat", "value": 5 },
-  { "stat": "damageTakenMult", "type": "percent_base", "value": 0.2 }
+  { "stat": "damageTakenMult", "type": "percent_base", "value": -0.2 },
+  { "stat": "atk", "type": "flat", "value": 5 }
 ]
 ```
 
-#### 5.5.2 建议约束
+当前 MVP 支持：
 
-- `statModifiers[].stat` 的取值应优先来自 `meta.enums.stats`。
-- 若遇到未知 stat 或未知 type：禁止静默忽略，必须产生日志告警（便于回归定位）。
+- `flat`
+- `percent` / `percent_base`
+- `overwrite`
 
----
+未知 type 不允许静默忽略，必须产生 `BUFF:WARN`。
 
-### 5.6 校验规则（编辑器/加载器应当执行）
+### 7.6 动态参数与占位符
 
-建议最少校验：
-
-1) `buffs` key 与 `buff.id` 一致性（若保留双写）
-2) `type/trigger/action/target/stackStrategy` 必须在 `meta.enums` 中
-3) `statModifiers[].stat` 与 `statModifiers[].type` 必须可识别
-4) `aliasOf` 指向的 buff 必须存在，且不允许循环 alias
-
----
-
-### 5.7 向后兼容与迁移策略
-
-为避免一次性改动过大，建议加载层做“归一化映射”：
-
-- 旧 action 名称映射到新枚举（例如 `damage -> DAMAGE`，`setDamageTaken -> SET_DAMAGE_TAKEN`）
-- 旧 `params` 合并进新 `payload`
-
-迁移完成后，编辑器保存时统一输出新版结构。
-
-## 6. 技能系统衍生 Buff 列表 (Skill System Derived Buffs)
-
-基于 `03-技能系统(skill_design)-设计说明.md` 第三章的技能设计，整理出如下 Buff 对象需求。这些对象将作为 JSON 数据配置的基础。（已删除）
-
-## 7. 装备系统衍生 Buff 列表 (Item System Derived Buffs)
-
-(补充自 `13-道具系统(item_design)-设计说明.md`)
-
-*   **passive_heavy_armor**: 速度 -5 (来源: 锁子甲) -> `statModifiers: { speed: -5 }`
-*   **passive_vampire**: 20% 吸血 (来源: 吸血鬼之牙) -> `onAttackPost` -> `heal` (20% dmg)
-*   **passive_start_weak**: 首回合攻击力降低 (来源: 角斗士头盔) -> `onTurnStart` (Round 1) -> Apply `debuff_weak`
-*   **passive_phoenix**: 每场战斗一次复活 (来源: 凤凰吊坠) -> `lifecycle: { triggerLimit: 1 }`, `onDeath` -> Revive.
-
-## 8. 总结 (Conclusion)
-
-通过上述抽象，我们将复杂的战斗技能逻辑转化为了约 30 个基础 Buff 对象。在开发 `script/engine/BuffSystem.js` 时，应优先实现 `statModifiers` 和 `onTurnStart/End` 的处理逻辑，随后逐步实现 `EventBus` 中的 `onAttack/Defend` 钩子以支持高级 Buff。
-
-## 9. 实现架构设计 (Implementation Architecture)
-
-本章节描述如何实现一个低耦合、数据驱动的 Buff 系统，使其满足上述 JSON 配置需求。
-
-### 9.1 架构核心 (Core Architecture)
-
-整个系统由四个核心部分组成：
-1.  **BuffManager**: 挂载在 Character 上的数据容器，负责 Buff 的增删改查和生命周期 Tick。
-2.  **BuffSystem (Processor)**: 独立的单例系统，订阅 `EventBus`，是实际执行 Buff 逻辑的大脑。
-3.  **ActionLibrary (Registry)**: 原子操作库，将 JSON 中的字符串 action 映射为具体的 JS 函数。
-4.  **ConditionLibrary (Registry)**: 条件判断库，用于检查 effects 中的 triggers 是否满足执行条件。
-
-### 9.2 数据流向 (Data Flow)
-
-1.  **事件触发**: 战斗系统 (CombatSystem) 发布事件 (e.g. `EVENT.ATTACK_HIT`).
-2.  **系统响应**: `BuffSystem` 监听到事件，遍历所有参与者的 `BuffManager`。
-3.  **匹配 Trigger**: 对于每个 Buff，检查其 `effects` 列表中的 `trigger` 字段是否匹配当前事件名。
-4.  **执行逻辑**: 如果匹配，调用 `ActionLibrary` 执行对应的原子函数。
-
-### 9.3 动作库设计 (ActionLibrary - The "Code in JSON")
-
----
-
-为了在 JSON 中配置逻辑，我们需要建立字符串到函数的映射表。
-
-```javascript
-// 伪代码示例
-const ActionLibrary = {
-    // 造成伤害
-    "DAMAGE": (source, target, params, context) => {
-        const val = resolveValue(params.value, source, target);
-        target.takeDamage(val);
-    },
-    // 治疗
-    "HEAL": (source, target, params, context) => {
-        const val = resolveValue(params.value, source, target);
-        target.heal(val);
-    },
-    // 修改属性 (临时)
-    "MODIFY_STAT": (source, target, params, context) => {
-        // ... logic to apply temporary modifier
-    },
-    // 施加/移除 Buff
-    "APPLY_BUFF": (source, target, params) => {
-        target.buffManager.addBuff(params.buffId);
-    }
-};
-
-// 辅助函数: 解析动态数值
-// 支持 JSON 配置: "value": "10" 或 "value": "source.atk * 0.5"
-function resolveValue(valExpression, source, target) {
-    if (typeof valExpression === 'number') return valExpression;
-    // 简易解析器或 eval (需注意安全，单机游戏可接受)
-    // 推荐: 简单的正则替换 + mathjs 库
-        // 示例: "source.atk * 0.5" -> source.stats.atk * 0.5
-    }
-   ```
-
-### 9.3.1 案例分析：配置“攻击吸血” (Example: Configuring Life Steal)
-
-以 `buff_lifesteal` 为例，分析如何配置 **20% 吸血比例**，展示数据驱动的灵活性。
-
-**1. JSON 配置**:
-我们复用通用的 `HEAL` 动作，而不是专门编写 `LIFESTEAL` 动作。关键在于动态参数的配置方法。
-
-```json
-{
-    "id": "buff_lifesteal",
-    "effects": [
-    {
-        "trigger": "onAttackPost",          // 触发时机：攻击结算后
-        "action": "HEAL",                   // 动作：执行治疗函数
-        "target": "self",                   // 目标：来源者自己
-        "params": {
-        "value": "{context.damageDealt} * 0.2"  // 数值配置：引用上下文中的伤害值 * 0.2 (即20%吸血率)
-        }
-    }
-    ]
-}
-```
-
-**2. 上下文传递 (Context Injection)**:
-当战斗系统触发 `onAttackPost` 时，必须将当次攻击的数据打包作为 `context` 传递出来。
-
-```javascript
-// 战斗引擎伪代码
-const contextData = {
-    damageDealt: 50,  // 本次攻击造成的实际伤害
-    isCrit: true      // 是否暴击
-};
-EventBus.emit("onAttackPost", attacker, defender, contextData);
-```
-
-**3. 变量解析 (Variable Resolution)**:
-在 `ActionLibrary` 的 `HEAL` 函数中，解析器会将 `{context.damageDealt}` 替换为 `50`，然后执行 `50 * 0.2 = 10` 的治疗。
-这样，**吸血比例 (0.2)** 甚至 **计算公式** 都完全由 JSON 决定，改动时无需重新编译代码。
-
-### 9.3.2 案例分析：配置“破甲意图” (Example: Configuring Armor Penetration)
-
-目标是实现 **“下次攻击削弱目标护甲减免 30%，生效一次后消失”**。这是一个典型的 **耗散型 (Consumable) Buff**，需要组合两个 Effect 来实现。
-
-**1. JSON 配置**:
-```json
-{
-  "id": "buff_armor_pen",
-  "effects": [
-    {
-      // 步骤 A: 临时削弱目标护甲 (仅本次计算有效)
-      "trigger": "onAttackPre",
-      "action": "MODIFY_STAT_TEMP", // 修改本次计算上下文中的属性（而不是永久改面板）
-      "target": "target",
-      "params": {
-        "stat": "armorMitigationMult",
-        "value": "+0.3",            // 护甲减免系数乘区提高 30%（意味着护甲更“软”，最终伤害更高）
-        "type": "percent_current"
-      }
-    },
-    {
-      // 步骤 B: 攻击后自我移除
-      "trigger": "onAttackPost",
-      "action": "REMOVE_SELF",      // 这是一个假设的原子操作，移除Buff自身
-      "target": "self"
-    }
-  ]
-}
-```
-
-**2. 逻辑流 (Logic Flow)**:
-1.  **前置钩子 (`onAttackPre`)**: 战斗系统在计算伤害公式 `Step 1: RawDmg = Atk - Def` 之前，触发此事件。
-2.  **执行修正**: `ActionLibrary.MODIFY_STAT_TEMP` 介入，在**本次计算上下文**中写入 `armorMitigationMult`（例如 +30%），用于削弱“目标部位护甲参与减免时的减免系数”。
-3.  **计算伤害**: 战斗系统在护甲结算阶段读取该 `armorMitigationMult`，从而让相同护甲值下的最终伤害更高。
-4.  **后置钩子 (`onAttackPost`)**: 伤害结算完毕。
-5.  **自我消耗**: 触发 `REMOVE_SELF`，Buff 从列表中移除，确保效果只生效一次。
-
-### 9.4 参数体系深度解析 (Deep Dive into Parameters)
-
-针对 `params` 中的核心字段 `stat`, `value`, `type`，本设计明确了哪些是**可直接扩展的**（无需改代码），哪些是**枚举类型**（需引擎支持）。
-
-#### 9.4.1 stat (属性键名) - 可扩展 (Extensible)
-*   **定义**: 目标对象上需要被修改的属性名称（如 `atk`, `def`, `speed`）。
-*   **类型**: **开放字符串 (Open String)**。
-*   **扩展策略**:
-    *   这是一个**非枚举**字段。只要 `Character` 或 `BattleStats` 数据结构中存在该属性，JSON 配置即可引用。
-    *   **举例**: 如果游戏后期新增了属性 `luck` (幸运)，程序员只需在角色数据结构中添加 `luck` 字段，策划即可在 Buff 中配置 `"stat": "luck"`，无需修改 `BuffSystem` 代码。
-*   **引擎实现**:
-    *   **禁止**: 使用硬编码判断 (e.g., `if (stat === 'atk') ...`).
-    *   **推荐**: 使用动态属性访问 (Reflection-like access)。
-    ```javascript
-    // 引擎代码示例
-    function applyModifier(target, statKey, value) {
-        if (target.stats.hasOwnProperty(statKey)) {
-             target.stats[statKey] += value;
-        } else {
-             console.warn(`Stat ${statKey} not found on target.`);
-        }
-    }
-    ```
-
-#### 9.4.2 type (计算策略) - 枚举值 (Enumeration)
-*   **定义**: 数值作用于属性的数学算法。
-*   **类型**: **闭合枚举 (Closed Enum)**。
-*   **扩展策略**:
-    *   这是一个**枚举**字段。新增类型意味着需要编写新的底层数学逻辑，**必须修改引擎代码**。
-*   **标准枚举值**:
-    1.  `flat`: **固定值修正**。公式: `Result = Base + Value`。 (例如: 攻击力 +10)
-    2.  `percent_base`: **基础百分比**。公式: `Result = Base * (1 + Value)`。 (例如: 攻击力 +10%)
-    3.  `percent_current`: **当前值百分比**。公式: `Result = Current * (1 + Value)`。 (例如: 减少当前 50% 的生命值)
-    4.  `overwrite`: **覆盖**。公式: `Result = Value`。 (例如: 强制设置行动力为 0)
-*   **引擎实现**:
-    *   推荐使用策略模式 (Strategy Pattern) 维护这些算法，便于集中管理。
-
-#### 9.4.3 value (数值载荷) - 高度动态 (Dynamic)
-*   **定义**: 实际作用的数值大小。
-*   **类型**: **多态 (Number | String Expression)**。
-*   **扩展策略**:
-    *   通过支持解析字符串公式，实现无限的扩展能力。
-*   **数据形式**:
-    *   **Number**: 静态常量 (e.g., `100`, `0.5`).
-    *   **String**: 动态公式 (e.g., `"{source.atk} * 0.5 + 10"`).
-*   **引擎实现**:
-    *   利用 `Context` 上下文对象，解析字符串中的占位符（如 `{source.atk}`），替换为实际运行时数值后计算。
-
-### 9.5 低耦合优势 (Decoupling Benefits)
-
-*   **无需修改战斗代码**: 新增一个"攻击时吸血"的 Buff，只需要在 JSON 里配置 `trigger: onAttackPost`, `action: HEAL`, `target: self`。不需要去改动 CombatSystem 的攻击函数。
-*   **统一入口**: 所有修改属性、造成伤害的来源都被统一管理，方便通过 `console.log` 追踪战斗日志。
-*   **易于扩展**: 如果需要新机制（例如“偷取金币”），只需在 `ActionLibrary` 注册 `STEAL_GOLD` 函数，无需改动整个架构。
-
-## 10. Buff 动态参数与映射机制 (Dynamic Parameters & Mapping)
-
-> 目的：解决“Buff 模板结构固定，但在 Skill 引用时需要配置少量数值参数（例如流血每轮伤害、持续回合）”的问题，同时**严格保证数据与逻辑的解耦**。
->
-> 核心原则：
-> 1) **数据自描述映射**：Buff 的 JSON 数据不仅要声明有哪些参数，还要通过**占位符（Placeholder）**自己描述这些参数替换到哪个具体字段。引擎只做无情的解析器。
-> 2) **Skill 只做传参**：Skill 引用 Buff 时只传入参数字典（Key-Value），不关心 Buff 内部结构。
-> 3) **UI 傻瓜化**：编辑器底层保存占位符字符串，但 UI 层面通过“模式切换（固定值/参数绑定）”让策划做选择题，避免手敲代码。
-
-### 10.1 核心方案：占位符映射（Variable Interpolation）
-
-为了让 Buff 成为一个“带参数的模板”，我们采用**占位符映射（方案A）**。
-在 Buff 的具体数值字段中，不写死数字，而是写成类似 `${paramName}` 的字符串。引擎在实例化 Buff 时，自动将 `${}` 替换为外部传入的参数。
-
-**优势**：
-- **解耦最彻底**：映射关系直接写在具体字段的值里，策划看 JSON 一眼就知道这个参数用在哪了。
-- **一对多映射**：同一个参数（如 `${power}`）可以填在多个 Effect 的 value 中，实现一个参数控制多个效果（如同时造成伤害和减甲）。
-- **不破坏原有结构**：不需要把 value 变成复杂的对象，保持了 JSON 的简洁性。
-
-### 10.2 Buff 侧数据结构（模板定义）
-
-在 `buffs.json` 的每个 Buff 对象中，需要增加 `paramsSchema` 字段，并在具体数值处使用占位符。
-
-#### 10.2.1 `paramsSchema`（参数声明）
-声明该 Buff 接受哪些动态参数，并提供默认值和 UI 渲染信息。
+Buff 可以通过 `paramsSchema` 声明动态参数：
 
 ```json
 "paramsSchema": {
-  "damagePerTurn": {
-    "type": "number",
-    "default": 5,
-    "name": "每回合伤害"
-  },
-  "duration": {
-    "type": "number",
-    "default": 3,
-    "name": "持续回合"
-  }
+  "duration": { "type": "number", "default": 2, "name": "持续回合" },
+  "value": { "type": "number", "default": 5, "name": "数值" }
 }
 ```
 
-#### 10.2.2 字段占位符（映射描述）
-在 `lifecycle`, `effects`, `statModifiers` 等原本填数字的地方，填入 `${参数名}`。
+然后在 Buff 定义内使用 `${paramName}`：
 
 ```json
 {
-  "id": "buff_bleed",
-  "paramsSchema": {
-    "damagePerTurn": { "type": "number", "default": 5, "name": "每回合伤害" },
-    "duration": { "type": "number", "default": 3, "name": "持续回合" }
-  },
-  "lifecycle": {
-    "duration": "${duration}",  // <--- 绑定持续回合参数
-    "maxStacks": 5
-  },
+  "lifecycle": { "duration": "${duration}" },
   "effects": [
     {
-      "trigger": "onTurnStart",
+      "trigger": "onTurnEnd",
       "action": "DAMAGE_HP",
       "target": "self",
-      "value": "${damagePerTurn}" // <--- 绑定伤害参数
+      "payload": { "value": "${value}", "valueType": "flat" }
     }
   ]
 }
 ```
 
-### 10.3 Skill 侧数据结构（实例传参）
-
-在 `skills.json` 中引用 Buff 时，通过 `params` 字段传入具体的数值。Skill 不需要知道这些数值最终会替换 Buff 的哪些字段。
+技能只传参数：
 
 ```json
-"buffRefs": [
-  {
-    "buffId": "buff_bleed",
-    "target": "enemy",
-    "params": {
-      "damagePerTurn": 10,
-      "duration": 2
-    }
-  }
-]
+{
+  "buffId": "buff_bleed",
+  "target": "enemy",
+  "params": { "duration": 2, "value": 5 },
+  "stackStrategy": "extend",
+  "extendBy": 2
+}
 ```
 
-### 10.4 引擎解析逻辑（运行时实例化）
+映射关系由 Buff 数据自身表达，`BuffRegistry` 只做机械解析。
 
-引擎在战斗中实例化 Buff 时的处理流程：
-1. 读取 Buff 模板（`buffs.json` 中的定义）。
-2. 获取外部传入的 `params`（如果没有传，则使用 `paramsSchema` 中的 `default` 值）。
-3. **递归遍历** Buff 模板的 JSON 结构。
-4. 发现任何值为字符串且匹配 `${...}` 正则表达式的字段，提取出参数名。
-5. 从 `params` 中取出对应的值进行替换。
-6. **类型转换**：根据 `paramsSchema` 中定义的 `type`（如 `number`），将替换后的字符串强转回正确的类型（解决 JSON 语法限制占位符必须是字符串的问题）。
+## 8. Skill 与 Buff 对接契约
 
-### 10.5 编辑器 UI 交互设计（防呆与体验优化）
+### 8.1 buffRefs
 
-为了避免策划手动输入 `${...}` 导致拼写错误或类型混乱，`buff_editor` 必须采用**“模式切换（Mode Switch） + 引用绑定”**的 UI 设计。同时，为了符合策划“先填数值，再想起来要配参数”的心智模型，必须支持**“就地创建（Create In-Place）”**工作流。
+技能通过 `buffRefs` 引用 Buff：
 
-**工作流 1：自上而下（先声明，后绑定）**
-- **参数声明区**：在 Buff 编辑器顶部增加“动态参数定义区”。用户可预先添加参数，输入参数名、显示名称、默认值。这会实时更新 JSON 中的 `paramsSchema` 对象。
-- **字段绑定区**：在 Effect 或 StatModifier 的数值输入框旁边，增加一个**“模式切换按钮”**（例如 `[fx]` 或 ?? 图标）。
-  - **状态 A（固定值模式 - 默认）**：普通的数字输入框 `<input type="number">`。底层 JSON 保存为纯数字，例如 `"value": 5`。
-  - **状态 B（动态参数模式）**：点击 `[fx]` 后，输入框变成下拉选择框。用户从列表中选择已声明的参数，底层 JSON 自动保存为字符串 `"${damagePerTurn}"`。
+```json
+"buffRefs": {
+  "apply": [
+    {
+      "target": "enemy",
+      "buffId": "buff_bleed",
+      "duration": 2,
+      "stackStrategy": "extend",
+      "extendBy": 2,
+      "params": {}
+    }
+  ],
+  "remove": [
+    { "target": "self", "buffId": "buff_stun" }
+  ]
+}
+```
 
-**工作流 2：自下而上（就地创建参数 - 强烈推荐）**
-当策划在输入框中已经填入了具体数值（如 `5`），突然决定将其提取为动态参数时：
-1. **触发新建**：点击 `[fx]` 切换到动态参数模式，下拉框最底部提供特殊选项：**`[+] 新建参数... (Create New Parameter...)`**。
-2. **智能预填**：点击后弹出新建参数表单。编辑器**自动将刚才填写的 `5` 作为新参数的默认值（Default）**，并自动推断类型为 `number`。
-3. **确认绑定**：策划只需补充“参数名”和“中文标签”，点击确认。
-4. **后台处理**：编辑器自动在 `paramsSchema` 中追加该参数，并将当前输入框的值自动绑定为该参数的占位符（`${新参数名}`）。
+`target` 的语义：
 
-**优势**：
-- **防呆设计**：策划不需要学习占位符语法，只需做“选择题”。
-- **心智契合**：就地创建（类似 IDE 的 Extract Variable）不打断策划思路，免去频繁上下滚动的繁琐操作。
-- **数据干净**：底层生成的 JSON 依然是完美的占位符结构，引擎解析极其方便。
+- `self`：技能使用者。
+- `enemy`：技能目标。
+- `attacker` / `target`：运行时事件上下文中使用，技能数据侧优先使用 `self/enemy`。
 
-### 10.6 常见场景解答
+### 8.2 技能读取 Buff 资源
 
-**Q: 如果一个 Buff 有多个 Effect，每个 action 下面的 value 都要配置不一样的参数名吗？**
-**A: 不需要，这正是占位符的灵活性所在（一对多映射）。**
-如果一个“剧毒”Buff 既造成生命值伤害，又削减护甲，且你希望它们由**同一个参数**控制。你只需定义一个参数 `power`。在 `DAMAGE_HP` 的 value 中填入 `${power}`，在 `DAMAGE_ARMOR` 的 value 中也填入 `${power}`。技能编辑器中只需输入一次 `power = 10`，引擎会自动把这两个 Effect 的值都替换为 10。只有当需要独立控制时，才定义不同的参数名。
+技能若需要“按某个 Buff 的状态计算数值”，应使用通用读数：
 
+- `BUFF_REMAINING`：读取指定 Buff 的剩余持续时间。
+- `BUFF_STACKS`：读取指定 Buff 的层数。
+
+设计约束：
+
+- 流血相关技能应读取 `BUFF_REMAINING`。
+- 未来中毒或蓄力相关技能可读取 `BUFF_STACKS`。
+- 读取对象必须显式指定 `buffId`，不能靠显示名或 tag 猜测。
+
+### 8.3 复杂度分级
+
+Skill 引入 Buff 的复杂度分为三类：
+
+| 复杂度 | 说明 | 示例 |
+| --- | --- | --- |
+| L1 施加/移除 | 技能只 apply/remove Buff | 普通流血、眩晕、加攻 |
+| L2 带参数施加 | 技能 apply Buff 并传 duration/value/stackStrategy | 2 回合流血、一次性免伤 |
+| L3 读取 Buff 资源计算 | 技能读取指定 Buff 的 remaining/stacks 再计算伤害或治疗 | 血涌、饮血、迸发 |
+
+L3 是必要能力，但设计时应控制数量。它会引入“技能依赖指定 Buff 状态”的组合复杂度，必须通过文档、测试和编辑器提示明确表达。
+
+## 9. 编辑展示工具设计
+
+### 9.1 Buff 编辑器定位
+
+Buff 编辑器是数据生产工具，不是运行时权威。
+
+它负责：
+
+- 加载 Buff 内容包。
+- 基于 `meta.enums` 渲染下拉、标签、动作选择。
+- 编辑 Buff 基础字段、生命周期、statModifiers、effects、paramsSchema。
+- 做结构校验、枚举校验、引用校验和迁移提示。
+- 导出或保存内容包。
+
+它不负责：
+
+- 证明 Buff 已被主流程运行时消费。
+- 复刻完整战斗系统。
+- 在 UI 中硬编码一套独立于 `meta.enums` 的规则。
+
+### 9.2 技能编辑器中的 Buff 面板
+
+技能编辑器可以加载同目录或项目内 Buff 数据，用于：
+
+- 在 `buffRefs.apply/remove` 中搜索选择 `buffId`。
+- 显示 Buff 名称、描述、类型、tags、生命周期摘要。
+- 对缺失 Buff 引用给出错误。
+- 辅助编辑技能对 Buff 的参数传递。
+
+技能编辑器不应编辑 Buff 定义本体；Buff 定义应回到 Buff 编辑器维护。
+
+### 9.3 编辑器与运行时探针关系
+
+```text
+Buff 编辑器：我能编辑出一份结构正确的 Buff 包
+运行时探针：这份 Buff 包能被 DataManagerV2 重新加载并被 BuffManager/BuffSystem 实际消费
+战斗机器人测试：这份 Buff 包在技能和战斗流程中符合预期
+```
+
+三者不能互相替代。
+
+## 10. 关键运行流程
+
+### 10.1 加载 Buff 内容包
+
+```text
+DataManagerV2.loadConfigs
+  -> 读取 assets/data/buffs_v2_7.json 或内容包覆盖源
+    -> 校验 schemaVersion
+      -> 归一化为 definitions map
+        -> BuffRegistry.setDefinitions(definitions)
+```
+
+### 10.2 技能施加 Buff
+
+```text
+Skill 执行
+  -> 读取 skill.buffRefs.apply
+    -> 解析 target: self/enemy
+      -> target.buffs.add(buffId, options)
+        -> BuffRegistry.getDefinition(buffId, options)
+          -> alias / paramsSchema / placeholder 解析
+            -> BuffManager 新增或按 stackStrategy 合并实例
+```
+
+### 10.3 事件触发 Buff
+
+```text
+EventBus.emit("TURN_END" / "BATTLE_TAKE_DAMAGE_PRE" / ...)
+  -> BuffSystem 收到事件
+    -> 找到相关 BuffManager
+      -> 遍历 active Buff
+        -> 匹配 effects[].trigger
+          -> normalize effect payload
+            -> actionLibrary[action](context, effect)
+              -> 写回 actor / battle context / event log
+```
+
+### 10.4 回合结束
+
+```text
+TURN_END
+  -> BuffSystem 执行 onTurnEnd effects
+  -> BuffManager.tickTurn()
+  -> 每个非永久 Buff remaining -= 1
+  -> remaining === 0 的 Buff 移除
+```
+
+## 11. 设计约束与质量门
+
+### 11.1 禁止硬编码边界
+
+禁止：
+
+- 在 `CoreEngine` 或战斗主流程中写具体 `buffId` 特判。
+- 在技能数据中复制 Buff 的运行逻辑。
+- 在编辑器中维护一套脱离 `meta.enums` 的 action/trigger 枚举。
+- 静默忽略未知 action、未知 statModifier type 或缺失 Buff 定义。
+
+允许：
+
+- 在 `BuffSystem._actionLibrary` 中维护 action 到函数的确定性映射。
+- 在 `BuffManager` 中维护 stackStrategy 的确定性合并规则。
+- 在 `BuffRegistry` 中维护 alias、paramsSchema 和占位符解析。
+- 在 DataManager 中维护内容包加载、版本检查和归一化规则。
+
+### 11.2 数据质量门
+
+Buff 数据包至少应满足：
+
+1. `buffs` key 与 `buff.id` 一致。
+2. `type/trigger/action/target/stackStrategy` 来自 `meta.enums`。
+3. `aliasOf` 指向存在，且不形成循环。
+4. `statModifiers[].type` 为运行时支持或明确标注实验。
+5. `effects[].payload` 与 action 的参数要求匹配。
+6. 技能引用的 `buffId` 全部存在。
+7. 流血类技能不再把流血持续时间描述为层数。
+
+### 11.3 运行质量门
+
+Buff 运行时至少应满足：
+
+1. `BuffManager.add/remove/tickTurn/getRemaining/getStacks` 行为稳定。
+2. `BuffSystem` 能按事件触发 effects。
+3. `onTurnEnd` 先执行 effect，再递减 remaining。
+4. `statModifiers` 能被 `getEffectiveStat` 汇总。
+5. 不支持的 action/type 会告警，不会静默失败。
+6. 运行时探针可证明内容包被重新加载并消费。
+
+## 12. 测试与验收口径
+
+### 12.1 建议测试入口
+
+```bash
+node --test test/skill_buff_decoupled_runtime.test.mjs test/skill_buff_battle_robot.test.mjs
+node --test test/skill_formal_skill_matrix.test.mjs
+node tools/validate_skill_authoring_guard.mjs assets/data/skills_melee_v4_5.json assets/data/buffs_v2_7.json
+```
+
+浏览器验证入口：
+
+- `test/buff_editor_v4.html`
+- `test/buff_editor_io_test.html`
+- `test/buff_runtime_probe.html`
+- `test/skill_editor_test_v3.html`
+
+### 12.2 产品验收
+
+- Buff 编辑器能清楚展示 Buff 的生命周期、effect、statModifier 和动态参数。
+- 技能编辑器能加载 Buff 数据并选择引用，不出现缺失引用。
+- 流血、免伤、回血、减伤、增伤、控制、反击等典型 Buff 能被测试解释。
+- 用户能区分“编辑器里看见”和“运行时真的消费”。
+
+### 12.3 架构验收
+
+- 新增普通 Buff 不需要修改战斗主引擎。
+- 新增 action 才需要修改 `BuffSystem._actionLibrary`，并补充枚举、文档和测试。
+- 技能只引用 Buff 或读取通用 Buff 资源。
+- Buff 状态机可从文档映射到 `Buff / BuffManager / BuffSystem` 的实现。
+
+## 13. 目标目录与代码映射
+
+| 设计对象 | 当前文件 |
+| --- | --- |
+| Buff 定义库 | `assets/data/buffs_v2_7.json` |
+| Buff 实例 | `script/engine/buff/Buff.js` |
+| Buff 注册表 | `script/engine/buff/BuffRegistry.js` |
+| Buff 管理器 | `script/engine/buff/BuffManager.js` |
+| Buff 系统 | `script/engine/buff/BuffSystem.js` |
+| Buff 模块出口 | `script/engine/buff/index.js` |
+| 内容装载 | `script/engine/DataManagerV2.js` |
+| 内容包覆盖 | `script/tooling/ContentPackOverrideStore.js` |
+| Buff 编辑器 | `test/buff_editor_v4.html` |
+| Buff I/O 测试页 | `test/buff_editor_io_test.html` |
+| Buff 运行时探针 | `test/buff_runtime_probe.html` |
+| 技能编辑器 Buff 引用面板 | `test/skill_editor_test_v3.html` |
+| 运行时回归 | `test/skill_buff_decoupled_runtime.test.mjs`、`test/skill_buff_battle_robot.test.mjs` |
+
+## 14. 设计结论
+
+Buff 系统的核心不是“列一批状态名”，而是建立一条稳定链路：
+
+```text
+数据契约可编辑
+  -> 内容装载可追踪
+    -> 运行内核可消费
+      -> 技能只做引用
+        -> 战斗主流程只消费通用上下文
+          -> 探针和机器人测试能证明行为
+```
+
+在这个链路中，`remaining` 与 `stacks` 的语义必须清楚区分；流血是持续时间型状态，不能被设计成按层数递增伤害的状态。后续新增 Buff 或技能时，应优先判断它属于 L1 施加/移除、L2 带参数施加，还是 L3 读取 Buff 资源计算，并据此决定是否值得引入更高复杂度。

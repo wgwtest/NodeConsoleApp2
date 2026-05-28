@@ -1,0 +1,4698 @@
+{
+  "$schemaVersion": "skills_melee_v3",
+  "meta": {
+    "title": "玩家技能树 Growth v2 - 剑系重构工作稿",
+    "variantId": "growth_v2_weapon_spell_heal_layout",
+    "status": "authoring_review",
+    "source": "skills_melee_v4_5_growth_v2_20260527_125308.json",
+    "buffsPath": "assets/data/buffs_v2_7.json",
+    "notes": [
+      "本工作稿基于 growth_v1_20260526_231741，不发布到主流程。",
+      "剑系拆分为流血、连击、招架反击三条子线。",
+      "锤系拆分为破甲线和慢速重击/震荡线。",
+      "法术系新增回血分支，并将急救迁移到法术治疗线。",
+      "防御系保留加甲、减伤、受击收益三类，并保持层级间距为 200px。",
+      "仅使用 y=1214 作为第 6 层，放置剑锤交叉终极草案。",
+      "2026-05-27 剑系按低 KP、低 AP、多节点、多动作原则重构。",
+      "剑击和连刺总伤害回到 1 AP = 10 HP 基准。",
+      "新增浅割、深切、失血踉跄、借力还击、剑影连环、断脉一剑。",
+      "撕裂伤口定位为流血加深器；当前运行时不强制检查目标已有流血。",
+      "断脉一剑当前读取流血层数但不消耗层数；消耗层数能力待后续通用机制支持。",
+      "本工作稿不发布到 assets/data/skills_melee_v4_5.json。",
+      "2026-05-27 23:30：剑系技能 description 已改为玩家可读口径；设计备注不再写入技能简介。"
+    ],
+    "growthTracks": [
+      {
+        "id": "sword",
+        "label": "剑系",
+        "summary": "流血、连击、招架反击三分支。",
+        "x": 614
+      },
+      {
+        "id": "hammer",
+        "label": "锤系",
+        "summary": "破甲与慢速重击/震荡双分支。",
+        "x": 1014
+      },
+      {
+        "id": "spell",
+        "label": "法术系",
+        "summary": "控制诅咒与回血治疗双分支。",
+        "x": 1214
+      },
+      {
+        "id": "defense",
+        "label": "防御系",
+        "summary": "加甲、减伤、受击收益。",
+        "x": 1614
+      },
+      {
+        "id": "tempo",
+        "label": "战术/AP系",
+        "summary": "速度、免伤、回 AP 与技能费用压缩。",
+        "x": 2114
+      }
+    ],
+    "defaultParts": [
+      "head",
+      "chest",
+      "abdomen",
+      "arm",
+      "leg"
+    ],
+    "enums": {
+      "rarities": [
+        "Common",
+        "Uncommon",
+        "Rare",
+        "Epic",
+        "Legendary"
+      ],
+      "targetSubjects": [
+        "SUBJECT_SELF",
+        "SUBJECT_ENEMY",
+        "SUBJECT_BOTH"
+      ],
+      "targetScopes": [
+        "SCOPE_ENTITY",
+        "SCOPE_PART",
+        "SCOPE_MULTI_PARTS"
+      ],
+      "selectionModes": [
+        "single",
+        "multiple",
+        "random_single"
+      ],
+      "effectTypes": [
+        "DMG_HP",
+        "DMG_ARMOR",
+        "PIERCE",
+        "HEAL",
+        "ARMOR_ADD",
+        "AP_GAIN",
+        "SPEED",
+        "BUFF_APPLY",
+        "BUFF_REMOVE"
+      ],
+      "amountTypes": [
+        "ABS",
+        "PCT_MAX",
+        "PCT_CURRENT",
+        "BUFF_STACKS"
+      ],
+      "buffRefTargets": [
+        "self",
+        "enemy"
+      ],
+      "requirementSelfPartModes": [
+        "ANY",
+        "ALL"
+      ],
+      "partOverrideModes": [
+        "fixed",
+        "listed"
+      ],
+      "hitModes": [
+        "normal",
+        "cannot_dodge",
+        "always_crit"
+      ],
+      "repeat": {
+        "minCount": 1,
+        "maxCount": 20
+      },
+      "editStates": [
+        "done",
+        "editing",
+        "deprecated"
+      ]
+    },
+    "updatedAt": "2026-05-27 23:04:44 +0800"
+  },
+  "skills": [
+    {
+      "id": "skill_double_thrust",
+      "name": "剑击",
+      "rarity": "Common",
+      "description": "学习 1 KP；消耗 1 AP。对目标部位连续攻击 2 次，每次造成 5 点生命伤害。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 614,
+        "y": 214,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword",
+        "growthTier": 1,
+        "sourceSkillId": "skill_double_thrust"
+      },
+      "speed": 4,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_double_cut",
+          "name": "双击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 5,
+            "repeat": {
+              "count": 2
+            },
+            "note": "1 AP 总伤害 10，保留双击手感但回到数值基准。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_1771769351059",
+      "name": "锯齿斩",
+      "rarity": "Uncommon",
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [
+        "skill_sword_shallow_cut_rework_v1"
+      ],
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_bleed",
+            "target": "enemy",
+            "params": {
+              "buff_duration": 2,
+              "maxVal": 5
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_jagged_cut",
+          "name": "锯齿切割",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 5
+          }
+        }
+      ],
+      "editorMeta": {
+        "x": 514,
+        "y": 614,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_bleed",
+        "growthTier": 3,
+        "sourceSkillId": "skill_1771769351059"
+      },
+      "description": "学习 2 KP；消耗 1 AP。对目标部位造成 5 点生命伤害，并施加 1 层流血。",
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      }
+    },
+    {
+      "id": "skill_shockwave_copy_1770042951717",
+      "name": "撕裂伤口",
+      "rarity": "Rare",
+      "description": "学习 3 KP；消耗 2 AP。对目标部位造成 5 点护甲伤害，并施加 2 回合撕裂伤口。",
+      "prerequisites": [
+        "skill_1771769351059"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 514,
+        "y": 814,
+        "editState": "done",
+        "group": "剑系",
+        "locked": false,
+        "groupLabel": "剑系",
+        "growthTrack": "sword_bleed",
+        "growthTier": 4,
+        "sourceSkillId": "skill_shockwave_copy_1770042951717"
+      },
+      "speed": 8,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_tear_wound",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_tear_armor",
+          "name": "撕开护甲边缘",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_execute_copy_1770043820577",
+      "name": "血涌斩",
+      "rarity": "Epic",
+      "description": "学习 5 KP；消耗 2 AP。按目标流血层数造成生命伤害，每层造成 5 点。",
+      "prerequisites": [
+        "skill_shockwave_copy_1770042951717"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 514,
+        "y": 1014,
+        "editState": "done",
+        "group": "剑系",
+        "locked": false,
+        "groupLabel": "剑系",
+        "growthTrack": "sword_bleed",
+        "growthTier": 5,
+        "sourceSkillId": "skill_execute_copy_1770043820577"
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_blood_surge",
+          "name": "血涌",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "BUFF_STACKS",
+            "amount": 5,
+            "amountSource": {
+              "owner": "skillTarget",
+              "buffId": "buff_bleed",
+              "multiplier": 5,
+              "missingAs": 0
+            },
+            "note": "按目标流血层数造成伤害；当前不消耗流血层数。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_execute_copy_1770044052832",
+      "name": "饮血斩",
+      "rarity": "Epic",
+      "description": "学习 5 KP；消耗 2 AP。按目标流血层数回复自身生命，每层回复 4 点。",
+      "prerequisites": [
+        "skill_shockwave_copy_1770042951717"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 414,
+        "y": 1014,
+        "editState": "done",
+        "group": "剑系",
+        "locked": false,
+        "groupLabel": "剑系",
+        "growthTrack": "sword_bleed",
+        "growthTier": 5,
+        "sourceSkillId": "skill_execute_copy_1770044052832"
+      },
+      "speed": 3,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_blood_drink",
+          "name": "饮血",
+          "target": {
+            "binding": {
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY",
+              "selection": {
+                "mode": "single",
+                "candidateParts": [],
+                "selectedParts": [],
+                "selectCount": 1
+              }
+            }
+          },
+          "effect": {
+            "effectType": "HEAL",
+            "amountType": "BUFF_STACKS",
+            "amount": 4,
+            "amountSource": {
+              "owner": "skillTarget",
+              "buffId": "buff_bleed",
+              "multiplier": 4,
+              "missingAs": 0
+            },
+            "note": "按目标流血层数回复自身 HP；当前不消耗流血层数。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_blood_debt_due",
+      "name": "猩红收割",
+      "rarity": "Legendary",
+      "description": "学习 8 KP；消耗 2 AP。自身获得 3 回合吸血。",
+      "prerequisites": [
+        "skill_execute_copy_1770044052832"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 414,
+        "y": 1214,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_bleed",
+        "growthTier": 6,
+        "sourceSkillId": "skill_blood_debt_due"
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_lifesteal",
+            "target": "self",
+            "chance": 1,
+            "duration": 3
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_1770474698976",
+      "name": "血誓打击",
+      "rarity": "Legendary",
+      "costs": {
+        "ap": 3,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "speed": 5,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [
+        "skill_execute_copy_1770043820577",
+        "skill_sword_riposte_growth_v2"
+      ],
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "editorMeta": {
+        "x": 614,
+        "y": 1214,
+        "editState": "done",
+        "group": "剑系",
+        "locked": false,
+        "groupLabel": "剑系",
+        "growthTrack": "sword_finisher",
+        "growthTier": 6,
+        "sourceSkillId": "skill_1770474698976"
+      },
+      "description": "学习 8 KP；消耗 3 AP。自身受到 6 点生命伤害，并对目标部位造成 30 点生命伤害。",
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "actions": [
+        {
+          "id": "action_blood_oath_self",
+          "name": "血誓代价",
+          "target": {
+            "binding": {
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY",
+              "selection": {
+                "mode": "single",
+                "candidateParts": [],
+                "selectedParts": [],
+                "selectCount": 1
+              }
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 6
+          }
+        },
+        {
+          "id": "action_blood_oath_strike",
+          "name": "血誓斩击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 30
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_heavy_swing",
+      "name": "锤击",
+      "rarity": "Common",
+      "description": "基础锤技。对目标部位造成稳定重击伤害，是锤系破甲路线的起点。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1014,
+        "y": 214,
+        "group": "锤系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "锤系",
+        "growthTrack": "hammer",
+        "growthTier": 1,
+        "sourceSkillId": "skill_heavy_swing"
+      },
+      "speed": 0,
+      "placement": {
+        "maxSlots": 1
+      },
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_skull_cracker",
+      "name": "破甲重锤",
+      "rarity": "Uncommon",
+      "description": "进阶锤技。集中打击头部护甲，强化锤系针对重甲目标的定位。",
+      "prerequisites": [
+        "skill_heavy_swing"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 914,
+        "y": 414,
+        "group": "锤系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "锤系",
+        "growthTrack": "hammer_break",
+        "growthTier": 2,
+        "sourceSkillId": "skill_skull_cracker"
+      },
+      "speed": -3,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 4,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_2",
+          "name": "Effect 2",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amount": 20,
+            "amountType": "ABS",
+            "partOverride": {
+              "mode": "fixed",
+              "parts": [
+                "head"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_hold_the_line",
+      "name": "碎甲重锤",
+      "rarity": "Rare",
+      "description": "破甲进阶。消耗自身护甲换取额外破甲，把防御资源转成锤系进攻压力。",
+      "prerequisites": [
+        "skill_skull_cracker"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 914,
+        "y": 614,
+        "group": "锤系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "锤系",
+        "growthTrack": "hammer_break",
+        "growthTier": 3,
+        "sourceSkillId": "skill_hold_the_line"
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "消耗护甲",
+          "target": {
+            "binding": {
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY",
+              "selection": {
+                "mode": "single",
+                "candidateParts": [
+                  "arm"
+                ],
+                "selectedParts": [
+                  "arm"
+                ],
+                "selectCount": 1
+              }
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "PCT_CURRENT",
+            "amount": 50
+          }
+        },
+        {
+          "id": "action_2",
+          "name": "造成伤害",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_execute_copy_1769961767095",
+      "name": "卸甲",
+      "rarity": "Epic",
+      "description": "锤系关键节点。移除目标指定部位的大量护甲，为后续重击打开缺口。",
+      "prerequisites": [
+        "skill_hold_the_line"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 914,
+        "y": 814,
+        "editState": "done",
+        "group": "锤系",
+        "locked": false,
+        "groupLabel": "锤系",
+        "growthTrack": "hammer_break",
+        "growthTier": 4,
+        "sourceSkillId": "skill_execute_copy_1769961767095"
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 3,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amount": 100,
+            "amountType": "PCT_CURRENT",
+            "note": "按当前 HP 百分比造成伤害；引擎实现时可映射为 TRUE/PIERCE 以避免护甲干扰。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_earthquake",
+      "name": "震地重击",
+      "rarity": "Epic",
+      "description": "重型压制。造成高额伤害并有概率眩晕，适合在破甲后扩大优势。",
+      "prerequisites": [
+        "skill_hammer_concussive_blow_growth_v2"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1014,
+        "y": 814,
+        "group": "锤系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "锤系",
+        "growthTrack": "hammer_slam",
+        "growthTier": 4,
+        "sourceSkillId": "skill_earthquake"
+      },
+      "speed": -4,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 5,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 3
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_stun",
+            "target": "enemy",
+            "chance": 0.5,
+            "duration": 1
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amount": 50,
+            "amountType": "ABS"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_ragnarok",
+      "name": "崩山终击",
+      "rarity": "Legendary",
+      "description": "锤系终局。以毁灭性多段重击压垮目标，承担高投入换取终结能力。",
+      "prerequisites": [
+        "skill_earthquake"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1014,
+        "y": 1014,
+        "group": "锤系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "锤系",
+        "growthTrack": "hammer_slam",
+        "growthTier": 5,
+        "sourceSkillId": "skill_ragnarok"
+      },
+      "speed": -5,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_MULTI_PARTS",
+        "selection": {
+          "mode": "multiple",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectCount": 5
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 3,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 4
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "repeat": {
+              "count": 6
+            },
+            "amount": 50
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_leftover_lunchbox",
+      "name": "毒雾术",
+      "rarity": "Common",
+      "description": "基础法术。造成少量伤害并施加中毒，让法术系从持续伤害起步。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1214,
+        "y": 214,
+        "group": "法术系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "法术系",
+        "growthTrack": "spell_control",
+        "growthTier": 1,
+        "sourceSkillId": "skill_leftover_lunchbox"
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_poison",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 3,
+            "params": {
+              "damageVal": 5
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "砸盒饭",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_loose_shoelaces",
+      "name": "寒霜缠绕",
+      "rarity": "Uncommon",
+      "description": "控制法术。造成少量伤害并降低目标速度，让敌人的行动节奏变慢。",
+      "prerequisites": [
+        "skill_leftover_lunchbox"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1214,
+        "y": 414,
+        "group": "法术系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "法术系",
+        "growthTrack": "spell_control",
+        "growthTier": 2,
+        "sourceSkillId": "skill_loose_shoelaces"
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_slow",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 2,
+            "params": {
+              "buff_speedVal": -4
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "绊一脚",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_all_talk_weak_legs",
+      "name": "虚弱诅咒",
+      "rarity": "Epic",
+      "description": "削弱法术。降低目标攻击能力，让法术系具备降低压力的手段。",
+      "prerequisites": [
+        "skill_break_defense_comment"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1214,
+        "y": 814,
+        "group": "法术系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "法术系",
+        "growthTrack": "spell_control",
+        "growthTier": 4,
+        "sourceSkillId": "skill_all_talk_weak_legs"
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "debuff_weak",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_break_defense_comment",
+      "name": "易伤符印",
+      "rarity": "Rare",
+      "description": "增伤法术。给目标施加易伤，让后续物理或法术爆发更有效。",
+      "prerequisites": [
+        "skill_loose_shoelaces"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1214,
+        "y": 614,
+        "group": "法术系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "法术系",
+        "growthTrack": "spell_control",
+        "growthTier": 3,
+        "sourceSkillId": "skill_break_defense_comment"
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_vulnerable",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "扎心",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_forced_overtime",
+      "name": "时间诅咒",
+      "rarity": "Legendary",
+      "description": "高阶法术。提高目标后续技能 AP 开销，从资源层面压制敌人。",
+      "prerequisites": [
+        "skill_all_talk_weak_legs"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1214,
+        "y": 1014,
+        "group": "法术系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "法术系",
+        "growthTrack": "spell_control",
+        "growthTier": 5,
+        "sourceSkillId": "skill_forced_overtime"
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771487055554",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 3
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_block",
+      "name": "修理护甲",
+      "rarity": "Common",
+      "description": "基础防御。指定部位获得护甲，是防御系所有后续护甲构筑的起点。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1614,
+        "y": 214,
+        "group": "防御系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "防御系",
+        "growthTrack": "defense",
+        "growthTier": 1,
+        "sourceSkillId": "skill_block"
+      },
+      "speed": 5,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amountType": "ABS",
+            "amount": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_artery_slice_copy_1769788322314",
+      "name": "护臂加固",
+      "rarity": "Uncommon",
+      "description": "部位防御。强化手臂护甲，支撑需要手臂发力的攻击和防反技能。",
+      "prerequisites": [
+        "skill_block"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1514,
+        "y": 414,
+        "editState": "done",
+        "group": "防御系",
+        "locked": false,
+        "groupLabel": "防御系",
+        "growthTrack": "defense_armor",
+        "growthTier": 2,
+        "sourceSkillId": "skill_artery_slice_copy_1769788322314"
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "arm"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amount": 15,
+            "amountType": "ABS"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_artery_slice",
+      "name": "头盔加固",
+      "rarity": "Uncommon",
+      "description": "部位防御。强化头部护甲，降低被点杀或控制窗口打开的风险。",
+      "prerequisites": [
+        "skill_block"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1714,
+        "y": 414,
+        "group": "防御系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "防御系",
+        "growthTrack": "defense_armor",
+        "growthTier": 2,
+        "sourceSkillId": "skill_artery_slice"
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [
+            "head"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "head",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amount": 20,
+            "amountType": "ABS"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_artery_slice_copy_1769789197982",
+      "name": "护腿加固",
+      "rarity": "Uncommon",
+      "description": "部位防御。强化腿部护甲，保护速度和战术移动相关能力。",
+      "prerequisites": [
+        "skill_block"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1614,
+        "y": 414,
+        "editState": "done",
+        "group": "防御系",
+        "locked": false,
+        "groupLabel": "防御系",
+        "growthTrack": "defense_armor",
+        "growthTier": 2,
+        "sourceSkillId": "skill_artery_slice_copy_1769789197982"
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "leg",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amount": 20,
+            "amountType": "ABS"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_heal",
+      "name": "急救",
+      "rarity": "Common",
+      "description": "法术治疗。回复生命值，作为治疗分支的基础稳定节点。",
+      "prerequisites": [
+        "skill_spell_mend_growth_v2"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1314,
+        "y": 414,
+        "group": "法术系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "法术系",
+        "growthTrack": "spell_heal",
+        "growthTier": 2,
+        "sourceSkillId": "skill_heal"
+      },
+      "speed": -2,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "HEAL",
+            "amount": 20,
+            "amountType": "ABS"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_savage_charge",
+      "name": "应急护甲",
+      "rarity": "Rare",
+      "description": "应急防御。付出少量生命换取关键部位护甲，适合抢救即将被打穿的部位。",
+      "prerequisites": [
+        "skill_block"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1614,
+        "y": 614,
+        "group": "防御系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "防御系",
+        "growthTrack": "defense_armor",
+        "growthTier": 3,
+        "sourceSkillId": "skill_savage_charge"
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "chest"
+          ],
+          "selectedParts": [
+            "chest"
+          ],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "leg"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 0,
+        "partSlot": {
+          "part": "leg",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "扣血",
+          "target": {
+            "binding": {
+              "mode": "explicit"
+            },
+            "spec": {
+              "subject": "SUBJECT_SELF",
+              "scope": "SCOPE_ENTITY",
+              "selection": {
+                "mode": "single",
+                "candidateParts": [],
+                "selectedParts": [],
+                "selectCount": 1
+              }
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amount": 5,
+            "amountType": "ABS"
+          }
+        },
+        {
+          "id": "action_2",
+          "name": "加甲",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amountType": "ABS",
+            "amount": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_regroup",
+      "name": "受击备甲",
+      "rarity": "Rare",
+      "description": "防御姿态。受到攻击前先获得护甲，把敌人的进攻压力转成缓冲层。",
+      "prerequisites": [
+        "skill_artery_slice_copy_1769788322314"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1514,
+        "y": 614,
+        "group": "防御系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "防御系",
+        "growthTrack": "defense_onhit",
+        "growthTier": 3,
+        "sourceSkillId": "skill_regroup"
+      },
+      "speed": 10,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "chest",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "remove": [],
+        "apply": [
+          {
+            "buffId": "new_buff_1771485041778",
+            "target": "self",
+            "params": {
+              "healArmorVal": 5
+            }
+          }
+        ]
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_hold_the_line_copy_1769790933469",
+      "name": "顺势回护",
+      "rarity": "Rare",
+      "description": "防守反打。造成少量伤害并回复手部护甲，让防御线具备轻量反击。",
+      "prerequisites": [
+        "skill_artery_slice_copy_1769788322314"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1414,
+        "y": 614,
+        "editState": "done",
+        "group": "防御系",
+        "locked": false,
+        "groupLabel": "防御系",
+        "growthTrack": "defense_onhit",
+        "growthTier": 3,
+        "sourceSkillId": "skill_hold_the_line_copy_1769790933469"
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "arm"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771482673293",
+            "target": "self",
+            "chance": 1,
+            "duration": 1,
+            "params": {
+              "ArmorGetVal": 5
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "造成伤害",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_hold_the_line_copy_1769956923405",
+      "name": "全身覆甲",
+      "rarity": "Rare",
+      "description": "范围防御。多个部位获得护甲，适合应对分散打击和持续消耗。",
+      "prerequisites": [
+        "skill_artery_slice_copy_1769789197982"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1714,
+        "y": 614,
+        "editState": "done",
+        "group": "防御系",
+        "locked": false,
+        "groupLabel": "防御系",
+        "growthTrack": "defense_armor",
+        "growthTier": 3,
+        "sourceSkillId": "skill_hold_the_line_copy_1769956923405"
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "multiple",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectCount": 5
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "增加护甲",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amountType": "ABS",
+            "amount": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_fortify",
+      "name": "堡垒姿态",
+      "rarity": "Epic",
+      "description": "重型防御。立即获得大量护甲，并为下一轮继续恢复护甲做准备。",
+      "prerequisites": [
+        "skill_regroup"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1514,
+        "y": 814,
+        "group": "防御系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "防御系",
+        "growthTrack": "defense_armor",
+        "growthTier": 4,
+        "sourceSkillId": "skill_fortify"
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 4,
+        "partSlot": {
+          "part": "head",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_ap_regen",
+            "target": "self",
+            "chance": 1,
+            "duration": 1,
+            "params": {
+              "ArmorGetVal": 40,
+              "buffDuration": 2
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "Effect 1",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amount": 40,
+            "amountType": "ABS"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_aegis",
+      "name": "绝对防御",
+      "rarity": "Legendary",
+      "description": "关键防御。短时间内保护现有护甲，用来扛住敌人的爆发回合。",
+      "prerequisites": [
+        "skill_fortify"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1514,
+        "y": 1014,
+        "group": "防御系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "防御系",
+        "growthTrack": "defense_armor",
+        "growthTier": 5,
+        "sourceSkillId": "skill_aegis"
+      },
+      "speed": 10,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 5,
+        "partSlot": {
+          "part": "chest",
+          "slotCost": 3
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771481773827",
+            "target": "self",
+            "chance": 1,
+            "duration": 1,
+            "params": {}
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_hit_me_if_you_dare",
+      "name": "反手割裂",
+      "rarity": "Uncommon",
+      "description": "学习 2 KP；消耗 1 AP。对目标部位造成 5 点生命伤害，并施加 1 层流血。",
+      "prerequisites": [
+        "skill_sword_parry_growth_v2"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 614,
+        "y": 614,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_parry",
+        "growthTier": 3,
+        "sourceSkillId": "skill_hit_me_if_you_dare"
+      },
+      "speed": 4,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_bleed",
+            "target": "enemy",
+            "params": {
+              "buff_duration": 2,
+              "maxVal": 5
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_backhand_cut",
+          "name": "反手割裂",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_play_dead_three_seconds",
+      "name": "忍痛减伤",
+      "rarity": "Epic",
+      "description": "减伤防御。短时间内降低受到的伤害，适合处理无法完全挡住的攻击。",
+      "prerequisites": [
+        "skill_block"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1714,
+        "y": 814,
+        "group": "防御系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "防御系",
+        "growthTrack": "defense_mitigation",
+        "growthTier": 4,
+        "sourceSkillId": "skill_play_dead_three_seconds"
+      },
+      "speed": 5,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_pain_sup",
+            "target": "self",
+            "chance": 1,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_cactus_vest",
+      "name": "荆棘甲",
+      "rarity": "Legendary",
+      "description": "防御终局。防守后把部分伤害反弹给攻击者，形成以守转攻的完成形。",
+      "prerequisites": [
+        "skill_play_dead_three_seconds"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1714,
+        "y": 1014,
+        "group": "防御系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "防御系",
+        "growthTrack": "defense_mitigation",
+        "growthTier": 5,
+        "sourceSkillId": "skill_cactus_vest"
+      },
+      "speed": 3,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_thorns",
+            "target": "self",
+            "chance": 1,
+            "duration": 3
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_skull_cracker_copy_1770042860426",
+      "name": "疾步",
+      "rarity": "Common",
+      "description": "基础战术。提高自身速度，让玩家更容易抢到关键行动窗口。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 2114,
+        "y": 214,
+        "editState": "done",
+        "group": "战术/AP系",
+        "locked": false,
+        "groupLabel": "战术/AP系",
+        "growthTrack": "tempo",
+        "growthTier": 1,
+        "sourceSkillId": "skill_skull_cracker_copy_1770042860426"
+      },
+      "speed": -3,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771487521271",
+            "target": "self",
+            "params": {
+              "speedUpVal": 2
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_shockwave_copy_1770041956468",
+      "name": "后撤步",
+      "rarity": "Uncommon",
+      "description": "防守战术。消耗腿部护甲换取免伤，为下一步回 AP 或爆发争取空间。",
+      "prerequisites": [
+        "skill_skull_cracker_copy_1770042860426"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 2114,
+        "y": 414,
+        "editState": "done",
+        "group": "战术/AP系",
+        "locked": false,
+        "groupLabel": "战术/AP系",
+        "growthTrack": "tempo",
+        "growthTier": 2,
+        "sourceSkillId": "skill_shockwave_copy_1770041956468"
+      },
+      "speed": 8,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "chest",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771481773827",
+            "target": "self",
+            "chance": 1,
+            "duration": 2,
+            "params": {
+              "buffDuration": 2,
+              "stackNum": 1
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "扣除护甲",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amount": 5,
+            "amountType": "ABS"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_shockwave_copy_1769791396881",
+      "name": "破盔回气",
+      "rarity": "Rare",
+      "description": "AP 节奏。舍弃头部护甲换取额外 AP，把防御资源转化为回合爆发。",
+      "prerequisites": [
+        "skill_shockwave_copy_1770041956468"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 2114,
+        "y": 614,
+        "editState": "done",
+        "group": "战术/AP系",
+        "locked": false,
+        "groupLabel": "战术/AP系",
+        "growthTrack": "tempo",
+        "growthTier": 3,
+        "sourceSkillId": "skill_shockwave_copy_1769791396881"
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 0,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_1",
+          "name": "移除护甲",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amount": 100,
+            "amountType": "PCT_CURRENT"
+          }
+        },
+        {
+          "id": "action_2",
+          "name": "获得行动点",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "AP_GAIN",
+            "amountType": "ABS",
+            "amount": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_aegis_copy_1770042764756",
+      "name": "战术重构",
+      "rarity": "Legendary",
+      "description": "战术终局。降低后续技能 AP 消耗，让爆发回合能够连续出手。",
+      "prerequisites": [
+        "skill_shockwave_copy_1769791396881"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 2114,
+        "y": 814,
+        "editState": "done",
+        "group": "战术/AP系",
+        "locked": false,
+        "groupLabel": "战术/AP系",
+        "growthTrack": "tempo",
+        "growthTier": 4,
+        "sourceSkillId": "skill_aegis_copy_1770042764756"
+      },
+      "speed": 10,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "chest"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "chest",
+          "slotCost": 3
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "new_buff_1771485482007",
+            "target": "self",
+            "params": {
+              "apReduceVal": 1
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_sword_flurry_growth_v2",
+      "name": "连刺",
+      "rarity": "Uncommon",
+      "description": "学习 1 KP；消耗 1 AP。对目标部位连续攻击 2 次，每次造成 5 点生命伤害。",
+      "prerequisites": [
+        "skill_double_thrust"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 814,
+        "y": 414,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_combo",
+        "growthTier": 2,
+        "sourceSkillId": "skill_sword_flurry_growth_v2"
+      },
+      "speed": 5,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_flurry",
+          "name": "连刺",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 5,
+            "repeat": {
+              "count": 2
+            },
+            "note": "1 AP 总伤害 10。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_sword_followup_growth_v2",
+      "name": "追击剑势",
+      "rarity": "Rare",
+      "description": "学习 3 KP；消耗 2 AP。对目标部位连续攻击 2 次，每次造成 9 点生命伤害。",
+      "prerequisites": [
+        "skill_sword_flurry_growth_v2"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 814,
+        "y": 614,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_combo",
+        "growthTier": 3,
+        "sourceSkillId": "skill_sword_followup_growth_v2"
+      },
+      "speed": 6,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_followup",
+          "name": "追击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 9,
+            "repeat": {
+              "count": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_sword_parry_growth_v2",
+      "name": "招架姿态",
+      "rarity": "Uncommon",
+      "description": "学习 1 KP；消耗 1 AP。自身获得 1 回合反击姿态。",
+      "prerequisites": [
+        "skill_double_thrust"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 614,
+        "y": 414,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_parry",
+        "growthTier": 2,
+        "sourceSkillId": "skill_sword_parry_growth_v2"
+      },
+      "speed": 5,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_counter",
+            "target": "self",
+            "chance": 1,
+            "duration": 1
+          }
+        ],
+        "remove": []
+      },
+      "actions": []
+    },
+    {
+      "id": "skill_sword_riposte_growth_v2",
+      "name": "破绽反刺",
+      "rarity": "Epic",
+      "description": "学习 5 KP；消耗 2 AP。对目标部位造成 18 点生命伤害，自身获得 1 回合反击姿态。",
+      "prerequisites": [
+        "skill_hit_me_if_you_dare"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 614,
+        "y": 814,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_parry",
+        "growthTier": 4,
+        "sourceSkillId": "skill_sword_riposte_growth_v2"
+      },
+      "speed": 6,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_counter",
+            "target": "self",
+            "chance": 1,
+            "duration": 1
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_riposte",
+          "name": "破绽反刺",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 18
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_sword_blade_storm_growth_v2",
+      "name": "剑刃风暴",
+      "rarity": "Legendary",
+      "description": "学习 8 KP；消耗 3 AP。对目标连续攻击 3 次，每次造成 12 点生命伤害。",
+      "prerequisites": [
+        "skill_sword_chain_shadow_rework_v1",
+        "skill_sword_riposte_growth_v2"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 814,
+        "y": 1014,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_combo_parry",
+        "growthTier": 5,
+        "sourceSkillId": "skill_sword_blade_storm_growth_v2"
+      },
+      "speed": 4,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_MULTI_PARTS",
+        "selection": {
+          "mode": "multiple",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [
+            "head",
+            "chest"
+          ],
+          "selectCount": 2
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 3,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_blade_storm",
+          "name": "风暴连斩",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 12,
+            "repeat": {
+              "count": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_hammer_charged_slam_growth_v2",
+      "name": "蓄力重击",
+      "rarity": "Uncommon",
+      "description": "锤系重击分支。速度慢，但单次生命伤害更高。",
+      "prerequisites": [
+        "skill_heavy_swing"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 2
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1014,
+        "y": 414,
+        "group": "锤系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "锤系",
+        "growthTrack": "hammer_slam",
+        "growthTier": 2,
+        "sourceSkillId": "skill_hammer_charged_slam_growth_v2"
+      },
+      "speed": -3,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 3,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_charged_slam",
+          "name": "蓄力重击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 34
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_hammer_concussive_blow_growth_v2",
+      "name": "震荡打击",
+      "rarity": "Rare",
+      "description": "锤系震荡分支。慢速高伤害，并尝试晕眩目标。",
+      "prerequisites": [
+        "skill_hammer_charged_slam_growth_v2"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1014,
+        "y": 614,
+        "group": "锤系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "锤系",
+        "growthTrack": "hammer_slam",
+        "growthTier": 3,
+        "sourceSkillId": "skill_hammer_concussive_blow_growth_v2"
+      },
+      "speed": -4,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 3,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_stun",
+            "target": "enemy",
+            "chance": 0.35,
+            "duration": 1
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_concussive_blow",
+          "name": "震荡打击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 30
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_hammer_break_line_growth_v2",
+      "name": "粉碎防线",
+      "rarity": "Legendary",
+      "description": "破甲路线终点。先摧毁护甲，再对目标造成重创。",
+      "prerequisites": [
+        "skill_execute_copy_1769961767095"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 914,
+        "y": 1014,
+        "group": "锤系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "锤系",
+        "growthTrack": "hammer_break",
+        "growthTier": 5,
+        "sourceSkillId": "skill_hammer_break_line_growth_v2"
+      },
+      "speed": -3,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 4,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_break_armor",
+          "name": "粉碎护甲",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "PCT_CURRENT",
+            "amount": 100
+          }
+        },
+        {
+          "id": "action_break_line",
+          "name": "防线崩裂",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 26
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_spell_mend_growth_v2",
+      "name": "治愈术",
+      "rarity": "Common",
+      "description": "法术回血分支入口。回复少量生命值，补足当前技能树缺少明确回血法术的问题。",
+      "prerequisites": [],
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1314,
+        "y": 214,
+        "group": "法术系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "法术系",
+        "growthTrack": "spell_heal",
+        "growthTier": 1,
+        "sourceSkillId": "skill_spell_mend_growth_v2"
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 1,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_mend",
+          "name": "治愈",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "HEAL",
+            "amountType": "ABS",
+            "amount": 12
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_spell_rejuvenation_growth_v2",
+      "name": "回春术",
+      "rarity": "Rare",
+      "description": "治疗进阶。提供更高生命回复，后续可扩展为持续回血 Buff。",
+      "prerequisites": [
+        "skill_heal"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1314,
+        "y": 614,
+        "group": "法术系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "法术系",
+        "growthTrack": "spell_heal",
+        "growthTier": 3,
+        "sourceSkillId": "skill_spell_rejuvenation_growth_v2"
+      },
+      "speed": 2,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 2,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_rejuvenation",
+          "name": "回春",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "HEAL",
+            "amountType": "ABS",
+            "amount": 28
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_spell_life_return_growth_v2",
+      "name": "生命回流",
+      "rarity": "Epic",
+      "description": "治疗高阶。回复生命并获得少量护甲，使治疗线与防御资源产生联动。",
+      "prerequisites": [
+        "skill_spell_rejuvenation_growth_v2"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 1314,
+        "y": 814,
+        "group": "法术系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "法术系",
+        "growthTrack": "spell_heal",
+        "growthTier": 4,
+        "sourceSkillId": "skill_spell_life_return_growth_v2"
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_SELF",
+        "scope": "SCOPE_ENTITY",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {},
+      "costs": {
+        "ap": 3,
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_life_return_heal",
+          "name": "生命回流",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "HEAL",
+            "amountType": "ABS",
+            "amount": 35
+          }
+        },
+        {
+          "id": "action_life_return_armor",
+          "name": "生命护甲",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "ARMOR_ADD",
+            "amountType": "ABS",
+            "amount": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_weapon_master_growth_v2",
+      "name": "兵刃大师",
+      "rarity": "Legendary",
+      "description": "剑锤共同终极。需要剑系连击终点和锤系破甲终点共同解锁，表达武器路线合流。",
+      "prerequisites": [
+        "skill_sword_blade_storm_growth_v2",
+        "skill_hammer_break_line_growth_v2"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 814,
+        "y": 1214,
+        "group": "武器交叉",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "武器交叉",
+        "growthTrack": "weapon_cross",
+        "growthTier": 6,
+        "sourceSkillId": "skill_weapon_master_growth_v2"
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_MULTI_PARTS",
+        "selection": {
+          "mode": "multiple",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 2
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 4,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_weapon_master_break",
+          "name": "破防",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_ARMOR",
+            "amountType": "ABS",
+            "amount": 30
+          }
+        },
+        {
+          "id": "action_weapon_master_hit",
+          "name": "兵刃终击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 20,
+            "repeat": {
+              "count": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_sword_shallow_cut_rework_v1",
+      "name": "浅割",
+      "rarity": "Uncommon",
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [
+        "skill_double_thrust"
+      ],
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_bleed",
+            "target": "enemy",
+            "params": {
+              "buff_duration": 2,
+              "maxVal": 5
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_shallow_cut",
+          "name": "浅割",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 4
+          }
+        }
+      ],
+      "editorMeta": {
+        "x": 514,
+        "y": 414,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_bleed",
+        "growthTier": 2,
+        "sourceSkillId": "skill_sword_shallow_cut_rework_v1"
+      },
+      "description": "学习 1 KP；消耗 1 AP。对目标部位造成 4 点生命伤害，并施加 1 层流血。",
+      "unlock": {
+        "cost": {
+          "kp": 1
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      }
+    },
+    {
+      "id": "skill_sword_deep_cut_rework_v1",
+      "name": "深切",
+      "rarity": "Rare",
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [
+        "skill_1771769351059"
+      ],
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_bleed",
+            "target": "enemy",
+            "params": {
+              "buff_duration": 2,
+              "maxVal": 5
+            },
+            "stacks": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_deep_cut",
+          "name": "深切",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 10
+          }
+        }
+      ],
+      "editorMeta": {
+        "x": 414,
+        "y": 814,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_bleed",
+        "growthTier": 4,
+        "sourceSkillId": "skill_sword_deep_cut_rework_v1"
+      },
+      "description": "学习 3 KP；消耗 2 AP。对目标部位造成 10 点生命伤害，并施加 2 层流血。",
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      }
+    },
+    {
+      "id": "skill_sword_blood_stagger_rework_v1",
+      "name": "失血踉跄",
+      "rarity": "Rare",
+      "costs": {
+        "ap": 1,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "speed": 0,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "prerequisites": [
+        "skill_shockwave_copy_1770042951717"
+      ],
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_slow",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 2,
+            "params": {
+              "buff_speedVal": -4
+            }
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_blood_stagger",
+          "name": "失血踉跄",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 4
+          }
+        }
+      ],
+      "editorMeta": {
+        "x": 314,
+        "y": 1014,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_bleed_control",
+        "growthTier": 5,
+        "sourceSkillId": "skill_sword_blood_stagger_rework_v1"
+      },
+      "description": "学习 3 KP；消耗 1 AP。对目标部位造成 4 点生命伤害，并施加 2 回合减速。",
+      "unlock": {
+        "cost": {
+          "kp": 3
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      }
+    },
+    {
+      "id": "skill_sword_borrowed_force_rework_v1",
+      "name": "借力还击",
+      "rarity": "Epic",
+      "description": "学习 5 KP；消耗 2 AP。对目标部位造成 10 点生命伤害，自身获得 1 回合反击姿态，并使目标虚弱 2 回合。",
+      "prerequisites": [
+        "skill_sword_riposte_growth_v2"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 614,
+        "y": 1014,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_parry",
+        "growthTier": 5,
+        "sourceSkillId": "skill_sword_borrowed_force_rework_v1"
+      },
+      "speed": 6,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [
+          {
+            "buffId": "buff_counter",
+            "target": "self",
+            "chance": 1,
+            "duration": 1
+          },
+          {
+            "buffId": "debuff_weak",
+            "target": "enemy",
+            "chance": 1,
+            "duration": 2
+          }
+        ],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_borrowed_force",
+          "name": "借力还击",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_sword_chain_shadow_rework_v1",
+      "name": "剑影连环",
+      "rarity": "Epic",
+      "description": "学习 5 KP；消耗 2 AP。对目标部位连续攻击 4 次，每次造成 5 点生命伤害。",
+      "prerequisites": [
+        "skill_sword_followup_growth_v2"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 5
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 814,
+        "y": 814,
+        "group": "剑系",
+        "locked": false,
+        "editState": "done",
+        "groupLabel": "剑系",
+        "growthTrack": "sword_combo",
+        "growthTier": 4,
+        "sourceSkillId": "skill_sword_chain_shadow_rework_v1"
+      },
+      "speed": 6,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        }
+      },
+      "costs": {
+        "ap": 2,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 1
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_chain_shadow",
+          "name": "剑影连环",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "ABS",
+            "amount": 5,
+            "repeat": {
+              "count": 4
+            },
+            "note": "2 AP 总伤害 20。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill_sword_sever_pulse_rework_v1",
+      "name": "断脉一剑",
+      "rarity": "Legendary",
+      "description": "学习 8 KP；消耗 4 AP。目标生命低于 35% 时可用；按目标流血层数造成生命伤害，每层造成 10 点。",
+      "prerequisites": [
+        "skill_execute_copy_1770043820577"
+      ],
+      "unlock": {
+        "cost": {
+          "kp": 8
+        },
+        "requirements": {},
+        "exclusives": [],
+        "grants": {
+          "type": "permanent"
+        }
+      },
+      "editorMeta": {
+        "x": 514,
+        "y": 1214,
+        "editState": "done",
+        "group": "剑系",
+        "locked": false,
+        "groupLabel": "剑系",
+        "growthTrack": "sword_bleed_finisher",
+        "growthTier": 6,
+        "sourceSkillId": "skill_sword_sever_pulse_rework_v1"
+      },
+      "speed": 1,
+      "target": {
+        "subject": "SUBJECT_ENEMY",
+        "scope": "SCOPE_PART",
+        "selection": {
+          "mode": "single",
+          "candidateParts": [
+            "head",
+            "chest",
+            "abdomen",
+            "arm",
+            "leg"
+          ],
+          "selectedParts": [],
+          "selectCount": 1
+        }
+      },
+      "requirements": {
+        "selfPart": {
+          "mode": "ANY",
+          "parts": [
+            "arm"
+          ],
+          "mustBeUsable": true
+        },
+        "targetHpPercentBelow": 0.35
+      },
+      "costs": {
+        "ap": 4,
+        "partSlot": {
+          "part": "arm",
+          "slotCost": 2
+        },
+        "perTurnLimit": 1
+      },
+      "buffRefs": {
+        "apply": [],
+        "remove": []
+      },
+      "actions": [
+        {
+          "id": "action_sever_pulse",
+          "name": "断脉",
+          "target": {
+            "binding": {
+              "mode": "follow",
+              "ref": "skillTarget"
+            }
+          },
+          "effect": {
+            "effectType": "DMG_HP",
+            "amountType": "BUFF_STACKS",
+            "amount": 10,
+            "amountSource": {
+              "owner": "skillTarget",
+              "buffId": "buff_bleed",
+              "multiplier": 10,
+              "missingAs": 0
+            },
+            "note": "按目标流血层数造成高倍率伤害；当前不消耗流血层数，设计上属于终结技。"
+          }
+        }
+      ]
+    }
+  ]
+}

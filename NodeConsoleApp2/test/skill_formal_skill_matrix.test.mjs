@@ -150,11 +150,14 @@ function setupSkillPreconditions({ skill, player, enemy }) {
     enemy.buffs.add('buff_slow');
   }
 
-  const usesBuffStacks = (skill.actions || []).some(action => action?.effect?.amountType === 'BUFF_STACKS');
-  if (usesBuffStacks) {
+  const usesBuffResource = (skill.actions || []).some(action => {
+    const amountType = action?.effect?.amountType;
+    return amountType === 'BUFF_STACKS' || amountType === 'BUFF_REMAINING';
+  });
+  if (usesBuffResource) {
     enemy.buffs.add('buff_bleed', {
-      stacks: 3,
-      params: { buff_duration: 2, maxVal: 5 }
+      duration: 3,
+      params: { buff_duration: 3 }
     });
   }
 
@@ -304,11 +307,11 @@ function validateExecutionRow(row, skill) {
 
   if (skill.id === 'skill_execute_copy_1770043820577') {
     const damage = actionResults[0]?.damage;
-    if (damage !== 15) failures.push(`迸发 expected 15 damage from 3 bleed stacks, got ${damage}`);
+    if (damage !== 15) failures.push(`迸发 expected 15 damage from 3 bleed remaining turns, got ${damage}`);
   }
   if (skill.id === 'skill_execute_copy_1770044052832') {
     const heal = actionResults[0]?.heal;
-    if (heal !== 12) failures.push(`吸血 expected 12 heal from 3 bleed stacks, got ${heal}`);
+    if (heal !== 12) failures.push(`吸血 expected 12 heal from 3 bleed remaining turns, got ${heal}`);
   }
 
   return failures;

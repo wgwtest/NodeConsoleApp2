@@ -15,15 +15,17 @@
 - Planner：`TurnPlanner`（规划状态、校验、存储）
 - Runtime Snapshot：`dataConfig.runtime.planning.player.*`（用于调试/回放/未来存档）
 
-### 1.2 核心结论（当前产品定义）
+### 1.2 核心结论（产品定义与当前实现状态）
 
-1. **产品定义 B（多选技能）**：
+1. **产品定义 B（多选技能的目标态）**：
    - “多选”不是指把同一个技能放到多个槽位；
    - 而是指 **一次施放（一次规划动作 action）携带多个部位选择结果**，即 `action.selectionResult.selectedParts: string[]`。
+   - 当前 `TurnPlanner.planMany()` 尚未完全达到这个目标态：当一个多选草稿带有多个 `placedSlots` 时，代码会按每个 slot 生成一条 `PlannedAction`，每条 action 都带同一份 `selectionResult.selectedParts`；`plannedBySkill[skillId]` 最终只保留最后一条 action，`skillToSlots[skillId]` 保留所有 slot。
 
 2. **每个技能每回合允许规划 1 次**（你已确认的规则）：
    - 这是一条 **规则层约束**，应由 Engine/Planner 兜底保证。
    - UI 侧可做体验优化（例如表现为“替换”），但不应成为唯一约束来源。
+   - 当前主链路通过 `planningDraftBySkill` 的 `skillId` key 保证同一技能只有一条草稿；但多选草稿在 Planner 内部仍可能展开为多条 action，因此“每技能一条草稿”与“每技能一条 PlannedAction”当前不是同一个事实。
 
 ### 1.3 规划层在整体 Skill 框架中的职责
 
@@ -34,7 +36,8 @@
 1. **读取技能契约**
    - 消费 skill 的 `target / costs / requirements / selection / speed` 等字段。
 2. **裁决本回合可行性**
-   - 判断 AP 是否足够、部位槽位是否冲突、同名技能是否已规划、目标与部位是否满足限制。
+   - 当前已实现：判断 AP 是否足够、slotKey 容量是否可用、同名技能草稿是否替换、目标与部位是否满足基础限制。
+   - 尚未实现为硬规则：`requirements`、`costs.partSlot.slotCost`、`costs.perTurnLimit`。
 3. **生成规划结果**
    - 将技能配置转成统一的 `PlannedAction` 或同类权威结构。
 4. **向执行层暴露稳定输出**
@@ -70,7 +73,7 @@
 - `name: string`
 
 ### 3.2 资源/节奏
-- `cost` 或 `costs.ap`：AP 消耗（当前 `CoreEngine` 使用 `skillConfig.cost`）
+- `costs.ap`：AP 消耗（当前 `CoreEngine._getSkillApCostStrict()` 严格读取该字段）
 
 > 说明：`speed` 属于执行/结算阶段（决定先后手、回合内排序等）的数据；**在规划阶段的输入合法性与存储上不需要依赖 speed**。
 
@@ -79,6 +82,7 @@
 - `target.scope`：
   - `SCOPE_ENTITY`：目标本体
   - `SCOPE_PART`：单部位
+  - `SCOPE_MULTI_PARTS`：当前被 CoreEngine 视为需要 `bodyPart` 的部位类技能；UI 也接受该 scope
 - `target.selection.mode`：`single | multiple`
 - `target.selection.selectCount: number`：当 `mode=multiple` 时表示一次施放要选多少个部位
 
@@ -165,7 +169,7 @@ Engine 在 `PLANNING_ENTER/ACTIVE/COMMIT` 上有明确的阶段边界。
 
 #### 4.2.1 进入/提交规划阶段（宏观）
 
-- `CoreEngine.enterPlanning()`：初始化本回合 Planner 状态、同步 runtime snapshot、通知 UI
+- `CoreEngine._enterPlanningBudgetSnapshot()`：初始化本回合 Planner AP 预算快照并同步 runtime snapshot；进入规划阶段由战斗流程调用该内部步骤
 - `CoreEngine.commitPlanning()`：对 UI 草稿做一次性校验与落盘，冻结 Planner 输出为执行阶段可消费的快照
 
 #### 4.2.2 提交一次规划（微观）
@@ -174,7 +178,7 @@ Engine 在 `PLANNING_ENTER/ACTIVE/COMMIT` 上有明确的阶段边界。
 
 - `cost: number`
 
-这些来自 `skillConfig` 与玩家属性（如 AP 系统）组合。
+这些来自 `TurnPlanner` 在进入规划阶段时持有的 `effectiveApCostBySkill` 快照；该快照由 `CoreEngine._getSkillApCostStrict()` 基于 `skill.costs.ap` 与规划期 AP 修正生成。
 
 ### 4.3 Planner 接口
 
@@ -183,16 +187,15 @@ Planner 提供两类能力：
 1) **规划周期内部索引（slot 维度）**：用于 UI/布局映射与快速访问（例如判断 slot 是否占用）。
 2) **对外权威提交（skill 维度）**：主引擎关心的“本回合哪些 skill 被激活了”。
 
-因此建议将提交接口定义为 skill-centric（权威），并支持 batch：
+当前实现中，提交接口已经采用 batch：
 
-- `TurnPlanner.planSkill({ skillId, targetId, selectionResult, cost, ui?: { slotKey, bodyPart } })`
 - `TurnPlanner.planMany({ planningDraftBySkill })`
 
-其中 `ui` 是可选的 UI 映射字段，不应被执行器依赖。
+`planningDraftBySkill` 以 `skillId` 为 key，草稿中的 `placedSlots` 是 UI 映射字段。`TurnPlanner.planMany()` 会按 skill 维度生成 `plannedBySkill/skillToSlots` 视图，并为执行队列生成 `PlannedAction`。
 
-> 现有代码实现仍为 `TurnPlanner.assign({ slotKey, ... })`（slot-centric）。
-> 若短期不改代码，可以在 `commitPlanning(...)` 内把草稿展开为对 `assign(...)` 的调用（仍然是一键 commit），
-> 但最终必须产出 `plannedBySkill/skillToSlots` 的 skill-centric 输出。
+当前实现需要特别注意：如果同一草稿包含多个 `placedSlots`，`TurnPlanner.planMany()` 会为每个 slot 生成一条 action；`plannedBySkill` 只是重建出的 skill 视图，不是当前执行队列的唯一权威。
+
+历史 `TurnPlanner.assign({ slotKey, ... })` 仍保留为 slot 入口，但不是当前 UI 的主要提交链路。当前主要链路是 `UI_SkillPanel.planningDraftBySkill -> CoreEngine.commitPlanning() -> TurnPlanner.planMany()`。
 
 Planner 的职责：
 
@@ -202,6 +205,8 @@ Planner 的职责：
 4. 写入内部状态。
 
 > 关键原则：Planner 的对外“可观测输出”应以 **skill 为中心**；slot 维度只能作为规划周期内部的索引与 UI 映射。
+>
+> 当前实现偏差：多选草稿仍会按 `placedSlots` 展开为多条 action，因此执行队列 `playerSkillQueue` 仍可能是 slot/action 数组；这是后续需要收敛的规划语义问题。
 
 ---
 
@@ -217,7 +222,7 @@ Planner 的职责：
 
 #### 5.1.2 对外核心输出（skill 维度，主引擎关心）
 
-- `plannedBySkill: Record<skillId, PlannedAction>`（本回合哪些 skill 被激活了）
+- `plannedBySkill: Record<skillId, PlannedAction>`（本回合哪些 skill 被激活了；当前同 skillId 多 action 时会保留最后一条）
 - `skillToSlots: Record<skillId, slotKey[]>`（该 skill 对应占用了哪些槽位，用于 UI 渲染/回放/调试）
 
 > 注：`skillToSlots` 是 UI/调试友好结构。主引擎一般只需要 `plannedBySkill`（或其数组视图）。
@@ -245,12 +250,12 @@ Planner 的职责：
 
 建议对外输出分两类：
 
-1. **Skill 视图（主引擎/执行器关心）**
+1. **Skill 视图（主引擎/执行器关心，目标态）**
    - `engine.playerPlannedBySkill: Record<skillId, PlannedAction>`
 2. **Slot/UI 视图（UI 关心）**
    - `engine.playerSkillQueue: PlannedAction[]`（或按 slotKey 重建的列表，用于 Action Matrix 渲染）
 
-UI 渲染 `Action Matrix` 主要依赖此队列。
+当前实现中，`CoreEngine._freezePlannerToQueue()` 把 `turnPlanner.getPlannedActions()` 直接冻结为 `playerSkillQueue`，执行时间线消费的是这个 action 数组，而不是 `plannedBySkill`。因此 `plannedBySkill` 已同步到 runtime snapshot，但还不是执行层唯一权威。
 
 ### 5.3 Runtime 快照（用于调试/可视化/未来存档）
 
@@ -276,7 +281,7 @@ UI 渲染 `Action Matrix` 主要依赖此队列。
 
 因此，**Engine/Planner 必须保证状态合法**；UI 的限制属于“体验增强”。
 
-### 6.2 合理的规划裁决顺序（Normative Ordering）
+### 6.2 合理的规划裁决顺序（目标态）与当前实现覆盖
 
 一个稳定的技能规划系统，应按固定顺序完成裁决，避免不同页面或不同入口各自做一部分判断。
 
@@ -294,14 +299,15 @@ UI 渲染 `Action Matrix` 主要依赖此队列。
    - `candidateParts / selectedParts / selectCount` 是否一致
    - 单选技能是否被错误提交为多部位
    - 多选技能是否满足最小/最大选择数量
-4. **释放条件校验**
+4. **释放条件校验**（目标态；当前未实现为硬校验）
    - `requirements` 是否满足
    - 自身部位是否可用
    - 目标状态是否满足前置条件
 5. **资源与槽位校验**
    - AP 是否足够
-   - `costs.partSlot` 是否与已规划动作冲突
-   - 同名技能是否已占用本回合规划机会
+   - slotKey 容量是否可用
+   - `costs.partSlot` 是否与已规划动作冲突（目标态；当前未按 `slotCost` 实现）
+   - 同名技能是否已占用本回合规划机会（当前主链路由 `planningDraftBySkill` 和 replace 语义间接实现）
 6. **权威规划结果写入**
    - 生成 `PlannedAction`
    - 维护 `plannedBySkill`
@@ -312,6 +318,18 @@ UI 渲染 `Action Matrix` 主要依赖此队列。
 
 这套顺序的关键价值是：让规划层成为“唯一的规则裁决入口”，而不是让 UI、Engine、执行器各自补判断。
 
+当前实现覆盖情况：
+
+| 规则 | 当前实现状态 |
+| --- | --- |
+| 技能存在性 | `CoreEngine.commitPlanning()` / `TurnPlanner.planMany()` 校验 |
+| AP 预算 | `TurnPlanner.enterPlanning()` 与 `recalcApBudgetForDraft()` 校验 |
+| 目标主体与部位存在 | `CoreEngine._validateSkillTargetSelection()` 校验 |
+| slotKey 格式与容量 | `TurnPlanner._validateSlotKey()` 校验 |
+| `requirements` | 当前只进入契约摘要和 UI 展示，不作为硬门槛 |
+| `costs.partSlot.slotCost` | 当前不参与槽位扣占 |
+| `costs.perTurnLimit` | 当前不直接读取；同技能限制由草稿 key 与 replace 语义间接形成 |
+
 ### 6.3 AP 预算（按 skill/turn 扣一次）子状态机（规划阶段专用）
 
 本节用于把“规划阶段 AP 预算”的职责边界与状态变化写清楚。
@@ -319,7 +337,7 @@ UI 渲染 `Action Matrix` 主要依赖此队列。
 #### 6.2.1 已确认规则（本项目当前口径）
 
 - **扣费粒度**：AP 是按“skill per turn”扣一次（不是按 slot、不是按 action 子步骤）。
-- **成本来源**：规划阶段使用的 `effectiveApCost` 来自 skill 数据的 cost（并允许在“规划阶段开始”一次性应用 buff 进行重算）。
+- **成本来源**：规划阶段使用的 `effectiveApCost` 来自 skill 数据的 `costs.ap`（并允许在“规划阶段开始”一次性应用 buff 进行重算）。
 - **成本稳定性**：在同一个规划阶段生命周期内（`PLANNING_ENTER -> PLANNING_COMMIT`），`effectiveApCost` 视为稳定值；规划过程中 UI 的增删改查不会触发再次重算。
 
 #### 6.2.2 状态机与职责划分
@@ -361,7 +379,7 @@ UI 渲染 `Action Matrix` 主要依赖此队列。
 1) `PLANNING_ENTER`：
 
 - 从 `turnContext` 获取 `availableAp` 快照（规划期内不再变动）。
-- 预计算 `effectiveApCostBySkill`（将 buff 影响一次性折算进 cost；规划期内稳定）。
+- 预计算 `effectiveApCostBySkill`（将 buff 影响一次性折算进 AP 成本；规划期内稳定）。
 - 初始化 `apUsage = { plannedCost: 0, remaining: availableAp, ok: true }`
 - AP 子状态进入 `AP_BUDGET_READY`
 
@@ -388,7 +406,7 @@ UI 渲染 `Action Matrix` 主要依赖此队列。
   - **替换**：同 skillId 已存在 action 时，新规划会先移除旧 action，再写入新 action；
   - 或 **拒绝**：返回 `{ ok:false, reason:"Skill already planned." }`。
 
-> 当前代码尚未实现该规则；建议在 `TurnPlanner.assign()` 中以 `plannedBySkill[skillId]` 为权威做 hard constraint（替换语义）。
+当前主要提交链路通过 `planningDraftBySkill` 天然保证同一 `skillId` 只有一条草稿；`TurnPlanner.planMany({ replace:true })` 在提交同 skillId 时先移除旧记录再写入新记录。历史 `assign()` 入口对单选技能也支持替换语义。
 
 ### 6.5 单选技能（`selection.mode=single`）在草稿期的完整规则（补齐）
 
@@ -445,9 +463,9 @@ UI 渲染 `Action Matrix` 主要依赖此队列。
 Engine/Planner 必须兜底：
 
 - 若草稿传入的 `placedSlots.length > max`：
-  - 推荐：裁剪为前 `max` 个（但要返回 warning）
+  - 当前 `TurnPlanner.planMany()` 会裁剪为前 `max` 个；当前代码不返回 warning。
 - 若 `placedSlots` 与 `selectionResult.selectedParts` 不一致：
-  - 推荐：以 `placedSlots` 反推 parts 并重建 `selectionResult`（或直接拒绝并提示数据不一致）
+  - 当前代码不会重建或拒绝；如果 `selectionResult.selectedParts` 已存在，会把同一份数组复制到每条 action；如果不存在，则按当前 slot 生成单元素数组。
 
 > 注意：兜底是为了保证权威规划态合法，不用于弥补 UI 交互期的缺失。
 
@@ -491,7 +509,9 @@ Engine/Planner 必须兜底：
 
 ---
 
-## 7. UI 多选（产品定义 B）建议交互状态（概念）
+## 7. UI 多选（产品定义 B）目标交互状态（概念）
+
+本章是目标态交互模型，不等同于当前已完全落地的实现事实。当前实现事实以第 8 章为准。
 
 `UI_SkillPanel` 内部维护 `selectionDraft`：
 
@@ -514,7 +534,7 @@ Engine/Planner 必须兜底：
 
 本节目标：把“多选技能”与“多槽位放置”严格区分开。
 
-- **多选技能**：一次规划提交产生 **一条** `PlannedAction`，该 action 的 `selectionResult.selectedParts` 里包含多个部位。
+- **多选技能目标态**：一次规划提交产生 **一条** `PlannedAction`，该 action 的 `selectionResult.selectedParts` 里包含多个部位。
 - **不是**：把同一个 skillId 放到多个 slot 上从而产生多条 action。
 
 #### 7.1.1 前置：进入 `PLANNING_ACTIVE`
@@ -532,7 +552,7 @@ Engine/Planner 必须兜底：
 3. UI 高亮“允许点击的部位行/槽位”。
 
 > 高亮的依据是 `target.subject`（self/enemy）和 `target.scope`（entity/part）。
-> 在新的 schema 下，多选仍是 `SCOPE_PART + mode=multiple`，不再依赖 `SCOPE_MULTI_PARTS`。
+> 当前运行时同时接受 `SCOPE_PART + mode=multiple` 和 `SCOPE_MULTI_PARTS`。当前正式玩家技能包仍有 `SCOPE_MULTI_PARTS` 技能；如果后续要收敛 schema，应先做数据迁移和兼容策略。
 
 #### 7.1.3 累积选择：`clickSlot(slotKey)`
 
@@ -590,76 +610,51 @@ UI 在每次点击后更新提示：
 
 ---
 
-## 8. 待办与下一步
+## 8. 当前实现状态
 
-- [ ] 在 `TurnPlanner.assign()` 实现“每回合每技能仅 1 次”的硬约束（替换或拒绝）。
-- [ ] 明确该规则的维度：仅 `skillId` 还是 `skillId + targetId`。
-- [ ] 执行阶段：由技能执行器消费 `selectionResult.selectedParts`（后续单独文档/章节）。
+当前规划链路已具备以下能力：
+
+1. UI 草稿期使用 `planningDraftBySkill`，以 `skillId` 作为草稿主键。
+2. 提交期通过 `CoreEngine.commitPlanning({ planningDraftBySkill })` 进入 `TurnPlanner.planMany()`。
+3. AP 预算由 `TurnPlanner.enterPlanning()` 初始化，并在草稿变化与提交时全量重算。
+4. `TurnPlanner` 维护 `assigned`、`plannedBySkill`、`skillToSlots` 三类视图。
+5. `selectionResult.selectedParts` 已进入 `PlannedAction`，供执行阶段消费。
+6. 当前规则维度按 `skillId` 处理；即同一技能每回合最多一条草稿。注意：当前多选草稿在 `TurnPlanner.planMany()` 内会按多个 `placedSlots` 展开为多条 `PlannedAction`，不是严格意义上的“一条 PlannedAction 表达多选部位”。
 
 ---
 
-## 9. 基于当前实现的差距分析与升级策略
+## 9. 实现约束与后续优化
 
-本章不做“兼容性兜底”的设计；目标是把规划模块升级到“Engine 相位驱动 + Planner skill-centric 权威输出”的一致模型。
+本章记录仍需要谨慎看待的实现约束和设计债务。后续改规划 UI 或执行器时需要继续保持一致，并优先处理会影响数值平衡的债务。
 
-### 9.1 当前实现的主要问题（为什么会导致交互/约束反复失控）
+### 9.1 当前约束
 
-1) **Planner 输入是 slot-centric，但输出期望 skill-centric**
-- 现状：`TurnPlanner.assign({ slotKey, ... })` 以 slot 为主语。
-- 结果：很容易把“同一 skill 多次规划”的约束（每回合 1 次）做成 UI 行为或分散逻辑。
-- 风险：任何绕过 UI 的入口（脚本/回放/未来 UI）都可能破坏约束。
+1) **slot 视图仍然存在**
+- `assigned` 与 `slotKey` 仍用于 UI 映射、槽位容量校验和回放调试。
+- 不能把它重新提升为执行层权威；执行层应消费 `PlannedAction` 和 `selectionResult`。
 
-2) **`selectionResult` 在规划阶段没有形成强约束的“权威结构”**
-- 现状：规划入口依赖 `bodyPart/slotKey`，而 `selectionResult` 可能缺省或不完整。
-- 结果：多选技能容易退化成“放多个槽位”而不是“一次 action 携带多个部位”。
+2) **`assign()` 是历史兼容入口**
+- 当前 UI 主链路使用 `commitPlanning()`。
+- 如果未来新增调用方直接使用 `assign()`，必须确认它不会绕过 `planningDraftBySkill` 的同 skillId 约束。
 
-3) **引擎相位（enter/commit）缺少明确 API/数据冻结点**
-- 现状：文档已引入 `PLANNING_ENTER/COMMIT`，但缺少对应实现接口与冻结语义。
-- 结果：UI 只能“边点边改”，缺少明确的提交边界，也不利于回放/存档。
+3) **AP 成本必须来自快照**
+- `commitPlanning()` 不直接重新解释 `skill.costs.ap`，而是读取 `TurnPlanner.getApBudgetState().effectiveApCostBySkill`。
+- 若规划入口没有先初始化预算，应 fail-fast，而不是静默按 0 AP 或旧 `cost` 兜底。
 
-### 9.2 升级策略（按最小闭环拆解）
+4) **`requirements/partSlot/perTurnLimit` 仍是设计债务**
+- 当前它们已进入技能数据、编辑器、UI 展示和契约摘要。
+- 当前 TurnPlanner 不按这些字段做硬释放裁决。
+- 后续如果把它们作为数值平衡约束，必须先补 Planner/CoreEngine 校验，否则文档、技能数据和实际战斗会继续漂移。
 
-#### 阶段 A：先引入 batch commit（把“草稿期”与“权威规划态”解耦）
+5) **多选技能的 action 粒度仍需收敛**
+- 目标态是“一次施放一条 action，`selectedParts` 表达多个部位”。
+- 当前实现是“一个多选草稿可展开为多条 action”，这会影响时间线、执行次数、AP 语义和测试解释。
+- 在正式依赖多选技能做平衡前，应优先修正该规划语义。
 
-目标：`PLANNING_ACTIVE` 只产生 UI 草稿；`PLANNING_COMMIT` 一次性提交。
+### 9.2 后续优化建议
 
-- UI 增加 `planningDraftBySkill`
-- Engine 增加 `commitPlanning({ planningDraftBySkill })`
-
-产出：误触不再直接污染引擎规划态；撤销/重选成本显著降低。
-
-#### 阶段 B：把“权威输出”收敛到 skill 维度（commit 后的一致快照）
-
-目标：Planner 内部仍允许 slot 索引，但对外提供 `plannedBySkill/skillToSlots` 的权威快照。
-
-- 在 `TurnPlanner` 增加：
-  - `plannedBySkill: Record<skillId, PlannedAction>`
-  - `skillToSlots: Record<skillId, slotKey[]>`
-- 每次 `assign(...)` 成功后，统一维护这两个结构。
-
-产出：Engine/UI/快照都可以改为优先读取 skill 视图，slot 视图仅用于渲染。
-
-#### 阶段 C：把“每技能每回合仅 1 次”做成 Planner 硬约束（替换语义）
-
-目标：无论 UI 怎么点，只要提交同 skillId，Planner 都先移除旧记录再写入新记录。
-
-- 以 `plannedBySkill[skillId]` 为权威判断：
-  - 已存在则 unassign 旧 action 占用的 slotKey 集合
-  - 插入新 action
-
-产出：单选技能“替换”不再依赖 UI；多选技能也不会无限占槽。
-
-#### 阶段 D：把 Planner 的提交接口语义升级为 skill-centric + batch
-
-目标：文档中的 `planSkill(...)` 成为真实入口：
-
-- `planSkill({ skillId, targetId, selectionResult, cost, ui?: { slotKey, bodyPart } })`
-
-产出：规划模块在概念层面与实现层面一致；slotKey 不再是权威输入。
-
-#### 阶段 E：补齐 Engine 的 enter/commit 生命周期与冻结合约
-
-- `enterPlanning()`：reset planner、同步 runtime、通知 UI
-- `commitPlanning()`：冻结快照，后续执行阶段只读
-
-产出：规划阶段有明确边界，便于存档/回放/调试。
+1. 将历史 `assign()` 入口的使用范围进一步收窄，只作为调试/兼容入口。
+2. 为 `selectionResult` 增加更明确的校验错误码，便于编辑器和测试页展示。
+3. 将 `plannedBySkill/skillToSlots/assigned` 的 runtime 快照稳定化，服务未来存档、回放和自动试玩。
+4. 补齐 `requirements`、`costs.partSlot.slotCost`、`costs.perTurnLimit` 的 Planner/CoreEngine 硬校验。
+5. 将多选技能从“多 slot 多 action”收敛为“单 action 多 selectedParts”。

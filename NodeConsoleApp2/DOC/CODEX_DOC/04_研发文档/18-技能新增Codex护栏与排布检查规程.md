@@ -71,7 +71,8 @@ Codex 必须先输出设计表，再改 JSON。设计表至少包含：
 1. `prerequisites` 只表达技能树前置关系，不表达战斗释放条件。
 2. 战斗释放条件应写入 `requirements` 或 `costs`。
 3. `unlock.cost.kp` 是学习成本，不等同于战斗 AP。
-4. 当前 Codex 检查器采用的建议 KP 区间：
+4. 当前运行时只有 `costs.ap` 是已硬执行的战斗成本；`requirements.selfPart`、`costs.partSlot.slotCost`、`costs.perTurnLimit` 仍是设计/编辑/统计契约。Codex 设计新技能时可以写入这些字段表达约束，但不能把它们当成已阻止非法释放的运行时事实；若技能强度依赖这些约束，必须先提出并实现 Planner/CoreEngine 校验。
+5. 当前 Codex 检查器采用的建议 KP 区间：
 
 | 稀有度 | KP 建议区间 |
 | --- | --- |

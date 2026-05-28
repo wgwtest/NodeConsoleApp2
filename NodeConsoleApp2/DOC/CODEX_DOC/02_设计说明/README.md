@@ -84,9 +84,7 @@
 | [04-技能编辑器(skill_editor_design)-设计说明](./S4_技能系统与编辑器/04-技能编辑器(skill_editor_design)-设计说明.md) | 技能编辑器设计 |
 | [05-技能规划(skill_planning_design)-设计说明](./S4_技能系统与编辑器/05-技能规划(skill_planning_design)-设计说明.md) | 技能规划设计 |
 | [06-技能平衡(skill_balance_design)-设计说明](./S4_技能系统与编辑器/06-技能平衡(skill_balance_design)-设计说明.md) | 技能平衡设计 |
-| [07-技能测试(skill_test_design)-设计说明](./S4_技能系统与编辑器/07-技能测试(skill_test_design)-设计说明.md) | 技能测试设计 |
 | [08-技能头脑风暴(skill_design_brainStorm)-设计说明](./S4_技能系统与编辑器/08-技能头脑风暴(skill_design_brainStorm)-设计说明.md) | 技能思路补充与脑暴记录 |
-| [25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明](./S4_技能系统与编辑器/25-旧技能附加字段退役(skill_legacy_field_retirement)-设计说明.md) | 旧技能字段退役与迁移方案 |
 | [29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明](./S4_技能系统与编辑器/29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明.md) | 敌人技能包独立真源与技能编辑器多技能域切换设计 |
 
 ### 4.6 S5 Buff 系统与编辑器

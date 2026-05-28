@@ -142,6 +142,8 @@ assets/data/skills_enemy_v1.json
 
 因此不应为敌人技能另造一套 schema。
 
+实现状态：敌人运行时当前主要由 `EnemyActionPlanner` 和 `CoreEngine.executeEnemySkill()` 消费 `target`、`costs.ap`、`actions`、`buffRefs`。敌人技能包可以保留 `requirements` 以复用 schema 和编辑器展示，但当前敌人 AI 不按 `requirements`、`costs.partSlot` 或 `costs.perTurnLimit` 做完整释放裁决。
+
 差异只在内容生产层：
 
 | 维度 | 玩家技能 | 敌人技能 |

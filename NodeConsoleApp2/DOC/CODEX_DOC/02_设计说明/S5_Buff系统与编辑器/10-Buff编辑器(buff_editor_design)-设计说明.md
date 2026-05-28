@@ -1,11 +1,24 @@
-# Buff 编辑器（Buff Editor）重做方案（vNext，不考虑兼容）
+# Buff 编辑器（Buff Editor）设计说明
 
-本文件描述 `buff_editor_v4` 的当前标准契约：以 `assets/data/buffs_v2_7.json` 为标准样本，并以其 `meta.enums` 与规范化后的 `effects[].payload` 结构驱动 UI。目标是打造一个“面向数据规范、面向批量生产、面向强校验与重构”的 Buff 编辑器。
+本文件是 `S5 Buff 系统与编辑器` 的子设计文档，专门描述 Buff 编辑器的工作区模型、信息架构、交互、校验、导入导出和验证辅助能力。
+
+Buff 编辑器属于 `S5` 的**编辑展示层**，不是运行内核本身。它负责生产、检查和导出 Buff 内容包；Buff 是否真的被战斗运行时消费，必须由 `buff_runtime_probe.html`、战斗机器人测试或主流程回归证明。
+
+当前标准契约以 `assets/data/buffs_v2_7.json` 为样本，并以其 `meta.enums`、`meta.fieldNotes` 与规范化后的 `effects[].payload` 结构驱动 UI。目标是打造一个“面向数据规范、面向批量生产、面向强校验与重构”的 Buff 编辑器。
 
 关联文档：
 
 - `DOC/CODEX_DOC/02_设计说明/S5_Buff系统与编辑器/09-Buff系统(buff_design)-设计说明.md`：Buff 数据规范（Schema / Data Spec）。
 - `assets/data/buffs_v2_7.json`：包含 `$schemaVersion`、`meta.enums`、`meta.fieldNotes`、以及 `buffs` 数据库。
+
+分层关系：
+
+```text
+09 主设计文档
+  -> 定义 Buff 系统边界、数据契约、运行内核、状态机和验收口径
+10 本文档
+  -> 定义 Buff 编辑器如何展示、编辑、校验和导入导出 Buff 内容包
+```
 
 ---
 
@@ -18,11 +31,13 @@
 3. 强校验 + 快速定位问题：结构校验、枚举校验、跨引用校验（`aliasOf`、id 唯一性等），并可跳转到字段。
 4. 批量生产/重构友好：模板、一键复制、批量替换、批量重命名、字段迁移工具优先。
 5. 编辑器与模拟器解耦：编辑器是“数据生产工具”，模拟器是“验证工具”（可选/可折叠/可独立页面）。
+6. 编辑展示层与运行内核解耦：编辑器不得把 `BuffSystem` 的运行逻辑复制成另一套不可追踪的 UI 逻辑。
 
 ### 1.2 非目标
 
 - 不追求对旧版 `buffs.json`/旧 effect 结构的兼容。
 - 不把编辑器做成完整战斗系统复刻；验证以“最小可用、可解释”优先。
+- 不把编辑器内存状态当作运行时生效证据；运行时生效必须通过独立装载链路验证。
 
 ---
 

@@ -15,7 +15,7 @@
 1. **加载/保存技能数据**：以 `skills_melee_v4_5.json` 为标准输入输出。
    - 当前项目的基准样本为 `skills_melee_v4_5.json`
 2. **可视化编辑技能树**：在二维网格画布上拖拽技能节点；用连线表达前置依赖。
-3. **结构化编辑技能属性**：目标选择、消耗、需求、效果、Buff 引用、解锁体系、标签等。
+3. **结构化编辑技能属性**：目标选择、消耗、需求、效果、Buff 引用、解锁体系、编辑元数据等。
 4. **严格校验**：导出前进行 schema/引用关系/循环依赖 等检查，降低数据写错的概率。
 
 ---
@@ -75,9 +75,9 @@
 
 ### 2.2 Buff 数据文件
 
-用于 `buffRefs` 下拉选择与校验：`assets/data/buffs.json`
+用于 `buffRefs` 下拉选择与校验：`assets/data/buffs_v2_7.json`
 
-如果未提供该文件，编辑器可以允许手动输入 `buffId`，但应在校验区提示“未加载 buffs.json，无法校验 buffId 是否存在”。
+如果未提供该文件，编辑器可以允许手动输入 `buffId`，但应在校验区提示“未加载 buffs_v2_7.json，无法校验 buffId 是否存在”。
 
 ### 2.2.1 编辑器与其他系统的边界约束
 
@@ -164,7 +164,7 @@ v4 的核心是 `actions[]`：
 1. 导入/导出以 v4 pack 为主：保持 `$schemaVersion/meta/skills`。
 2. UI 枚举、部位列表由 `meta` 驱动（不再硬编码）。
 3. 内部数据模型以 v4 字段为主：`target/costs/actions`。
-4. 保存时不得丢弃 effect 扩展字段（例如 `repeat/partOverride/subjectOverride/scaling/...`）。
+4. 保存时不得丢弃当前 schema 仍在使用的 effect 扩展字段（例如 `repeat/partOverride/subjectOverride/amountSource/note/...`）；已退役字段不得被重新写回为推荐结构。
 
 可后做（MVP 阶段允许先简化）：
 
@@ -318,7 +318,7 @@ v4 action 的关键字段：
   - `effectType`：枚举 `meta.enums.effectTypes`
   - `amountType`：枚举 `meta.enums.amountTypes`
   - `amount?: number`
-  - 以及 v3 时代 effect 的扩展字段（如 `scaling/repeat/partOverride/subjectOverride/note` 等）应 **原样保留**
+  - 当前 schema 仍在使用的 effect 扩展字段（如 `repeat/partOverride/subjectOverride/amountSource/note` 等）应 **原样保留**
 
 实现策略建议：
 
@@ -329,19 +329,20 @@ v4 action 的关键字段：
   - 若导入 v3 顶层 `effects[]`，迁移为 `actions[]`（每个 effect -> 一个 action），并默认 follow `skillTarget`
   - 若导入出现 `actions[].effects[]`（历史中间结构），拆分为多个 action，并落到 v4 单 `effect`
 
-### 4.2 `buffRefs`（需要联动 buffs.json）
+### 4.2 `buffRefs`（需要联动 buffs_v2_7.json）
 
 结构为：
 
 - `buffRefs.apply[]`
-- `buffRefs.applySelf[]`
 - `buffRefs.remove[]`
 
 每行建议字段（基于 Schema 驱动的动态表单）：
 
-- `buffId`（下拉选择，来源 `buffs.json`）
+- `buffId`（下拉选择，来源 `buffs_v2_7.json`）
 - `target`（枚举 `meta.enums.buffRefTargets`，当前为 `self/enemy`）
 - `params`（动态参数对象，根据所选 Buff 的 `paramsSchema` 动态生成输入项）
+
+历史 `buffRefs.applySelf[]` 在导入时应迁移为 `buffRefs.apply[]` 且 `target='self'`，保存时不再输出 `applySelf`。
 
 **UI 交互升级（卡片式动态表单）**：
 1. **放弃固定表格布局**：将每个 Buff 引用渲染为一个独立的配置卡片，而不是固定列的表格。
@@ -386,7 +387,7 @@ v4 action 的关键字段：
 4. `prerequisites`：引用 id 存在，且无循环依赖。
 5. 数值合理性：`ap>=0`、`slotCost>=0`、`perTurnLimit>=1`（若存在）。
 6. `buffRefs`：
-   - `buffId` 存在于 `buffs.json`（若已加载）
+   - `buffId` 存在于 `buffs_v2_7.json`（若已加载）
 
 ---
 
@@ -481,7 +482,7 @@ v4 action 的关键字段：
 | 效果对象 | `actions[i].effect` | `object` | 是 | `{effectType, amountType, amount}` | 必须是 object |
 | 效果类型 | `actions[i].effect.effectType` | `string` | 是 | `meta.enums.effectTypes[0]` | 必须在 `meta.enums.effectTypes` 内 |
 | 数值类型 | `actions[i].effect.amountType` | `string` | 否(建议) | `meta.enums.amountTypes[0]` | 若存在必须在 `meta.enums.amountTypes` 内 |
-| 数值 | `actions[i].effect.amount` | `number` | 条件 | `0` | `amountType!=SCALING` 时建议必填 |
+| 数值 | `actions[i].effect.amount` | `number` | 条件 | `0` | 直接数值效果建议必填；`BUFF_STACKS`/`BUFF_REMAINING` 等读数效果可配合 `amountSource` |
 | 备注 | `actions[i].effect.note` | `string` | 否 | 无 | 可选 |
 
 ### I. BuffRefs Panel（Buff 引用）
@@ -489,14 +490,13 @@ v4 action 的关键字段：
 | 字段名 | 数据路径 | 类型 | 必填 | 默认值来源 | 校验规则 |
 |---|---|---:|:---:|---|---|
 | apply 列表 | `buffRefs.apply` | `BuffRef[]` | 否 | `[]` | 每条 BuffRef 校验见下 |
-| applySelf 列表 | `buffRefs.applySelf` | `BuffRef[]` | 否 | `[]` | 同上 |
 | remove 列表 | `buffRefs.remove` | `BuffRef[]` | 否 | `[]` | 同上 |
 
 单条 `BuffRef` 字段：
 
 | 字段名 | 数据路径 | 类型 | 必填 | 默认值来源 | 校验规则 |
 |---|---|---:|:---:|---|---|
-| buffId | `buffId` | `string` | 是 | 从 `buffs.json` 下拉 | 必须存在于 `buffs.json`（若已加载） |
+| buffId | `buffId` | `string` | 是 | 从 `buffs_v2_7.json` 下拉 | 必须存在于 `buffs_v2_7.json`（若已加载） |
 | 目标 | `target` | `string` | 是 | `meta.enums.buffRefTargets[0]` | 必须在 `meta.enums.buffRefTargets` 内 |
 | 动态参数 | `params` | `object` | 否 | 根据 `paramsSchema` 初始化 | 必须符合对应 Buff 的 `paramsSchema` 定义 |
 
@@ -505,7 +505,7 @@ v4 action 的关键字段：
 ## 7. 与其他工具的对齐说明
 
 - `test/skill_editor_test_v3.html`：应以本文档的 v4 字段为准，尤其是 `target.selection`、`costs/requirements`、`unlock`、`editorMeta`、`actions`。
-- `test/skill_balance_tool.html`：加载 v4 时，应复用 `meta.enums` 做标签/枚举来源，避免硬编码。
+- `test/skill_balance_tool.html`：加载 v4 时，应复用正式字段和 `meta.enums` 派生分析维度，避免硬编码或写回持久化标签。
 
 ---
 
