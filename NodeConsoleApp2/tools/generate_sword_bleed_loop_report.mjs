@@ -3,12 +3,33 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Buffer } from 'node:buffer';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const skillPackPath = path.join(projectRoot, 'assets', 'skill_packs', 'authoring', 'skills_melee_v4_5_sword_bleed_window_standard_v2_20260529_013420.json');
 const buffPackPath = path.join(projectRoot, 'assets', 'data', 'buffs_v2_7.json');
-const outputDir = path.join(projectRoot, 'DOC', 'CODEX_DOC', '08_原型与附图', '2026-05-29-剑系流血输出循环回放-v1');
-const outputPath = path.join(outputDir, 'index.html');
+const defaultOutputRoot = path.join(projectRoot, 'DOC', 'CODEX_DOC', '05_测试文档', '05_Skill技能系统测试记录');
+const recordSlug = '剑系流血输出循环自测';
+const execFileAsync = promisify(execFile);
+
+const capturedRequirements = [
+  {
+    id: 'record_as_test_artifact',
+    source: 'user',
+    text: '技能循环回放属于 Skill 测试记录工具产物，不再放入原型与附图目录。'
+  },
+  {
+    id: 'timestamp_to_seconds',
+    source: 'user',
+    text: '测试记录目录必须同时包含日期和时间，因为一天可能执行多轮测试。'
+  },
+  {
+    id: 'record_results_and_findings',
+    source: 'user',
+    text: '每次自测要同时保存测试结果和发现的问题，后续技能设计必须以这些记录为复盘依据。'
+  }
+];
 
 async function importAsDataModule(filePath, rewrite = source => source) {
   const source = rewrite(await fs.readFile(filePath, 'utf8'));
@@ -41,6 +62,63 @@ async function importCoreEngineClass() {
       .replace(/^\uFEFF?import[^\n]*\n/gmu, '')
       .replace(/\/\/ 创建单例实例[\s\S]*?export \{ CoreEngine \};\s*$/u, 'export { CoreEngine };\n')
   );
+}
+
+function formatRunTimestamp(date = new Date()) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      hourCycle: 'h23'
+    }).formatToParts(date).map(part => [part.type, part.value])
+  );
+  return `${parts.year}-${parts.month}-${parts.day}-${parts.hour}${parts.minute}${parts.second}`;
+}
+
+function getRunTimestamp() {
+  const explicit = String(process.env.SKILL_TEST_RECORD_TIMESTAMP || '').trim();
+  return explicit || formatRunTimestamp();
+}
+
+function getOutputPaths(timestamp) {
+  const outputRoot = process.env.SKILL_TEST_RECORD_OUTPUT_ROOT
+    ? path.resolve(process.env.SKILL_TEST_RECORD_OUTPUT_ROOT)
+    : defaultOutputRoot;
+  const outputDir = path.join(outputRoot, `${timestamp}-${recordSlug}`);
+  return {
+    outputRoot,
+    outputDir,
+    htmlPath: path.join(outputDir, 'report.html'),
+    jsonPath: path.join(outputDir, 'report.json'),
+    findingsPath: path.join(outputDir, 'findings.md')
+  };
+}
+
+async function getGitInfo() {
+  try {
+    const [commitResult, statusResult] = await Promise.all([
+      execFileAsync('git', ['rev-parse', '--short', 'HEAD'], { cwd: projectRoot }),
+      execFileAsync('git', ['status', '--short'], { cwd: projectRoot })
+    ]);
+    const statusLines = statusResult.stdout.trim().split('\n').filter(Boolean);
+    return {
+      commit: commitResult.stdout.trim(),
+      dirty: statusLines.length > 0,
+      statusSummary: statusLines.slice(0, 30)
+    };
+  } catch (error) {
+    return {
+      commit: 'unknown',
+      dirty: null,
+      error: error?.message || String(error)
+    };
+  }
 }
 
 class TestEventBus {
@@ -292,6 +370,8 @@ async function simulateScenario({ scenario, skillPack, CoreEngine }) {
       round,
       combo: usedNames.length ? usedNames.join(' + ') : '无有效释放',
       ap: `${spentAp}/${scenario.apBudget}`,
+      spentAp,
+      apBudget: scenario.apBudget,
       before,
       afterActions,
       afterTurnEnd,
@@ -380,13 +460,141 @@ function renderScenario(result) {
   `;
 }
 
-function renderHtml({ generatedAt, skillPack, results }) {
+function buildFindings(results) {
+  const findings = [];
+  const underused = results
+    .map(result => {
+      const rows = result.rows.filter(row => row.spentAp < row.apBudget);
+      if (!rows.length) return null;
+      const examples = rows.slice(0, 3).map(row => `第${row.round}轮 ${row.ap}`).join('，');
+      return `${result.scenario.name}：${rows.length}/${result.rows.length} 轮未打满 AP（${examples}）`;
+    })
+    .filter(Boolean);
+
+  if (underused.length) {
+    findings.push({
+      id: 'ap_underuse_fixed_combo',
+      severity: 'high',
+      title: '固定组合回放会稳定浪费 AP',
+      evidence: underused,
+      recommendation: '下一版测试不应只硬编码短 combo，应基于已学技能池在“同回合同技能不可重复”的约束下搜索或枚举可用组合。'
+    });
+  }
+
+  findings.push({
+    id: 'low_tier_bleed_overlap',
+    severity: 'high',
+    title: '浅割与锯齿斩的低阶定位重叠',
+    evidence: [
+      '浅割是 1AP/7 护甲门控伤害/+1W，锯齿斩是 1AP/4 护甲门控伤害/+2W',
+      '二者都属于低阶建窗器，玩家学会后更像固定叠加按钮，而不是清晰分工的选择'
+    ],
+    recommendation: '重做低阶剑系时，应保留一个主建窗器，并把另一个改成明确的补刀、维窗、控场、防反或 AP 填充角色。'
+  });
+
+  findings.push({
+    id: 'test_record_must_drive_redesign',
+    severity: 'medium',
+    title: '测试记录必须反向驱动技能设计',
+    evidence: [
+      '本轮回放暴露的问题不能只停留在 HTML 展示里',
+      '后续重做剑系前，应先读取本记录的 findings，并把 AP 利用率、技能区分度、自然输出循环作为验收项'
+    ],
+    recommendation: '每次生成 Skill 测试记录时同步输出 findings.md 与 report.json，供下一轮设计读取。'
+  });
+
+  return findings;
+}
+
+function renderFindings(findings) {
+  return `
+    <section class="scenario findings">
+      <div class="scenario-head">
+        <div>
+          <p class="eyebrow">测试发现</p>
+          <h2>本轮问题记录</h2>
+          <p>这些结论是后续技能设计与复盘的输入，不是展示性文案。</p>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>级别</th>
+            <th>问题</th>
+            <th>证据</th>
+            <th>后续处理</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${findings.map(item => `
+            <tr>
+              <td class="round">${htmlEscape(item.severity)}</td>
+              <td class="combo">${htmlEscape(item.title)}</td>
+              <td>${htmlEscape(item.evidence.join('；'))}</td>
+              <td class="note">${htmlEscape(item.recommendation)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </section>
+  `;
+}
+
+function renderMarkdown({ meta, requirements, findings, results }) {
+  const scenarioRows = results.map(result => {
+    const underused = result.rows.filter(row => row.spentAp < row.apBudget).length;
+    return `| ${result.scenario.name} | ${result.result.killed ? `${result.result.rounds}轮击败` : `${result.result.rounds}轮未击败`} | ${Math.round(result.result.hp)} | ${Math.round(result.result.armorTotal)} | ${underused}/${result.rows.length} |`;
+  }).join('\n');
+
+  const requirementRows = requirements
+    .map(item => `- ${item.text}`)
+    .join('\n');
+
+  const findingRows = findings
+    .map(item => [
+      `### ${item.title}`,
+      '',
+      `- 级别：${item.severity}`,
+      `- ID：${item.id}`,
+      `- 证据：${item.evidence.join('；')}`,
+      `- 后续处理：${item.recommendation}`
+    ].join('\n'))
+    .join('\n\n');
+
+  return `# ${recordSlug}
+
+## 元数据
+
+- 记录类型：${meta.artifactKind}
+- 时间戳：${meta.timestamp}
+- 生成时间：${meta.generatedAt}
+- Git：${meta.git.commit}${meta.git.dirty ? '（dirty）' : ''}
+- 技能包：${meta.skillPackPath}
+- Buff 包：${meta.buffPackPath}
+
+## 本轮需求记录
+
+${requirementRows}
+
+## 测试结果总览
+
+| 场景 | 结果 | 结束 HP | 结束护甲 | AP 未打满轮次 |
+| --- | --- | ---: | ---: | ---: |
+${scenarioRows}
+
+## 发现的问题
+
+${findingRows}
+`;
+}
+
+function renderHtml({ generatedAt, skillPack, results, findings, meta }) {
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>剑系流血输出循环回放</title>
+  <title>剑系流血输出循环自测记录</title>
   <style>
     :root {
       --paper: #f6f2ea;
@@ -556,10 +764,11 @@ function renderHtml({ generatedAt, skillPack, results }) {
     <header>
       <div>
         <h1>剑系流血输出循环回放</h1>
-        <p>这个文件不是理论说明，而是用当前候选技能包和 CoreEngine 跑出的逐轮账本。每一行只看本轮组合造成的整体状态变化。</p>
+        <p>这个文件是 Skill 测试记录工具生成的逐轮账本。它同时记录测试结果和发现的问题，供下一轮技能设计复盘使用。</p>
       </div>
       <dl class="meta">
         <div><dt>生成时间</dt><dd>${htmlEscape(generatedAt)}</dd></div>
+        <div><dt>记录时间戳</dt><dd>${htmlEscape(meta.timestamp)}</dd></div>
         <div><dt>敌人模型</dt><dd>100 HP / 110 总护甲</dd></div>
         <div><dt>玩家 AP</dt><dd>每轮 5 AP</dd></div>
         <div><dt>技能包</dt><dd>${htmlEscape(skillPack.meta?.variantId || skillPack.meta?.title || 'unknown')}</dd></div>
@@ -570,6 +779,8 @@ function renderHtml({ generatedAt, skillPack, results }) {
       当前引擎中 <strong>DMG_ARMOR 会先扣指定部位护甲，护甲不足部分溢出为 HP 伤害</strong>；流血仍按回合结束结算为固定 HP 伤害。这个 HTML 用来暴露真实释放过程，而不是替技能设计找理由。
     </div>
 
+    ${renderFindings(findings)}
+
     ${results.map(renderScenario).join('\n')}
   </main>
 </body>
@@ -577,6 +788,8 @@ function renderHtml({ generatedAt, skillPack, results }) {
 }
 
 async function main() {
+  const timestamp = getRunTimestamp();
+  const outputPaths = getOutputPaths(timestamp);
   const skillPack = JSON.parse(await fs.readFile(skillPackPath, 'utf8'));
   const { CoreEngine } = await importCoreEngineClass();
   const scenarios = [
@@ -619,15 +832,37 @@ async function main() {
     const result = await simulateScenario({ scenario, skillPack, CoreEngine });
     results.push(result);
   }
+  const git = await getGitInfo();
   const generatedAt = new Date().toLocaleString('zh-CN', {
     timeZone: 'Asia/Shanghai',
     hour12: false
   });
+  const meta = {
+    artifactKind: 'skill_test_record',
+    timestamp,
+    generatedAt,
+    recordSlug,
+    skillPackPath: path.relative(projectRoot, skillPackPath),
+    buffPackPath: path.relative(projectRoot, buffPackPath),
+    git
+  };
+  const findings = buildFindings(results);
+  const report = {
+    meta,
+    requirements: capturedRequirements,
+    findings,
+    results
+  };
 
-  await fs.mkdir(outputDir, { recursive: true });
-  const html = renderHtml({ generatedAt, skillPack, results }).replace(/[ \t]+$/gmu, '');
-  await fs.writeFile(outputPath, html, 'utf8');
-  console.log(path.relative(projectRoot, outputPath));
+  await fs.mkdir(outputPaths.outputDir, { recursive: true });
+  const html = renderHtml({ generatedAt, skillPack, results, findings, meta }).replace(/[ \t]+$/gmu, '');
+  const markdown = renderMarkdown({ meta, requirements: capturedRequirements, findings, results }).replace(/[ \t]+$/gmu, '');
+  await fs.writeFile(outputPaths.htmlPath, html, 'utf8');
+  await fs.writeFile(outputPaths.jsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  await fs.writeFile(outputPaths.findingsPath, markdown, 'utf8');
+  console.log(path.relative(projectRoot, outputPaths.htmlPath));
+  console.log(path.relative(projectRoot, outputPaths.jsonPath));
+  console.log(path.relative(projectRoot, outputPaths.findingsPath));
 }
 
 main().catch(error => {

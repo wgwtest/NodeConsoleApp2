@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>剑系流血输出循环回放</title>
+  <title>剑系流血输出循环自测记录</title>
   <style>
     :root {
       --paper: #f6f2ea;
@@ -173,10 +173,11 @@
     <header>
       <div>
         <h1>剑系流血输出循环回放</h1>
-        <p>这个文件不是理论说明，而是用当前候选技能包和 CoreEngine 跑出的逐轮账本。每一行只看本轮组合造成的整体状态变化。</p>
+        <p>这个文件是 Skill 测试记录工具生成的逐轮账本。它同时记录测试结果和发现的问题，供下一轮技能设计复盘使用。</p>
       </div>
       <dl class="meta">
-        <div><dt>生成时间</dt><dd>2026/5/30 00:15:48</dd></div>
+        <div><dt>生成时间</dt><dd>2026/5/30 00:49:31</dd></div>
+        <div><dt>记录时间戳</dt><dd>2026-05-30-004618</dd></div>
         <div><dt>敌人模型</dt><dd>100 HP / 110 总护甲</dd></div>
         <div><dt>玩家 AP</dt><dd>每轮 5 AP</dd></div>
         <div><dt>技能包</dt><dd>growth_v2_sword_bleed_window_standard_v2</dd></div>
@@ -186,6 +187,52 @@
     <div class="notice">
       当前引擎中 <strong>DMG_ARMOR 会先扣指定部位护甲，护甲不足部分溢出为 HP 伤害</strong>；流血仍按回合结束结算为固定 HP 伤害。这个 HTML 用来暴露真实释放过程，而不是替技能设计找理由。
     </div>
+
+
+    <section class="scenario findings">
+      <div class="scenario-head">
+        <div>
+          <p class="eyebrow">测试发现</p>
+          <h2>本轮问题记录</h2>
+          <p>这些结论是后续技能设计与复盘的输入，不是展示性文案。</p>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>级别</th>
+            <th>问题</th>
+            <th>证据</th>
+            <th>后续处理</th>
+          </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+              <td class="round">high</td>
+              <td class="combo">固定组合回放会稳定浪费 AP</td>
+              <td>基础破甲 + 轻流血：9/9 轮未打满 AP（第1轮 3/5，第2轮 3/5，第3轮 3/5）；连续建窗循环：8/8 轮未打满 AP（第1轮 4/5，第2轮 4/5，第3轮 4/5）；建窗后读窗循环：2/7 轮未打满 AP（第1轮 4/5，第7轮 3/5）</td>
+              <td class="note">下一版测试不应只硬编码短 combo，应基于已学技能池在“同回合同技能不可重复”的约束下搜索或枚举可用组合。</td>
+            </tr>
+
+            <tr>
+              <td class="round">high</td>
+              <td class="combo">浅割与锯齿斩的低阶定位重叠</td>
+              <td>浅割是 1AP/7 护甲门控伤害/+1W，锯齿斩是 1AP/4 护甲门控伤害/+2W；二者都属于低阶建窗器，玩家学会后更像固定叠加按钮，而不是清晰分工的选择</td>
+              <td class="note">重做低阶剑系时，应保留一个主建窗器，并把另一个改成明确的补刀、维窗、控场、防反或 AP 填充角色。</td>
+            </tr>
+
+            <tr>
+              <td class="round">medium</td>
+              <td class="combo">测试记录必须反向驱动技能设计</td>
+              <td>本轮回放暴露的问题不能只停留在 HTML 展示里；后续重做剑系前，应先读取本记录的 findings，并把 AP 利用率、技能区分度、自然输出循环作为验收项</td>
+              <td class="note">每次生成 Skill 测试记录时同步输出 findings.md 与 report.json，供下一轮设计读取。</td>
+            </tr>
+
+        </tbody>
+      </table>
+    </section>
+
 
 
     <section class="scenario">

@@ -1,0 +1,961 @@
+{
+  "meta": {
+    "artifactKind": "skill_test_record",
+    "timestamp": "2026-05-30-004618",
+    "generatedAt": "2026/5/30 00:49:31",
+    "recordSlug": "剑系流血输出循环自测",
+    "skillPackPath": "assets/skill_packs/authoring/skills_melee_v4_5_sword_bleed_window_standard_v2_20260529_013420.json",
+    "buffPackPath": "assets/data/buffs_v2_7.json",
+    "git": {
+      "commit": "07670b1",
+      "dirty": true,
+      "statusSummary": [
+        "D  \"DOC/CODEX_DOC/08_\\345\\216\\237\\345\\236\\213\\344\\270\\216\\351\\231\\204\\345\\233\\276/2026-05-29-\\345\\211\\221\\347\\263\\273\\346\\265\\201\\350\\241\\200\\350\\276\\223\\345\\207\\272\\345\\276\\252\\347\\216\\257\\345\\233\\236\\346\\224\\276-v1/index.html\"",
+        " M tools/generate_sword_bleed_loop_report.mjs",
+        "?? \"DOC/CODEX_DOC/05_\\346\\265\\213\\350\\257\\225\\346\\226\\207\\346\\241\\243/05_Skill\\346\\212\\200\\350\\203\\275\\347\\263\\273\\347\\273\\237\\346\\265\\213\\350\\257\\225\\350\\256\\260\\345\\275\\225/\"",
+        "?? test/skill_test_record_tool.test.mjs"
+      ]
+    }
+  },
+  "requirements": [
+    {
+      "id": "record_as_test_artifact",
+      "source": "user",
+      "text": "技能循环回放属于 Skill 测试记录工具产物，不再放入原型与附图目录。"
+    },
+    {
+      "id": "timestamp_to_seconds",
+      "source": "user",
+      "text": "测试记录目录必须同时包含日期和时间，因为一天可能执行多轮测试。"
+    },
+    {
+      "id": "record_results_and_findings",
+      "source": "user",
+      "text": "每次自测要同时保存测试结果和发现的问题，后续技能设计必须以这些记录为复盘依据。"
+    }
+  ],
+  "findings": [
+    {
+      "id": "ap_underuse_fixed_combo",
+      "severity": "high",
+      "title": "固定组合回放会稳定浪费 AP",
+      "evidence": [
+        "基础破甲 + 轻流血：9/9 轮未打满 AP（第1轮 3/5，第2轮 3/5，第3轮 3/5）",
+        "连续建窗循环：8/8 轮未打满 AP（第1轮 4/5，第2轮 4/5，第3轮 4/5）",
+        "建窗后读窗循环：2/7 轮未打满 AP（第1轮 4/5，第7轮 3/5）"
+      ],
+      "recommendation": "下一版测试不应只硬编码短 combo，应基于已学技能池在“同回合同技能不可重复”的约束下搜索或枚举可用组合。"
+    },
+    {
+      "id": "low_tier_bleed_overlap",
+      "severity": "high",
+      "title": "浅割与锯齿斩的低阶定位重叠",
+      "evidence": [
+        "浅割是 1AP/7 护甲门控伤害/+1W，锯齿斩是 1AP/4 护甲门控伤害/+2W",
+        "二者都属于低阶建窗器，玩家学会后更像固定叠加按钮，而不是清晰分工的选择"
+      ],
+      "recommendation": "重做低阶剑系时，应保留一个主建窗器，并把另一个改成明确的补刀、维窗、控场、防反或 AP 填充角色。"
+    },
+    {
+      "id": "test_record_must_drive_redesign",
+      "severity": "medium",
+      "title": "测试记录必须反向驱动技能设计",
+      "evidence": [
+        "本轮回放暴露的问题不能只停留在 HTML 展示里",
+        "后续重做剑系前，应先读取本记录的 findings，并把 AP 利用率、技能区分度、自然输出循环作为验收项"
+      ],
+      "recommendation": "每次生成 Skill 测试记录时同步输出 findings.md 与 report.json，供下一轮设计读取。"
+    }
+  ],
+  "results": [
+    {
+      "scenario": {
+        "kind": "前期可用循环",
+        "name": "基础破甲 + 轻流血",
+        "summary": "每轮重复 剑击 + 浅割 + 锯齿斩。目标是看低 KP 组合能否形成清晰的 HP 与流血变化。",
+        "combo": [
+          "剑击",
+          "浅割",
+          "锯齿斩"
+        ],
+        "apBudget": 5,
+        "maxRounds": 24,
+        "targetPolicy": "highest-armor"
+      },
+      "rows": [
+        {
+          "round": 1,
+          "combo": "剑击 + 浅割 + 锯齿斩",
+          "ap": "3/5",
+          "spentAp": 3,
+          "apBudget": 5,
+          "before": {
+            "hp": 100,
+            "armorTotal": 110,
+            "armorText": "头:15/15 胸:30/30 腹:25/25 臂:20/20 腿:20/20",
+            "bleed": 0,
+            "buffsText": "无"
+          },
+          "afterActions": {
+            "hp": 100,
+            "armorTotal": 89,
+            "armorText": "头:15/15 胸:16/30 腹:18/25 臂:20/20 腿:20/20",
+            "bleed": 3,
+            "buffsText": "流血(3回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 95,
+            "armorTotal": 89,
+            "armorText": "头:15/15 胸:16/30 腹:18/25 臂:20/20 腿:20/20",
+            "bleed": 2,
+            "buffsText": "流血(2回合)"
+          },
+          "delta": {
+            "hp": "100 -> 95 (-5)",
+            "armor": "110 -> 89 (-21)",
+            "bleed": "0 -> 2 (+2)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 2,
+          "combo": "剑击 + 浅割 + 锯齿斩",
+          "ap": "3/5",
+          "spentAp": 3,
+          "apBudget": 5,
+          "before": {
+            "hp": 95,
+            "armorTotal": 89,
+            "armorText": "头:15/15 胸:16/30 腹:18/25 臂:20/20 腿:20/20",
+            "bleed": 2,
+            "buffsText": "流血(2回合)"
+          },
+          "afterActions": {
+            "hp": 95,
+            "armorTotal": 68,
+            "armorText": "头:15/15 胸:16/30 腹:14/25 臂:10/20 腿:13/20",
+            "bleed": 5,
+            "buffsText": "流血(5回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 90,
+            "armorTotal": 68,
+            "armorText": "头:15/15 胸:16/30 腹:14/25 臂:10/20 腿:13/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "delta": {
+            "hp": "95 -> 90 (-5)",
+            "armor": "89 -> 68 (-21)",
+            "bleed": "2 -> 4 (+2)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 3,
+          "combo": "剑击 + 浅割 + 锯齿斩",
+          "ap": "3/5",
+          "spentAp": 3,
+          "apBudget": 5,
+          "before": {
+            "hp": 90,
+            "armorTotal": 68,
+            "armorText": "头:15/15 胸:16/30 腹:14/25 臂:10/20 腿:13/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "afterActions": {
+            "hp": 90,
+            "armorTotal": 47,
+            "armorText": "头:8/15 胸:6/30 腹:10/25 臂:10/20 腿:13/20",
+            "bleed": 7,
+            "buffsText": "流血(7回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 85,
+            "armorTotal": 47,
+            "armorText": "头:8/15 胸:6/30 腹:10/25 臂:10/20 腿:13/20",
+            "bleed": 6,
+            "buffsText": "流血(6回合)"
+          },
+          "delta": {
+            "hp": "90 -> 85 (-5)",
+            "armor": "68 -> 47 (-21)",
+            "bleed": "4 -> 6 (+2)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 4,
+          "combo": "剑击 + 浅割 + 锯齿斩",
+          "ap": "3/5",
+          "spentAp": 3,
+          "apBudget": 5,
+          "before": {
+            "hp": 85,
+            "armorTotal": 47,
+            "armorText": "头:8/15 胸:6/30 腹:10/25 臂:10/20 腿:13/20",
+            "bleed": 6,
+            "buffsText": "流血(6回合)"
+          },
+          "afterActions": {
+            "hp": 85,
+            "armorTotal": 26,
+            "armorText": "头:8/15 胸:6/30 腹:3/25 臂:6/20 腿:3/20",
+            "bleed": 9,
+            "buffsText": "流血(9回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 80,
+            "armorTotal": 26,
+            "armorText": "头:8/15 胸:6/30 腹:3/25 臂:6/20 腿:3/20",
+            "bleed": 8,
+            "buffsText": "流血(8回合)"
+          },
+          "delta": {
+            "hp": "85 -> 80 (-5)",
+            "armor": "47 -> 26 (-21)",
+            "bleed": "6 -> 8 (+2)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 5,
+          "combo": "剑击 + 浅割 + 锯齿斩",
+          "ap": "3/5",
+          "spentAp": 3,
+          "apBudget": 5,
+          "before": {
+            "hp": 80,
+            "armorTotal": 26,
+            "armorText": "头:8/15 胸:6/30 腹:3/25 臂:6/20 腿:3/20",
+            "bleed": 8,
+            "buffsText": "流血(8回合)"
+          },
+          "afterActions": {
+            "hp": 77,
+            "armorTotal": 8,
+            "armorText": "头:0/15 胸:0/30 腹:3/25 臂:2/20 腿:3/20",
+            "bleed": 11,
+            "buffsText": "流血(11回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 72,
+            "armorTotal": 8,
+            "armorText": "头:0/15 胸:0/30 腹:3/25 臂:2/20 腿:3/20",
+            "bleed": 10,
+            "buffsText": "流血(10回合)"
+          },
+          "delta": {
+            "hp": "80 -> 72 (-8)",
+            "armor": "26 -> 8 (-18)",
+            "bleed": "8 -> 10 (+2)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 6,
+          "combo": "剑击 + 浅割 + 锯齿斩",
+          "ap": "3/5",
+          "spentAp": 3,
+          "apBudget": 5,
+          "before": {
+            "hp": 72,
+            "armorTotal": 8,
+            "armorText": "头:0/15 胸:0/30 腹:3/25 臂:2/20 腿:3/20",
+            "bleed": 10,
+            "buffsText": "流血(10回合)"
+          },
+          "afterActions": {
+            "hp": 59,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 13,
+            "buffsText": "流血(13回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 54,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 12,
+            "buffsText": "流血(12回合)"
+          },
+          "delta": {
+            "hp": "72 -> 54 (-18)",
+            "armor": "8 -> 0 (-8)",
+            "bleed": "10 -> 12 (+2)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 7,
+          "combo": "剑击 + 浅割 + 锯齿斩",
+          "ap": "3/5",
+          "spentAp": 3,
+          "apBudget": 5,
+          "before": {
+            "hp": 54,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 12,
+            "buffsText": "流血(12回合)"
+          },
+          "afterActions": {
+            "hp": 33,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 15,
+            "buffsText": "流血(15回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 28,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 14,
+            "buffsText": "流血(14回合)"
+          },
+          "delta": {
+            "hp": "54 -> 28 (-26)",
+            "armor": "0 -> 0 (0)",
+            "bleed": "12 -> 14 (+2)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 8,
+          "combo": "剑击 + 浅割 + 锯齿斩",
+          "ap": "3/5",
+          "spentAp": 3,
+          "apBudget": 5,
+          "before": {
+            "hp": 28,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 14,
+            "buffsText": "流血(14回合)"
+          },
+          "afterActions": {
+            "hp": 7,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 17,
+            "buffsText": "流血(17回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 2,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 16,
+            "buffsText": "流血(16回合)"
+          },
+          "delta": {
+            "hp": "28 -> 2 (-26)",
+            "armor": "0 -> 0 (0)",
+            "bleed": "14 -> 16 (+2)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 9,
+          "combo": "剑击",
+          "ap": "1/5",
+          "spentAp": 1,
+          "apBudget": 5,
+          "before": {
+            "hp": 2,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 16,
+            "buffsText": "流血(16回合)"
+          },
+          "afterActions": {
+            "hp": 0,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 16,
+            "buffsText": "流血(16回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 0,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 15,
+            "buffsText": "流血(15回合)"
+          },
+          "delta": {
+            "hp": "2 -> 0 (-2)",
+            "armor": "0 -> 0 (0)",
+            "bleed": "16 -> 15 (-1)"
+          },
+          "notes": "无"
+        }
+      ],
+      "result": {
+        "killed": true,
+        "rounds": 9,
+        "hp": 0,
+        "armorTotal": 0,
+        "bleed": 15,
+        "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+        "buffsText": "流血(15回合)"
+      }
+    },
+    {
+      "scenario": {
+        "kind": "前期末循环",
+        "name": "连续建窗循环",
+        "summary": "每轮重复 浅割 + 锯齿斩 + 深切。它会更快建立 W，并在破甲后通过普通伤害产生 HP 溢出。",
+        "combo": [
+          "浅割",
+          "锯齿斩",
+          "深切"
+        ],
+        "apBudget": 5,
+        "maxRounds": 24,
+        "targetPolicy": "highest-armor"
+      },
+      "rows": [
+        {
+          "round": 1,
+          "combo": "浅割 + 锯齿斩 + 深切",
+          "ap": "4/5",
+          "spentAp": 4,
+          "apBudget": 5,
+          "before": {
+            "hp": 100,
+            "armorTotal": 110,
+            "armorText": "头:15/15 胸:30/30 腹:25/25 臂:20/20 腿:20/20",
+            "bleed": 0,
+            "buffsText": "无"
+          },
+          "afterActions": {
+            "hp": 100,
+            "armorTotal": 87,
+            "armorText": "头:15/15 胸:11/30 腹:21/25 臂:20/20 腿:20/20",
+            "bleed": 5,
+            "buffsText": "流血(5回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 95,
+            "armorTotal": 87,
+            "armorText": "头:15/15 胸:11/30 腹:21/25 臂:20/20 腿:20/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "delta": {
+            "hp": "100 -> 95 (-5)",
+            "armor": "110 -> 87 (-23)",
+            "bleed": "0 -> 4 (+4)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 2,
+          "combo": "浅割 + 锯齿斩 + 深切",
+          "ap": "4/5",
+          "spentAp": 4,
+          "apBudget": 5,
+          "before": {
+            "hp": 95,
+            "armorTotal": 87,
+            "armorText": "头:15/15 胸:11/30 腹:21/25 臂:20/20 腿:20/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "afterActions": {
+            "hp": 95,
+            "armorTotal": 64,
+            "armorText": "头:15/15 胸:11/30 腹:14/25 臂:16/20 腿:8/20",
+            "bleed": 9,
+            "buffsText": "流血(9回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 90,
+            "armorTotal": 64,
+            "armorText": "头:15/15 胸:11/30 腹:14/25 臂:16/20 腿:8/20",
+            "bleed": 8,
+            "buffsText": "流血(8回合)"
+          },
+          "delta": {
+            "hp": "95 -> 90 (-5)",
+            "armor": "87 -> 64 (-23)",
+            "bleed": "4 -> 8 (+4)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 3,
+          "combo": "浅割 + 锯齿斩 + 深切",
+          "ap": "4/5",
+          "spentAp": 4,
+          "apBudget": 5,
+          "before": {
+            "hp": 90,
+            "armorTotal": 64,
+            "armorText": "头:15/15 胸:11/30 腹:14/25 臂:16/20 腿:8/20",
+            "bleed": 8,
+            "buffsText": "流血(8回合)"
+          },
+          "afterActions": {
+            "hp": 90,
+            "armorTotal": 41,
+            "armorText": "头:11/15 胸:11/30 腹:2/25 臂:9/20 腿:8/20",
+            "bleed": 13,
+            "buffsText": "流血(13回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 85,
+            "armorTotal": 41,
+            "armorText": "头:11/15 胸:11/30 腹:2/25 臂:9/20 腿:8/20",
+            "bleed": 12,
+            "buffsText": "流血(12回合)"
+          },
+          "delta": {
+            "hp": "90 -> 85 (-5)",
+            "armor": "64 -> 41 (-23)",
+            "bleed": "8 -> 12 (+4)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 4,
+          "combo": "浅割 + 锯齿斩 + 深切",
+          "ap": "4/5",
+          "spentAp": 4,
+          "apBudget": 5,
+          "before": {
+            "hp": 85,
+            "armorTotal": 41,
+            "armorText": "头:11/15 胸:11/30 腹:2/25 臂:9/20 腿:8/20",
+            "bleed": 12,
+            "buffsText": "流血(12回合)"
+          },
+          "afterActions": {
+            "hp": 82,
+            "armorTotal": 21,
+            "armorText": "头:4/15 胸:7/30 腹:2/25 臂:0/20 腿:8/20",
+            "bleed": 17,
+            "buffsText": "流血(17回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 77,
+            "armorTotal": 21,
+            "armorText": "头:4/15 胸:7/30 腹:2/25 臂:0/20 腿:8/20",
+            "bleed": 16,
+            "buffsText": "流血(16回合)"
+          },
+          "delta": {
+            "hp": "85 -> 77 (-8)",
+            "armor": "41 -> 21 (-20)",
+            "bleed": "12 -> 16 (+4)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 5,
+          "combo": "浅割 + 锯齿斩 + 深切",
+          "ap": "4/5",
+          "spentAp": 4,
+          "apBudget": 5,
+          "before": {
+            "hp": 77,
+            "armorTotal": 21,
+            "armorText": "头:4/15 胸:7/30 腹:2/25 臂:0/20 腿:8/20",
+            "bleed": 16,
+            "buffsText": "流血(16回合)"
+          },
+          "afterActions": {
+            "hp": 69,
+            "armorTotal": 6,
+            "armorText": "头:0/15 胸:3/30 腹:2/25 臂:0/20 腿:1/20",
+            "bleed": 21,
+            "buffsText": "流血(21回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 64,
+            "armorTotal": 6,
+            "armorText": "头:0/15 胸:3/30 腹:2/25 臂:0/20 腿:1/20",
+            "bleed": 20,
+            "buffsText": "流血(20回合)"
+          },
+          "delta": {
+            "hp": "77 -> 64 (-13)",
+            "armor": "21 -> 6 (-15)",
+            "bleed": "16 -> 20 (+4)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 6,
+          "combo": "浅割 + 锯齿斩 + 深切",
+          "ap": "4/5",
+          "spentAp": 4,
+          "apBudget": 5,
+          "before": {
+            "hp": 64,
+            "armorTotal": 6,
+            "armorText": "头:0/15 胸:3/30 腹:2/25 臂:0/20 腿:1/20",
+            "bleed": 20,
+            "buffsText": "流血(20回合)"
+          },
+          "afterActions": {
+            "hp": 47,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 25,
+            "buffsText": "流血(25回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 42,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 24,
+            "buffsText": "流血(24回合)"
+          },
+          "delta": {
+            "hp": "64 -> 42 (-22)",
+            "armor": "6 -> 0 (-6)",
+            "bleed": "20 -> 24 (+4)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 7,
+          "combo": "浅割 + 锯齿斩 + 深切",
+          "ap": "4/5",
+          "spentAp": 4,
+          "apBudget": 5,
+          "before": {
+            "hp": 42,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 24,
+            "buffsText": "流血(24回合)"
+          },
+          "afterActions": {
+            "hp": 19,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 29,
+            "buffsText": "流血(29回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 14,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 28,
+            "buffsText": "流血(28回合)"
+          },
+          "delta": {
+            "hp": "42 -> 14 (-28)",
+            "armor": "0 -> 0 (0)",
+            "bleed": "24 -> 28 (+4)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 8,
+          "combo": "浅割 + 锯齿斩 + 深切",
+          "ap": "4/5",
+          "spentAp": 4,
+          "apBudget": 5,
+          "before": {
+            "hp": 14,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 28,
+            "buffsText": "流血(28回合)"
+          },
+          "afterActions": {
+            "hp": 0,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 33,
+            "buffsText": "流血(33回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 0,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 32,
+            "buffsText": "流血(32回合)"
+          },
+          "delta": {
+            "hp": "14 -> 0 (-14)",
+            "armor": "0 -> 0 (0)",
+            "bleed": "28 -> 32 (+4)"
+          },
+          "notes": "无"
+        }
+      ],
+      "result": {
+        "killed": true,
+        "rounds": 8,
+        "hp": 0,
+        "armorTotal": 0,
+        "bleed": 32,
+        "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+        "buffsText": "流血(32回合)"
+      }
+    },
+    {
+      "scenario": {
+        "kind": "中阶预览循环",
+        "name": "建窗后读窗循环",
+        "summary": "第 1 轮建窗，之后重复 血涌斩 + 饮血斩 + 反手割裂。用于观察读窗技能在 100HP 假人上的真实循环，不代表前期一定已学会。",
+        "apBudget": 5,
+        "maxRounds": 24,
+        "targetPolicy": "highest-armor"
+      },
+      "rows": [
+        {
+          "round": 1,
+          "combo": "浅割 + 锯齿斩 + 深切",
+          "ap": "4/5",
+          "spentAp": 4,
+          "apBudget": 5,
+          "before": {
+            "hp": 100,
+            "armorTotal": 110,
+            "armorText": "头:15/15 胸:30/30 腹:25/25 臂:20/20 腿:20/20",
+            "bleed": 0,
+            "buffsText": "无"
+          },
+          "afterActions": {
+            "hp": 100,
+            "armorTotal": 87,
+            "armorText": "头:15/15 胸:11/30 腹:21/25 臂:20/20 腿:20/20",
+            "bleed": 5,
+            "buffsText": "流血(5回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 95,
+            "armorTotal": 87,
+            "armorText": "头:15/15 胸:11/30 腹:21/25 臂:20/20 腿:20/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "delta": {
+            "hp": "100 -> 95 (-5)",
+            "armor": "110 -> 87 (-23)",
+            "bleed": "0 -> 4 (+4)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 2,
+          "combo": "血涌斩 + 饮血斩 + 反手割裂",
+          "ap": "5/5",
+          "spentAp": 5,
+          "apBudget": 5,
+          "before": {
+            "hp": 95,
+            "armorTotal": 87,
+            "armorText": "头:15/15 胸:11/30 腹:21/25 臂:20/20 腿:20/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "afterActions": {
+            "hp": 95,
+            "armorTotal": 57,
+            "armorText": "头:15/15 胸:11/30 腹:3/25 臂:14/20 腿:14/20",
+            "bleed": 5,
+            "buffsText": "流血(5回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 90,
+            "armorTotal": 57,
+            "armorText": "头:15/15 胸:11/30 腹:3/25 臂:14/20 腿:14/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "delta": {
+            "hp": "95 -> 90 (-5)",
+            "armor": "87 -> 57 (-30)",
+            "bleed": "4 -> 4 (0)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 3,
+          "combo": "血涌斩 + 饮血斩 + 反手割裂",
+          "ap": "5/5",
+          "spentAp": 5,
+          "apBudget": 5,
+          "before": {
+            "hp": 90,
+            "armorTotal": 57,
+            "armorText": "头:15/15 胸:11/30 腹:3/25 臂:14/20 腿:14/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "afterActions": {
+            "hp": 87,
+            "armorTotal": 30,
+            "armorText": "头:0/15 胸:11/30 腹:3/25 臂:8/20 腿:8/20",
+            "bleed": 5,
+            "buffsText": "流血(5回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 82,
+            "armorTotal": 30,
+            "armorText": "头:0/15 胸:11/30 腹:3/25 臂:8/20 腿:8/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "delta": {
+            "hp": "90 -> 82 (-8)",
+            "armor": "57 -> 30 (-27)",
+            "bleed": "4 -> 4 (0)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 4,
+          "combo": "血涌斩 + 饮血斩 + 反手割裂",
+          "ap": "5/5",
+          "spentAp": 5,
+          "apBudget": 5,
+          "before": {
+            "hp": 82,
+            "armorTotal": 30,
+            "armorText": "头:0/15 胸:11/30 腹:3/25 臂:8/20 腿:8/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "afterActions": {
+            "hp": 75,
+            "armorTotal": 7,
+            "armorText": "头:0/15 胸:0/30 腹:3/25 臂:2/20 腿:2/20",
+            "bleed": 5,
+            "buffsText": "流血(5回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 70,
+            "armorTotal": 7,
+            "armorText": "头:0/15 胸:0/30 腹:3/25 臂:2/20 腿:2/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "delta": {
+            "hp": "82 -> 70 (-12)",
+            "armor": "30 -> 7 (-23)",
+            "bleed": "4 -> 4 (0)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 5,
+          "combo": "血涌斩 + 饮血斩 + 反手割裂",
+          "ap": "5/5",
+          "spentAp": 5,
+          "apBudget": 5,
+          "before": {
+            "hp": 70,
+            "armorTotal": 7,
+            "armorText": "头:0/15 胸:0/30 腹:3/25 臂:2/20 腿:2/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "afterActions": {
+            "hp": 47,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 5,
+            "buffsText": "流血(5回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 42,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "delta": {
+            "hp": "70 -> 42 (-28)",
+            "armor": "7 -> 0 (-7)",
+            "bleed": "4 -> 4 (0)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 6,
+          "combo": "血涌斩 + 饮血斩 + 反手割裂",
+          "ap": "5/5",
+          "spentAp": 5,
+          "apBudget": 5,
+          "before": {
+            "hp": 42,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "afterActions": {
+            "hp": 12,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 5,
+            "buffsText": "流血(5回合)"
+          },
+          "afterTurnEnd": {
+            "hp": 7,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "delta": {
+            "hp": "42 -> 7 (-35)",
+            "armor": "0 -> 0 (0)",
+            "bleed": "4 -> 4 (0)"
+          },
+          "notes": "无"
+        },
+        {
+          "round": 7,
+          "combo": "断脉一剑",
+          "ap": "3/5",
+          "spentAp": 3,
+          "apBudget": 5,
+          "before": {
+            "hp": 7,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 4,
+            "buffsText": "流血(4回合)"
+          },
+          "afterActions": {
+            "hp": 0,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 0,
+            "buffsText": "无"
+          },
+          "afterTurnEnd": {
+            "hp": 0,
+            "armorTotal": 0,
+            "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+            "bleed": 0,
+            "buffsText": "无"
+          },
+          "delta": {
+            "hp": "7 -> 0 (-7)",
+            "armor": "0 -> 0 (0)",
+            "bleed": "4 -> 0 (-4)"
+          },
+          "notes": "无"
+        }
+      ],
+      "result": {
+        "killed": true,
+        "rounds": 7,
+        "hp": 0,
+        "armorTotal": 0,
+        "bleed": 0,
+        "armorText": "头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20",
+        "buffsText": "无"
+      }
+    }
+  ]
+}
