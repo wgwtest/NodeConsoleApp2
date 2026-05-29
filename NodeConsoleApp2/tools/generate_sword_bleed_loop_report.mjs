@@ -567,7 +567,7 @@ function renderHtml({ generatedAt, skillPack, results }) {
     </header>
 
     <div class="notice">
-      当前引擎中 <strong>DMG_ARMOR 只扣护甲，不向 HP 溢出</strong>；因此这些循环里的 HP 下降主要来自流血回合结算。这个 HTML 正是用来暴露这种真实释放过程，而不是替技能设计找理由。
+      当前引擎中 <strong>DMG_ARMOR 会先扣指定部位护甲，护甲不足部分溢出为 HP 伤害</strong>；流血仍按回合结束结算为固定 HP 伤害。这个 HTML 用来暴露真实释放过程，而不是替技能设计找理由。
     </div>
 
     ${results.map(renderScenario).join('\n')}
@@ -592,7 +592,7 @@ async function main() {
     {
       kind: '前期末循环',
       name: '连续建窗循环',
-      summary: '每轮重复 浅割 + 锯齿斩 + 深切。它会更快堆 W，但直接 HP 压力仍依赖流血结算。',
+      summary: '每轮重复 浅割 + 锯齿斩 + 深切。它会更快建立 W，并在破甲后通过普通伤害产生 HP 溢出。',
       combo: ['浅割', '锯齿斩', '深切'],
       apBudget: 5,
       maxRounds: 24,

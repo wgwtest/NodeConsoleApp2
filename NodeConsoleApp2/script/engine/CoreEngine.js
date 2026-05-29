@@ -1614,7 +1614,7 @@ class CoreEngine {
         };
     }
 
-    _applyArmorOnlyDamage({ attacker, target, skillId, bodyPart, rawArmorDamage, isReactionAttack = false, reactionMeta = null }) {
+    _applyArmorDamage({ attacker, target, skillId, bodyPart, rawArmorDamage, isReactionAttack = false, reactionMeta = null }) {
         const context = {
             attacker,
             target,
@@ -1622,7 +1622,7 @@ class CoreEngine {
             bodyPart,
             rawDamage: rawArmorDamage,
             rawArmorDamage,
-            armorOnly: true,
+            damageEffectType: 'DMG_ARMOR',
             isReactionAttack,
             reactionMeta,
             damageDealt: 0,
@@ -1631,28 +1631,47 @@ class CoreEngine {
         };
         this.eventBus.emit('BATTLE_ATTACK_PRE', context);
 
-        let pendingArmorDamage = Math.max(0, Number(context.rawArmorDamage ?? rawArmorDamage ?? 0) || 0);
+        let pendingDamage = Math.max(0, Number(context.rawArmorDamage ?? rawArmorDamage ?? 0) || 0);
         const targetPart = this._getDefaultBodyPart(target, bodyPart);
         const targetParts = this._getEntityBodyParts(target);
         const part = targetPart && targetParts ? targetParts[targetPart] : null;
 
-        context.damageTaken = pendingArmorDamage;
+        context.damageTaken = pendingDamage;
         this.eventBus.emit('BATTLE_TAKE_DAMAGE_PRE', context);
 
-        pendingArmorDamage = Math.max(0, Number(context.damageTaken ?? pendingArmorDamage) || 0);
+        pendingDamage = Math.max(0, Number(context.damageTaken ?? pendingDamage) || 0);
         let armorDamage = 0;
         if (part && Number(part.current ?? 0) > 0) {
             const currentArmor = Number(part.current ?? 0) || 0;
-            const damageToArmor = Math.min(currentArmor, pendingArmorDamage);
+            const damageToArmor = Math.min(currentArmor, pendingDamage);
             if (!context.preventArmorDamage) {
                 part.current = Math.max(0, currentArmor - damageToArmor);
                 armorDamage = damageToArmor;
                 part.status = part.current <= 0 ? 'BROKEN' : 'NORMAL';
             }
+            pendingDamage = Math.max(0, pendingDamage - currentArmor);
         }
 
-        context.damageTaken = 0;
-        context.damageDealt = 0;
+        context.damageTaken = pendingDamage;
+        if (context.damageTakenMult) {
+            context.damageTaken = Math.floor(context.damageTaken * context.damageTakenMult);
+        }
+        if (context.shieldPool) {
+            const absorbed = Math.min(context.shieldPool, context.damageTaken);
+            context.damageTaken -= absorbed;
+            context.shieldPool -= absorbed;
+        }
+        if (context.preventHpDamage) {
+            context.damageTaken = 0;
+        }
+
+        const hpDamage = Math.max(0, Number(context.damageTaken ?? 0) || 0);
+        if (hpDamage > 0) {
+            this._applyHpDelta(target, -hpDamage);
+        }
+
+        context.damageTaken = hpDamage;
+        context.damageDealt = hpDamage;
         context.armorDamage = armorDamage;
         context.targetPart = targetPart;
         context.targetHpRemaining = this._getEntityCurrentHp(target);
@@ -1662,7 +1681,7 @@ class CoreEngine {
 
         return {
             isHit: true,
-            damage: 0,
+            damage: hpDamage,
             armorDamage,
             targetHpRemaining: this._getEntityCurrentHp(target),
             targetPart
@@ -1857,7 +1876,7 @@ class CoreEngine {
                 }
                 case 'DMG_ARMOR': {
                     const amount = this._computeEffectAmount(effect, { actor, target, bodyPart, skillTarget: defaultTarget });
-                    const outcome = this._applyArmorOnlyDamage({
+                    const outcome = this._applyArmorDamage({
                         attacker: actor,
                         target,
                         skillId: skillConfig.id,
@@ -1866,12 +1885,15 @@ class CoreEngine {
                     });
                     results.push({
                         isHit: true,
-                        damage: 0,
+                        damage: Math.abs(outcome.damage || 0),
                         armorDamage: Math.abs(outcome.armorDamage || 0),
                         targetPart: outcome.targetPart,
                         targetHpRemaining: this._getEntityCurrentHp(target)
                     });
-                    logs.push(`${skillConfig.name} damaged ${target.name || target.id}'s armor on ${outcome.targetPart || 'unknown'} by ${Math.round(Math.abs(outcome.armorDamage || 0))}.`);
+                    const hpText = outcome.damage
+                        ? ` and dealt ${Math.round(Math.abs(outcome.damage || 0))} HP`
+                        : '';
+                    logs.push(`${skillConfig.name} damaged ${target.name || target.id}'s armor on ${outcome.targetPart || 'unknown'} by ${Math.round(Math.abs(outcome.armorDamage || 0))}${hpText}.`);
                     break;
                 }
                 case 'HEAL': {

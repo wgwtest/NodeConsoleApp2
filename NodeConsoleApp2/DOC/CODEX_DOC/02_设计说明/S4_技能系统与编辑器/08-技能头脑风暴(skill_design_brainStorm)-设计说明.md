@@ -195,7 +195,7 @@
 用于把某部位护甲快速打到 0，制造 Broken 窗口。
 
 - **技能 A1：碎甲斩（Shatter Slash）**
-  - 概念：对单一部位造成高额护甲伤害（优先扣护甲，不溢出到 HP）。
+  - 概念：对单一部位造成高额护甲门控伤害（优先扣护甲，护甲不足部分溢出到 HP）。
   - 标签建议：`DMG_ARMOR` `ABS` `INSTANT` `ONE_SHOT` `anti_armor` `part_specific`
   - 玩法定位：核心破甲工具。
 
