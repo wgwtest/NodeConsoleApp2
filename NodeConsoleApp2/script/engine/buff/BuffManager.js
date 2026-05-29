@@ -31,6 +31,33 @@ export default class BuffManager {
 		return b ? b.remaining : 0;
 	}
 
+	consumeRemaining(buffId, amount, reason = 'consumeRemaining') {
+		const b = this._byId.get(buffId);
+		if (!b || b.isPermanent()) {
+			return { consumed: 0, remaining: b ? b.remaining : 0, removed: false };
+		}
+
+		const requested = Math.max(0, Math.floor(Number(amount) || 0));
+		const before = Math.max(0, Number(b.remaining) || 0);
+		const consumed = Math.min(before, requested);
+		b.remaining = Math.max(0, before - consumed);
+		this._dirty = true;
+
+		if (b.remaining <= 0) {
+			this.remove(buffId, reason);
+			return { consumed, remaining: 0, removed: true };
+		}
+
+		this.eventBus?.emit?.('BUFF:CONSUMED_REMAINING', {
+			ownerId: this.ownerId,
+			buffId,
+			consumed,
+			remaining: b.remaining,
+			reason
+		});
+		return { consumed, remaining: b.remaining, removed: false };
+	}
+
 	add(buffId, options = {}) {
 		const def = this.registry.getDefinition(buffId, options);
 		if (!def) {

@@ -180,6 +180,13 @@ async function executeFixtureSkill(skillName, action = {}, options = {}) {
   driver.data = harness.data;
   const actor = action.actor === 'enemy' ? harness.enemy : harness.player;
   const target = action.target === 'self' ? actor : (action.target === 'player' ? harness.player : harness.enemy);
+  const hpGate = Number(skillConfig.requirements?.targetHpPercentBelow);
+  if (Number.isFinite(hpGate) && target === harness.enemy) {
+    const maxHp = target.stats?.maxHp ?? target.maxHp ?? 100;
+    const gatedHp = Math.max(1, Math.floor(maxHp * hpGate) - 1);
+    target.stats.hp = Math.min(target.stats.hp, gatedHp);
+    if (typeof target.hp === 'number') target.hp = Math.min(target.hp, gatedHp);
+  }
   const result = driver._executeSkillActions({
     actor,
     action: {
@@ -500,6 +507,7 @@ test('后撤步和重新开始把增益加给自身，而不是误加给敌人',
 test('迸发和吸血用 BUFF_REMAINING 读取目标流血剩余回合结算，不写技能 ID 特判', async () => {
   const burst = await executeFixtureSkill('迸发', { bodyPart: 'chest' }, {
     enemyHp: 100,
+    enemyMaxHp: 300,
     enemyBodyParts: { chest: { current: 0, max: 20, weakness: 1 } }
   });
   burst.enemy.buffs.add('buff_bleed', {
@@ -512,12 +520,13 @@ test('迸发和吸血用 BUFF_REMAINING 读取目标流血剩余回合结算，�
   });
   assert.equal(burstResult.ok, true);
   assert.equal(burstResult.actions[0].damage, 15);
-  assert.equal(burst.enemy.stats.hp, 85);
+  assert.equal(burst.enemy.stats.hp, 74);
   assert.equal(burst.enemy.buffs.getRemaining('buff_bleed'), 3);
 
   const drain = await executeFixtureSkill('吸血', { bodyPart: 'chest' }, {
     playerHp: 60,
     enemyHp: 100,
+    enemyMaxHp: 300,
     enemyBodyParts: { chest: { current: 0, max: 20, weakness: 1 } }
   });
   drain.enemy.buffs.add('buff_bleed', {
@@ -531,7 +540,7 @@ test('迸发和吸血用 BUFF_REMAINING 读取目标流血剩余回合结算，�
   assert.equal(drainResult.ok, true);
   assert.equal(drainResult.actions[0].heal, 16);
   assert.equal(drain.player.stats.hp, 76);
-  assert.equal(drain.enemy.stats.hp, 100);
+  assert.equal(drain.enemy.stats.hp, 89);
   assert.equal(drain.enemy.buffs.getRemaining('buff_bleed'), 4);
 });
 
@@ -591,6 +600,429 @@ test('BUFF_REMAINING 是通用读数，可读取任意持续时间型 Buff 的 r
   assert.equal(result.ok, true);
   assert.equal(result.actions[0].damage, 12);
   assert.equal(enemy.stats.hp, 88);
+});
+
+test('BUFF_REMAINING 可限制最大读取值，避免流血窗口读数技能无限放大', async () => {
+  const { BuffRegistry, BuffManager, BuffSystem } = await importBuffRuntime();
+  const { CoreEngine } = await importCoreEngineClass();
+  const eventBus = new TestEventBus();
+  const registry = new BuffRegistry({
+    buff_bleed: {
+      id: 'buff_bleed',
+      name: '流血',
+      type: 'debuff',
+      lifecycle: { duration: 1, maxStacks: 1, stackStrategy: 'extend' },
+      effects: []
+    }
+  });
+  const system = new BuffSystem(eventBus, registry);
+  system.start();
+  const runtime = { BuffManager, registry, eventBus, system };
+  const driver = Object.create(CoreEngine.prototype);
+  driver.eventBus = eventBus;
+
+  const player = attachBuffs(createActor('player_1'), runtime);
+  const enemy = attachBuffs(createActor('enemy_1', {
+    hp: 100,
+    bodyParts: { chest: { current: 0, max: 0, weakness: 1 } }
+  }), runtime);
+  driver.data = { playerData: player, currentLevelData: { enemies: [enemy] } };
+  enemy.buffs.add('buff_bleed', { duration: 9 });
+
+  const result = driver._executeSkillActions({
+    actor: player,
+    action: { targetId: enemy.id, bodyPart: 'chest' },
+    skillConfig: {
+      id: 'skill_bleed_read_cap_probe',
+      name: '流血读数上限探针',
+      target: { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_PART' },
+      actions: [
+        {
+          id: 'action_1',
+          target: { binding: { mode: 'follow', ref: 'skillTarget' } },
+          effect: {
+            effectType: 'DMG_HP',
+            amountType: 'BUFF_REMAINING',
+            amountSource: {
+              owner: 'skillTarget',
+              buffId: 'buff_bleed',
+              multiplier: 3,
+              maxRead: 4,
+              missingAs: 0
+            }
+          }
+        }
+      ]
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.actions[0].damage, 12);
+  assert.equal(enemy.stats.hp, 88);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 9);
+});
+
+test('技能 buffRefs 可消耗指定 Buff 的部分 remaining 作为通用窗口兑现能力', async () => {
+  const { BuffRegistry, BuffManager, BuffSystem } = await importBuffRuntime();
+  const { CoreEngine } = await importCoreEngineClass();
+  const eventBus = new TestEventBus();
+  const registry = new BuffRegistry({
+    buff_bleed: {
+      id: 'buff_bleed',
+      name: '流血',
+      type: 'debuff',
+      lifecycle: { duration: 1, maxStacks: 1, stackStrategy: 'extend' },
+      effects: []
+    }
+  });
+  const system = new BuffSystem(eventBus, registry);
+  system.start();
+  const runtime = { BuffManager, registry, eventBus, system };
+  const driver = Object.create(CoreEngine.prototype);
+  driver.eventBus = eventBus;
+
+  const player = attachBuffs(createActor('player_1'), runtime);
+  const enemy = attachBuffs(createActor('enemy_1'), runtime);
+  driver.data = { playerData: player, currentLevelData: { enemies: [enemy] } };
+  enemy.buffs.add('buff_bleed', { duration: 6 });
+
+  const result = driver._applySkillBuffRefs({
+    actor: player,
+    defaultTarget: enemy,
+    skillConfig: {
+      id: 'skill_bleed_consume_probe',
+      name: '流血消耗探针',
+      buffRefs: {
+        apply: [],
+        remove: [
+          {
+            target: 'enemy',
+            buffId: 'buff_bleed',
+            consumeRemaining: 4
+          }
+        ]
+      }
+    }
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].kind, 'consumeRemaining');
+  assert.equal(result[0].consumedRemaining, 4);
+  assert.equal(result[0].remaining, 2);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 2);
+
+  const second = driver._applySkillBuffRefs({
+    actor: player,
+    defaultTarget: enemy,
+    skillConfig: {
+      id: 'skill_bleed_consume_probe_2',
+      name: '流血消耗探针二',
+      buffRefs: {
+        remove: [
+          {
+            target: 'enemy',
+            buffId: 'buff_bleed',
+            consumeRemaining: 5
+          }
+        ]
+      }
+    }
+  });
+
+  assert.equal(second[0].consumedRemaining, 2);
+  assert.equal(second[0].remaining, 0);
+  assert.equal(enemy.buffs.has('buff_bleed'), false);
+});
+
+test('CoreEngine 通用校验 targetBuff 释放条件，不让技能描述与真实执行脱节', async () => {
+  const { BuffRegistry, BuffManager, BuffSystem } = await importBuffRuntime();
+  const { CoreEngine } = await importCoreEngineClass();
+  const eventBus = new TestEventBus();
+  const registry = new BuffRegistry({
+    buff_bleed: {
+      id: 'buff_bleed',
+      name: '流血',
+      type: 'debuff',
+      lifecycle: { duration: 1, maxStacks: 1, stackStrategy: 'extend' },
+      effects: []
+    }
+  });
+  const system = new BuffSystem(eventBus, registry);
+  system.start();
+  const runtime = { BuffManager, registry, eventBus, system };
+
+  const player = attachBuffs(createActor('player_1'), runtime);
+  const enemy = attachBuffs(createActor('enemy_1', {
+    hp: 100,
+    bodyParts: { chest: { current: 0, max: 0, weakness: 1 } }
+  }), runtime);
+  const skill = {
+    id: 'skill_target_buff_requirement_probe',
+    name: '流血门槛探针',
+    target: { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_PART' },
+    requirements: { targetBuff: { buffId: 'buff_bleed', minRemaining: 3 } },
+    actions: [
+      {
+        id: 'action_1',
+        target: { binding: { mode: 'follow', ref: 'skillTarget' } },
+        effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 10 }
+      }
+    ]
+  };
+  const driver = Object.create(CoreEngine.prototype);
+  driver.eventBus = eventBus;
+  driver.data = {
+    playerData: player,
+    currentLevelData: { enemies: [enemy] },
+    getSkillConfig: skillId => (skillId === skill.id ? skill : null)
+  };
+
+  const blocked = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: skill.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: 1
+  });
+  assert.equal(blocked.ok, false);
+  assert.match(blocked.reason, /requires buff_bleed remaining >= 3/);
+  assert.equal(enemy.stats.hp, 100);
+  assert.equal(player.stats.ap, 3);
+
+  enemy.buffs.add('buff_bleed', { duration: 3 });
+  const passed = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: skill.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: 1
+  });
+  assert.equal(passed.ok, true);
+  assert.equal(enemy.stats.hp, 90);
+  assert.equal(player.stats.ap, 2);
+});
+
+test('CoreEngine 通用校验 targetHpPercentBelow 释放条件', async () => {
+  const { BuffRegistry, BuffManager, BuffSystem } = await importBuffRuntime();
+  const { CoreEngine } = await importCoreEngineClass();
+  const eventBus = new TestEventBus();
+  const registry = new BuffRegistry({});
+  const system = new BuffSystem(eventBus, registry);
+  system.start();
+  const runtime = { BuffManager, registry, eventBus, system };
+
+  const player = attachBuffs(createActor('player_1'), runtime);
+  const enemy = attachBuffs(createActor('enemy_1', {
+    hp: 50,
+    maxHp: 100,
+    bodyParts: { chest: { current: 0, max: 0, weakness: 1 } }
+  }), runtime);
+  const skill = {
+    id: 'skill_hp_gate_probe',
+    name: '血线门槛探针',
+    target: { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_PART' },
+    requirements: { targetHpPercentBelow: 0.35 },
+    actions: [
+      {
+        id: 'action_1',
+        target: { binding: { mode: 'follow', ref: 'skillTarget' } },
+        effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 10 }
+      }
+    ]
+  };
+  const driver = Object.create(CoreEngine.prototype);
+  driver.eventBus = eventBus;
+  driver.data = {
+    playerData: player,
+    currentLevelData: { enemies: [enemy] },
+    getSkillConfig: skillId => (skillId === skill.id ? skill : null)
+  };
+
+  const blocked = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: skill.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: 1
+  });
+  assert.equal(blocked.ok, false);
+  assert.match(blocked.reason, /requires target HP percent < 0.35/);
+  assert.equal(enemy.stats.hp, 50);
+
+  enemy.stats.hp = 34;
+  const passed = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: skill.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: 1
+  });
+  assert.equal(passed.ok, true);
+  assert.equal(enemy.stats.hp, 24);
+});
+
+test('剑系流血窗口候选包能执行读窗上限与消耗窗口核心链路', async () => {
+  const rawSkills = JSON.parse(await fs.readFile(
+    path.join(projectRoot, 'assets', 'skill_packs', 'authoring', 'skills_melee_v4_5_sword_bleed_window_from_004020_v1_20260529_003716.json'),
+    'utf8'
+  ));
+  const skillsByName = new Map(rawSkills.skills.map(skill => [skill.name, skill]));
+  const bloodSurge = skillsByName.get('血涌斩');
+  const arteryCut = skillsByName.get('断脉一剑');
+  assert.ok(bloodSurge, '候选包应包含血涌斩');
+  assert.ok(arteryCut, '候选包应包含断脉一剑');
+
+  const runtime = await buildRuntime();
+  const { CoreEngine } = await importCoreEngineClass();
+  const player = attachBuffs(createActor('player_1', { ap: 10 }), runtime);
+  const enemy = attachBuffs(createActor('enemy_1', {
+    hp: 120,
+    maxHp: 120,
+    bodyParts: { chest: { current: 0, max: 0, weakness: 1 } }
+  }), runtime);
+  const driver = Object.create(CoreEngine.prototype);
+  driver.eventBus = runtime.eventBus;
+  driver.data = {
+    playerData: player,
+    currentLevelData: { enemies: [enemy] },
+    getSkillConfig: skillId => rawSkills.skills.find(skill => skill.id === skillId) || null
+  };
+
+  const blocked = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: bloodSurge.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: bloodSurge.costs.ap
+  });
+  assert.equal(blocked.ok, false);
+  assert.equal(enemy.stats.hp, 120);
+
+  enemy.buffs.add('buff_bleed', { duration: 9 });
+  const surgeResult = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: bloodSurge.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: bloodSurge.costs.ap
+  });
+  assert.equal(surgeResult.ok, true);
+  assert.equal(enemy.stats.hp, 103);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 9);
+
+  const hpGateBlocked = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: arteryCut.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: arteryCut.costs.ap
+  });
+  assert.equal(hpGateBlocked.ok, false);
+  assert.match(hpGateBlocked.reason, /requires target HP percent < 0.35/);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 9);
+
+  enemy.stats.hp = 40;
+  const cutResult = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: arteryCut.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: arteryCut.costs.ap
+  });
+  assert.equal(cutResult.ok, true);
+  assert.equal(enemy.stats.hp, 0);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 5);
+  assert.equal(cutResult.buffResults[0].kind, 'consumeRemaining');
+  assert.equal(cutResult.buffResults[0].consumedRemaining, 4);
+});
+
+test('标准半重构剑系候选包的普通命中落到护甲伤害而不是 HP 伤害', async () => {
+  const rawSkills = JSON.parse(await fs.readFile(
+    path.join(projectRoot, 'assets', 'skill_packs', 'authoring', 'skills_melee_v4_5_sword_bleed_window_standard_v2_20260529_013420.json'),
+    'utf8'
+  ));
+  const skillsByName = new Map(rawSkills.skills.map(skill => [skill.name, skill]));
+  const jaggedCut = skillsByName.get('锯齿斩');
+  const bloodSurge = skillsByName.get('血涌斩');
+  const arteryCut = skillsByName.get('断脉一剑');
+  assert.ok(jaggedCut, '候选包应包含锯齿斩');
+  assert.ok(bloodSurge, '候选包应包含血涌斩');
+  assert.ok(arteryCut, '候选包应包含断脉一剑');
+
+  const runtime = await buildRuntime();
+  const { CoreEngine } = await importCoreEngineClass();
+  const player = attachBuffs(createActor('player_1', { ap: 10 }), runtime);
+  const enemy = attachBuffs(createActor('enemy_1', {
+    hp: 120,
+    maxHp: 120,
+    bodyParts: { chest: { current: 100, max: 100, weakness: 1 } }
+  }), runtime);
+  const driver = Object.create(CoreEngine.prototype);
+  driver.eventBus = runtime.eventBus;
+  driver.data = {
+    playerData: player,
+    currentLevelData: { enemies: [enemy] },
+    getSkillConfig: skillId => rawSkills.skills.find(skill => skill.id === skillId) || null
+  };
+
+  const jaggedResult = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: jaggedCut.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: jaggedCut.costs.ap
+  });
+  assert.equal(jaggedResult.ok, true);
+  assert.equal(jaggedResult.actions[0].damage, 0);
+  assert.equal(jaggedResult.actions[0].armorDamage, 4);
+  assert.equal(enemy.stats.hp, 120);
+  assert.equal(enemy.bodyParts.chest.current, 96);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 2);
+
+  const surgeResult = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: bloodSurge.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: bloodSurge.costs.ap
+  });
+  assert.equal(surgeResult.ok, true);
+  assert.equal(surgeResult.actions.reduce((sum, item) => sum + item.damage, 0), 0);
+  assert.equal(surgeResult.actions.reduce((sum, item) => sum + item.armorDamage, 0), 12);
+  assert.equal(enemy.stats.hp, 120);
+  assert.equal(enemy.bodyParts.chest.current, 84);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 2);
+
+  enemy.stats.hp = 40;
+  enemy.buffs.add('buff_bleed', { duration: 4 });
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 6);
+
+  const cutResult = driver.executePlayerSkill({
+    source: 'PLAYER',
+    sourceId: player.id,
+    skillId: arteryCut.id,
+    targetId: enemy.id,
+    bodyPart: 'chest',
+    cost: arteryCut.costs.ap
+  });
+  assert.equal(cutResult.ok, true);
+  assert.equal(cutResult.actions.reduce((sum, item) => sum + item.damage, 0), 0);
+  assert.equal(cutResult.actions.reduce((sum, item) => sum + item.armorDamage, 0), 48);
+  assert.equal(enemy.stats.hp, 40);
+  assert.equal(enemy.bodyParts.chest.current, 36);
+  assert.equal(enemy.buffs.getRemaining('buff_bleed'), 2);
+  assert.equal(cutResult.buffResults[0].kind, 'consumeRemaining');
+  assert.equal(cutResult.buffResults[0].consumedRemaining, 4);
 });
 
 test('防守后 Buff 能通过通用事件触发反伤和反击请求', async () => {
@@ -753,12 +1185,12 @@ test('正式技能直接动作层能执行 DMG_HP、repeat、PCT_CURRENT 和 exp
 
   const executeCase = await executeFixtureSkill('斩首', { bodyPart: 'chest' }, {
     enemyBodyParts: { chest: { current: 0, max: 20, weakness: 1 } },
-    enemyHp: 50,
-    enemyMaxHp: 100
+    enemyHp: 100,
+    enemyMaxHp: 300
   });
   assert.equal(executeCase.result.ok, true);
-  assert.equal(executeCase.result.actions[0].damage, 15);
-  assert.equal(executeCase.enemy.stats.hp, 35);
+  assert.equal(executeCase.result.actions[0].damage, 26);
+  assert.equal(executeCase.enemy.stats.hp, 63);
 
   const bloodCase = await executeFixtureSkill('鲜血打击', { bodyPart: 'chest' }, {
     playerHp: 80,

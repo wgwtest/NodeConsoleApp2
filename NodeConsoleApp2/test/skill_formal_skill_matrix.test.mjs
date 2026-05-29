@@ -167,6 +167,14 @@ function setupSkillPreconditions({ skill, player, enemy }) {
     enemy.hp = Math.min(enemy.hp, 80);
     enemy.stats.hp = Math.min(enemy.stats.hp, 80);
   }
+
+  const hpGate = Number(skill.requirements?.targetHpPercentBelow);
+  if (Number.isFinite(hpGate) && skill.target?.subject !== 'SUBJECT_SELF') {
+    const maxHp = enemy.stats?.maxHp ?? enemy.maxHp ?? 100;
+    const gatedHp = Math.max(1, Math.floor(maxHp * hpGate) - 1);
+    enemy.hp = Math.min(enemy.hp, gatedHp);
+    enemy.stats.hp = Math.min(enemy.stats.hp, gatedHp);
+  }
 }
 
 async function createSkillExecutionHarness({ rawSkills, rawBuffs, skill }) {

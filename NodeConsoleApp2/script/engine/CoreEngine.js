@@ -1391,6 +1391,57 @@ class CoreEngine {
         return { target, bodyPart };
     }
 
+    _validateSkillRequirements({ actor, defaultTarget, skillConfig }) {
+        const req = skillConfig?.requirements;
+        if (!req || typeof req !== 'object') return { ok: true };
+
+        if (req.targetHpPercentBelow !== undefined) {
+            const threshold = Number(req.targetHpPercentBelow);
+            const currentHp = this._getEntityCurrentHp(defaultTarget);
+            const maxHp = this._getEntityMaxHp(defaultTarget);
+            const currentPercent = maxHp > 0 ? currentHp / maxHp : 0;
+            if (Number.isFinite(threshold) && currentPercent >= threshold) {
+                return {
+                    ok: false,
+                    reason: `${skillConfig?.name || skillConfig?.id || 'Skill'} requires target HP percent < ${threshold}.`
+                };
+            }
+        }
+
+        const targetBuff = req.targetBuff;
+        if (targetBuff && typeof targetBuff === 'object' && targetBuff.buffId) {
+            let owner = defaultTarget;
+            if (targetBuff.owner === 'self' || targetBuff.owner === 'actor') owner = actor;
+            else if (targetBuff.owner === 'enemy' || targetBuff.owner === 'skillTarget') owner = defaultTarget;
+
+            const remaining = owner?.buffs?.getRemaining ? owner.buffs.getRemaining(targetBuff.buffId) : 0;
+            const stacks = owner?.buffs?.getStacks ? owner.buffs.getStacks(targetBuff.buffId) : 0;
+            const minRemaining = Number(targetBuff.minRemaining ?? 0) || 0;
+            const minStacks = Number(targetBuff.minStacks ?? 0) || 0;
+
+            if (minRemaining > 0 && remaining < minRemaining) {
+                return {
+                    ok: false,
+                    reason: `${skillConfig?.name || skillConfig?.id || 'Skill'} requires ${targetBuff.buffId} remaining >= ${minRemaining}.`
+                };
+            }
+            if (minStacks > 0 && stacks < minStacks) {
+                return {
+                    ok: false,
+                    reason: `${skillConfig?.name || skillConfig?.id || 'Skill'} requires ${targetBuff.buffId} stacks >= ${minStacks}.`
+                };
+            }
+            if (minRemaining <= 0 && minStacks <= 0 && !owner?.buffs?.has?.(targetBuff.buffId)) {
+                return {
+                    ok: false,
+                    reason: `${skillConfig?.name || skillConfig?.id || 'Skill'} requires ${targetBuff.buffId}.`
+                };
+            }
+        }
+
+        return { ok: true };
+    }
+
     _computeEffectAmount(effect, { actor, target, bodyPart, skillTarget = null }) {
         const amount = Number(effect?.amount ?? 0) || 0;
         const amountType = effect?.amountType || 'ABS';
@@ -1404,8 +1455,12 @@ class CoreEngine {
                 ? actor
                 : (source.owner === 'skillTarget' ? skillTarget : target);
             const stacks = owner?.buffs?.getStacks && source.buffId ? owner.buffs.getStacks(source.buffId) : Number(source.missingAs ?? 0);
+            const maxRead = Number(source.maxRead);
+            const readableStacks = Number.isFinite(maxRead) && maxRead >= 0
+                ? Math.min(Number(stacks) || 0, maxRead)
+                : (Number(stacks) || 0);
             const multiplier = Number(source.multiplier ?? amount ?? 1) || 0;
-            return (Number(stacks) || 0) * multiplier;
+            return readableStacks * multiplier;
         }
         if (amountType === 'BUFF_REMAINING') {
             const source = effect?.amountSource || {};
@@ -1413,8 +1468,12 @@ class CoreEngine {
                 ? actor
                 : (source.owner === 'skillTarget' ? skillTarget : target);
             const remaining = owner?.buffs?.getRemaining && source.buffId ? owner.buffs.getRemaining(source.buffId) : Number(source.missingAs ?? 0);
+            const maxRead = Number(source.maxRead);
+            const readableRemaining = Number.isFinite(maxRead) && maxRead >= 0
+                ? Math.min(Number(remaining) || 0, maxRead)
+                : (Number(remaining) || 0);
             const multiplier = Number(source.multiplier ?? amount ?? 1) || 0;
-            return (Number(remaining) || 0) * multiplier;
+            return readableRemaining * multiplier;
         }
         let base = 0;
         if (effect?.effectType === 'DMG_ARMOR' || effect?.effectType === 'ARMOR_ADD') {
@@ -1652,6 +1711,21 @@ class CoreEngine {
             const existingBuff = typeof target.buffs.getAll === 'function'
                 ? target.buffs.getAll().find(buff => buff?.id === row.buffId)
                 : null;
+            if (row.consumeRemaining !== undefined && typeof target.buffs.consumeRemaining === 'function') {
+                const outcome = target.buffs.consumeRemaining(row.buffId, row.consumeRemaining, 'skill_ref_consume_remaining');
+                if (outcome.consumed > 0) {
+                    applied.push({
+                        kind: 'consumeRemaining',
+                        buffId: row.buffId,
+                        buffName: existingBuff?.definition?.name || row.buffId,
+                        targetId: target.id,
+                        consumedRemaining: outcome.consumed,
+                        remaining: outcome.remaining,
+                        removed: outcome.removed
+                    });
+                }
+                continue;
+            }
             if (target.buffs.remove(row.buffId, 'skill_ref_remove')) {
                 applied.push({
                     kind: 'remove',
@@ -1730,6 +1804,9 @@ class CoreEngine {
             cancelReason: null,
             skipTurn: false
         };
+        const requirementResult = this._validateSkillRequirements({ actor, defaultTarget, skillConfig });
+        if (!requirementResult.ok) return requirementResult;
+
         this.eventBus.emit('BATTLE_ACTION_PRE', actionContext);
         if (actionContext.cancelled || actionContext.skipTurn) {
             if (actionContext.skipTurn && actor) actor._skipTurn = false;

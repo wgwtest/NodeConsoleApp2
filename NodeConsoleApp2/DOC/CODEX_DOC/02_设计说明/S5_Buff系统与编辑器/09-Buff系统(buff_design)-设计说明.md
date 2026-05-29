@@ -1722,6 +1722,9 @@ Buff 可以通过 `paramsSchema` 声明动态参数：
 - 流血相关技能应读取 `BUFF_REMAINING`。
 - 未来中毒或蓄力相关技能可读取 `BUFF_STACKS`。
 - 读取对象必须显式指定 `buffId`，不能靠显示名或 tag 猜测。
+- `amountSource.maxRead` 可限制本次读取的最大 `remaining/stacks`，用于控制不消耗资源的读数技能上限。
+- `buffRefs.remove[].consumeRemaining` 可消耗指定 Buff 的部分 `remaining`；消耗到 0 时由 BuffManager 移除该 Buff。
+- `requirements.targetBuff` 可在技能执行前检查指定 Buff 是否存在、`remaining` 是否达到门槛或 `stacks` 是否达到门槛；它属于 Skill 释放条件，不属于 Buff 生命周期。
 
 ### 8.3 复杂度分级
 
@@ -1732,8 +1735,9 @@ Skill 引入 Buff 的复杂度分为三类：
 | L1 施加/移除 | 技能只 apply/remove Buff | 普通流血、眩晕、加攻 |
 | L2 带参数施加 | 技能 apply Buff 并传 duration/value/stackStrategy | 2 回合流血、一次性免伤 |
 | L3 读取 Buff 资源计算 | 技能读取指定 Buff 的 remaining/stacks 再计算伤害或治疗 | 血涌、饮血、迸发 |
+| L4 消耗 Buff 窗口兑现 | 技能读取或直接消耗指定 Buff 的部分 remaining/stacks，并把它转成爆发收益 | 断脉一剑、猩红收割 |
 
-L3 是必要能力，但设计时应控制数量。它会引入“技能依赖指定 Buff 状态”的组合复杂度，必须通过文档、测试和编辑器提示明确表达。
+L3 是必要能力，但设计时应控制数量。它会引入“技能依赖指定 Buff 状态”的组合复杂度，必须通过文档、测试和编辑器提示明确表达。L4 比 L3 更强，应只用于终结、爆发或明确的资源兑现技能；如果不消耗资源却按高倍率反复读取，同一段 Buff 窗口会被重复计价。
 
 ## 9. 编辑展示工具设计
 
