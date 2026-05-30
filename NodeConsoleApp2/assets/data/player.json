@@ -12,7 +12,7 @@
         },
         "skills": {
             "skillTreeId": "melee_v4_5",
-            "skillPoints": 30,
+            "skillPoints": 5,
             "learned": ["skill_heal", "skill_heavy_swing", "skill_savage_charge"]
         },
         "resources": {
