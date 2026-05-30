@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>剑系流血输出循环自测记录</title>
+  <style>
+    :root {
+      --paper: #f6f2ea;
+      --ink: #221f1a;
+      --muted: #6f685d;
+      --line: #d7cfc2;
+      --panel: #fffaf1;
+      --accent: #a83b28;
+      --accent-2: #1f6f68;
+      --accent-3: #7a5b13;
+      --soft-red: #f5ddd8;
+      --soft-green: #dff0e8;
+      --soft-yellow: #f3e7c6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(1780px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 34px 0 56px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(420px, 0.7fr);
+      gap: 28px;
+      align-items: end;
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 22px;
+      margin-bottom: 26px;
+    }
+
+    h1, h2 { margin: 0; line-height: 1.12; letter-spacing: 0; }
+    h1 { font-size: 36px; }
+    h2 { font-size: 24px; }
+    p { margin: 10px 0 0; color: var(--muted); }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .meta div, .score div {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px 12px;
+    }
+
+    dt {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+
+    dd {
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .notice {
+      border: 1px solid #caa99d;
+      background: var(--soft-red);
+      padding: 14px 16px;
+      margin: 0 0 22px;
+    }
+
+    .scenario {
+      margin-top: 28px;
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 241, 0.68);
+    }
+
+    .scenario-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 540px;
+      gap: 22px;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .score {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 14px;
+    }
+
+    th {
+      text-align: left;
+      color: #fff;
+      background: var(--ink);
+      padding: 10px;
+      font-weight: 700;
+    }
+
+    td {
+      vertical-align: top;
+      padding: 11px 10px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.34);
+    }
+
+    tr:nth-child(even) td { background: rgba(255, 250, 241, 0.95); }
+    th:nth-child(1), td:nth-child(1) { width: 62px; }
+    th:nth-child(2), td:nth-child(2) { width: 250px; }
+    th:nth-child(3), td:nth-child(3) { width: 70px; }
+    th:nth-child(4), td:nth-child(4) { width: 140px; }
+    th:nth-child(5), td:nth-child(5) { width: 150px; }
+    th:nth-child(6), td:nth-child(6) { width: 120px; }
+    th:nth-child(8), td:nth-child(8) { width: 240px; }
+
+    .round {
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .combo {
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+
+    .state-line + .state-line {
+      margin-top: 4px;
+      color: var(--muted);
+    }
+
+    .note {
+      color: var(--accent-3);
+    }
+
+    @media (max-width: 1100px) {
+      main { width: calc(100% - 24px); }
+      header, .scenario-head { grid-template-columns: 1fr; }
+      .score, .meta { grid-template-columns: 1fr 1fr; }
+      table { min-width: 1180px; }
+      .scenario { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>剑系流血输出循环回放</h1>
+        <p>这个文件是 Skill 测试记录工具生成的逐轮账本。它同时记录测试结果和发现的问题，供下一轮技能设计复盘使用。</p>
+      </div>
+      <dl class="meta">
+        <div><dt>生成时间</dt><dd>2026/5/30 00:49:31</dd></div>
+        <div><dt>记录时间戳</dt><dd>2026-05-30-004618</dd></div>
+        <div><dt>敌人模型</dt><dd>100 HP / 110 总护甲</dd></div>
+        <div><dt>玩家 AP</dt><dd>每轮 5 AP</dd></div>
+        <div><dt>技能包</dt><dd>growth_v2_sword_bleed_window_standard_v2</dd></div>
+      </dl>
+    </header>
+
+    <div class="notice">
+      当前引擎中 <strong>DMG_ARMOR 会先扣指定部位护甲，护甲不足部分溢出为 HP 伤害</strong>；流血仍按回合结束结算为固定 HP 伤害。这个 HTML 用来暴露真实释放过程，而不是替技能设计找理由。
+    </div>
+
+
+    <section class="scenario findings">
+      <div class="scenario-head">
+        <div>
+          <p class="eyebrow">测试发现</p>
+          <h2>本轮问题记录</h2>
+          <p>这些结论是后续技能设计与复盘的输入，不是展示性文案。</p>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>级别</th>
+            <th>问题</th>
+            <th>证据</th>
+            <th>后续处理</th>
+          </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+              <td class="round">high</td>
+              <td class="combo">固定组合回放会稳定浪费 AP</td>
+              <td>基础破甲 + 轻流血：9/9 轮未打满 AP（第1轮 3/5，第2轮 3/5，第3轮 3/5）；连续建窗循环：8/8 轮未打满 AP（第1轮 4/5，第2轮 4/5，第3轮 4/5）；建窗后读窗循环：2/7 轮未打满 AP（第1轮 4/5，第7轮 3/5）</td>
+              <td class="note">下一版测试不应只硬编码短 combo，应基于已学技能池在“同回合同技能不可重复”的约束下搜索或枚举可用组合。</td>
+            </tr>
+
+            <tr>
+              <td class="round">high</td>
+              <td class="combo">浅割与锯齿斩的低阶定位重叠</td>
+              <td>浅割是 1AP/7 护甲门控伤害/+1W，锯齿斩是 1AP/4 护甲门控伤害/+2W；二者都属于低阶建窗器，玩家学会后更像固定叠加按钮，而不是清晰分工的选择</td>
+              <td class="note">重做低阶剑系时，应保留一个主建窗器，并把另一个改成明确的补刀、维窗、控场、防反或 AP 填充角色。</td>
+            </tr>
+
+            <tr>
+              <td class="round">medium</td>
+              <td class="combo">测试记录必须反向驱动技能设计</td>
+              <td>本轮回放暴露的问题不能只停留在 HTML 展示里；后续重做剑系前，应先读取本记录的 findings，并把 AP 利用率、技能区分度、自然输出循环作为验收项</td>
+              <td class="note">每次生成 Skill 测试记录时同步输出 findings.md 与 report.json，供下一轮设计读取。</td>
+            </tr>
+
+        </tbody>
+      </table>
+    </section>
+
+
+
+    <section class="scenario">
+      <div class="scenario-head">
+        <div>
+          <p class="eyebrow">前期可用循环</p>
+          <h2>基础破甲 + 轻流血</h2>
+          <p>每轮重复 剑击 + 浅割 + 锯齿斩。目标是看低 KP 组合能否形成清晰的 HP 与流血变化。</p>
+        </div>
+        <dl class="score">
+          <div><dt>结果</dt><dd>9 轮击败</dd></div>
+          <div><dt>HP</dt><dd>0</dd></div>
+          <div><dt>护甲总量</dt><dd>0</dd></div>
+          <div><dt>流血 W</dt><dd>15</dd></div>
+        </dl>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>轮次</th>
+            <th>本轮组合</th>
+            <th>AP</th>
+            <th>HP 变化</th>
+            <th>护甲变化</th>
+            <th>流血 W</th>
+            <th>回合结束后状态</th>
+            <th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+              <td class="round">1</td>
+              <td class="combo">剑击 + 浅割 + 锯齿斩</td>
+              <td>3/5</td>
+              <td>100 -&gt; 95 (-5)</td>
+              <td>110 -&gt; 89 (-21)</td>
+              <td>0 -&gt; 2 (+2)</td>
+              <td>
+                <div class="state-line">护甲：头:15/15 胸:16/30 腹:18/25 臂:20/20 腿:20/20</div>
+                <div class="state-line">Buff：流血(2回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">2</td>
+              <td class="combo">剑击 + 浅割 + 锯齿斩</td>
+              <td>3/5</td>
+              <td>95 -&gt; 90 (-5)</td>
+              <td>89 -&gt; 68 (-21)</td>
+              <td>2 -&gt; 4 (+2)</td>
+              <td>
+                <div class="state-line">护甲：头:15/15 胸:16/30 腹:14/25 臂:10/20 腿:13/20</div>
+                <div class="state-line">Buff：流血(4回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">3</td>
+              <td class="combo">剑击 + 浅割 + 锯齿斩</td>
+              <td>3/5</td>
+              <td>90 -&gt; 85 (-5)</td>
+              <td>68 -&gt; 47 (-21)</td>
+              <td>4 -&gt; 6 (+2)</td>
+              <td>
+                <div class="state-line">护甲：头:8/15 胸:6/30 腹:10/25 臂:10/20 腿:13/20</div>
+                <div class="state-line">Buff：流血(6回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">4</td>
+              <td class="combo">剑击 + 浅割 + 锯齿斩</td>
+              <td>3/5</td>
+              <td>85 -&gt; 80 (-5)</td>
+              <td>47 -&gt; 26 (-21)</td>
+              <td>6 -&gt; 8 (+2)</td>
+              <td>
+                <div class="state-line">护甲：头:8/15 胸:6/30 腹:3/25 臂:6/20 腿:3/20</div>
+                <div class="state-line">Buff：流血(8回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">5</td>
+              <td class="combo">剑击 + 浅割 + 锯齿斩</td>
+              <td>3/5</td>
+              <td>80 -&gt; 72 (-8)</td>
+              <td>26 -&gt; 8 (-18)</td>
+              <td>8 -&gt; 10 (+2)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:3/25 臂:2/20 腿:3/20</div>
+                <div class="state-line">Buff：流血(10回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">6</td>
+              <td class="combo">剑击 + 浅割 + 锯齿斩</td>
+              <td>3/5</td>
+              <td>72 -&gt; 54 (-18)</td>
+              <td>8 -&gt; 0 (-8)</td>
+              <td>10 -&gt; 12 (+2)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20</div>
+                <div class="state-line">Buff：流血(12回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">7</td>
+              <td class="combo">剑击 + 浅割 + 锯齿斩</td>
+              <td>3/5</td>
+              <td>54 -&gt; 28 (-26)</td>
+              <td>0 -&gt; 0 (0)</td>
+              <td>12 -&gt; 14 (+2)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20</div>
+                <div class="state-line">Buff：流血(14回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">8</td>
+              <td class="combo">剑击 + 浅割 + 锯齿斩</td>
+              <td>3/5</td>
+              <td>28 -&gt; 2 (-26)</td>
+              <td>0 -&gt; 0 (0)</td>
+              <td>14 -&gt; 16 (+2)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20</div>
+                <div class="state-line">Buff：流血(16回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">9</td>
+              <td class="combo">剑击</td>
+              <td>1/5</td>
+              <td>2 -&gt; 0 (-2)</td>
+              <td>0 -&gt; 0 (0)</td>
+              <td>16 -&gt; 15 (-1)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20</div>
+                <div class="state-line">Buff：流血(15回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+        </tbody>
+      </table>
+    </section>
+
+
+    <section class="scenario">
+      <div class="scenario-head">
+        <div>
+          <p class="eyebrow">前期末循环</p>
+          <h2>连续建窗循环</h2>
+          <p>每轮重复 浅割 + 锯齿斩 + 深切。它会更快建立 W，并在破甲后通过普通伤害产生 HP 溢出。</p>
+        </div>
+        <dl class="score">
+          <div><dt>结果</dt><dd>8 轮击败</dd></div>
+          <div><dt>HP</dt><dd>0</dd></div>
+          <div><dt>护甲总量</dt><dd>0</dd></div>
+          <div><dt>流血 W</dt><dd>32</dd></div>
+        </dl>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>轮次</th>
+            <th>本轮组合</th>
+            <th>AP</th>
+            <th>HP 变化</th>
+            <th>护甲变化</th>
+            <th>流血 W</th>
+            <th>回合结束后状态</th>
+            <th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+              <td class="round">1</td>
+              <td class="combo">浅割 + 锯齿斩 + 深切</td>
+              <td>4/5</td>
+              <td>100 -&gt; 95 (-5)</td>
+              <td>110 -&gt; 87 (-23)</td>
+              <td>0 -&gt; 4 (+4)</td>
+              <td>
+                <div class="state-line">护甲：头:15/15 胸:11/30 腹:21/25 臂:20/20 腿:20/20</div>
+                <div class="state-line">Buff：流血(4回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">2</td>
+              <td class="combo">浅割 + 锯齿斩 + 深切</td>
+              <td>4/5</td>
+              <td>95 -&gt; 90 (-5)</td>
+              <td>87 -&gt; 64 (-23)</td>
+              <td>4 -&gt; 8 (+4)</td>
+              <td>
+                <div class="state-line">护甲：头:15/15 胸:11/30 腹:14/25 臂:16/20 腿:8/20</div>
+                <div class="state-line">Buff：流血(8回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">3</td>
+              <td class="combo">浅割 + 锯齿斩 + 深切</td>
+              <td>4/5</td>
+              <td>90 -&gt; 85 (-5)</td>
+              <td>64 -&gt; 41 (-23)</td>
+              <td>8 -&gt; 12 (+4)</td>
+              <td>
+                <div class="state-line">护甲：头:11/15 胸:11/30 腹:2/25 臂:9/20 腿:8/20</div>
+                <div class="state-line">Buff：流血(12回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">4</td>
+              <td class="combo">浅割 + 锯齿斩 + 深切</td>
+              <td>4/5</td>
+              <td>85 -&gt; 77 (-8)</td>
+              <td>41 -&gt; 21 (-20)</td>
+              <td>12 -&gt; 16 (+4)</td>
+              <td>
+                <div class="state-line">护甲：头:4/15 胸:7/30 腹:2/25 臂:0/20 腿:8/20</div>
+                <div class="state-line">Buff：流血(16回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">5</td>
+              <td class="combo">浅割 + 锯齿斩 + 深切</td>
+              <td>4/5</td>
+              <td>77 -&gt; 64 (-13)</td>
+              <td>21 -&gt; 6 (-15)</td>
+              <td>16 -&gt; 20 (+4)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:3/30 腹:2/25 臂:0/20 腿:1/20</div>
+                <div class="state-line">Buff：流血(20回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">6</td>
+              <td class="combo">浅割 + 锯齿斩 + 深切</td>
+              <td>4/5</td>
+              <td>64 -&gt; 42 (-22)</td>
+              <td>6 -&gt; 0 (-6)</td>
+              <td>20 -&gt; 24 (+4)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20</div>
+                <div class="state-line">Buff：流血(24回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">7</td>
+              <td class="combo">浅割 + 锯齿斩 + 深切</td>
+              <td>4/5</td>
+              <td>42 -&gt; 14 (-28)</td>
+              <td>0 -&gt; 0 (0)</td>
+              <td>24 -&gt; 28 (+4)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20</div>
+                <div class="state-line">Buff：流血(28回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">8</td>
+              <td class="combo">浅割 + 锯齿斩 + 深切</td>
+              <td>4/5</td>
+              <td>14 -&gt; 0 (-14)</td>
+              <td>0 -&gt; 0 (0)</td>
+              <td>28 -&gt; 32 (+4)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20</div>
+                <div class="state-line">Buff：流血(32回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+        </tbody>
+      </table>
+    </section>
+
+
+    <section class="scenario">
+      <div class="scenario-head">
+        <div>
+          <p class="eyebrow">中阶预览循环</p>
+          <h2>建窗后读窗循环</h2>
+          <p>第 1 轮建窗，之后重复 血涌斩 + 饮血斩 + 反手割裂。用于观察读窗技能在 100HP 假人上的真实循环，不代表前期一定已学会。</p>
+        </div>
+        <dl class="score">
+          <div><dt>结果</dt><dd>7 轮击败</dd></div>
+          <div><dt>HP</dt><dd>0</dd></div>
+          <div><dt>护甲总量</dt><dd>0</dd></div>
+          <div><dt>流血 W</dt><dd>0</dd></div>
+        </dl>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>轮次</th>
+            <th>本轮组合</th>
+            <th>AP</th>
+            <th>HP 变化</th>
+            <th>护甲变化</th>
+            <th>流血 W</th>
+            <th>回合结束后状态</th>
+            <th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+              <td class="round">1</td>
+              <td class="combo">浅割 + 锯齿斩 + 深切</td>
+              <td>4/5</td>
+              <td>100 -&gt; 95 (-5)</td>
+              <td>110 -&gt; 87 (-23)</td>
+              <td>0 -&gt; 4 (+4)</td>
+              <td>
+                <div class="state-line">护甲：头:15/15 胸:11/30 腹:21/25 臂:20/20 腿:20/20</div>
+                <div class="state-line">Buff：流血(4回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">2</td>
+              <td class="combo">血涌斩 + 饮血斩 + 反手割裂</td>
+              <td>5/5</td>
+              <td>95 -&gt; 90 (-5)</td>
+              <td>87 -&gt; 57 (-30)</td>
+              <td>4 -&gt; 4 (0)</td>
+              <td>
+                <div class="state-line">护甲：头:15/15 胸:11/30 腹:3/25 臂:14/20 腿:14/20</div>
+                <div class="state-line">Buff：流血(4回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">3</td>
+              <td class="combo">血涌斩 + 饮血斩 + 反手割裂</td>
+              <td>5/5</td>
+              <td>90 -&gt; 82 (-8)</td>
+              <td>57 -&gt; 30 (-27)</td>
+              <td>4 -&gt; 4 (0)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:11/30 腹:3/25 臂:8/20 腿:8/20</div>
+                <div class="state-line">Buff：流血(4回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">4</td>
+              <td class="combo">血涌斩 + 饮血斩 + 反手割裂</td>
+              <td>5/5</td>
+              <td>82 -&gt; 70 (-12)</td>
+              <td>30 -&gt; 7 (-23)</td>
+              <td>4 -&gt; 4 (0)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:3/25 臂:2/20 腿:2/20</div>
+                <div class="state-line">Buff：流血(4回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">5</td>
+              <td class="combo">血涌斩 + 饮血斩 + 反手割裂</td>
+              <td>5/5</td>
+              <td>70 -&gt; 42 (-28)</td>
+              <td>7 -&gt; 0 (-7)</td>
+              <td>4 -&gt; 4 (0)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20</div>
+                <div class="state-line">Buff：流血(4回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">6</td>
+              <td class="combo">血涌斩 + 饮血斩 + 反手割裂</td>
+              <td>5/5</td>
+              <td>42 -&gt; 7 (-35)</td>
+              <td>0 -&gt; 0 (0)</td>
+              <td>4 -&gt; 4 (0)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20</div>
+                <div class="state-line">Buff：流血(4回合)</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+            <tr>
+              <td class="round">7</td>
+              <td class="combo">断脉一剑</td>
+              <td>3/5</td>
+              <td>7 -&gt; 0 (-7)</td>
+              <td>0 -&gt; 0 (0)</td>
+              <td>4 -&gt; 0 (-4)</td>
+              <td>
+                <div class="state-line">护甲：头:0/15 胸:0/30 腹:0/25 臂:0/20 腿:0/20</div>
+                <div class="state-line">Buff：无</div>
+              </td>
+              <td class="note">无</td>
+            </tr>
+
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+</body>
+</html>

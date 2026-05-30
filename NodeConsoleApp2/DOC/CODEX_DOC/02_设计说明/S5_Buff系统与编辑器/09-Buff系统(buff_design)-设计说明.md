@@ -423,11 +423,11 @@ flowchart TB
 | --- | --- | --- | --- | --- |
 | `TURN_START` | `CoreEngine.startTurn()` | `_onTurnStart` | `onTurnStart` | 所有已注册 manager |
 | `BATTLE_ACTION_PRE` | `CoreEngine._executeSkillActions()` | `_onActionPre` | `onActionPre` | 当前行动者 manager |
-| `BATTLE_ATTACK_PRE` | `_applyBattleDamage()` / `_applyArmorOnlyDamage()` | `_onAttackPre` | `onAttackPre` | attacker/source 与 target |
-| `BATTLE_TAKE_DAMAGE_PRE` | `_applyBattleDamage()` / `_applyArmorOnlyDamage()` | `_onTakeDamagePre` | `onTakeDamagePre` | attacker/source 与 target；先汇入 statModifiers |
-| `BATTLE_TAKE_DAMAGE` | `_applyBattleDamage()` / `_applyArmorOnlyDamage()` | `_onTakeDamage` | `onTakeDamage` | attacker/source 与 target |
-| `BATTLE_ATTACK_POST` | `_applyBattleDamage()` / `_applyArmorOnlyDamage()` | `_onAttackPost` | `onAttackPost` | attacker/source 与 target |
-| `BATTLE_DEFEND_POST` | `_applyBattleDamage()` / `_applyArmorOnlyDamage()` | `_onDefendPost` | `onDefendPost` | attacker/source 与 target |
+| `BATTLE_ATTACK_PRE` | `_applyBattleDamage()` / `_applyArmorDamage()` | `_onAttackPre` | `onAttackPre` | attacker/source 与 target |
+| `BATTLE_TAKE_DAMAGE_PRE` | `_applyBattleDamage()` / `_applyArmorDamage()` | `_onTakeDamagePre` | `onTakeDamagePre` | attacker/source 与 target；先汇入 statModifiers |
+| `BATTLE_TAKE_DAMAGE` | `_applyBattleDamage()` / `_applyArmorDamage()` | `_onTakeDamage` | `onTakeDamage` | attacker/source 与 target |
+| `BATTLE_ATTACK_POST` | `_applyBattleDamage()` / `_applyArmorDamage()` | `_onAttackPost` | `onAttackPost` | attacker/source 与 target |
+| `BATTLE_DEFEND_POST` | `_applyBattleDamage()` / `_applyArmorDamage()` | `_onDefendPost` | `onDefendPost` | attacker/source 与 target |
 | `TURN_END` | `CoreEngine._bindTimelineEvents()` 的 `TIMELINE_FINISHED` 回调 | `_onTurnEnd` | `onTurnEnd` | 所有已注册 manager；effects 后执行 `tickTurn()` |
 
 当前没有独立的“技能扣费前事件”。`AP_COST_ADD / AP_COST_REDUCE` 只能作为普通 Buff action 在某个已订阅 trigger 中执行，当前数据里实际用法是 `onTurnStart` 写入 actor 的 `_planningApCostFlatDelta`，随后 `CoreEngine._getSkillApCostStrict()` 读取这个字段。
@@ -849,7 +849,7 @@ sequenceDiagram
 2. 合并：再次添加时走 `refresh`，刷新 `remaining`；当前不因 `maxStacks=3` 自动加层。
 3. 触发：伤害管线 emit `BATTLE_TAKE_DAMAGE_PRE`，`BuffSystem._onTakeDamagePre()` 先执行 `_applyStatModifiersToContext()`。
 4. 响应：如果持有者是本次 `target`，读取 `target.buffs.getEffectiveStat('damageTakenMult', 0)`，写入 `context.damageTakenMult = base * (1 + takenMult)`。
-5. 消费：`CoreEngine._applyBattleDamage()` 在护甲处理之后、HP 扣减之前按 `context.damageTakenMult` 修正生命伤害。
+5. 消费：`CoreEngine._applyBattleDamage()` / `_applyArmorDamage()` 在护甲处理之后、HP 扣减之前按 `context.damageTakenMult` 修正生命伤害。
 6. 退出：`TURN_END -> tickTurn()` 递减并移除。
 
 #### 6.6.8 减伤
@@ -945,7 +945,7 @@ sequenceDiagram
 
 1. 进入：`BuffManager.add('buff_thorns')` 创建实例。
 2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
-3. 触发：`CoreEngine._applyBattleDamage()` 或 `_applyArmorOnlyDamage()` 末尾 emit `BATTLE_DEFEND_POST`，`BuffSystem._onDefendPost()` 分发到 attacker/source 与 target。
+3. 触发：`CoreEngine._applyBattleDamage()` 或 `_applyArmorDamage()` 末尾 emit `BATTLE_DEFEND_POST`，`BuffSystem._onDefendPost()` 分发到 attacker/source 与 target。
 4. 响应：持有者匹配 `onDefendPost` 后执行 `DAMAGE_HP`，`target=attacker`，公式 `damageTaken * 0.3`。
 5. 写入：`_act_damage()` 直接扣攻击者 HP，不进入护甲/部位伤害管线。
 6. 退出：`TURN_END -> tickTurn()` 递减并移除。
@@ -1126,7 +1126,7 @@ sequenceDiagram
   BS->>BM: _processManager(onTakeDamagePre)
   BM-->>BS: 匹配 PREVENT_DAMAGE_ARMOR target=self
   BS->>Ctx: context.preventArmorDamage = true
-  CE->>Ctx: _applyBattleDamage / _applyArmorOnlyDamage 检查标记
+  CE->>Ctx: _applyBattleDamage / _applyArmorDamage 检查标记
   CE->>Holder: 本次不扣护甲
 
   Note over CE,Holder: 回合结束：持续时间递减，不按 stackNum 消耗次数
@@ -1145,7 +1145,7 @@ sequenceDiagram
 2. 合并：再次添加时走 `refresh`，刷新 `remaining`；`maxStacks` 不代表当前已实现的“免伤次数”。
 3. 触发：伤害管线 emit `BATTLE_TAKE_DAMAGE_PRE`。
 4. 响应：执行 `PREVENT_DAMAGE_ARMOR`，写入共享 `context.preventArmorDamage = true`。
-5. 消费：`CoreEngine._applyBattleDamage()` / `_applyArmorOnlyDamage()` 在扣护甲时检查该字段；为 true 时不降低护甲。
+5. 消费：`CoreEngine._applyBattleDamage()` / `_applyArmorDamage()` 在扣护甲时检查该字段；为 true 时不降低护甲；若本次伤害高于当前护甲，剩余伤害仍按普通伤害管线进入 HP 溢出。
 6. 退出：`TURN_END -> tickTurn()` 递减并移除。
 
 当前代码事实：`PREVENT_DAMAGE_ARMOR` 不消耗层数，也不按 `stackNum` 计次；只要 Buff 持续存在，每次对应伤害上下文都会写入免护甲伤害标记。
@@ -1196,7 +1196,7 @@ sequenceDiagram
 2. 合并：再次添加时走 `refresh`，刷新 `remaining`。
 3. 触发：伤害管线 emit `BATTLE_TAKE_DAMAGE_PRE`。
 4. 响应：执行 `PREVENT_DAMAGE_HP`，写入共享 `context.preventHpDamage = true`。
-5. 消费：`CoreEngine._applyBattleDamage()` 在最终 HP 扣减前检查该字段；为 true 时 `context.damageTaken = 0`。
+5. 消费：`CoreEngine._applyBattleDamage()` / `_applyArmorDamage()` 在最终 HP 扣减前检查该字段；为 true 时 `context.damageTaken = 0`。
 6. 退出：`TURN_END -> tickTurn()` 递减并移除。
 
 当前代码事实：该 Buff 只阻止 HP 伤害，不阻止护甲伤害。

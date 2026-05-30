@@ -420,8 +420,8 @@ unlock
 
 | effectType | 当前意义 | 主要运行方法 |
 | --- | --- | --- |
-| `DMG_HP` | 对目标造成会落到 HP 的战斗伤害；当前对敌部位目标先经过护甲，剩余溢出扣 HP；自身无部位目标直接扣 HP | `_applyBattleDamage` |
-| `DMG_ARMOR` | 对目标指定部位造成护甲伤害，不直接扣 HP | `_applyArmorOnlyDamage` |
+| `DMG_HP` | 明确 HP/真实/自伤/绕甲语义的战斗伤害；当前对敌部位目标仍走护甲门控，剩余溢出扣 HP；自身无部位目标直接扣 HP | `_applyBattleDamage` |
+| `DMG_ARMOR` | 对目标指定部位造成普通伤害：先扣该部位护甲，护甲不足部分溢出为 HP 伤害 | `_applyArmorDamage` |
 | `HEAL` | 恢复目标 HP | `_applyHpDelta` |
 | `ARMOR_ADD` | 恢复目标部位护甲 | `_applyArmorDelta` |
 | `AP_GAIN` | 增加目标 AP | `_setEntityCurrentAp` |
@@ -434,7 +434,7 @@ unlock
 3. 逐个 action 解析目标。
 4. 逐个 action 计算数值。
 
-配置约定：普通主动攻击默认使用 `DMG_ARMOR` 和部位目标表达“打指定位置的护甲”。`DMG_HP` 不能作为普通伤害文案的默认选项；只有技能明确设计为生命伤害、真实伤害、绕甲追击、流血/中毒结算或自身代价时，才应使用 HP 语义。
+配置约定：普通主动攻击默认使用 `DMG_ARMOR` 和部位目标表达“打指定位置的护甲门控伤害”。它会先扣护甲，护甲不足时才进入 HP。`DMG_HP` 不能作为普通伤害文案的默认选项；只有技能明确设计为生命伤害、真实伤害、绕甲追击、流血/中毒结算或自身代价时，才应使用 HP 语义。
 5. 按 `effect.repeat.count` 进行多段结算。
 6. 所有 actions 执行后，再处理 `buffRefs.apply/remove`。
 7. 生成日志、结果和 `buffResults`。
