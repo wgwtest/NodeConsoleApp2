@@ -1024,6 +1024,7 @@ test('LevelMapEditorPage 保存工作稿接口不可用时给出可执行的服�
 
         const status = document.getElementById('status').textContent || '';
         assert.match(status, /保存接口不可用/u);
+        assert.match(status, /\$env:PORT='3121'; node app\.js/u);
         assert.match(status, /PORT=3121 node app\.js/u);
     } finally {
         dom.window.close();

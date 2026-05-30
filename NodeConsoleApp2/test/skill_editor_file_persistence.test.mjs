@@ -42,6 +42,32 @@ async function waitForServer(baseUrl, child) {
   throw lastError || new Error('server did not start');
 }
 
+async function waitForChildExit(child) {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  await new Promise(resolve => {
+    const timeout = setTimeout(resolve, 2000);
+    child.once('exit', () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+  });
+}
+
+async function removeTempRoot(tempRoot) {
+  let lastError = null;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      await fs.rm(tempRoot, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!['EBUSY', 'ENOTEMPTY', 'EPERM'].includes(error?.code)) throw error;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+  throw lastError;
+}
+
 async function withTempServer(t, callback) {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-editor-file-api-'));
   await fs.mkdir(path.join(tempRoot, 'assets', 'data'), { recursive: true });
@@ -90,7 +116,8 @@ async function withTempServer(t, callback) {
   });
   t.after(async () => {
     child.kill();
-    await fs.rm(tempRoot, { recursive: true, force: true });
+    await waitForChildExit(child);
+    await removeTempRoot(tempRoot);
   });
 
   child.stderr.on('data', chunk => {

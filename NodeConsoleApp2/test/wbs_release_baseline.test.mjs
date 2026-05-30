@@ -62,6 +62,8 @@ test('运行与交付说明已经固定到 README 与 CHANGELOG', async () => {
     readProjectFile('CHANGELOG.md')
   ]);
 
+  assert.match(repoReadme, /npm run serve:3101/u);
+  assert.match(repoReadme, /\$env:PORT='3101'; node app\.js/u);
   assert.match(repoReadme, /PORT=3101 node app\.js/u);
   assert.match(repoReadme, /mock_ui_v11\.html/u);
   assert.match(repoReadme, /codex_regression_runner\.html/u);

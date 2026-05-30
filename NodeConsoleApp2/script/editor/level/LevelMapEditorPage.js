@@ -943,7 +943,7 @@ export class LevelMapEditorPage {
                 })
             });
         } catch (error) {
-            throw new Error(`保存接口不可用：请确认后端服务已启动，并从 http://127.0.0.1:3121/test/level_map_editor_v1.html 打开地图编辑器。启动命令：PORT=3121 node app.js。原始错误：${error.message}`);
+            throw new Error(`保存接口不可用：请确认后端服务已启动，并从 http://127.0.0.1:3121/test/level_map_editor_v1.html 打开地图编辑器。启动命令：PowerShell 使用 $env:PORT='3121'; node app.js，Bash 使用 PORT=3121 node app.js。原始错误：${error.message}`);
         }
         if (!response?.ok) {
             let message = response?.status ? `HTTP ${response.status}` : 'unknown';

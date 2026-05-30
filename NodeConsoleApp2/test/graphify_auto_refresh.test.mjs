@@ -28,8 +28,21 @@ function setMtime(filePath, isoString) {
     fs.utimesSync(filePath, date, date);
 }
 
+function findWindowsBash() {
+    const candidates = [
+        process.env.BASH,
+        'C:/Program Files/Git/bin/bash.exe',
+        'C:/Program Files/Git/usr/bin/bash.exe'
+    ].filter(Boolean);
+
+    return candidates.find(candidate => fs.existsSync(candidate)) || 'bash';
+}
+
 function runScript(scriptPath, args = [], env = {}) {
-    return spawnSync(scriptPath, args, {
+    const command = process.platform === 'win32' ? findWindowsBash() : scriptPath;
+    const commandArgs = process.platform === 'win32' ? [scriptPath, ...args] : args;
+
+    return spawnSync(command, commandArgs, {
         encoding: 'utf8',
         env: {
             ...process.env,

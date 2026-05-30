@@ -5,7 +5,7 @@ Purpose: isolate real implementation technology selection work for the main game
 ## Workspace
 
 - Branch: `codex/engine-selection-20260527`
-- Worktree: `/home/wgw/CodexProject/NodeConsoleApp2/.worktree/engine-selection-20260527`
+- Worktree: `.worktree/engine-selection-20260527`
 - Base branch: `master`
 - Starting commit: `cf6746c`
 
@@ -14,10 +14,10 @@ This branch is for validating whether the current browser-front-end runtime shou
 ## Startup
 
 ```bash
-cd /home/wgw/CodexProject/NodeConsoleApp2/.worktree/engine-selection-20260527/NodeConsoleApp2
+cd .worktree/engine-selection-20260527/NodeConsoleApp2
 npm install --package-lock=false --no-audit --no-fund --prefer-offline --progress=false
 npm install --package-lock=false --no-save --no-audit --no-fund --prefer-offline --progress=false jsdom
-PORT=3124 node app.js
+node tools/serve_with_port.cjs 3124
 ```
 
 Open:
@@ -50,7 +50,7 @@ Use this branch to answer these questions with evidence, not preference:
 ## Baseline Checks
 
 ```bash
-cd /home/wgw/CodexProject/NodeConsoleApp2/.worktree/engine-selection-20260527/NodeConsoleApp2
+cd .worktree/engine-selection-20260527/NodeConsoleApp2
 npm test
 node --test test/campaign_balance_content.test.mjs test/acceptance_click_smoke_contract.test.mjs test/skill_growth_tree_authoring_pack.test.mjs
 ```

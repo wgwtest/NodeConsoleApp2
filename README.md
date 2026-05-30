@@ -4,8 +4,8 @@
 
 如果你是第一次进入仓库，先记住两件事：
 
-1. 实际运行目录是 [`NodeConsoleApp2`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2)
-2. 正式本地文档根是 [`NodeConsoleApp2/DOC/CODEX_DOC`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC)
+1. 实际运行目录是 [`NodeConsoleApp2`](NodeConsoleApp2)
+2. 正式本地文档根是 [`NodeConsoleApp2/DOC/CODEX_DOC`](NodeConsoleApp2/DOC/CODEX_DOC)
 
 ## 当前版本定位
 
@@ -27,7 +27,7 @@
 ### 1. 进入运行目录
 
 ```bash
-cd /home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2
+cd NodeConsoleApp2
 ```
 
 ### 2. 安装依赖
@@ -46,6 +46,14 @@ npm run serve:3101
 
 等价命令：
 
+PowerShell：
+
+```powershell
+$env:PORT='3101'; node app.js
+```
+
+Bash：
+
 ```bash
 PORT=3101 node app.js
 ```
@@ -57,22 +65,22 @@ PORT=3101 node app.js
 2. 共享回归入口：
    - `http://127.0.0.1:3101/test/codex_regression_runner.html`
 3. 当前人工验收入口：
-   - [`NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md)
+   - [`NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md`](NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/02_验收清单/00-当前待验收功能总入口.md)
 
 ## 仓库结构
 
 ### 运行工程
 
-- [`NodeConsoleApp2/mock_ui_v11.html`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/mock_ui_v11.html)
-- [`NodeConsoleApp2/test/`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/test)
-- [`NodeConsoleApp2/assets/data/`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/assets/data)
-- [`NodeConsoleApp2/script/`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/script)
+- [`NodeConsoleApp2/mock_ui_v11.html`](NodeConsoleApp2/mock_ui_v11.html)
+- [`NodeConsoleApp2/test/`](NodeConsoleApp2/test)
+- [`NodeConsoleApp2/assets/data/`](NodeConsoleApp2/assets/data)
+- [`NodeConsoleApp2/script/`](NodeConsoleApp2/script)
 
 ### 本地文档根
 
-- [`NodeConsoleApp2/DOC/CODEX_DOC/README.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/README.md)
-- [`NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md)
-- [`NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/README.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/README.md)
+- [`NodeConsoleApp2/DOC/CODEX_DOC/README.md`](NodeConsoleApp2/DOC/CODEX_DOC/README.md)
+- [`NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md`](NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md)
+- [`NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/README.md`](NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/README.md)
 
 ## 常用命令
 
@@ -103,6 +111,6 @@ npm run test:release-docs
 
 按下面顺序：
 
-1. [`CODEX_DOC README`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/README.md)
-2. [`03_研制计划/README.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md)
-3. [`05_测试文档/README.md`](/home/wgw/CodexProject/NodeConsoleApp2/NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/README.md)
+1. [`CODEX_DOC README`](NodeConsoleApp2/DOC/CODEX_DOC/README.md)
+2. [`03_研制计划/README.md`](NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/README.md)
+3. [`05_测试文档/README.md`](NodeConsoleApp2/DOC/CODEX_DOC/05_测试文档/README.md)
