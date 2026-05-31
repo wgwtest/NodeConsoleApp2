@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>技能批量分析器</title>
+  <link rel="stylesheet" href="../script/editor/skill_tester/skill_batch_analyzer.css">
+</head>
+<body>
+  <main class="analysis-shell">
+    <header class="analysis-header">
+      <div>
+        <p class="eyebrow">Skill Batch Analyzer</p>
+        <h1>技能批量分析器</h1>
+      </div>
+      <nav class="header-links" aria-label="工具链接">
+        <a href="./skill_tester.html">技能测试器</a>
+        <a href="./skill_editor_test_v3.html">技能编辑器</a>
+      </nav>
+    </header>
+
+    <section class="loader-strip" aria-label="批量记录数据源">
+      <label>
+        <span>批量记录目录</span>
+        <input id="batchRootInput" type="text" value="DOC/CODEX_DOC/05_测试文档/05_Skill技能系统测试记录/2026-05-31-112110-30关技能测试批量记录">
+      </label>
+      <button id="loadBatchBtn" type="button">加载分析</button>
+    </section>
+
+    <div id="analysisStatusLine" class="status-line" role="status">等待加载批量记录。</div>
+
+    <section id="overviewGrid" class="overview-grid" aria-label="分析概览"></section>
+    <section id="monotonyGrid" class="overview-grid monotony-grid" aria-label="循环单调性指标"></section>
+
+    <section id="evaluationPanel" class="panel evaluation-panel" aria-label="循环趣味性分档">
+      <div class="panel-title">
+        <h2>循环趣味性分档</h2>
+        <span class="muted">按理想 / 勉强可接受 / 较差 / 最差判断</span>
+      </div>
+      <div class="evaluation-body">
+        <div id="evaluationGrade" class="evaluation-grade">未加载</div>
+        <div>
+          <p id="evaluationSummary" class="evaluation-summary">等待批量数据。</p>
+          <div id="evaluationEvidence" class="evidence-grid"></div>
+          <ul id="evaluationReasons" class="evaluation-reasons"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="analysis-layout semantic-layout">
+      <section class="panel" aria-label="语义画像概览">
+        <div class="panel-title">
+          <h2>语义画像概览</h2>
+          <span class="muted">只读取 authoring 分析字段，不代表运行时决策</span>
+        </div>
+        <div id="semanticGrid" class="overview-grid semantic-grid"></div>
+      </section>
+
+      <section class="panel" aria-label="分层专项指标">
+        <div class="panel-title">
+          <h2>分层专项指标</h2>
+          <span class="muted">区分无脑排查、标签探索和 Codex 决策</span>
+        </div>
+        <div class="table-wrap">
+          <table id="layeredIndicatorTable">
+            <thead>
+              <tr>
+                <th>层级</th>
+                <th>指标</th>
+                <th>状态</th>
+                <th>数值</th>
+                <th>说明</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="analysis-layout">
+      <section class="panel trend-panel" aria-label="趋势">
+        <div class="panel-title">
+          <h2>关卡趋势</h2>
+          <span class="muted">循环相似度诊断的辅助曲线</span>
+        </div>
+        <svg id="trendSvg" class="trend-svg" viewBox="0 0 880 280" role="img" aria-label="批量测试趋势图"></svg>
+      </section>
+
+      <section class="panel conclusion-panel" aria-label="趣味性判断">
+        <div class="panel-title">
+          <h2>趣味性判断</h2>
+        </div>
+        <ul id="conclusionList" class="conclusion-list"></ul>
+      </section>
+    </section>
+
+    <section class="table-grid">
+      <section class="panel" aria-label="主导循环">
+        <div class="panel-title">
+          <h2>主导循环</h2>
+          <span class="muted">同一循环覆盖越高，通解风险越高</span>
+        </div>
+        <div class="table-wrap">
+          <table id="dominantLoopTable">
+            <thead>
+              <tr>
+                <th>循环签名</th>
+                <th>关卡数</th>
+                <th>覆盖率</th>
+                <th>出现关卡</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="核心技能">
+        <div class="panel-title">
+          <h2>核心技能覆盖</h2>
+          <span class="muted">单技能出现率过高代表单调风险</span>
+        </div>
+        <div class="table-wrap">
+          <table id="coreSkillTable">
+            <thead>
+              <tr>
+                <th>技能</th>
+                <th>循环关卡</th>
+                <th>循环覆盖</th>
+                <th>构筑关卡</th>
+                <th>出现关卡</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="敌人适配">
+        <div class="panel-title">
+          <h2>敌人适配度</h2>
+          <span class="muted">重复敌人是否真的换循环</span>
+        </div>
+        <div class="table-wrap">
+          <table id="adaptationTable">
+            <thead>
+              <tr>
+                <th>敌人</th>
+                <th>关卡数</th>
+                <th>循环种类</th>
+                <th>主导覆盖</th>
+                <th>机制深度</th>
+                <th>主导循环</th>
+                <th>出现关卡</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="复合度">
+        <div class="panel-title">
+          <h2>技能复合度</h2>
+          <span class="muted">短循环与机制复合情况</span>
+        </div>
+        <div class="table-wrap">
+          <table id="complexityTable">
+            <thead>
+              <tr>
+                <th>指标</th>
+                <th>数值</th>
+                <th>解释</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="风险关卡">
+        <div class="panel-title">
+          <h2>性能参考</h2>
+          <span class="muted">只作为辅助，不作为趣味性主指标</span>
+        </div>
+        <div class="table-wrap">
+          <table id="riskTable">
+            <thead>
+              <tr>
+                <th>关卡</th>
+                <th>敌人</th>
+                <th>击杀</th>
+                <th>回合</th>
+                <th>评分</th>
+                <th>KP</th>
+                <th>上限</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="levelDetailPanel" class="panel level-detail-panel" aria-label="单关详情">
+        <div class="panel-title">
+          <h2>单关详情</h2>
+          <span id="selectedLevelBadge" class="badge">未选择</span>
+        </div>
+        <div id="levelDetailBody" class="level-detail-body">选择风险关卡中的任意一行查看原始记录。</div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="../script/editor/skill_tester/skillBatchAnalyzerApp.mjs"></script>
+</body>
+</html>

@@ -639,6 +639,40 @@ targetHpPercent = targetCurrentHp / targetMaxHp
 3. 运行时技能树可以缩放或投影坐标，但不能丢失相对布局关系。
 4. 测试/演示节点必须显式标记隐藏，不再依赖旧标签。
 
+### 5.12 技能语义标签与机制画像
+
+技能系统除运行时字段外，还必须能生成一套用于设计分析、编辑器辅助、批量测试和 Codex 复盘的语义投影。该投影不替代 `actions / buffRefs / costs / target / requirements / prerequisites` 等正式运行时事实源，也不恢复旧 `tags` 驱动运行时特判的做法。
+
+推荐投影模型：
+
+```text
+SkillSemanticProfile = {
+  id,
+  name,
+  roleTags,
+  mechanicProfile,
+  relationProfile,
+  decisionProfile
+}
+```
+
+字段职责：
+
+| 字段 | 说明 |
+| --- | --- |
+| `roleTags` | 战术角色，例如基础护甲伤害、建窗、维窗、读窗、消窗、终结、防反、控制、恢复 |
+| `mechanicProfile` | 从正式字段推导出的机制画像，例如 AP/KP、命中段数、目标形态、护甲伤害、HP 伤害、Buff 写入/读取/消耗和释放条件 |
+| `relationProfile` | 技能之间的设计关系，例如变体、进阶替代、并行选择、协同、互斥、阶段替代 |
+| `decisionProfile` | 技能在何种战斗状态下应被选择或避免，用于解释“为什么选 A 而不是 B” |
+
+语义投影的治理规则：
+
+1. 能从正式字段推导出的内容应由工具派生，避免人工维护重复事实。
+2. 无法可靠推导、但属于设计意图的关系，才允许由人工维护。
+3. 玩家 `description` 不承担标签职责；它只解释玩家可见效果。
+4. 测试器、批量分析器和 Codex 结论应消费该投影，用于识别等价技能、同角色堆叠、核心技能组通解和技能支配关系。
+5. 若两个技能的 `roleTags / apCost / conditions / buffWrites / buffReads / buffConsumes` 高度接近，必须在工具中被标记为疑似等价或疑似重复设计。
+
 ## 6. 技能生命周期与状态机
 
 ### 6.1 技能内容生命周期

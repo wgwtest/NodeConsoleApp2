@@ -144,6 +144,28 @@
       "name": "剑击",
       "rarity": "Common",
       "description": "学习 1 KP；消耗 1 AP。对目标指定部位造成 10 点护甲伤害。",
+      "semanticProfile": {
+        "profileVersion": 1,
+        "roleTags": {
+          "primary": "Skill.Attack.BasicArmor",
+          "secondary": []
+        },
+        "mechanicTags": [
+          "Damage.Armor.Basic",
+          "Target.Part.Single"
+        ],
+        "relationProfile": {
+          "alternativeTo": [
+            "skill_sword_flurry_growth_v2"
+          ],
+          "synergyWith": []
+        },
+        "decisionProfile": {
+          "preferredWhen": "需要低成本、无前置的指定部位基础破甲。",
+          "avoidWhen": "需要建立状态窗口、触发多段收益或消耗流血窗口。",
+          "differentiation": "剑击是剑系基础单段破甲基准；连刺是同等 AP 的多段变体。"
+        }
+      },
       "prerequisites": [],
       "unlock": {
         "cost": {
@@ -300,6 +322,34 @@
         "sourceSkillId": "skill_1771769351059"
       },
       "description": "学习 2 KP；消耗 1 AP。对目标指定部位造成 4 点护甲伤害，并增加 2 回合流血。",
+      "semanticProfile": {
+        "profileVersion": 1,
+        "roleTags": {
+          "primary": "Skill.Bleed.Extend",
+          "secondary": [
+            "Skill.Bleed.Apply",
+            "Skill.Attack.BasicArmor"
+          ]
+        },
+        "mechanicTags": [
+          "Bleed.Window.Extend",
+          "Damage.Armor.LowImmediate"
+        ],
+        "relationProfile": {
+          "alternativeTo": [
+            "skill_sword_shallow_cut_rework_v1"
+          ],
+          "synergyWith": [
+            "skill_sword_deep_cut_rework_v1",
+            "skill_sword_sever_pulse_rework_v1"
+          ]
+        },
+        "decisionProfile": {
+          "preferredWhen": "已经进入流血路线，需要牺牲即时破甲换取更长流血窗口。",
+          "avoidWhen": "目标需要立即破甲，或流血窗口已经足够等待读窗/消窗技能兑现。",
+          "differentiation": "锯齿斩偏维持和延长窗口；浅割偏低成本起手建窗。"
+        }
+      },
       "unlock": {
         "cost": {
           "kp": 2
@@ -325,6 +375,30 @@
       "name": "撕裂伤口",
       "rarity": "Rare",
       "description": "学习 3 KP；消耗 2 AP。对目标部位造成 5 点护甲伤害，并施加 2 回合撕裂伤口（目标行动前会给自己增加 2 回合流血）。",
+      "semanticProfile": {
+        "profileVersion": 1,
+        "roleTags": {
+          "primary": "Skill.Bleed.Extend",
+          "secondary": [
+            "Skill.Bleed.Apply"
+          ]
+        },
+        "mechanicTags": [
+          "Bleed.Window.Delayed",
+          "Bleed.Window.Extend"
+        ],
+        "relationProfile": {
+          "upgradeOf": "skill_1771769351059",
+          "synergyWith": [
+            "skill_sword_sever_pulse_rework_v1"
+          ]
+        },
+        "decisionProfile": {
+          "preferredWhen": "需要通过目标行动前钩子继续扩大流血窗口，接受较低即时破甲。",
+          "avoidWhen": "战斗会在目标行动前结束，或当前只需要即时输出。",
+          "differentiation": "撕裂伤口是延迟维窗手段，不是即时建窗或直接消窗技能。"
+        }
+      },
       "prerequisites": [
         "skill_1771769351059"
       ],
@@ -2756,6 +2830,34 @@
       "name": "反手割裂",
       "rarity": "Uncommon",
       "description": "学习 2 KP；消耗 1 AP。对目标指定部位造成 6 点护甲伤害，增加 1 回合流血，并使自身获得 1 回合反击姿态。",
+      "semanticProfile": {
+        "profileVersion": 1,
+        "roleTags": {
+          "primary": "Skill.Defense.Counter",
+          "secondary": [
+            "Skill.Bleed.Apply",
+            "Skill.Attack.BasicArmor"
+          ]
+        },
+        "mechanicTags": [
+          "Counter.Stance.ApplySelf",
+          "Bleed.Window.Create",
+          "Damage.Armor.Basic"
+        ],
+        "relationProfile": {
+          "alternativeTo": [
+            "skill_sword_shallow_cut_rework_v1"
+          ],
+          "synergyWith": [
+            "skill_sword_riposte_growth_v2"
+          ]
+        },
+        "decisionProfile": {
+          "preferredWhen": "需要在招架反击线中兼顾轻量建窗和反击姿态准备。",
+          "avoidWhen": "不准备进入反击姿态，或只需要纯流血建窗效率。",
+          "differentiation": "反手割裂是招架线交叉建窗；浅割是纯流血线起手建窗。"
+        }
+      },
       "prerequisites": [
         "skill_sword_parry_growth_v2"
       ],
@@ -3299,6 +3401,31 @@
       "name": "连刺",
       "rarity": "Uncommon",
       "description": "学习 1 KP；消耗 1 AP。对目标指定部位连续攻击 2 次，每次造成 5 点护甲伤害。",
+      "semanticProfile": {
+        "profileVersion": 1,
+        "roleTags": {
+          "primary": "Skill.Attack.MultiHit",
+          "secondary": [
+            "Skill.Attack.BasicArmor"
+          ]
+        },
+        "mechanicTags": [
+          "Damage.Armor.MultiHit",
+          "Target.Part.Single"
+        ],
+        "relationProfile": {
+          "variantOf": "skill_double_thrust",
+          "alternativeTo": [
+            "skill_double_thrust"
+          ],
+          "synergyWith": []
+        },
+        "decisionProfile": {
+          "preferredWhen": "需要多段命中形态，或后续机制会奖励多段触发。",
+          "avoidWhen": "多段命中没有额外收益，且只需要单段稳定破甲。",
+          "differentiation": "连刺与剑击当前总伤害接近，差异依赖多段命中是否被机制利用。"
+        }
+      },
       "prerequisites": [
         "skill_double_thrust"
       ],
@@ -3534,6 +3661,30 @@
       "name": "破绽反刺",
       "rarity": "Epic",
       "description": "学习 5 KP；消耗 2 AP。对目标指定部位造成 18 点护甲伤害，自身获得 1 回合反击姿态。",
+      "semanticProfile": {
+        "profileVersion": 1,
+        "roleTags": {
+          "primary": "Skill.Defense.Counter",
+          "secondary": [
+            "Skill.Attack.BasicArmor"
+          ]
+        },
+        "mechanicTags": [
+          "Counter.Stance.ApplySelf",
+          "Damage.Armor.Burst"
+        ],
+        "relationProfile": {
+          "upgradeOf": "skill_hit_me_if_you_dare",
+          "synergyWith": [
+            "skill_sword_borrowed_force_rework_v1"
+          ]
+        },
+        "decisionProfile": {
+          "preferredWhen": "已经进入招架反击路线，需要用更高 AP 投入换取破甲爆发和反击姿态。",
+          "avoidWhen": "当前缺少反击路线收益，或 AP 需要留给流血窗口维护。",
+          "differentiation": "破绽反刺是反击线中期爆发，不是流血线建窗技能。"
+        }
+      },
       "prerequisites": [
         "skill_hit_me_if_you_dare"
       ],
@@ -4385,6 +4536,34 @@
         "sourceSkillId": "skill_sword_shallow_cut_rework_v1"
       },
       "description": "学习 1 KP；消耗 1 AP。对目标指定部位造成 7 点护甲伤害，并增加 1 回合流血。流血会在回合结束时造成 5 点生命伤害。",
+      "semanticProfile": {
+        "profileVersion": 1,
+        "roleTags": {
+          "primary": "Skill.Bleed.Apply",
+          "secondary": [
+            "Skill.Attack.BasicArmor"
+          ]
+        },
+        "mechanicTags": [
+          "Bleed.Window.Create",
+          "Damage.Armor.Basic"
+        ],
+        "relationProfile": {
+          "alternativeTo": [
+            "skill_1771769351059",
+            "skill_hit_me_if_you_dare"
+          ],
+          "synergyWith": [
+            "skill_sword_deep_cut_rework_v1",
+            "skill_sword_sever_pulse_rework_v1"
+          ]
+        },
+        "decisionProfile": {
+          "preferredWhen": "需要低成本建立短流血窗口，同时保留较高即时破甲。",
+          "avoidWhen": "目标已有足够流血窗口，或当前更需要延长窗口而不是起手建窗。",
+          "differentiation": "浅割偏起手建窗；锯齿斩偏牺牲伤害维持更长窗口。"
+        }
+      },
       "unlock": {
         "cost": {
           "kp": 1
@@ -4482,6 +4661,30 @@
         "sourceSkillId": "skill_sword_deep_cut_rework_v1"
       },
       "description": "学习 3 KP；消耗 2 AP。对目标指定部位造成 12 点护甲伤害，并增加 2 回合流血。",
+      "semanticProfile": {
+        "profileVersion": 1,
+        "roleTags": {
+          "primary": "Skill.Bleed.Extend",
+          "secondary": [
+            "Skill.Attack.BasicArmor"
+          ]
+        },
+        "mechanicTags": [
+          "Bleed.Window.Extend",
+          "Damage.Armor.MidImmediate"
+        ],
+        "relationProfile": {
+          "upgradeOf": "skill_1771769351059",
+          "synergyWith": [
+            "skill_sword_sever_pulse_rework_v1"
+          ]
+        },
+        "decisionProfile": {
+          "preferredWhen": "需要用 2 AP 同时补充中等破甲和较长流血窗口。",
+          "avoidWhen": "当前需要真正读窗或消窗兑现；按当前字段，深切仍是重建/维窗而不是读窗技能。",
+          "differentiation": "深切是高投入维窗技能；断脉一剑才是当前数据里的消窗终结。"
+        }
+      },
       "unlock": {
         "cost": {
           "kp": 3
@@ -4705,6 +4908,28 @@
       "name": "剑影连环",
       "rarity": "Epic",
       "description": "学习 5 KP；消耗 2 AP。对目标指定部位连续攻击 4 次，每次造成 5 点护甲伤害。",
+      "semanticProfile": {
+        "profileVersion": 1,
+        "roleTags": {
+          "primary": "Skill.Attack.MultiHit",
+          "secondary": [
+            "Skill.Attack.BasicArmor"
+          ]
+        },
+        "mechanicTags": [
+          "Damage.Armor.MultiHit",
+          "Damage.Armor.Burst"
+        ],
+        "relationProfile": {
+          "upgradeOf": "skill_sword_flurry_growth_v2",
+          "synergyWith": []
+        },
+        "decisionProfile": {
+          "preferredWhen": "连击线中期需要用 2 AP 获得多段破甲爆发。",
+          "avoidWhen": "多段命中没有额外收益，或当前更需要流血窗口操作。",
+          "differentiation": "剑影连环是连刺的中期多段爆发版本。"
+        }
+      },
       "prerequisites": [
         "skill_sword_followup_growth_v2"
       ],
@@ -4794,6 +5019,36 @@
       "name": "断脉一剑",
       "rarity": "Legendary",
       "description": "学习 8 KP；消耗 3 AP。目标生命低于 35% 且至少有 3 回合流血时可用；对目标指定部位造成 16 点护甲伤害，并按目标最多 4 回合流血各追加 8 点护甲伤害，随后消耗最多 4 回合流血。",
+      "semanticProfile": {
+        "profileVersion": 1,
+        "roleTags": {
+          "primary": "Skill.Bleed.Consume",
+          "secondary": [
+            "Skill.Bleed.Read",
+            "Skill.Finisher",
+            "Skill.Attack.BasicArmor"
+          ]
+        },
+        "mechanicTags": [
+          "Bleed.Window.Read",
+          "Bleed.Window.Consume",
+          "Damage.Armor.Finisher",
+          "Condition.TargetLowHp"
+        ],
+        "relationProfile": {
+          "synergyWith": [
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_1771769351059",
+            "skill_sword_deep_cut_rework_v1",
+            "skill_shockwave_copy_1770042951717"
+          ]
+        },
+        "decisionProfile": {
+          "preferredWhen": "目标低生命且已有至少 3 回合流血窗口，需要消耗窗口完成终结。",
+          "avoidWhen": "目标没有足够流血窗口，或生命尚未进入终结阈值。",
+          "differentiation": "断脉一剑是消窗终结技能，不承担建窗或维窗职责。"
+        }
+      },
       "prerequisites": [
         "skill_execute_copy_1770043820577"
       ],
