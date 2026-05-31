@@ -35,7 +35,7 @@ export class LevelDetailEditorPage {
         this.fetchImpl = options.fetchImpl || globalThis.fetch?.bind(globalThis);
         this.mapSourceUrl = options.mapSourceUrl || '../assets/map_packs/authoring/story_pack_v1/package.json';
         this.levelSourceUrl = options.levelSourceUrl || '../assets/data/levels.json';
-        this.enemySourceUrl = options.enemySourceUrl || '../assets/data/enemies.json';
+        this.enemySourceUrl = options.enemySourceUrl || '../assets/enemy_packs/current/enemies.json';
         this.workspaceFactory = options.workspaceFactory || ((rawMap, rawLevels, rawEnemies) => new LevelDetailWorkspace({
             mapDocument: rawMap,
             levelsDocument: rawLevels,

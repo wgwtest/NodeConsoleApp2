@@ -52,7 +52,7 @@ export function createLevelMapEditorPage(options = {}) {
         document: options.document || globalThis.document,
         mapSourceUrl: options.mapSourceUrl || '../assets/map_packs/authoring/story_pack_v1/package.json',
         levelSourceUrl: options.levelSourceUrl || '../assets/data/levels.json',
-        enemySourceUrl: options.enemySourceUrl || '../assets/data/enemies.json',
+        enemySourceUrl: options.enemySourceUrl || '../assets/enemy_packs/current/enemies.json',
         fetchImpl: options.fetchImpl || globalThis.fetch?.bind(globalThis),
         navigateTo: options.navigateTo,
         workspaceFactory(rawMapPack, levelsDocument) {
@@ -76,7 +76,7 @@ export function createLevelDetailEditorPage(options = {}) {
         window: options.window || globalThis.window,
         mapSourceUrl: options.mapSourceUrl || '../assets/map_packs/authoring/story_pack_v1/package.json',
         levelSourceUrl: options.levelSourceUrl || '../assets/data/levels.json',
-        enemySourceUrl: options.enemySourceUrl || '../assets/data/enemies.json',
+        enemySourceUrl: options.enemySourceUrl || '../assets/enemy_packs/current/enemies.json',
         fetchImpl: options.fetchImpl || globalThis.fetch?.bind(globalThis),
         workspaceFactory: options.workspaceFactory
     });

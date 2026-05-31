@@ -529,7 +529,7 @@ test('UI_SkillPanel 会把剑砍的 random_single 视为可落槽的单目标模
     const [{ default: UI_SkillPanel }, skillsData, enemiesData] = await Promise.all([
       importSourceModule('script/ui/UI_SkillPanel.js'),
       loadDataJson('assets/data/skills_melee_v4_5.json'),
-      loadDataJson('assets/data/enemies.json')
+      loadDataJson('assets/enemy_packs/current/enemies.json')
     ]);
     const slash = skillsData.skills.find(skill => skill.id === 'skill_double_thrust');
     assert.ok(slash, '缺少剑砍技能配置');
@@ -563,7 +563,7 @@ test('UI_SkillPanel 会把剑砍的 random_single 视为可落槽的单目标模
     assert.notEqual(panel.formatTargetText(slash), '目标配置错误');
 
     panel.selectedSkill = slash;
-    panel.initMatrixRows(enemiesData.enemy_c1_razor_runner);
+    panel.initMatrixRows(enemiesData.enemy_v2_c1_01_razor_initiate);
     panel.highlightValidSlots();
 
     const highlighted = [...document.querySelectorAll('.slot-placeholder.highlight-valid')]
@@ -583,7 +583,7 @@ test('UI_SkillPanel 会让重拳在第一关敌人身上至少有一个可用敌
     const [{ default: UI_SkillPanel }, skillsData, enemiesData] = await Promise.all([
       importSourceModule('script/ui/UI_SkillPanel.js'),
       loadDataJson('assets/data/skills_melee_v4_5.json'),
-      loadDataJson('assets/data/enemies.json')
+      loadDataJson('assets/enemy_packs/current/enemies.json')
     ]);
     const punch = skillsData.skills.find(skill => skill.id === 'skill_hold_the_line');
     assert.ok(punch, '缺少重拳技能配置');
@@ -612,7 +612,7 @@ test('UI_SkillPanel 会让重拳在第一关敌人身上至少有一个可用敌
     });
 
     panel.selectedSkill = punch;
-    panel.initMatrixRows(enemiesData.enemy_c1_razor_runner);
+    panel.initMatrixRows(enemiesData.enemy_v2_c1_01_razor_initiate);
     panel.highlightValidSlots();
 
     const highlighted = [...document.querySelectorAll('.slot-placeholder.highlight-valid')]

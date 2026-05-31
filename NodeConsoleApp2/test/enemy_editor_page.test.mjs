@@ -290,7 +290,7 @@ test('EnemyEditorPage uses battle sprite dropdown as the primary art selector', 
 
 test('EnemyEditorPage loads enemy skill pack as the default skill reference source', async () => {
     const reads = new Map([
-        ['assets/data/enemies.json', buildEnemies()],
+        ['assets/enemy_packs/current/enemies.json', buildEnemies()],
         ['assets/data/skills_enemy_v1.json', {
             skills: [{ id: 'skill_throw_stone', name: '投石', costs: { ap: 2 } }]
         }],
@@ -345,7 +345,7 @@ test('EnemyEditorPage saves draft and publishes runtime enemy JSON through proje
 
     assert.equal(writes.length, 2);
     assert.match(writes[0].path, /^assets\/enemy_packs\/authoring\/enemies_\d{8}_\d{6}\.json$/);
-    assert.equal(writes[1].path, 'assets/data/enemies.json');
+    assert.equal(writes[1].path, 'assets/enemy_packs/current/enemies.json');
     assert.equal(JSON.parse(writes[0].content).goblin_story_headhunter.name, '保存工作稿自动写入');
     assert.equal(
         JSON.parse(writes[1].content).goblin_story_headhunter.presentation.battleSpriteRef,
@@ -355,7 +355,7 @@ test('EnemyEditorPage saves draft and publishes runtime enemy JSON through proje
 
 test('EnemyEditorPage refreshes and loads enemy libraries from the toolbar dropdown', async () => {
     const reads = new Map([
-        ['assets/data/enemies.json', {
+        ['assets/enemy_packs/current/enemies.json', {
             runtime_enemy: {
                 id: 'runtime_enemy',
                 name: '运行时敌人',
@@ -387,8 +387,8 @@ test('EnemyEditorPage refreshes and loads enemy libraries from the toolbar dropd
                 json: async () => ({
                     ok: true,
                     path: filePath,
-                    files: filePath.startsWith('assets/data/')
-                        ? ['assets/data/enemies.json', 'assets/data/levels.json']
+                    files: filePath.startsWith('assets/enemy_packs/current/')
+                        ? ['assets/enemy_packs/current/enemies.json']
                         : ['assets/enemy_packs/authoring/enemies_20260524_210829.json']
                 })
             };
@@ -409,7 +409,7 @@ test('EnemyEditorPage refreshes and loads enemy libraries from the toolbar dropd
     const files = await page.refreshEnemyLibraryFiles();
     const select = dom.window.document.getElementById('enemyLibrarySelect');
     assert.deepEqual(files, [
-        'assets/data/enemies.json',
+        'assets/enemy_packs/current/enemies.json',
         'assets/enemy_packs/authoring/enemies_20260524_210829.json'
     ]);
     assert.deepEqual(select.children.map(option => option.value), files);
@@ -423,7 +423,7 @@ test('EnemyEditorPage refreshes and loads enemy libraries from the toolbar dropd
 
 test('EnemyEditorPage default startup loads the newest enemy authoring draft when available', async () => {
     const reads = new Map([
-        ['assets/data/enemies.json', {
+        ['assets/enemy_packs/current/enemies.json', {
             runtime_enemy: {
                 id: 'runtime_enemy',
                 name: '运行时敌人',
@@ -465,8 +465,8 @@ test('EnemyEditorPage default startup loads the newest enemy authoring draft whe
                 json: async () => ({
                     ok: true,
                     path: filePath,
-                    files: filePath.startsWith('assets/data/')
-                        ? ['assets/data/enemies.json']
+                    files: filePath.startsWith('assets/enemy_packs/current/')
+                        ? ['assets/enemy_packs/current/enemies.json']
                         : [
                             'assets/enemy_packs/authoring/enemies_20260524_210829.json',
                             'assets/enemy_packs/authoring/enemies_20260524_222540.json'
@@ -498,7 +498,7 @@ test('EnemyEditorPage default startup loads the newest enemy authoring draft whe
 
 test('EnemyEditorPage loads enemy, skill, and level reference sources together', async () => {
     const reads = new Map([
-        ['assets/data/enemies.json', {
+        ['assets/enemy_packs/current/enemies.json', {
             goblin_01: {
                 id: 'goblin_01',
                 name: '哥布林战士',
@@ -551,7 +551,7 @@ test('EnemyEditorPage loads enemy, skill, and level reference sources together',
 
     await page.loadDefault();
 
-    assert.equal(dom.window.document.getElementById('status').textContent, '已加载 assets/data/enemies.json');
+    assert.equal(dom.window.document.getElementById('status').textContent, '已加载 assets/enemy_packs/current/enemies.json');
     assert.equal(dom.window.document.getElementById('mapPreviewName').textContent, '哥布林战士');
     assert.equal(
         dom.window.document.getElementById('mapPreviewPortrait').getAttribute('src'),

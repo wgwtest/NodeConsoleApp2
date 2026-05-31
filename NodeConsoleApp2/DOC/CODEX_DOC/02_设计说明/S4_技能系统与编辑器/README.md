@@ -20,7 +20,7 @@
 | [06-技能平衡(skill_balance_design)-设计说明](./06-技能平衡(skill_balance_design)-设计说明.md) | 技能平衡设计 |
 | [08-技能头脑风暴(skill_design_brainStorm)-设计说明](./08-技能头脑风暴(skill_design_brainStorm)-设计说明.md) | 技能思路补充与脑暴记录 |
 | [29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明](./29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明.md) | 敌人技能包独立真源与技能编辑器多技能域切换设计 |
-| [30-三章关卡敌人与技能平衡(content_balance_campaign)-设计说明](../S6_敌人系统与编辑器/30-三章关卡敌人与技能平衡(content_balance_campaign)-设计说明.md) | 三章关卡平衡中玩家技能树补洞、敌人技能引用和自动试玩指标的跨子系统设计 |
+| [11-敌人系统(enemy_design)-设计说明](../S6_敌人系统与编辑器/11-敌人系统(enemy_design)-设计说明.md) | 敌人职责、敌技策略、流程压力和玩家构筑反制的跨子系统设计 |
 
 ## 2.1 待审补充
 

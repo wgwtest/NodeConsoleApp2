@@ -3,29 +3,35 @@ export default class EnemyActionPlanner {
         this._getSkillConfig = getSkillConfig;
     }
 
-    planTurn({ enemy, player, playerBodyParts }) {
+    planTurn({ enemy, player, playerBodyParts, turnNumber, turnIndex } = {}) {
         if (!enemy || !player) return null;
 
         const skills = Array.isArray(enemy.skills) ? enemy.skills : [];
         const candidates = skills
             .map(skillId => this._getSkillConfig ? this._getSkillConfig(skillId) : null)
             .filter(Boolean)
-            .map(skill => ({
-                skill,
-                target: this._pickTarget(skill, { enemy, player, playerBodyParts }),
-                score: this._scoreSkill(skill, { enemy, player, playerBodyParts })
-            }))
+            .map(skill => {
+                const summary = this._summarizeSkill(skill);
+                return {
+                    skill,
+                    summary,
+                    target: this._pickTarget(skill, { enemy, player, playerBodyParts }),
+                    score: this._scoreSkill(skill, { enemy, player, playerBodyParts })
+                };
+            })
             .filter(entry => entry.target && entry.target.targetId);
 
         if (candidates.length === 0) return null;
 
-        candidates.sort((a, b) => b.score - a.score);
-        const best = candidates[0];
+        const intentPlan = this._selectIntentCandidates(candidates, enemy, { turnNumber, turnIndex });
+        const ranked = intentPlan.candidates.length > 0 ? intentPlan.candidates : candidates;
+        ranked.sort((a, b) => b.score - a.score);
+        const best = ranked[0];
         const cost = Number(best.skill?.costs?.ap ?? 0) || 0;
         const baseSpeed = Number(enemy?.speed ?? enemy?.stats?.speed ?? 0) || 0;
         const skillSpeed = Number(best.skill?.speed ?? 0) || 0;
 
-        return {
+        const out = {
             source: 'ENEMY',
             sourceId: enemy.id,
             skillId: best.skill.id,
@@ -35,6 +41,134 @@ export default class EnemyActionPlanner {
             cost,
             speed: baseSpeed + skillSpeed
         };
+        if (intentPlan.intent) {
+            out.intentToken = intentPlan.selectedToken || intentPlan.intent.token;
+            out.intentSource = intentPlan.source;
+            out.intentIndex = intentPlan.intent.index;
+            out.intentPatternLength = intentPlan.intent.patternLength;
+        }
+        return out;
+    }
+
+    _selectIntentCandidates(candidates, enemy, { turnNumber, turnIndex } = {}) {
+        const intent = this._resolveIntent(enemy, { turnNumber, turnIndex });
+        if (!intent) {
+            return { intent: null, candidates: [], selectedToken: null, source: null };
+        }
+
+        const preferred = this._filterCandidatesByIntent(candidates, intent.token, enemy);
+        if (preferred.length > 0) {
+            return { intent, candidates: preferred, selectedToken: intent.token, source: 'pattern' };
+        }
+
+        const fallbackToken = this._normalizeIntentToken(intent.fallback);
+        if (fallbackToken && fallbackToken !== intent.token) {
+            const fallback = this._filterCandidatesByIntent(candidates, fallbackToken, enemy);
+            if (fallback.length > 0) {
+                return { intent, candidates: fallback, selectedToken: fallbackToken, source: 'fallback' };
+            }
+        }
+
+        return { intent, candidates: [], selectedToken: null, source: 'score' };
+    }
+
+    _resolveIntent(enemy, { turnNumber, turnIndex } = {}) {
+        const model = enemy?.intentModel;
+        const pattern = Array.isArray(model?.pattern)
+            ? model.pattern.map(token => this._normalizeIntentToken(token)).filter(Boolean)
+            : [];
+        if (pattern.length === 0) return null;
+
+        const providedIndex = Number.isFinite(Number(turnIndex))
+            ? Number(turnIndex)
+            : (Number.isFinite(Number(turnNumber)) ? Number(turnNumber) - 1 : 0);
+        const index = ((Math.trunc(providedIndex) % pattern.length) + pattern.length) % pattern.length;
+        return {
+            token: pattern[index],
+            fallback: model?.fallback,
+            index,
+            patternLength: pattern.length
+        };
+    }
+
+    _filterCandidatesByIntent(candidates, token, enemy) {
+        const normalized = this._normalizeIntentToken(token);
+        if (!normalized) return [];
+
+        const affordable = candidates.filter(entry => this._canPaySkill(entry.skill, enemy));
+        const pool = affordable.length > 0 ? affordable : candidates;
+        return pool.filter(entry => this._skillMatchesIntent(entry.skill, normalized, entry.summary));
+    }
+
+    _normalizeIntentToken(token) {
+        return String(token || '').trim().toLowerCase();
+    }
+
+    _canPaySkill(skill, enemy) {
+        const cost = Number(skill?.costs?.ap ?? 0) || 0;
+        const ap = Number(enemy?.stats?.ap ?? enemy?.ap ?? 0) || 0;
+        return cost <= ap;
+    }
+
+    _skillMatchesIntent(skill, token, summary = this._summarizeSkill(skill)) {
+        if (!skill || !token) return false;
+
+        const explicitTags = [
+            ...(Array.isArray(skill.intentTags) ? skill.intentTags : []),
+            ...(Array.isArray(skill.aiTags) ? skill.aiTags : []),
+            ...(Array.isArray(skill.tags) ? skill.tags : []),
+            ...(Array.isArray(skill.editorMeta?.intentTags) ? skill.editorMeta.intentTags : [])
+        ].map(tag => this._normalizeIntentToken(tag));
+        if (explicitTags.includes(token)) return true;
+
+        const buffIds = (skill?.buffRefs?.apply || []).map(row => this._normalizeIntentToken(row?.buffId));
+        const targetSubject = skill?.target?.subject;
+        const isEnemyTarget = targetSubject !== 'SUBJECT_SELF';
+        const isSelfTarget = targetSubject === 'SUBJECT_SELF';
+        const cost = Number(skill?.costs?.ap ?? 0) || 0;
+
+        switch (token) {
+        case 'attack':
+        case 'pressure':
+        case 'punish':
+        case 'cash_out':
+        case 'terminal':
+            return isEnemyTarget && (summary.damageHp > 0 || summary.damageArmor > 0);
+        case 'heavy_attack':
+        case 'burst':
+            return isEnemyTarget && (summary.damageHp >= 20 || (cost >= 3 && summary.damageHp > 0));
+        case 'armor_attack':
+        case 'break':
+            return isEnemyTarget && summary.damageArmor > 0;
+        case 'bleed':
+            return buffIds.includes('buff_bleed');
+        case 'poison':
+            return buffIds.includes('buff_poison');
+        case 'slow':
+            return buffIds.includes('buff_slow');
+        case 'vulnerable':
+        case 'mark':
+        case 'exposed':
+            return buffIds.includes('buff_vulnerable');
+        case 'stun':
+        case 'control':
+        case 'control_phase':
+        case 'bind':
+            return buffIds.includes('buff_stun') || buffIds.includes('buff_slow');
+        case 'lifesteal':
+        case 'stance':
+        case 'setup':
+            return isSelfTarget && summary.buffRefsSelf > 0;
+        case 'recover':
+        case 'heal':
+            return isSelfTarget && summary.healHp > 0;
+        case 'repair':
+        case 'guard':
+        case 'armor_phase':
+            return isSelfTarget && summary.addArmor > 0;
+        default:
+            return explicitTags.includes(token);
+        }
     }
 
     _pickTarget(skill, context) {

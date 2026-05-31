@@ -41,8 +41,10 @@
       "name": "幽暗森林 1 敌人池",
       "members": [
         {
-          "templateId": "enemy_c1_razor_runner",
-          "position": 1
+          "templateId": "enemy_v2_c1_01_razor_initiate",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -51,8 +53,10 @@
       "name": "幽暗森林 2 敌人池",
       "members": [
         {
-          "templateId": "goblin_scout",
-          "position": 1
+          "templateId": "enemy_v2_c1_02_path_cutthroat",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -61,8 +65,10 @@
       "name": "幽暗森林 3 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_headhunter",
-          "position": 1
+          "templateId": "enemy_v2_c1_03_canopy_bleeder",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -71,8 +77,10 @@
       "name": "幽暗森林 4 敌人池",
       "members": [
         {
-          "templateId": "orc_warrior",
-          "position": 1
+          "templateId": "enemy_v2_c1_04_telegraph_bruiser",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -81,8 +89,10 @@
       "name": "幽暗森林 5 敌人池",
       "members": [
         {
-          "templateId": "enemy_c1_thorn_mender",
-          "position": 1
+          "templateId": "enemy_v2_c1_05_thorn_mender",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -91,8 +101,10 @@
       "name": "幽暗森林 6 敌人池",
       "members": [
         {
-          "templateId": "enemy_c1_barkshield_guard",
-          "position": 1
+          "templateId": "enemy_v2_c1_06_barkshield_guard",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -101,8 +113,10 @@
       "name": "幽暗森林 7 敌人池",
       "members": [
         {
-          "templateId": "goblin_story_medic",
-          "position": 1
+          "templateId": "enemy_v2_c1_07_field_medic",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -111,8 +125,10 @@
       "name": "幽暗森林 8 敌人池",
       "members": [
         {
-          "templateId": "enemy_c1_razor_runner",
-          "position": 1
+          "templateId": "enemy_v2_c1_08_bramble_counter",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -121,8 +137,10 @@
       "name": "幽暗森林 9 敌人池",
       "members": [
         {
-          "templateId": "enemy_c1_barkshield_guard",
-          "position": 1
+          "templateId": "enemy_v2_c1_09_bark_gate_elite",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -131,8 +149,10 @@
       "name": "幽暗森林 10 敌人池",
       "members": [
         {
-          "templateId": "boss_c1_ruin_bruiser",
-          "position": 1
+          "templateId": "boss_v2_c1_10_ruin_bruiser",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -141,8 +161,10 @@
       "name": "霜雾峡谷 1 敌人池",
       "members": [
         {
-          "templateId": "enemy_c2_frost_skirmisher",
-          "position": 1
+          "templateId": "enemy_v2_c2_01_frost_skirmisher",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -151,8 +173,10 @@
       "name": "霜雾峡谷 2 敌人池",
       "members": [
         {
-          "templateId": "goblin_scout_lvl3",
-          "position": 1
+          "templateId": "enemy_v2_c2_02_frost_blood_raider",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -161,8 +185,10 @@
       "name": "霜雾峡谷 3 敌人池",
       "members": [
         {
-          "templateId": "enemy_c2_iceplate_guard",
-          "position": 1
+          "templateId": "enemy_v2_c2_03_iceplate_guard",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -171,8 +197,10 @@
       "name": "霜雾峡谷 4 敌人池",
       "members": [
         {
-          "templateId": "orc_berserker_lvl4",
-          "position": 1
+          "templateId": "enemy_v2_c2_04_canyon_breaker",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -181,8 +209,10 @@
       "name": "霜雾峡谷 5 敌人池",
       "members": [
         {
-          "templateId": "skeleton_story_repair_guard",
-          "position": 1
+          "templateId": "enemy_v2_c2_05_frostbone_mender",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -191,8 +221,10 @@
       "name": "霜雾峡谷 6 敌人池",
       "members": [
         {
-          "templateId": "enemy_c2_chill_hexer",
-          "position": 1
+          "templateId": "enemy_v2_c2_06_chill_hexer",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -201,8 +233,10 @@
       "name": "霜雾峡谷 7 敌人池",
       "members": [
         {
-          "templateId": "skeleton_guard_lvl4",
-          "position": 1
+          "templateId": "enemy_v2_c2_07_rotplate_guard",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -211,8 +245,10 @@
       "name": "霜雾峡谷 8 敌人池",
       "members": [
         {
-          "templateId": "enemy_c2_iceplate_guard",
-          "position": 1
+          "templateId": "enemy_v2_c2_08_ice_counter_sentinel",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -221,8 +257,10 @@
       "name": "霜雾峡谷 9 敌人池",
       "members": [
         {
-          "templateId": "orc_berserker_lvl4",
-          "position": 1
+          "templateId": "enemy_v2_c2_09_gatebreaker_knight",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -231,8 +269,10 @@
       "name": "霜雾峡谷 10 敌人池",
       "members": [
         {
-          "templateId": "boss_c2_frozen_centurion",
-          "position": 1
+          "templateId": "boss_v2_c2_10_frozen_centurion",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -241,8 +281,10 @@
       "name": "暮色古道 1 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_dusk_runner",
-          "position": 1
+          "templateId": "enemy_v2_c3_01_dusk_runner",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -251,8 +293,10 @@
       "name": "暮色古道 2 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_plague_caller",
-          "position": 1
+          "templateId": "enemy_v2_c3_02_plague_caller",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -261,8 +305,10 @@
       "name": "暮色古道 3 敌人池",
       "members": [
         {
-          "templateId": "orc_berserker_lvl5",
-          "position": 1
+          "templateId": "enemy_v2_c3_03_twilight_reaver",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -271,8 +317,10 @@
       "name": "暮色古道 4 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_graveplate_guard",
-          "position": 1
+          "templateId": "enemy_v2_c3_04_graveplate_bastion",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -281,8 +329,10 @@
       "name": "暮色古道 5 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_blood_rite_acolyte",
-          "position": 1
+          "templateId": "enemy_v2_c3_05_blood_rite_acolyte",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -291,8 +341,10 @@
       "name": "暮色古道 6 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_mire_chain_jailer",
-          "position": 1
+          "templateId": "enemy_v2_c3_06_mire_chain_jailer",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -301,8 +353,10 @@
       "name": "暮色古道 7 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_twilight_warden",
-          "position": 1
+          "templateId": "enemy_v2_c3_07_twilight_warden",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -311,8 +365,10 @@
       "name": "暮色古道 8 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_plague_standard_bearer",
-          "position": 1
+          "templateId": "enemy_v2_c3_08_plague_standard",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -321,8 +377,10 @@
       "name": "暮色古道 9 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_twilight_gate_elite",
-          "position": 1
+          "templateId": "enemy_v2_c3_09_twilight_gate_elite",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -331,8 +389,10 @@
       "name": "暮色古道 10 敌人池",
       "members": [
         {
-          "templateId": "boss_c3_twilight_bastion",
-          "position": 1
+          "templateId": "boss_v2_c3_10_twilight_bastion",
+          "position": 1,
+          "weight": 1,
+          "role": "primary"
         }
       ]
     },
@@ -341,7 +401,7 @@
       "name": "南侧补给道 敌人池",
       "members": [
         {
-          "templateId": "enemy_c1_thorn_mender",
+          "templateId": "enemy_v2_c1_05_thorn_mender",
           "position": 1
         }
       ]
@@ -351,7 +411,7 @@
       "name": "破损营地 敌人池",
       "members": [
         {
-          "templateId": "enemy_c1_barkshield_guard",
+          "templateId": "enemy_v2_c1_06_barkshield_guard",
           "position": 1
         }
       ]
@@ -361,7 +421,7 @@
       "name": "冰桥近路 敌人池",
       "members": [
         {
-          "templateId": "enemy_c2_frost_skirmisher",
+          "templateId": "enemy_v2_c2_01_frost_skirmisher",
           "position": 1
         }
       ]
@@ -371,7 +431,7 @@
       "name": "裂冰伏击 敌人池",
       "members": [
         {
-          "templateId": "orc_berserker_lvl5",
+          "templateId": "enemy_v2_c2_09_gatebreaker_knight",
           "position": 1
         }
       ]
@@ -381,7 +441,7 @@
       "name": "商队残骸 敌人池",
       "members": [
         {
-          "templateId": "enemy_c3_plague_caller",
+          "templateId": "enemy_v2_c3_02_plague_caller",
           "position": 1
         }
       ]
@@ -391,7 +451,7 @@
       "name": "塌陷古井 敌人池",
       "members": [
         {
-          "templateId": "skeleton_story_repair_guard",
+          "templateId": "enemy_v2_c2_05_frostbone_mender",
           "position": 1
         }
       ]
@@ -422,7 +482,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c1_razor_runner"
+        "templateId": "enemy_v2_c1_01_razor_initiate"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -470,7 +530,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_scout"
+        "templateId": "enemy_v2_c1_02_path_cutthroat"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -518,7 +578,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_headhunter"
+        "templateId": "enemy_v2_c1_03_canopy_bleeder"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -566,7 +626,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "orc_warrior"
+        "templateId": "enemy_v2_c1_04_telegraph_bruiser"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -614,7 +674,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c1_thorn_mender"
+        "templateId": "enemy_v2_c1_05_thorn_mender"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -662,7 +722,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c1_barkshield_guard"
+        "templateId": "enemy_v2_c1_06_barkshield_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -710,7 +770,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_story_medic"
+        "templateId": "enemy_v2_c1_07_field_medic"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -758,7 +818,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c1_razor_runner"
+        "templateId": "enemy_v2_c1_08_bramble_counter"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -806,7 +866,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c1_barkshield_guard"
+        "templateId": "enemy_v2_c1_09_bark_gate_elite"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -855,7 +915,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "boss_c1_ruin_bruiser"
+        "templateId": "boss_v2_c1_10_ruin_bruiser"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -903,7 +963,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c2_frost_skirmisher"
+        "templateId": "enemy_v2_c2_01_frost_skirmisher"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -951,7 +1011,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "goblin_scout_lvl3"
+        "templateId": "enemy_v2_c2_02_frost_blood_raider"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -999,7 +1059,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c2_iceplate_guard"
+        "templateId": "enemy_v2_c2_03_iceplate_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1047,7 +1107,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "orc_berserker_lvl5"
+        "templateId": "enemy_v2_c2_04_canyon_breaker"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1095,7 +1155,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_story_repair_guard"
+        "templateId": "enemy_v2_c2_05_frostbone_mender"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1143,7 +1203,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c2_chill_hexer"
+        "templateId": "enemy_v2_c2_06_chill_hexer"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1191,7 +1251,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_guard_lvl4"
+        "templateId": "enemy_v2_c2_07_rotplate_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1239,7 +1299,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c2_iceplate_guard"
+        "templateId": "enemy_v2_c2_08_ice_counter_sentinel"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1287,7 +1347,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "orc_berserker_lvl5"
+        "templateId": "enemy_v2_c2_09_gatebreaker_knight"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1336,7 +1396,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "boss_c2_frozen_centurion"
+        "templateId": "boss_v2_c2_10_frozen_centurion"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1384,7 +1444,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c3_dusk_runner"
+        "templateId": "enemy_v2_c3_01_dusk_runner"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1432,7 +1492,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c3_plague_caller"
+        "templateId": "enemy_v2_c3_02_plague_caller"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1480,7 +1540,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "orc_berserker_lvl5"
+        "templateId": "enemy_v2_c3_03_twilight_reaver"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1528,7 +1588,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c3_graveplate_guard"
+        "templateId": "enemy_v2_c3_04_graveplate_bastion"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1576,7 +1636,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c3_blood_rite_acolyte"
+        "templateId": "enemy_v2_c3_05_blood_rite_acolyte"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1624,7 +1684,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c3_mire_chain_jailer"
+        "templateId": "enemy_v2_c3_06_mire_chain_jailer"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1672,7 +1732,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c3_twilight_warden"
+        "templateId": "enemy_v2_c3_07_twilight_warden"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1720,7 +1780,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c3_plague_standard_bearer"
+        "templateId": "enemy_v2_c3_08_plague_standard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1768,7 +1828,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c3_graveplate_guard"
+        "templateId": "enemy_v2_c3_09_twilight_gate_elite"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1817,7 +1877,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "boss_c3_twilight_bastion"
+        "templateId": "boss_v2_c3_10_twilight_bastion"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1865,7 +1925,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c1_thorn_mender"
+        "templateId": "enemy_v2_c1_05_thorn_mender"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1913,7 +1973,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c1_barkshield_guard"
+        "templateId": "enemy_v2_c1_06_barkshield_guard"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -1961,7 +2021,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c2_frost_skirmisher"
+        "templateId": "enemy_v2_c2_01_frost_skirmisher"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -2009,7 +2069,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "orc_berserker_lvl5"
+        "templateId": "enemy_v2_c2_09_gatebreaker_knight"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -2057,7 +2117,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "enemy_c3_plague_caller"
+        "templateId": "enemy_v2_c3_02_plague_caller"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",
@@ -2105,7 +2165,7 @@
       },
       "background": "bg_forest_01",
       "primaryEnemy": {
-        "templateId": "skeleton_story_repair_guard"
+        "templateId": "enemy_v2_c2_05_frostbone_mender"
       },
       "battleRules": {
         "slotLayoutId": "default_v1",

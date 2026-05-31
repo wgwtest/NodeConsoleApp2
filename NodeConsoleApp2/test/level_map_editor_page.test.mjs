@@ -412,7 +412,7 @@ async function createPageContext() {
         document,
         mapSourceUrl: '../assets/data/level_map_pack_v1.example.json',
         levelSourceUrl: '../assets/data/levels.json',
-        enemySourceUrl: '../assets/data/enemies.json',
+        enemySourceUrl: '../assets/enemy_packs/current/enemies.json',
         fetchImpl: async (url) => ({
             ok: true,
             async json() {

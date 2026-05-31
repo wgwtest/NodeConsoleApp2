@@ -1,0 +1,4527 @@
+{
+  "enemy_v2_c1_01_razor_initiate": {
+    "id": "enemy_v2_c1_01_razor_initiate",
+    "name": "Chapter 1 01 Razor Initiate",
+    "stats": {
+      "hp": 72,
+      "maxHp": 72,
+      "ap": 3,
+      "speed": 14
+    },
+    "skills": [
+      "enemy_skill_rusty_shiv",
+      "skill_throw_stone"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 3,
+        "max": 3,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 5,
+        "max": 5,
+        "weakness": 1.25
+      },
+      "abdomen": {
+        "current": 2,
+        "max": 2,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 2,
+        "max": 2,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 2,
+        "max": 2,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "goblin",
+    "class": "scout",
+    "tags": [
+      "v2_candidate",
+      "chapter_1",
+      "role_fast",
+      "role_status",
+      "pressure_basic"
+    ],
+    "description": "level_1_1 V2 candidate for C1-M01/fast_intro. Core capabilities: basic_attack, bleed_apply.",
+    "candidateForLevel": "level_1_1",
+    "mechanicProfile": {
+      "slotId": "C1-M01",
+      "primaryRole": "fast_intro",
+      "targetTurns": [
+        3,
+        4
+      ],
+      "hpBand": [
+        65,
+        80
+      ],
+      "armorBudget": [
+        8,
+        16
+      ],
+      "counterTags": [
+        "low_ap_defense",
+        "fast_kill"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: slow_opening, no_guard."
+    },
+    "capabilities": [
+      {
+        "type": "basic_attack",
+        "cadence": "every_turn",
+        "pressure": "early_hp_pressure",
+        "counterplay": [
+          "guard",
+          "fast_kill"
+        ]
+      },
+      {
+        "type": "bleed_apply",
+        "cadence": "cooldown_2_turns",
+        "pressure": "light_hp_attrition",
+        "counterplay": [
+          "healing",
+          "fast_kill"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "attack",
+        "bleed",
+        "attack"
+      ],
+      "telegraphText": "Intent pattern: attack -> bleed -> attack.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "slow_opening",
+        "no_guard"
+      ],
+      "expectedCounter": [
+        "low_ap_defense",
+        "fast_kill"
+      ]
+    },
+    "runPressure": {
+      "type": "none",
+      "carryoverImpact": [],
+      "expectedDamageBudget": 4,
+      "counterplay": [
+        "low_ap_defense",
+        "fast_kill"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-001-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c1_02_path_cutthroat": {
+    "id": "enemy_v2_c1_02_path_cutthroat",
+    "name": "Chapter 1 02 Path Cutthroat",
+    "stats": {
+      "hp": 95,
+      "maxHp": 95,
+      "ap": 3,
+      "speed": 11
+    },
+    "skills": [
+      "skill_bite",
+      "enemy_skill_orc_club"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 2,
+        "max": 2,
+        "weakness": 1.35
+      },
+      "chest": {
+        "current": 7,
+        "max": 7,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 4,
+        "max": 4,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 3,
+        "max": 3,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 3,
+        "max": 3,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "human",
+    "class": "cutthroat",
+    "tags": [
+      "v2_candidate",
+      "chapter_1",
+      "role_fast",
+      "pressure_basic"
+    ],
+    "description": "level_1_2 V2 candidate for C1-M02/basic_blood. Core capabilities: basic_attack, high_damage.",
+    "candidateForLevel": "level_1_2",
+    "mechanicProfile": {
+      "slotId": "C1-M02",
+      "primaryRole": "basic_blood",
+      "targetTurns": [
+        4,
+        5
+      ],
+      "hpBand": [
+        90,
+        110
+      ],
+      "armorBudget": [
+        15,
+        25
+      ],
+      "counterTags": [
+        "stable_output",
+        "basic_guard"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: low_damage."
+    },
+    "capabilities": [
+      {
+        "type": "basic_attack",
+        "cadence": "every_turn",
+        "pressure": "stable_damage",
+        "counterplay": [
+          "stable_output",
+          "guard"
+        ]
+      },
+      {
+        "type": "high_damage",
+        "cadence": "cooldown_3_turns",
+        "pressure": "small_burst",
+        "counterplay": [
+          "guard",
+          "fast_kill"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "attack",
+        "attack",
+        "recover"
+      ],
+      "telegraphText": "Intent pattern: attack -> attack -> recover.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "low_damage"
+      ],
+      "expectedCounter": [
+        "stable_output",
+        "basic_guard"
+      ]
+    },
+    "runPressure": {
+      "type": "none",
+      "carryoverImpact": [],
+      "expectedDamageBudget": 6,
+      "counterplay": [
+        "stable_output",
+        "basic_guard"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-002-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c1_03_canopy_bleeder": {
+    "id": "enemy_v2_c1_03_canopy_bleeder",
+    "name": "Chapter 1 03 Canopy Bleeder",
+    "stats": {
+      "hp": 92,
+      "maxHp": 92,
+      "ap": 3,
+      "speed": 13
+    },
+    "skills": [
+      "enemy_skill_rusty_shiv",
+      "enemy_skill_ankle_pebble"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 5,
+        "max": 5,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 8,
+        "max": 8,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 4,
+        "max": 4,
+        "weakness": 1.25
+      },
+      "arm": {
+        "current": 3,
+        "max": 3,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 3,
+        "max": 3,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "goblin",
+    "class": "headhunter",
+    "tags": [
+      "v2_candidate",
+      "chapter_1",
+      "role_fast",
+      "role_status",
+      "pressure_dot"
+    ],
+    "description": "level_1_3 V2 candidate for C1-M06/dot_intro. Core capabilities: bleed_apply, slow_or_bind.",
+    "candidateForLevel": "level_1_3",
+    "mechanicProfile": {
+      "slotId": "C1-M06",
+      "primaryRole": "dot_intro",
+      "targetTurns": [
+        4,
+        5
+      ],
+      "hpBand": [
+        85,
+        105
+      ],
+      "armorBudget": [
+        15,
+        28
+      ],
+      "counterTags": [
+        "healing",
+        "fast_kill",
+        "low_ap_defense"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_healing, slow_build."
+    },
+    "capabilities": [
+      {
+        "type": "bleed_apply",
+        "cadence": "cooldown_2_turns",
+        "pressure": "intro_dot_pressure",
+        "counterplay": [
+          "healing",
+          "fast_kill"
+        ]
+      },
+      {
+        "type": "slow_or_bind",
+        "cadence": "cooldown_3_turns",
+        "pressure": "tempo_tax",
+        "counterplay": [
+          "low_ap_actions"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "bleed",
+        "attack",
+        "slow"
+      ],
+      "telegraphText": "Intent pattern: bleed -> attack -> slow.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_healing",
+        "slow_build"
+      ],
+      "expectedCounter": [
+        "healing",
+        "fast_kill",
+        "low_ap_defense"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 10,
+      "counterplay": [
+        "healing",
+        "fast_kill",
+        "low_ap_defense"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-003-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c1_04_telegraph_bruiser": {
+    "id": "enemy_v2_c1_04_telegraph_bruiser",
+    "name": "Chapter 1 04 Telegraph Bruiser",
+    "stats": {
+      "hp": 115,
+      "maxHp": 115,
+      "ap": 4,
+      "speed": 8
+    },
+    "skills": [
+      "enemy_skill_orc_club",
+      "enemy_skill_wrecking_swing"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 9,
+        "max": 9,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 16,
+        "max": 16,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 8,
+        "max": 8,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 6,
+        "max": 6,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 6,
+        "max": 6,
+        "weakness": 1.25
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "orc",
+    "class": "bruiser",
+    "tags": [
+      "v2_candidate",
+      "chapter_1",
+      "role_elite",
+      "pressure_burst"
+    ],
+    "description": "level_1_4 V2 candidate for C1-M03/telegraph_attack. Core capabilities: telegraph_countdown, high_damage.",
+    "candidateForLevel": "level_1_4",
+    "mechanicProfile": {
+      "slotId": "C1-M03",
+      "primaryRole": "telegraph_attack",
+      "targetTurns": [
+        4,
+        6
+      ],
+      "hpBand": [
+        105,
+        130
+      ],
+      "armorBudget": [
+        30,
+        50
+      ],
+      "counterTags": [
+        "guard",
+        "armor_up",
+        "interrupt"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: ignores_telegraph."
+    },
+    "capabilities": [
+      {
+        "type": "telegraph_countdown",
+        "cadence": "windup_1_turn",
+        "pressure": "readable_burst",
+        "counterplay": [
+          "guard",
+          "interrupt"
+        ]
+      },
+      {
+        "type": "high_damage",
+        "cadence": "cooldown_3_turns",
+        "pressure": "hp_spike",
+        "counterplay": [
+          "guard",
+          "armor"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "telegraph",
+        "heavy_attack",
+        "recover"
+      ],
+      "telegraphText": "Intent pattern: telegraph -> heavy_attack -> recover.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "ignores_telegraph"
+      ],
+      "expectedCounter": [
+        "guard",
+        "armor_up",
+        "interrupt"
+      ]
+    },
+    "runPressure": {
+      "type": "armor_attrition",
+      "carryoverImpact": [
+        "armor_loss"
+      ],
+      "expectedDamageBudget": 12,
+      "counterplay": [
+        "guard",
+        "armor_up",
+        "interrupt"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-004-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c1_05_thorn_mender": {
+    "id": "enemy_v2_c1_05_thorn_mender",
+    "name": "Chapter 1 05 Thorn Mender",
+    "stats": {
+      "hp": 108,
+      "maxHp": 108,
+      "ap": 4,
+      "speed": 9
+    },
+    "skills": [
+      "enemy_skill_dirty_bandage",
+      "enemy_skill_bad_lunchbox"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 9,
+        "max": 9,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 15,
+        "max": 15,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 8,
+        "max": 8,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 6,
+        "max": 6,
+        "weakness": 1.25
+      },
+      "leg": {
+        "current": 6,
+        "max": 6,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "plantkin",
+    "class": "mender",
+    "tags": [
+      "v2_candidate",
+      "chapter_1",
+      "role_repair",
+      "role_status",
+      "pressure_poison"
+    ],
+    "description": "level_1_5 V2 candidate for C1-M05/light_repair. Core capabilities: self_heal, poison_apply.",
+    "candidateForLevel": "level_1_5",
+    "mechanicProfile": {
+      "slotId": "C1-M05",
+      "primaryRole": "light_repair",
+      "targetTurns": [
+        5,
+        6
+      ],
+      "hpBand": [
+        100,
+        120
+      ],
+      "armorBudget": [
+        32,
+        48
+      ],
+      "counterTags": [
+        "burst_window",
+        "healing",
+        "fast_kill"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: low_burst, no_healing."
+    },
+    "capabilities": [
+      {
+        "type": "self_heal",
+        "cadence": "cooldown_3_turns",
+        "pressure": "extends_fight",
+        "counterplay": [
+          "burst",
+          "interrupt"
+        ]
+      },
+      {
+        "type": "poison_apply",
+        "cadence": "cooldown_2_turns",
+        "pressure": "hp_attrition",
+        "counterplay": [
+          "healing",
+          "cleanse"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "attack",
+        "repair",
+        "poison"
+      ],
+      "telegraphText": "Intent pattern: attack -> repair -> poison.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "low_burst",
+        "no_healing"
+      ],
+      "expectedCounter": [
+        "burst_window",
+        "healing",
+        "fast_kill"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 12,
+      "counterplay": [
+        "burst_window",
+        "healing",
+        "fast_kill"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-005-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c1_06_barkshield_guard": {
+    "id": "enemy_v2_c1_06_barkshield_guard",
+    "name": "Chapter 1 06 Barkshield Guard",
+    "stats": {
+      "hp": 118,
+      "maxHp": 118,
+      "ap": 3,
+      "speed": 6
+    },
+    "skills": [
+      "skill_block",
+      "skill_shield_bash"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 20,
+        "max": 20,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 34,
+        "max": 34,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 18,
+        "max": 18,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 14,
+        "max": 14,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 14,
+        "max": 14,
+        "weakness": 1.25
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "plantkin",
+    "class": "guard",
+    "tags": [
+      "v2_candidate",
+      "chapter_1",
+      "role_armor",
+      "role_repair"
+    ],
+    "description": "level_1_6 V2 candidate for C1-M04/weakpoint_armor. Core capabilities: armor_repair, armor_break.",
+    "candidateForLevel": "level_1_6",
+    "mechanicProfile": {
+      "slotId": "C1-M04",
+      "primaryRole": "weakpoint_armor",
+      "targetTurns": [
+        5,
+        7
+      ],
+      "hpBand": [
+        110,
+        130
+      ],
+      "armorBudget": [
+        75,
+        100
+      ],
+      "counterTags": [
+        "armor_break",
+        "part_targeting"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: random_targeting."
+    },
+    "capabilities": [
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_2_turns",
+        "pressure": "armor_wall",
+        "counterplay": [
+          "armor_break",
+          "focus_weak_part"
+        ]
+      },
+      {
+        "type": "armor_break",
+        "cadence": "cooldown_3_turns",
+        "pressure": "armor_attrition",
+        "counterplay": [
+          "armor_up",
+          "fast_kill"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "guard",
+        "attack",
+        "guard"
+      ],
+      "telegraphText": "Intent pattern: guard -> attack -> guard.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "random_targeting"
+      ],
+      "expectedCounter": [
+        "armor_break",
+        "part_targeting"
+      ]
+    },
+    "runPressure": {
+      "type": "armor_attrition",
+      "carryoverImpact": [
+        "armor_loss"
+      ],
+      "expectedDamageBudget": 8,
+      "counterplay": [
+        "armor_break",
+        "part_targeting"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-006-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c1_07_field_medic": {
+    "id": "enemy_v2_c1_07_field_medic",
+    "name": "Chapter 1 07 Field Medic",
+    "stats": {
+      "hp": 110,
+      "maxHp": 110,
+      "ap": 4,
+      "speed": 10
+    },
+    "skills": [
+      "skill_heal",
+      "enemy_skill_ankle_pebble"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 4,
+        "max": 4,
+        "weakness": 1.35
+      },
+      "chest": {
+        "current": 12,
+        "max": 12,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 6,
+        "max": 6,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 5,
+        "max": 5,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 5,
+        "max": 5,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "goblin",
+    "class": "medic",
+    "tags": [
+      "v2_candidate",
+      "chapter_1",
+      "role_repair",
+      "role_status",
+      "pressure_slow"
+    ],
+    "description": "level_1_7 V2 candidate for C1-M07/control_heal_intro. Core capabilities: self_heal, slow_or_bind.",
+    "candidateForLevel": "level_1_7",
+    "mechanicProfile": {
+      "slotId": "C1-M07",
+      "primaryRole": "control_heal_intro",
+      "targetTurns": [
+        5,
+        6
+      ],
+      "hpBand": [
+        100,
+        125
+      ],
+      "armorBudget": [
+        25,
+        40
+      ],
+      "counterTags": [
+        "tempo_management",
+        "burst_window"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_burst, slow_action_plan."
+    },
+    "capabilities": [
+      {
+        "type": "self_heal",
+        "cadence": "cooldown_3_turns",
+        "pressure": "healing_check",
+        "counterplay": [
+          "burst",
+          "interrupt"
+        ]
+      },
+      {
+        "type": "slow_or_bind",
+        "cadence": "cooldown_2_turns",
+        "pressure": "tempo_tax",
+        "counterplay": [
+          "low_ap_actions"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "slow",
+        "attack",
+        "heal"
+      ],
+      "telegraphText": "Intent pattern: slow -> attack -> heal.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_burst",
+        "slow_action_plan"
+      ],
+      "expectedCounter": [
+        "tempo_management",
+        "burst_window"
+      ]
+    },
+    "runPressure": {
+      "type": "delay_tax",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 10,
+      "counterplay": [
+        "tempo_management",
+        "burst_window"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-007-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c1_08_bramble_counter": {
+    "id": "enemy_v2_c1_08_bramble_counter",
+    "name": "Chapter 1 08 Bramble Counter",
+    "stats": {
+      "hp": 125,
+      "maxHp": 125,
+      "ap": 3,
+      "speed": 8
+    },
+    "skills": [
+      "skill_block",
+      "enemy_skill_bone_splinter_jab"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 13,
+        "max": 13,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 22,
+        "max": 22,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 12,
+        "max": 12,
+        "weakness": 1.25
+      },
+      "arm": {
+        "current": 9,
+        "max": 9,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 9,
+        "max": 9,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "plantkin",
+    "class": "counter_guard",
+    "tags": [
+      "v2_candidate",
+      "chapter_1",
+      "role_armor",
+      "role_status",
+      "pressure_counter"
+    ],
+    "description": "level_1_8 V2 candidate for C1-M08/counter_stance_intro. Core capabilities: counter_stance, bleed_apply.",
+    "candidateForLevel": "level_1_8",
+    "mechanicProfile": {
+      "slotId": "C1-M08",
+      "primaryRole": "counter_stance_intro",
+      "targetTurns": [
+        5,
+        7
+      ],
+      "hpBand": [
+        115,
+        140
+      ],
+      "armorBudget": [
+        45,
+        65
+      ],
+      "counterTags": [
+        "read_telegraph",
+        "break_stance",
+        "stop_attack"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: blind_attack."
+    },
+    "capabilities": [
+      {
+        "type": "counter_stance",
+        "cadence": "alternating_turns",
+        "pressure": "punishes_blind_attack",
+        "counterplay": [
+          "wait",
+          "break_stance"
+        ]
+      },
+      {
+        "type": "bleed_apply",
+        "cadence": "after_counter",
+        "pressure": "counter_bleed",
+        "counterplay": [
+          "healing",
+          "stop_attack"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "stance",
+        "counter",
+        "recover"
+      ],
+      "telegraphText": "Intent pattern: stance -> counter -> recover.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "blind_attack"
+      ],
+      "expectedCounter": [
+        "read_telegraph",
+        "break_stance",
+        "stop_attack"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 12,
+      "counterplay": [
+        "read_telegraph",
+        "break_stance",
+        "stop_attack"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-008-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c1_09_bark_gate_elite": {
+    "id": "enemy_v2_c1_09_bark_gate_elite",
+    "name": "Chapter 1 09 Bark Gate Elite",
+    "stats": {
+      "hp": 180,
+      "maxHp": 180,
+      "ap": 4,
+      "speed": 7
+    },
+    "skills": [
+      "skill_block",
+      "enemy_skill_wrecking_swing",
+      "skill_shield_bash"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 25,
+        "max": 25,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 43,
+        "max": 43,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 22,
+        "max": 22,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 17,
+        "max": 17,
+        "weakness": 1.25
+      },
+      "leg": {
+        "current": 17,
+        "max": 17,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "plantkin",
+    "class": "gate_elite",
+    "tags": [
+      "v2_candidate",
+      "chapter_1",
+      "role_elite",
+      "role_armor",
+      "pressure_burst"
+    ],
+    "description": "level_1_9 V2 candidate for C1-M09/chapter_gate_elite. Core capabilities: armor_repair, telegraph_countdown.",
+    "candidateForLevel": "level_1_9",
+    "mechanicProfile": {
+      "slotId": "C1-M09",
+      "primaryRole": "chapter_gate_elite",
+      "targetTurns": [
+        7,
+        9
+      ],
+      "hpBand": [
+        165,
+        200
+      ],
+      "armorBudget": [
+        90,
+        125
+      ],
+      "counterTags": [
+        "armor_break",
+        "guard",
+        "burst_window"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_armor_break, ignores_telegraph."
+    },
+    "capabilities": [
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_2_turns",
+        "pressure": "gate_delay",
+        "counterplay": [
+          "armor_break"
+        ]
+      },
+      {
+        "type": "telegraph_countdown",
+        "cadence": "windup_1_turn",
+        "pressure": "pre_boss_burst",
+        "counterplay": [
+          "guard",
+          "interrupt"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "guard",
+        "telegraph",
+        "heavy_attack",
+        "repair"
+      ],
+      "telegraphText": "Intent pattern: guard -> telegraph -> heavy_attack -> repair.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_armor_break",
+        "ignores_telegraph"
+      ],
+      "expectedCounter": [
+        "armor_break",
+        "guard",
+        "burst_window"
+      ]
+    },
+    "runPressure": {
+      "type": "pre_boss_drain",
+      "carryoverImpact": [
+        "hp_loss",
+        "armor_loss"
+      ],
+      "expectedDamageBudget": 18,
+      "counterplay": [
+        "armor_break",
+        "guard",
+        "burst_window"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-009-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "boss_v2_c1_10_ruin_bruiser": {
+    "id": "boss_v2_c1_10_ruin_bruiser",
+    "name": "Chapter 1 10 Ruin Bruiser",
+    "stats": {
+      "hp": 310,
+      "maxHp": 310,
+      "ap": 5,
+      "speed": 7
+    },
+    "skills": [
+      "enemy_skill_wrecking_swing",
+      "skill_block",
+      "enemy_skill_orc_headbutt",
+      "enemy_skill_dirty_bandage"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 36,
+        "max": 36,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 63,
+        "max": 63,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 33,
+        "max": 33,
+        "weakness": 1.25
+      },
+      "arm": {
+        "current": 25,
+        "max": 25,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 25,
+        "max": 25,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "plantkin",
+    "class": "boss",
+    "tags": [
+      "v2_candidate",
+      "chapter_1",
+      "role_boss",
+      "role_elite",
+      "role_armor",
+      "pressure_burst"
+    ],
+    "description": "level_1_10 V2 candidate for C1-M10/chapter_boss. Core capabilities: phase_shift, telegraph_countdown, armor_repair.",
+    "candidateForLevel": "level_1_10",
+    "mechanicProfile": {
+      "slotId": "C1-M10",
+      "primaryRole": "chapter_boss",
+      "targetTurns": [
+        9,
+        12
+      ],
+      "hpBand": [
+        280,
+        340
+      ],
+      "armorBudget": [
+        145,
+        180
+      ],
+      "counterTags": [
+        "basic_guard",
+        "weakpoint_window",
+        "armor_break"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_resource_save, ignores_exposed."
+    },
+    "capabilities": [
+      {
+        "type": "phase_shift",
+        "cadence": "hp_50_percent",
+        "pressure": "phase_pressure",
+        "counterplay": [
+          "resource_save"
+        ]
+      },
+      {
+        "type": "telegraph_countdown",
+        "cadence": "windup_1_turn",
+        "pressure": "boss_burst",
+        "counterplay": [
+          "guard",
+          "interrupt"
+        ]
+      },
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_3_turns",
+        "pressure": "boss_delay",
+        "counterplay": [
+          "armor_break"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "pressure",
+        "guard",
+        "exposed",
+        "heavy_attack"
+      ],
+      "telegraphText": "Intent pattern: pressure -> guard -> exposed -> heavy_attack.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_resource_save",
+        "ignores_exposed"
+      ],
+      "expectedCounter": [
+        "basic_guard",
+        "weakpoint_window",
+        "armor_break"
+      ]
+    },
+    "runPressure": {
+      "type": "none",
+      "carryoverImpact": [],
+      "expectedDamageBudget": 0,
+      "counterplay": [
+        "basic_guard",
+        "weakpoint_window",
+        "armor_break"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-010-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c2_01_frost_skirmisher": {
+    "id": "enemy_v2_c2_01_frost_skirmisher",
+    "name": "Chapter 2 01 Frost Skirmisher",
+    "stats": {
+      "hp": 190,
+      "maxHp": 190,
+      "ap": 4,
+      "speed": 13
+    },
+    "skills": [
+      "enemy_skill_ankle_pebble",
+      "enemy_skill_orc_club"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 10,
+        "max": 10,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 17,
+        "max": 17,
+        "weakness": 1.25
+      },
+      "abdomen": {
+        "current": 9,
+        "max": 9,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 7,
+        "max": 7,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 7,
+        "max": 7,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "human",
+    "class": "skirmisher",
+    "tags": [
+      "v2_candidate",
+      "chapter_2",
+      "role_fast",
+      "role_status",
+      "pressure_slow"
+    ],
+    "description": "level_2_1 V2 candidate for C2-M01/advanced_fast. Core capabilities: slow_or_bind, basic_attack.",
+    "candidateForLevel": "level_2_1",
+    "mechanicProfile": {
+      "slotId": "C2-M01",
+      "primaryRole": "advanced_fast",
+      "targetTurns": [
+        5,
+        7
+      ],
+      "hpBand": [
+        175,
+        210
+      ],
+      "armorBudget": [
+        40,
+        55
+      ],
+      "counterTags": [
+        "speed_management",
+        "low_ap_defense"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: slow_build."
+    },
+    "capabilities": [
+      {
+        "type": "slow_or_bind",
+        "cadence": "cooldown_2_turns",
+        "pressure": "tempo_pressure",
+        "counterplay": [
+          "speed_management"
+        ]
+      },
+      {
+        "type": "basic_attack",
+        "cadence": "every_turn",
+        "pressure": "hp_pressure",
+        "counterplay": [
+          "guard"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "slow",
+        "attack",
+        "attack"
+      ],
+      "telegraphText": "Intent pattern: slow -> attack -> attack.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "slow_build"
+      ],
+      "expectedCounter": [
+        "speed_management",
+        "low_ap_defense"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 14,
+      "counterplay": [
+        "speed_management",
+        "low_ap_defense"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-011-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c2_02_frost_blood_raider": {
+    "id": "enemy_v2_c2_02_frost_blood_raider",
+    "name": "Chapter 2 02 Frost Blood Raider",
+    "stats": {
+      "hp": 260,
+      "maxHp": 260,
+      "ap": 4,
+      "speed": 9
+    },
+    "skills": [
+      "enemy_skill_orc_club",
+      "skill_cleave"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 7,
+        "max": 7,
+        "weakness": 1.35
+      },
+      "chest": {
+        "current": 24,
+        "max": 24,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 12,
+        "max": 12,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 9,
+        "max": 9,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 9,
+        "max": 9,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "human",
+    "class": "raider",
+    "tags": [
+      "v2_candidate",
+      "chapter_2",
+      "role_fast",
+      "pressure_basic"
+    ],
+    "description": "level_2_2 V2 candidate for C2-M02/standard_blood. Core capabilities: basic_attack, high_damage.",
+    "candidateForLevel": "level_2_2",
+    "mechanicProfile": {
+      "slotId": "C2-M02",
+      "primaryRole": "standard_blood",
+      "targetTurns": [
+        6,
+        8
+      ],
+      "hpBand": [
+        240,
+        285
+      ],
+      "armorBudget": [
+        50,
+        75
+      ],
+      "counterTags": [
+        "stable_output",
+        "guard"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: low_output."
+    },
+    "capabilities": [
+      {
+        "type": "basic_attack",
+        "cadence": "every_turn",
+        "pressure": "standard_hp_pressure",
+        "counterplay": [
+          "stable_output"
+        ]
+      },
+      {
+        "type": "high_damage",
+        "cadence": "cooldown_3_turns",
+        "pressure": "mid_burst",
+        "counterplay": [
+          "guard"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "attack",
+        "attack",
+        "heavy_attack"
+      ],
+      "telegraphText": "Intent pattern: attack -> attack -> heavy_attack.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "low_output"
+      ],
+      "expectedCounter": [
+        "stable_output",
+        "guard"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 16,
+      "counterplay": [
+        "stable_output",
+        "guard"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-012-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c2_03_iceplate_guard": {
+    "id": "enemy_v2_c2_03_iceplate_guard",
+    "name": "Chapter 2 03 Iceplate Guard",
+    "stats": {
+      "hp": 250,
+      "maxHp": 250,
+      "ap": 3,
+      "speed": 6
+    },
+    "skills": [
+      "enemy_skill_iceplate_head_crush",
+      "skill_block"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 50,
+        "max": 50,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 86,
+        "max": 86,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 45,
+        "max": 45,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 34,
+        "max": 34,
+        "weakness": 1.25
+      },
+      "leg": {
+        "current": 34,
+        "max": 34,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "construct",
+    "class": "armor_guard",
+    "tags": [
+      "v2_candidate",
+      "chapter_2",
+      "role_armor",
+      "role_repair"
+    ],
+    "description": "level_2_3 V2 candidate for C2-M04/armor_wall. Core capabilities: armor_repair, armor_break.",
+    "candidateForLevel": "level_2_3",
+    "mechanicProfile": {
+      "slotId": "C2-M04",
+      "primaryRole": "armor_wall",
+      "targetTurns": [
+        7,
+        9
+      ],
+      "hpBand": [
+        230,
+        275
+      ],
+      "armorBudget": [
+        200,
+        245
+      ],
+      "counterTags": [
+        "armor_break",
+        "part_targeting"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_armor_break."
+    },
+    "capabilities": [
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_2_turns",
+        "pressure": "armor_wall",
+        "counterplay": [
+          "armor_break"
+        ]
+      },
+      {
+        "type": "armor_break",
+        "cadence": "cooldown_3_turns",
+        "pressure": "armor_attrition",
+        "counterplay": [
+          "armor_up"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "guard",
+        "armor_attack",
+        "attack"
+      ],
+      "telegraphText": "Intent pattern: guard -> armor_attack -> attack.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_armor_break"
+      ],
+      "expectedCounter": [
+        "armor_break",
+        "part_targeting"
+      ]
+    },
+    "runPressure": {
+      "type": "armor_attrition",
+      "carryoverImpact": [
+        "armor_loss"
+      ],
+      "expectedDamageBudget": 10,
+      "counterplay": [
+        "armor_break",
+        "part_targeting"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-001-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c2_04_canyon_breaker": {
+    "id": "enemy_v2_c2_04_canyon_breaker",
+    "name": "Chapter 2 04 Canyon Breaker",
+    "stats": {
+      "hp": 245,
+      "maxHp": 245,
+      "ap": 5,
+      "speed": 8
+    },
+    "skills": [
+      "enemy_skill_wrecking_swing",
+      "enemy_skill_orc_headbutt"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 19,
+        "max": 19,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 33,
+        "max": 33,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 17,
+        "max": 17,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 13,
+        "max": 13,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 13,
+        "max": 13,
+        "weakness": 1.25
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "orc",
+    "class": "breaker",
+    "tags": [
+      "v2_candidate",
+      "chapter_2",
+      "role_elite",
+      "pressure_burst",
+      "pressure_armor"
+    ],
+    "description": "level_2_4 V2 candidate for C2-M03/pure_attack_pressure. Core capabilities: telegraph_countdown, armor_break.",
+    "candidateForLevel": "level_2_4",
+    "mechanicProfile": {
+      "slotId": "C2-M03",
+      "primaryRole": "pure_attack_pressure",
+      "targetTurns": [
+        6,
+        8
+      ],
+      "hpBand": [
+        225,
+        265
+      ],
+      "armorBudget": [
+        70,
+        100
+      ],
+      "counterTags": [
+        "guard",
+        "interrupt",
+        "armor_up"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: ignores_telegraph."
+    },
+    "capabilities": [
+      {
+        "type": "telegraph_countdown",
+        "cadence": "windup_1_turn",
+        "pressure": "readable_heavy",
+        "counterplay": [
+          "guard",
+          "interrupt"
+        ]
+      },
+      {
+        "type": "armor_break",
+        "cadence": "cooldown_2_turns",
+        "pressure": "armor_loss",
+        "counterplay": [
+          "armor_up"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "telegraph",
+        "heavy_attack",
+        "recover"
+      ],
+      "telegraphText": "Intent pattern: telegraph -> heavy_attack -> recover.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "ignores_telegraph"
+      ],
+      "expectedCounter": [
+        "guard",
+        "interrupt",
+        "armor_up"
+      ]
+    },
+    "runPressure": {
+      "type": "armor_attrition",
+      "carryoverImpact": [
+        "armor_loss",
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 18,
+      "counterplay": [
+        "guard",
+        "interrupt",
+        "armor_up"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-002-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c2_05_frostbone_mender": {
+    "id": "enemy_v2_c2_05_frostbone_mender",
+    "name": "Chapter 2 05 Frostbone Mender",
+    "stats": {
+      "hp": 265,
+      "maxHp": 265,
+      "ap": 4,
+      "speed": 6
+    },
+    "skills": [
+      "enemy_skill_bone_patch",
+      "enemy_skill_dead_air",
+      "enemy_skill_shield_tap"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 20,
+        "max": 20,
+        "weakness": 1.35
+      },
+      "chest": {
+        "current": 63,
+        "max": 63,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 33,
+        "max": 33,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 25,
+        "max": 25,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 25,
+        "max": 25,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "undead",
+    "class": "mender_guard",
+    "tags": [
+      "v2_candidate",
+      "chapter_2",
+      "role_repair",
+      "role_armor",
+      "role_status"
+    ],
+    "description": "level_2_5 V2 candidate for C2-M05/repair_guard. Core capabilities: armor_repair, slow_or_bind.",
+    "candidateForLevel": "level_2_5",
+    "mechanicProfile": {
+      "slotId": "C2-M05",
+      "primaryRole": "repair_guard",
+      "targetTurns": [
+        7,
+        9
+      ],
+      "hpBand": [
+        245,
+        285
+      ],
+      "armorBudget": [
+        145,
+        180
+      ],
+      "counterTags": [
+        "burst_window",
+        "armor_break",
+        "interrupt"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: low_burst."
+    },
+    "capabilities": [
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_2_turns",
+        "pressure": "repair_delay",
+        "counterplay": [
+          "burst",
+          "armor_break"
+        ]
+      },
+      {
+        "type": "slow_or_bind",
+        "cadence": "cooldown_3_turns",
+        "pressure": "tempo_tax",
+        "counterplay": [
+          "speed_management"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "attack",
+        "repair",
+        "guard"
+      ],
+      "telegraphText": "Intent pattern: attack -> repair -> guard.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "low_burst"
+      ],
+      "expectedCounter": [
+        "burst_window",
+        "armor_break",
+        "interrupt"
+      ]
+    },
+    "runPressure": {
+      "type": "delay_tax",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 16,
+      "counterplay": [
+        "burst_window",
+        "armor_break",
+        "interrupt"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-003-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c2_06_chill_hexer": {
+    "id": "enemy_v2_c2_06_chill_hexer",
+    "name": "Chapter 2 06 Chill Hexer",
+    "stats": {
+      "hp": 230,
+      "maxHp": 230,
+      "ap": 4,
+      "speed": 10
+    },
+    "skills": [
+      "enemy_skill_dead_air",
+      "enemy_skill_bad_lunchbox"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 16,
+        "max": 16,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 28,
+        "max": 28,
+        "weakness": 1.25
+      },
+      "abdomen": {
+        "current": 15,
+        "max": 15,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 11,
+        "max": 11,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 11,
+        "max": 11,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "human",
+    "class": "hexer",
+    "tags": [
+      "v2_candidate",
+      "chapter_2",
+      "role_status",
+      "pressure_slow",
+      "pressure_poison"
+    ],
+    "description": "level_2_6 V2 candidate for C2-M06/control_ritual. Core capabilities: slow_or_bind, poison_apply.",
+    "candidateForLevel": "level_2_6",
+    "mechanicProfile": {
+      "slotId": "C2-M06",
+      "primaryRole": "control_ritual",
+      "targetTurns": [
+        6,
+        8
+      ],
+      "hpBand": [
+        215,
+        250
+      ],
+      "armorBudget": [
+        60,
+        85
+      ],
+      "counterTags": [
+        "speed_management",
+        "healing",
+        "fast_kill"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: slow_build, no_healing."
+    },
+    "capabilities": [
+      {
+        "type": "slow_or_bind",
+        "cadence": "cooldown_2_turns",
+        "pressure": "control_pressure",
+        "counterplay": [
+          "speed_management"
+        ]
+      },
+      {
+        "type": "poison_apply",
+        "cadence": "cooldown_3_turns",
+        "pressure": "hp_attrition",
+        "counterplay": [
+          "healing",
+          "fast_kill"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "slow",
+        "poison",
+        "attack"
+      ],
+      "telegraphText": "Intent pattern: slow -> poison -> attack.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "slow_build",
+        "no_healing"
+      ],
+      "expectedCounter": [
+        "speed_management",
+        "healing",
+        "fast_kill"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 18,
+      "counterplay": [
+        "speed_management",
+        "healing",
+        "fast_kill"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-004-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c2_07_rotplate_guard": {
+    "id": "enemy_v2_c2_07_rotplate_guard",
+    "name": "Chapter 2 07 Rotplate Guard",
+    "stats": {
+      "hp": 240,
+      "maxHp": 240,
+      "ap": 4,
+      "speed": 7
+    },
+    "skills": [
+      "enemy_skill_bad_lunchbox",
+      "enemy_skill_shield_tap",
+      "enemy_skill_bone_patch"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 28,
+        "max": 28,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 48,
+        "max": 48,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 25,
+        "max": 25,
+        "weakness": 1.25
+      },
+      "arm": {
+        "current": 19,
+        "max": 19,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 19,
+        "max": 19,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "undead",
+    "class": "dot_guard",
+    "tags": [
+      "v2_candidate",
+      "chapter_2",
+      "role_armor",
+      "role_status",
+      "pressure_poison"
+    ],
+    "description": "level_2_7 V2 candidate for C2-M07/armor_dot. Core capabilities: poison_apply, armor_break.",
+    "candidateForLevel": "level_2_7",
+    "mechanicProfile": {
+      "slotId": "C2-M07",
+      "primaryRole": "armor_dot",
+      "targetTurns": [
+        6,
+        8
+      ],
+      "hpBand": [
+        225,
+        260
+      ],
+      "armorBudget": [
+        105,
+        140
+      ],
+      "counterTags": [
+        "healing",
+        "cleanse",
+        "fast_kill"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_healing."
+    },
+    "capabilities": [
+      {
+        "type": "poison_apply",
+        "cadence": "cooldown_2_turns",
+        "pressure": "dot_attrition",
+        "counterplay": [
+          "healing",
+          "cleanse"
+        ]
+      },
+      {
+        "type": "armor_break",
+        "cadence": "cooldown_3_turns",
+        "pressure": "armor_attrition",
+        "counterplay": [
+          "armor_up"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "poison",
+        "armor_attack",
+        "poison"
+      ],
+      "telegraphText": "Intent pattern: poison -> armor_attack -> poison.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_healing"
+      ],
+      "expectedCounter": [
+        "healing",
+        "cleanse",
+        "fast_kill"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 20,
+      "counterplay": [
+        "healing",
+        "cleanse",
+        "fast_kill"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-005-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c2_08_ice_counter_sentinel": {
+    "id": "enemy_v2_c2_08_ice_counter_sentinel",
+    "name": "Chapter 2 08 Ice Counter Sentinel",
+    "stats": {
+      "hp": 280,
+      "maxHp": 280,
+      "ap": 4,
+      "speed": 7
+    },
+    "skills": [
+      "skill_block",
+      "enemy_skill_iceplate_head_crush",
+      "enemy_skill_dead_air"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 32,
+        "max": 32,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 55,
+        "max": 55,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 29,
+        "max": 29,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 22,
+        "max": 22,
+        "weakness": 1.25
+      },
+      "leg": {
+        "current": 22,
+        "max": 22,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "construct",
+    "class": "counter_sentinel",
+    "tags": [
+      "v2_candidate",
+      "chapter_2",
+      "role_armor",
+      "role_status",
+      "pressure_counter"
+    ],
+    "description": "level_2_8 V2 candidate for C2-M08/defense_counter. Core capabilities: counter_stance, slow_or_bind.",
+    "candidateForLevel": "level_2_8",
+    "mechanicProfile": {
+      "slotId": "C2-M08",
+      "primaryRole": "defense_counter",
+      "targetTurns": [
+        7,
+        9
+      ],
+      "hpBand": [
+        260,
+        305
+      ],
+      "armorBudget": [
+        125,
+        160
+      ],
+      "counterTags": [
+        "read_telegraph",
+        "armor_break",
+        "stop_attack"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: blind_attack."
+    },
+    "capabilities": [
+      {
+        "type": "counter_stance",
+        "cadence": "alternating_turns",
+        "pressure": "counter_pressure",
+        "counterplay": [
+          "stop_attack",
+          "break_stance"
+        ]
+      },
+      {
+        "type": "slow_or_bind",
+        "cadence": "after_counter",
+        "pressure": "tempo_tax",
+        "counterplay": [
+          "speed_management"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "stance",
+        "counter",
+        "slow"
+      ],
+      "telegraphText": "Intent pattern: stance -> counter -> slow.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "blind_attack"
+      ],
+      "expectedCounter": [
+        "read_telegraph",
+        "armor_break",
+        "stop_attack"
+      ]
+    },
+    "runPressure": {
+      "type": "delay_tax",
+      "carryoverImpact": [
+        "hp_loss",
+        "armor_loss"
+      ],
+      "expectedDamageBudget": 18,
+      "counterplay": [
+        "read_telegraph",
+        "armor_break",
+        "stop_attack"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-006-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c2_09_gatebreaker_knight": {
+    "id": "enemy_v2_c2_09_gatebreaker_knight",
+    "name": "Chapter 2 09 Gatebreaker Knight",
+    "stats": {
+      "hp": 380,
+      "maxHp": 380,
+      "ap": 5,
+      "speed": 8
+    },
+    "skills": [
+      "enemy_skill_centurion_wrecking_swing",
+      "enemy_skill_shield_tap",
+      "enemy_skill_blood_heat"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 47,
+        "max": 47,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 82,
+        "max": 82,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 43,
+        "max": 43,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 32,
+        "max": 32,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 32,
+        "max": 32,
+        "weakness": 1.25
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "human",
+    "class": "gate_elite",
+    "tags": [
+      "v2_candidate",
+      "chapter_2",
+      "role_elite",
+      "role_armor",
+      "pressure_burst"
+    ],
+    "description": "level_2_9 V2 candidate for C2-M09/chapter_gate_elite. Core capabilities: telegraph_countdown, lifesteal, armor_break.",
+    "candidateForLevel": "level_2_9",
+    "mechanicProfile": {
+      "slotId": "C2-M09",
+      "primaryRole": "chapter_gate_elite",
+      "targetTurns": [
+        8,
+        10
+      ],
+      "hpBand": [
+        350,
+        410
+      ],
+      "armorBudget": [
+        190,
+        235
+      ],
+      "counterTags": [
+        "guard",
+        "burst_window",
+        "armor_break"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_guard, low_burst."
+    },
+    "capabilities": [
+      {
+        "type": "telegraph_countdown",
+        "cadence": "windup_1_turn",
+        "pressure": "gate_burst",
+        "counterplay": [
+          "guard",
+          "interrupt"
+        ]
+      },
+      {
+        "type": "lifesteal",
+        "cadence": "cooldown_3_turns",
+        "pressure": "sustain_pressure",
+        "counterplay": [
+          "burst_finish"
+        ]
+      },
+      {
+        "type": "armor_break",
+        "cadence": "cooldown_2_turns",
+        "pressure": "pre_boss_armor_loss",
+        "counterplay": [
+          "armor_up"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "guard",
+        "telegraph",
+        "heavy_attack",
+        "lifesteal"
+      ],
+      "telegraphText": "Intent pattern: guard -> telegraph -> heavy_attack -> lifesteal.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_guard",
+        "low_burst"
+      ],
+      "expectedCounter": [
+        "guard",
+        "burst_window",
+        "armor_break"
+      ]
+    },
+    "runPressure": {
+      "type": "pre_boss_drain",
+      "carryoverImpact": [
+        "hp_loss",
+        "armor_loss"
+      ],
+      "expectedDamageBudget": 24,
+      "counterplay": [
+        "guard",
+        "burst_window",
+        "armor_break"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-007-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "boss_v2_c2_10_frozen_centurion": {
+    "id": "boss_v2_c2_10_frozen_centurion",
+    "name": "Chapter 2 10 Frozen Centurion",
+    "stats": {
+      "hp": 540,
+      "maxHp": 540,
+      "ap": 5,
+      "speed": 7
+    },
+    "skills": [
+      "enemy_skill_centurion_wrecking_swing",
+      "enemy_skill_iceplate_head_crush",
+      "enemy_skill_bone_patch",
+      "enemy_skill_dead_air"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 63,
+        "max": 63,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 108,
+        "max": 108,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 57,
+        "max": 57,
+        "weakness": 1.25
+      },
+      "arm": {
+        "current": 43,
+        "max": 43,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 43,
+        "max": 43,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "construct",
+    "class": "boss",
+    "tags": [
+      "v2_candidate",
+      "chapter_2",
+      "role_boss",
+      "role_elite",
+      "role_armor",
+      "role_status"
+    ],
+    "description": "level_2_10 V2 candidate for C2-M10/chapter_boss. Core capabilities: phase_shift, telegraph_countdown, armor_repair, slow_or_bind.",
+    "candidateForLevel": "level_2_10",
+    "mechanicProfile": {
+      "slotId": "C2-M10",
+      "primaryRole": "chapter_boss",
+      "targetTurns": [
+        10,
+        13
+      ],
+      "hpBand": [
+        500,
+        580
+      ],
+      "armorBudget": [
+        260,
+        310
+      ],
+      "counterTags": [
+        "armor_break",
+        "speed_management",
+        "burst_window"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_armor_break, no_speed_plan."
+    },
+    "capabilities": [
+      {
+        "type": "phase_shift",
+        "cadence": "armor_break_phase",
+        "pressure": "phase_pressure",
+        "counterplay": [
+          "phase_reading"
+        ]
+      },
+      {
+        "type": "telegraph_countdown",
+        "cadence": "windup_1_turn",
+        "pressure": "boss_burst",
+        "counterplay": [
+          "guard",
+          "interrupt"
+        ]
+      },
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_3_turns",
+        "pressure": "boss_delay",
+        "counterplay": [
+          "armor_break"
+        ]
+      },
+      {
+        "type": "slow_or_bind",
+        "cadence": "phase_2",
+        "pressure": "tempo_pressure",
+        "counterplay": [
+          "speed_management"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "armor_phase",
+        "control_phase",
+        "exposed",
+        "burst"
+      ],
+      "telegraphText": "Intent pattern: armor_phase -> control_phase -> exposed -> burst.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_armor_break",
+        "no_speed_plan"
+      ],
+      "expectedCounter": [
+        "armor_break",
+        "speed_management",
+        "burst_window"
+      ]
+    },
+    "runPressure": {
+      "type": "none",
+      "carryoverImpact": [],
+      "expectedDamageBudget": 0,
+      "counterplay": [
+        "armor_break",
+        "speed_management",
+        "burst_window"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-008-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c3_01_dusk_runner": {
+    "id": "enemy_v2_c3_01_dusk_runner",
+    "name": "Chapter 3 01 Dusk Runner",
+    "stats": {
+      "hp": 390,
+      "maxHp": 390,
+      "ap": 5,
+      "speed": 15
+    },
+    "skills": [
+      "enemy_skill_blood_rite_cut",
+      "enemy_skill_ankle_pebble"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 21,
+        "max": 21,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 36,
+        "max": 36,
+        "weakness": 1.25
+      },
+      "abdomen": {
+        "current": 19,
+        "max": 19,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 14,
+        "max": 14,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 14,
+        "max": 14,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "human",
+    "class": "runner",
+    "tags": [
+      "v2_candidate",
+      "chapter_3",
+      "role_fast",
+      "role_status",
+      "pressure_bleed"
+    ],
+    "description": "level_3_1 V2 candidate for C3-M01/high_speed_attrition. Core capabilities: bleed_apply, slow_or_bind.",
+    "candidateForLevel": "level_3_1",
+    "mechanicProfile": {
+      "slotId": "C3-M01",
+      "primaryRole": "high_speed_attrition",
+      "targetTurns": [
+        7,
+        9
+      ],
+      "hpBand": [
+        360,
+        420
+      ],
+      "armorBudget": [
+        80,
+        110
+      ],
+      "counterTags": [
+        "low_ap_defense",
+        "healing",
+        "fast_kill"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_healing, slow_build."
+    },
+    "capabilities": [
+      {
+        "type": "bleed_apply",
+        "cadence": "cooldown_2_turns",
+        "pressure": "hp_attrition",
+        "counterplay": [
+          "healing",
+          "fast_kill"
+        ]
+      },
+      {
+        "type": "slow_or_bind",
+        "cadence": "cooldown_3_turns",
+        "pressure": "tempo_pressure",
+        "counterplay": [
+          "speed_management"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "bleed",
+        "attack",
+        "slow"
+      ],
+      "telegraphText": "Intent pattern: bleed -> attack -> slow.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_healing",
+        "slow_build"
+      ],
+      "expectedCounter": [
+        "low_ap_defense",
+        "healing",
+        "fast_kill"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 24,
+      "counterplay": [
+        "low_ap_defense",
+        "healing",
+        "fast_kill"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-009-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c3_02_plague_caller": {
+    "id": "enemy_v2_c3_02_plague_caller",
+    "name": "Chapter 3 02 Plague Caller",
+    "stats": {
+      "hp": 510,
+      "maxHp": 510,
+      "ap": 5,
+      "speed": 9
+    },
+    "skills": [
+      "enemy_skill_plague_mist_burst",
+      "enemy_skill_plague_standard_wave"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 14,
+        "max": 14,
+        "weakness": 1.35
+      },
+      "chest": {
+        "current": 44,
+        "max": 44,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 23,
+        "max": 23,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 17,
+        "max": 17,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 17,
+        "max": 17,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "cultist",
+    "class": "plague_caster",
+    "tags": [
+      "v2_candidate",
+      "chapter_3",
+      "role_status",
+      "pressure_poison",
+      "pressure_vulnerable"
+    ],
+    "description": "level_3_2 V2 candidate for C3-M06/dot_engine. Core capabilities: poison_apply, mark_and_cashout.",
+    "candidateForLevel": "level_3_2",
+    "mechanicProfile": {
+      "slotId": "C3-M06",
+      "primaryRole": "dot_engine",
+      "targetTurns": [
+        8,
+        10
+      ],
+      "hpBand": [
+        470,
+        540
+      ],
+      "armorBudget": [
+        95,
+        130
+      ],
+      "counterTags": [
+        "healing",
+        "cleanse",
+        "fast_kill"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_healing, no_cleanse."
+    },
+    "capabilities": [
+      {
+        "type": "poison_apply",
+        "cadence": "cooldown_2_turns",
+        "pressure": "dot_engine",
+        "counterplay": [
+          "healing",
+          "cleanse"
+        ]
+      },
+      {
+        "type": "mark_and_cashout",
+        "cadence": "cooldown_3_turns",
+        "pressure": "vulnerable_pressure",
+        "counterplay": [
+          "burst_window"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "poison",
+        "vulnerable",
+        "attack"
+      ],
+      "telegraphText": "Intent pattern: poison -> vulnerable -> attack.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_healing",
+        "no_cleanse"
+      ],
+      "expectedCounter": [
+        "healing",
+        "cleanse",
+        "fast_kill"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 28,
+      "counterplay": [
+        "healing",
+        "cleanse",
+        "fast_kill"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-010-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c3_03_twilight_reaver": {
+    "id": "enemy_v2_c3_03_twilight_reaver",
+    "name": "Chapter 3 03 Twilight Reaver",
+    "stats": {
+      "hp": 620,
+      "maxHp": 620,
+      "ap": 5,
+      "speed": 10
+    },
+    "skills": [
+      "enemy_skill_orc_club",
+      "skill_cleave",
+      "enemy_skill_wrecking_swing"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 20,
+        "max": 20,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 35,
+        "max": 35,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 18,
+        "max": 18,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 14,
+        "max": 14,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 14,
+        "max": 14,
+        "weakness": 1.25
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "orc",
+    "class": "reaver",
+    "tags": [
+      "v2_candidate",
+      "chapter_3",
+      "role_elite",
+      "pressure_basic",
+      "pressure_burst"
+    ],
+    "description": "level_3_3 V2 candidate for C3-M02/high_standard_blood. Core capabilities: basic_attack, telegraph_countdown.",
+    "candidateForLevel": "level_3_3",
+    "mechanicProfile": {
+      "slotId": "C3-M02",
+      "primaryRole": "high_standard_blood",
+      "targetTurns": [
+        8,
+        10
+      ],
+      "hpBand": [
+        580,
+        660
+      ],
+      "armorBudget": [
+        80,
+        105
+      ],
+      "counterTags": [
+        "stable_output",
+        "guard",
+        "execute_window"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: low_output, no_guard."
+    },
+    "capabilities": [
+      {
+        "type": "basic_attack",
+        "cadence": "every_turn",
+        "pressure": "high_hp_pressure",
+        "counterplay": [
+          "stable_output"
+        ]
+      },
+      {
+        "type": "telegraph_countdown",
+        "cadence": "cooldown_3_turns",
+        "pressure": "heavy_pressure",
+        "counterplay": [
+          "guard",
+          "interrupt"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "attack",
+        "attack",
+        "heavy_attack"
+      ],
+      "telegraphText": "Intent pattern: attack -> attack -> heavy_attack.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "low_output",
+        "no_guard"
+      ],
+      "expectedCounter": [
+        "stable_output",
+        "guard",
+        "execute_window"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 26,
+      "counterplay": [
+        "stable_output",
+        "guard",
+        "execute_window"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-011-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c3_04_graveplate_bastion": {
+    "id": "enemy_v2_c3_04_graveplate_bastion",
+    "name": "Chapter 3 04 Graveplate Bastion",
+    "stats": {
+      "hp": 565,
+      "maxHp": 565,
+      "ap": 4,
+      "speed": 5
+    },
+    "skills": [
+      "enemy_skill_bone_patch",
+      "enemy_skill_shield_tap",
+      "enemy_skill_dead_air"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 72,
+        "max": 72,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 124,
+        "max": 124,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 65,
+        "max": 65,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 49,
+        "max": 49,
+        "weakness": 1.25
+      },
+      "leg": {
+        "current": 49,
+        "max": 49,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "undead",
+    "class": "bastion_guard",
+    "tags": [
+      "v2_candidate",
+      "chapter_3",
+      "role_armor",
+      "role_repair",
+      "pressure_armor"
+    ],
+    "description": "level_3_4 V2 candidate for C3-M04/heavy_armor_standard. Core capabilities: armor_repair, armor_break, slow_or_bind.",
+    "candidateForLevel": "level_3_4",
+    "mechanicProfile": {
+      "slotId": "C3-M04",
+      "primaryRole": "heavy_armor_standard",
+      "targetTurns": [
+        9,
+        11
+      ],
+      "hpBand": [
+        530,
+        600
+      ],
+      "armorBudget": [
+        290,
+        350
+      ],
+      "counterTags": [
+        "armor_break",
+        "weakpoint_attack",
+        "speed_management"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_armor_break."
+    },
+    "capabilities": [
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_2_turns",
+        "pressure": "heavy_armor_wall",
+        "counterplay": [
+          "armor_break"
+        ]
+      },
+      {
+        "type": "armor_break",
+        "cadence": "cooldown_3_turns",
+        "pressure": "armor_attrition",
+        "counterplay": [
+          "armor_up"
+        ]
+      },
+      {
+        "type": "slow_or_bind",
+        "cadence": "cooldown_4_turns",
+        "pressure": "tempo_tax",
+        "counterplay": [
+          "speed_management"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "guard",
+        "repair",
+        "exposed"
+      ],
+      "telegraphText": "Intent pattern: guard -> repair -> exposed.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_armor_break"
+      ],
+      "expectedCounter": [
+        "armor_break",
+        "weakpoint_attack",
+        "speed_management"
+      ]
+    },
+    "runPressure": {
+      "type": "armor_attrition",
+      "carryoverImpact": [
+        "armor_loss"
+      ],
+      "expectedDamageBudget": 20,
+      "counterplay": [
+        "armor_break",
+        "weakpoint_attack",
+        "speed_management"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-012-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c3_05_blood_rite_acolyte": {
+    "id": "enemy_v2_c3_05_blood_rite_acolyte",
+    "name": "Chapter 3 05 Blood Rite Acolyte",
+    "stats": {
+      "hp": 560,
+      "maxHp": 560,
+      "ap": 5,
+      "speed": 11
+    },
+    "skills": [
+      "enemy_skill_blood_rite_cut",
+      "enemy_skill_blood_heat",
+      "enemy_skill_rusty_shiv"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 32,
+        "max": 32,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 55,
+        "max": 55,
+        "weakness": 1.25
+      },
+      "abdomen": {
+        "current": 29,
+        "max": 29,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 22,
+        "max": 22,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 22,
+        "max": 22,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "cultist",
+    "class": "blood_acolyte",
+    "tags": [
+      "v2_candidate",
+      "chapter_3",
+      "role_status",
+      "pressure_bleed",
+      "pressure_lifesteal_setup"
+    ],
+    "description": "level_3_5 V2 candidate for C3-M08/mark_cashout. Core capabilities: bleed_apply, mark_and_cashout, lifesteal.",
+    "candidateForLevel": "level_3_5",
+    "mechanicProfile": {
+      "slotId": "C3-M08",
+      "primaryRole": "mark_cashout",
+      "targetTurns": [
+        8,
+        10
+      ],
+      "hpBand": [
+        520,
+        590
+      ],
+      "armorBudget": [
+        120,
+        160
+      ],
+      "counterTags": [
+        "cleanse",
+        "prevent_setup",
+        "burst_window"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_cleanse, slow_build."
+    },
+    "capabilities": [
+      {
+        "type": "bleed_apply",
+        "cadence": "cooldown_2_turns",
+        "pressure": "setup_bleed",
+        "counterplay": [
+          "healing",
+          "cleanse"
+        ]
+      },
+      {
+        "type": "mark_and_cashout",
+        "cadence": "windup_2_turns",
+        "pressure": "delayed_lifesteal",
+        "counterplay": [
+          "burst_window",
+          "interrupt"
+        ]
+      },
+      {
+        "type": "lifesteal",
+        "cadence": "after_mark",
+        "pressure": "sustain_pressure",
+        "counterplay": [
+          "fast_kill"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "mark",
+        "bleed",
+        "cash_out"
+      ],
+      "telegraphText": "Intent pattern: mark -> bleed -> cash_out.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_cleanse",
+        "slow_build"
+      ],
+      "expectedCounter": [
+        "cleanse",
+        "prevent_setup",
+        "burst_window"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 30,
+      "counterplay": [
+        "cleanse",
+        "prevent_setup",
+        "burst_window"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-001-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c3_06_mire_chain_jailer": {
+    "id": "enemy_v2_c3_06_mire_chain_jailer",
+    "name": "Chapter 3 06 Mire Chain Jailer",
+    "stats": {
+      "hp": 505,
+      "maxHp": 505,
+      "ap": 5,
+      "speed": 8
+    },
+    "skills": [
+      "enemy_skill_mire_chain_drag",
+      "enemy_skill_shield_tap",
+      "enemy_skill_bone_patch"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 34,
+        "max": 34,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 59,
+        "max": 59,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 31,
+        "max": 31,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 23,
+        "max": 23,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 23,
+        "max": 23,
+        "weakness": 1.25
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "undead",
+    "class": "jailer",
+    "tags": [
+      "v2_candidate",
+      "chapter_3",
+      "role_armor",
+      "role_status",
+      "pressure_slow",
+      "pressure_armor"
+    ],
+    "description": "level_3_6 V2 candidate for C3-M07/tempo_control. Core capabilities: slow_or_bind, armor_break, armor_repair.",
+    "candidateForLevel": "level_3_6",
+    "mechanicProfile": {
+      "slotId": "C3-M07",
+      "primaryRole": "tempo_control",
+      "targetTurns": [
+        8,
+        10
+      ],
+      "hpBand": [
+        470,
+        540
+      ],
+      "armorBudget": [
+        130,
+        170
+      ],
+      "counterTags": [
+        "speed_management",
+        "preventive_defense",
+        "armor_up"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: slow_build, no_armor."
+    },
+    "capabilities": [
+      {
+        "type": "slow_or_bind",
+        "cadence": "cooldown_2_turns",
+        "pressure": "tempo_lock",
+        "counterplay": [
+          "speed_management"
+        ]
+      },
+      {
+        "type": "armor_break",
+        "cadence": "cooldown_3_turns",
+        "pressure": "armor_loss",
+        "counterplay": [
+          "armor_up"
+        ]
+      },
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_3_turns",
+        "pressure": "delay_tax",
+        "counterplay": [
+          "burst"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "slow",
+        "armor_attack",
+        "bind"
+      ],
+      "telegraphText": "Intent pattern: slow -> armor_attack -> bind.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "slow_build",
+        "no_armor"
+      ],
+      "expectedCounter": [
+        "speed_management",
+        "preventive_defense",
+        "armor_up"
+      ]
+    },
+    "runPressure": {
+      "type": "armor_attrition",
+      "carryoverImpact": [
+        "armor_loss",
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 24,
+      "counterplay": [
+        "speed_management",
+        "preventive_defense",
+        "armor_up"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-002-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c3_07_twilight_warden": {
+    "id": "enemy_v2_c3_07_twilight_warden",
+    "name": "Chapter 3 07 Twilight Warden",
+    "stats": {
+      "hp": 585,
+      "maxHp": 585,
+      "ap": 5,
+      "speed": 7
+    },
+    "skills": [
+      "enemy_skill_twilight_warden_bulwark",
+      "enemy_skill_shield_tap",
+      "enemy_skill_twilight_gate_crush"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 45,
+        "max": 45,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 78,
+        "max": 78,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 41,
+        "max": 41,
+        "weakness": 1.25
+      },
+      "arm": {
+        "current": 31,
+        "max": 31,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 31,
+        "max": 31,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "construct",
+    "class": "warden",
+    "tags": [
+      "v2_candidate",
+      "chapter_3",
+      "role_elite",
+      "role_armor",
+      "role_repair",
+      "pressure_armor"
+    ],
+    "description": "level_3_7 V2 candidate for C3-M05/repair_engine. Core capabilities: armor_repair, self_cleanse, telegraph_countdown.",
+    "candidateForLevel": "level_3_7",
+    "mechanicProfile": {
+      "slotId": "C3-M05",
+      "primaryRole": "repair_engine",
+      "targetTurns": [
+        9,
+        11
+      ],
+      "hpBand": [
+        540,
+        620
+      ],
+      "armorBudget": [
+        180,
+        225
+      ],
+      "counterTags": [
+        "burst",
+        "dot_timing",
+        "interrupt"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: passive_dot_only, low_burst."
+    },
+    "capabilities": [
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_2_turns",
+        "pressure": "repair_engine",
+        "counterplay": [
+          "armor_break",
+          "burst"
+        ]
+      },
+      {
+        "type": "self_cleanse",
+        "cadence": "cooldown_4_turns",
+        "pressure": "resists_passive_dot",
+        "counterplay": [
+          "bait_cleanse",
+          "burst_after_cleanse"
+        ]
+      },
+      {
+        "type": "telegraph_countdown",
+        "cadence": "windup_1_turn",
+        "pressure": "punish_after_repair",
+        "counterplay": [
+          "guard",
+          "interrupt"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "guard",
+        "repair",
+        "punish"
+      ],
+      "telegraphText": "Intent pattern: guard -> repair -> punish.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "passive_dot_only",
+        "low_burst"
+      ],
+      "expectedCounter": [
+        "burst",
+        "dot_timing",
+        "interrupt"
+      ]
+    },
+    "runPressure": {
+      "type": "delay_tax",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 26,
+      "counterplay": [
+        "burst",
+        "dot_timing",
+        "interrupt"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-003-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c3_08_plague_standard": {
+    "id": "enemy_v2_c3_08_plague_standard",
+    "name": "Chapter 3 08 Plague Standard",
+    "stats": {
+      "hp": 545,
+      "maxHp": 545,
+      "ap": 5,
+      "speed": 9
+    },
+    "skills": [
+      "enemy_skill_plague_standard_wave",
+      "enemy_skill_plague_mist_burst",
+      "enemy_skill_dirty_bandage"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 17,
+        "max": 17,
+        "weakness": 1.35
+      },
+      "chest": {
+        "current": 54,
+        "max": 54,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 28,
+        "max": 28,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 21,
+        "max": 21,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 21,
+        "max": 21,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "cultist",
+    "class": "standard_bearer",
+    "tags": [
+      "v2_candidate",
+      "chapter_3",
+      "role_status",
+      "role_repair",
+      "pressure_poison",
+      "pressure_vulnerable"
+    ],
+    "description": "level_3_8 V2 candidate for C3-M06B/support_dot_variant. Core capabilities: support_aura, poison_apply, self_heal.",
+    "candidateForLevel": "level_3_8",
+    "mechanicProfile": {
+      "slotId": "C3-M06B",
+      "primaryRole": "support_dot_variant",
+      "targetTurns": [
+        8,
+        10
+      ],
+      "hpBand": [
+        510,
+        580
+      ],
+      "armorBudget": [
+        120,
+        160
+      ],
+      "counterTags": [
+        "target_priority",
+        "healing",
+        "fast_kill"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: ignores_support, no_healing."
+    },
+    "capabilities": [
+      {
+        "type": "support_aura",
+        "cadence": "cooldown_3_turns",
+        "pressure": "priority_pressure",
+        "counterplay": [
+          "target_priority"
+        ]
+      },
+      {
+        "type": "poison_apply",
+        "cadence": "cooldown_2_turns",
+        "pressure": "dot_attrition",
+        "counterplay": [
+          "healing",
+          "cleanse"
+        ]
+      },
+      {
+        "type": "self_heal",
+        "cadence": "cooldown_4_turns",
+        "pressure": "support_delay",
+        "counterplay": [
+          "burst"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "vulnerable",
+        "poison",
+        "pressure"
+      ],
+      "telegraphText": "Intent pattern: vulnerable -> poison -> pressure.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "ignores_support",
+        "no_healing"
+      ],
+      "expectedCounter": [
+        "target_priority",
+        "healing",
+        "fast_kill"
+      ]
+    },
+    "runPressure": {
+      "type": "hp_attrition",
+      "carryoverImpact": [
+        "hp_loss"
+      ],
+      "expectedDamageBudget": 30,
+      "counterplay": [
+        "target_priority",
+        "healing",
+        "fast_kill"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-004-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "enemy_v2_c3_09_twilight_gate_elite": {
+    "id": "enemy_v2_c3_09_twilight_gate_elite",
+    "name": "Chapter 3 09 Twilight Gate Elite",
+    "stats": {
+      "hp": 770,
+      "maxHp": 770,
+      "ap": 6,
+      "speed": 7
+    },
+    "skills": [
+      "enemy_skill_twilight_gate_crush",
+      "enemy_skill_twilight_warden_bulwark",
+      "enemy_skill_shield_tap",
+      "enemy_skill_dead_air"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 67,
+        "max": 67,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 116,
+        "max": 116,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 61,
+        "max": 61,
+        "weakness": 1
+      },
+      "arm": {
+        "current": 46,
+        "max": 46,
+        "weakness": 1.25
+      },
+      "leg": {
+        "current": 46,
+        "max": 46,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "construct",
+    "class": "gate_elite",
+    "tags": [
+      "v2_candidate",
+      "chapter_3",
+      "role_elite",
+      "role_armor",
+      "role_repair",
+      "pressure_burst"
+    ],
+    "description": "level_3_9 V2 candidate for C3-M09/final_gate_elite. Core capabilities: armor_repair, telegraph_countdown, slow_or_bind, self_cleanse.",
+    "candidateForLevel": "level_3_9",
+    "mechanicProfile": {
+      "slotId": "C3-M09",
+      "primaryRole": "final_gate_elite",
+      "targetTurns": [
+        10,
+        12
+      ],
+      "hpBand": [
+        720,
+        820
+      ],
+      "armorBudget": [
+        270,
+        330
+      ],
+      "counterTags": [
+        "armor_break",
+        "burst_window",
+        "guard",
+        "speed_management"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_armor_break, no_guard."
+    },
+    "capabilities": [
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_2_turns",
+        "pressure": "gate_armor",
+        "counterplay": [
+          "armor_break"
+        ]
+      },
+      {
+        "type": "telegraph_countdown",
+        "cadence": "windup_1_turn",
+        "pressure": "gate_crush",
+        "counterplay": [
+          "guard",
+          "interrupt"
+        ]
+      },
+      {
+        "type": "slow_or_bind",
+        "cadence": "cooldown_3_turns",
+        "pressure": "boss_prep_drain",
+        "counterplay": [
+          "speed_management"
+        ]
+      },
+      {
+        "type": "self_cleanse",
+        "cadence": "cooldown_4_turns",
+        "pressure": "resists_control_lock",
+        "counterplay": [
+          "burst_after_cleanse"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "guard",
+        "repair",
+        "control",
+        "burst"
+      ],
+      "telegraphText": "Intent pattern: guard -> repair -> control -> burst.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_armor_break",
+        "no_guard"
+      ],
+      "expectedCounter": [
+        "armor_break",
+        "burst_window",
+        "guard",
+        "speed_management"
+      ]
+    },
+    "runPressure": {
+      "type": "pre_boss_drain",
+      "carryoverImpact": [
+        "hp_loss",
+        "armor_loss"
+      ],
+      "expectedDamageBudget": 36,
+      "counterplay": [
+        "armor_break",
+        "burst_window",
+        "guard",
+        "speed_management"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-005-??001-????.png",
+      "iconRef": ""
+    }
+  },
+  "boss_v2_c3_10_twilight_bastion": {
+    "id": "boss_v2_c3_10_twilight_bastion",
+    "name": "Chapter 3 10 Twilight Bastion",
+    "stats": {
+      "hp": 1050,
+      "maxHp": 1050,
+      "ap": 6,
+      "speed": 6
+    },
+    "skills": [
+      "enemy_skill_twilight_bastion_swing",
+      "enemy_skill_twilight_warden_bulwark",
+      "enemy_skill_plague_standard_wave",
+      "enemy_skill_blood_heat"
+    ],
+    "bodyParts": {
+      "head": {
+        "current": 95,
+        "max": 95,
+        "weakness": 1
+      },
+      "chest": {
+        "current": 163,
+        "max": 163,
+        "weakness": 0.95
+      },
+      "abdomen": {
+        "current": 86,
+        "max": 86,
+        "weakness": 1.25
+      },
+      "arm": {
+        "current": 65,
+        "max": 65,
+        "weakness": 1
+      },
+      "leg": {
+        "current": 65,
+        "max": 65,
+        "weakness": 1
+      }
+    },
+    "dropTable": "drop_enemy_v2_candidate",
+    "race": "construct",
+    "class": "boss",
+    "tags": [
+      "v2_candidate",
+      "chapter_3",
+      "role_boss",
+      "role_elite",
+      "role_armor",
+      "role_repair",
+      "role_status"
+    ],
+    "description": "level_3_10 V2 candidate for C3-M10/final_boss. Core capabilities: phase_shift, mark_and_cashout, armor_repair, telegraph_countdown, lifesteal.",
+    "candidateForLevel": "level_3_10",
+    "mechanicProfile": {
+      "slotId": "C3-M10",
+      "primaryRole": "final_boss",
+      "targetTurns": [
+        12,
+        16
+      ],
+      "hpBand": [
+        980,
+        1120
+      ],
+      "armorBudget": [
+        390,
+        460
+      ],
+      "counterTags": [
+        "buff_management",
+        "burst_window",
+        "sustain",
+        "armor_break"
+      ],
+      "failureSignal": "Player fails this enemy when punish axes are not covered: no_resource_save, misses_exposed_window."
+    },
+    "capabilities": [
+      {
+        "type": "phase_shift",
+        "cadence": "three_phases",
+        "pressure": "final_exam",
+        "counterplay": [
+          "phase_reading",
+          "resource_save"
+        ]
+      },
+      {
+        "type": "mark_and_cashout",
+        "cadence": "phase_2_windup",
+        "pressure": "terminal_pressure",
+        "counterplay": [
+          "cleanse",
+          "burst_window"
+        ]
+      },
+      {
+        "type": "armor_repair",
+        "cadence": "cooldown_3_turns",
+        "pressure": "boss_sustain",
+        "counterplay": [
+          "armor_break"
+        ]
+      },
+      {
+        "type": "telegraph_countdown",
+        "cadence": "windup_1_turn",
+        "pressure": "terminal_swing",
+        "counterplay": [
+          "guard",
+          "interrupt"
+        ]
+      },
+      {
+        "type": "lifesteal",
+        "cadence": "phase_3",
+        "pressure": "low_hp_reversal",
+        "counterplay": [
+          "execute_window"
+        ]
+      }
+    ],
+    "intentModel": {
+      "visible": true,
+      "pattern": [
+        "setup",
+        "pressure",
+        "exposed",
+        "terminal"
+      ],
+      "telegraphText": "Intent pattern: setup -> pressure -> exposed -> terminal.",
+      "fallback": "attack"
+    },
+    "buildCheck": {
+      "punishAxis": [
+        "no_resource_save",
+        "misses_exposed_window"
+      ],
+      "expectedCounter": [
+        "buff_management",
+        "burst_window",
+        "sustain",
+        "armor_break"
+      ]
+    },
+    "runPressure": {
+      "type": "none",
+      "carryoverImpact": [],
+      "expectedDamageBudget": 0,
+      "counterplay": [
+        "buff_management",
+        "burst_window",
+        "sustain",
+        "armor_break"
+      ]
+    },
+    "statePersistence": {
+      "carryOver": [
+        "hp",
+        "armor"
+      ],
+      "clearAfterBattle": [
+        "bleed",
+        "poison",
+        "slow",
+        "vulnerable",
+        "stun",
+        "temporary_buff"
+      ]
+    },
+    "presentation": {
+      "portraitRef": "",
+      "mapPortraitRef": "",
+      "battleSpriteRef": "../source/character/??-006-??001-????.png",
+      "iconRef": ""
+    }
+  }
+}
