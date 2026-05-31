@@ -6,6 +6,8 @@ import {
   createSkillTestRecordPath,
   enumeratePurchasableBuilds,
   generateTurnCombos,
+  listEnemyOptions,
+  listStoryLevelOptions,
   compactSkillTestResultForRecord,
   resolveLevelTestContext,
   simulateSkillLoop
@@ -96,6 +98,48 @@ test('resolveLevelTestContext actual mode includes player initial skill points',
   assert.equal(context.initialSkillPoints, 5);
   assert.equal(context.actualThroughCurrent, 3);
   assert.equal(context.kpBudget, 8);
+});
+
+test('level options expose story rows for KP selection without route-only levels', () => {
+  const options = listStoryLevelOptions(makeLevelsDocument());
+
+  assert.deepEqual(options.map(option => option.id), ['level_1_1', 'level_1_2']);
+  assert.deepEqual(options.map(option => option.levelIndex), [1, 2]);
+  assert.deepEqual(options.map(option => option.kp), [1, 2]);
+  assert.equal(options[1].nodeLabel, '1-2');
+});
+
+test('enemy options expose enemy package rows for independent target selection', () => {
+  const options = listEnemyOptions(enemyDocuments);
+
+  assert.deepEqual(options.map(option => option.id), ['enemy_a', 'enemy_b']);
+  assert.equal(options[0].hp, 40);
+  assert.equal(options[1].armorTotal, 10);
+});
+
+test('resolveLevelTestContext can use a level for KP while testing an independently selected enemy', () => {
+  const context = resolveLevelTestContext({
+    levelsDocument: makeLevelsDocument(),
+    enemyDocuments,
+    playerDocument: {
+      default: {
+        skills: {
+          skillPoints: 5,
+          learned: []
+        }
+      }
+    },
+    levelIndex: 2,
+    enemyIdOverride: 'enemy_a',
+    kpMode: 'actual_player_plus_rewards'
+  });
+
+  assert.equal(context.level.id, 'level_1_2');
+  assert.equal(context.actualThroughCurrent, 3);
+  assert.equal(context.kpBudget, 8);
+  assert.equal(context.enemyId, 'enemy_a');
+  assert.equal(context.enemy.id, 'enemy_a');
+  assert.equal(context.enemy.stats.hp, 40);
 });
 
 test('enumeratePurchasableBuilds respects KP budget and prerequisite closure', () => {

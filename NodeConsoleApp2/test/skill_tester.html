@@ -19,11 +19,54 @@
       </nav>
     </header>
 
-    <section class="control-strip" aria-label="测试条件">
+    <section class="source-strip" aria-label="数据源">
       <label>
-        <span>关卡</span>
-        <input id="levelIndexInput" type="number" min="1" max="30" value="5">
+        <span>技能包</span>
+        <input id="skillPackPathInput" type="text" value="assets/skill_packs/authoring/skills_melee_v4_5_sword_bleed_window_standard_v2_20260529_013420.json">
       </label>
+      <label>
+        <span>Buff 包</span>
+        <input id="buffPackPathInput" type="text" value="assets/data/buffs_v2_7.json">
+      </label>
+      <label>
+        <span>关卡包</span>
+        <input id="levelsPathInput" type="text" value="assets/data/levels.json">
+      </label>
+      <label>
+        <span>敌人包</span>
+        <input id="enemyPathInput" type="text" value="assets/data/enemies.json">
+      </label>
+      <label>
+        <span>玩家</span>
+        <input id="playerPathInput" type="text" value="assets/data/player.json">
+      </label>
+    </section>
+
+    <section id="levelContextStrip" class="level-context-strip" aria-label="关卡与敌人选择">
+      <input id="levelIndexInput" type="hidden" value="5">
+      <label>
+        <span>KP 关卡</span>
+        <select id="levelSelect">
+          <option value="5" selected>读取关卡包后选择</option>
+        </select>
+      </label>
+      <div id="levelSummaryPanel" class="summary-panel">
+        <b>关卡用于 KP</b>
+        <span>读取关卡包后显示奖励与累计 KP。</span>
+      </div>
+      <label>
+        <span>输出目标</span>
+        <select id="enemySelect">
+          <option value="">读取敌人包后选择</option>
+        </select>
+      </label>
+      <div id="enemySummaryPanel" class="summary-panel">
+        <b>敌人独立选择</b>
+        <span>敌人包决定输出循环目标。</span>
+      </div>
+    </section>
+
+    <section class="control-strip" aria-label="测试条件">
       <label>
         <span>KP 模式</span>
         <select id="kpModeSelect">
@@ -62,29 +105,6 @@
       </label>
       <button id="runSkillTestBtn" class="primary" type="button">运行测试</button>
       <button id="saveSkillTestRecordBtn" type="button">保存记录</button>
-    </section>
-
-    <section class="source-strip" aria-label="数据源">
-      <label>
-        <span>技能包</span>
-        <input id="skillPackPathInput" type="text" value="assets/skill_packs/authoring/skills_melee_v4_5_sword_bleed_window_standard_v2_20260529_013420.json">
-      </label>
-      <label>
-        <span>Buff 包</span>
-        <input id="buffPackPathInput" type="text" value="assets/data/buffs_v2_7.json">
-      </label>
-      <label>
-        <span>关卡包</span>
-        <input id="levelsPathInput" type="text" value="assets/data/levels.json">
-      </label>
-      <label>
-        <span>敌人包</span>
-        <input id="enemyPathInput" type="text" value="assets/data/enemies.json">
-      </label>
-      <label>
-        <span>玩家</span>
-        <input id="playerPathInput" type="text" value="assets/data/player.json">
-      </label>
     </section>
 
     <div id="statusLine" class="status-line" role="status">等待运行。</div>

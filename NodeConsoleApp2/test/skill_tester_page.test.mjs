@@ -13,6 +13,8 @@ test('skill tester page exposes the required workbench controls', async () => {
 
   for (const id of [
     'levelIndexInput',
+    'levelSelect',
+    'enemySelect',
     'kpModeSelect',
     'initialKpInput',
     'perLevelKpInput',
@@ -22,6 +24,9 @@ test('skill tester page exposes the required workbench controls', async () => {
     'skillFocusSelect',
     'runSkillTestBtn',
     'saveSkillTestRecordBtn',
+    'levelContextStrip',
+    'levelSummaryPanel',
+    'enemySummaryPanel',
     'contextPanel',
     'candidateList',
     'turnReplayTable',
@@ -34,6 +39,19 @@ test('skill tester page exposes the required workbench controls', async () => {
   assert.match(html, /skill_tester\.css/u);
   assert.match(html, /初始 5KP \+ 3KP\/关/u);
   assert.match(html, /id=["']playerPathInput["']/u);
+});
+
+test('skill tester page orders package selection before KP and enemy context controls', async () => {
+  const html = await fs.readFile(pagePath, 'utf8');
+  const sourceIndex = html.indexOf('class="source-strip"');
+  const contextIndex = html.indexOf('id="levelContextStrip"');
+  const controlIndex = html.indexOf('class="control-strip"');
+
+  assert.notEqual(sourceIndex, -1);
+  assert.notEqual(contextIndex, -1);
+  assert.notEqual(controlIndex, -1);
+  assert.equal(sourceIndex < contextIndex, true);
+  assert.equal(contextIndex < controlIndex, true);
 });
 
 test('skill tester app and stylesheet files exist', async () => {

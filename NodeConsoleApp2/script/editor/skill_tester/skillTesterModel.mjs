@@ -32,6 +32,17 @@ function getStoryLevels(levelsDocument) {
     .sort(compareByOrder);
 }
 
+export function listStoryLevelOptions(levelsDocument) {
+  return getStoryLevels(levelsDocument).map((level, index) => ({
+    levelIndex: index + 1,
+    id: level.id,
+    name: level.name || level.title || level.id,
+    nodeLabel: level.flow?.nodeLabel || `${index + 1}`,
+    order: toFiniteNumber(level.flow?.order, index + 1),
+    kp: Math.max(0, toFiniteNumber(level.rewards?.kp, 0))
+  }));
+}
+
 function normalizeEnemyCatalog(enemyDocuments = []) {
   const catalog = new Map();
   const docs = Array.isArray(enemyDocuments) ? enemyDocuments : [enemyDocuments];
@@ -62,6 +73,18 @@ function normalizeEnemyCatalog(enemyDocuments = []) {
   }
 
   return catalog;
+}
+
+export function listEnemyOptions(enemyDocuments = []) {
+  return [...normalizeEnemyCatalog(enemyDocuments).values()]
+    .map(enemy => ({
+      id: enemy.id,
+      name: enemy.name || enemy.id,
+      hp: Math.max(0, toFiniteNumber(enemy.stats?.hp ?? enemy.stats?.maxHp, 0)),
+      maxHp: Math.max(0, toFiniteNumber(enemy.stats?.maxHp ?? enemy.stats?.hp, 0)),
+      armorTotal: summarizeArmor(enemy.bodyParts)
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
 }
 
 function resolveLevelEnemyId(level, levelsDocument) {
@@ -148,6 +171,7 @@ export function resolveLevelTestContext({
   enemyDocuments = [],
   playerDocument = null,
   levelIndex = 1,
+  enemyIdOverride = null,
   kpMode = 'assumed_per_level',
   assumedInitialKp = 5,
   assumedKpPerLevel = 3,
@@ -171,7 +195,8 @@ export function resolveLevelTestContext({
     initialSkillPoints
   });
   const enemyCatalog = normalizeEnemyCatalog(enemyDocuments);
-  const enemyId = resolveLevelEnemyId(level, levelsDocument);
+  const requestedEnemyId = String(enemyIdOverride || '').trim();
+  const enemyId = requestedEnemyId || resolveLevelEnemyId(level, levelsDocument);
   const enemy = deepClone(enemyCatalog.get(enemyId) || makeFallbackEnemy(enemyId));
 
   return {
@@ -868,6 +893,7 @@ export function analyzeSkillTestScenario({
   playerDocument = null,
   skillPack,
   levelIndex = 5,
+  enemyIdOverride = null,
   kpMode = 'assumed_per_level',
   assumedInitialKp = 5,
   assumedKpPerLevel = 3,
@@ -884,6 +910,7 @@ export function analyzeSkillTestScenario({
     enemyDocuments,
     playerDocument,
     levelIndex,
+    enemyIdOverride,
     kpMode,
     assumedInitialKp,
     assumedKpPerLevel,

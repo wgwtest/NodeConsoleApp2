@@ -2,13 +2,17 @@ import {
   analyzeSkillTestScenario,
   buildSkillTestRecord,
   createSkillTestRecordPath,
-  formatSkillTestTimestamp
+  formatSkillTestTimestamp,
+  listEnemyOptions,
+  listStoryLevelOptions
 } from './skillTesterModel.mjs';
 
 const dom = {};
 let lastResult = null;
 let selectedCandidateIndex = 0;
 let lastSources = null;
+let lastLevelOptions = [];
+let lastEnemyOptions = [];
 
 function $(id) {
   return document.getElementById(id);
@@ -17,6 +21,8 @@ function $(id) {
 function bindDom() {
   [
     'levelIndexInput',
+    'levelSelect',
+    'enemySelect',
     'kpModeSelect',
     'initialKpInput',
     'perLevelKpInput',
@@ -31,6 +37,8 @@ function bindDom() {
     'levelsPathInput',
     'enemyPathInput',
     'playerPathInput',
+    'levelSummaryPanel',
+    'enemySummaryPanel',
     'contextPanel',
     'candidateCountBadge',
     'candidateList',
@@ -58,8 +66,10 @@ function readNumber(id, fallback) {
 }
 
 function readScenario() {
+  const selectedLevelIndex = readNumber('levelSelect', readNumber('levelIndexInput', 5));
   return {
-    levelIndex: readNumber('levelIndexInput', 5),
+    levelIndex: selectedLevelIndex,
+    enemyIdOverride: dom.enemySelect?.value || null,
     kpMode: dom.kpModeSelect.value,
     assumedInitialKp: readNumber('initialKpInput', 5),
     assumedKpPerLevel: readNumber('perLevelKpInput', 3),
@@ -92,6 +102,70 @@ async function fetchJson(projectPath) {
     throw new Error(`读取失败：${path} (${response.status})`);
   }
   return response.json();
+}
+
+function replaceOptions(select, options, selectedValue) {
+  const normalizedSelected = String(selectedValue ?? '');
+  select.innerHTML = options.map(option => {
+    const selected = String(option.value) === normalizedSelected ? ' selected' : '';
+    const dataset = Object.entries(option.dataset || {})
+      .map(([key, value]) => ` data-${key}="${html(value)}"`)
+      .join('');
+    return `<option value="${html(option.value)}"${selected}${dataset}>${html(option.label)}</option>`;
+  }).join('');
+  if (select.options.length && select.selectedIndex < 0) select.selectedIndex = 0;
+}
+
+function populateLevelSelect(levelsDocument, preferredLevelIndex) {
+  lastLevelOptions = listStoryLevelOptions(levelsDocument);
+  replaceOptions(dom.levelSelect, lastLevelOptions.map(option => ({
+    value: option.levelIndex,
+    label: `${option.nodeLabel} ${option.name} / +${option.kp} KP`,
+    dataset: {
+      id: option.id,
+      kp: option.kp,
+      name: option.name,
+      node: option.nodeLabel
+    }
+  })), preferredLevelIndex);
+  dom.levelIndexInput.value = dom.levelSelect.value || preferredLevelIndex || 1;
+}
+
+function populateEnemySelect(enemyDocuments, preferredEnemyId) {
+  lastEnemyOptions = listEnemyOptions(enemyDocuments);
+  replaceOptions(dom.enemySelect, lastEnemyOptions.map(option => ({
+    value: option.id,
+    label: `${option.name} (${option.id})`,
+    dataset: {
+      id: option.id,
+      hp: option.hp,
+      maxHp: option.maxHp,
+      armor: option.armorTotal,
+      name: option.name
+    }
+  })), preferredEnemyId);
+}
+
+function syncSelectionSummaries() {
+  const levelOption = dom.levelSelect?.selectedOptions?.[0];
+  const enemyOption = dom.enemySelect?.selectedOptions?.[0];
+
+  if (dom.levelIndexInput && dom.levelSelect) {
+    dom.levelIndexInput.value = dom.levelSelect.value || '1';
+  }
+
+  if (levelOption) {
+    dom.levelSummaryPanel.innerHTML = `
+      <b>${html(levelOption.dataset.node || `第 ${dom.levelSelect.value} 关`)} ${html(levelOption.dataset.name || '')}</b>
+      <span>本关奖励 ${html(levelOption.dataset.kp || 0)} KP；关卡选择只参与 KP 预算。</span>
+    `;
+  }
+  if (enemyOption) {
+    dom.enemySummaryPanel.innerHTML = `
+      <b>${html(enemyOption.dataset.name || enemyOption.value)}</b>
+      <span>HP ${html(enemyOption.dataset.hp || 0)}/${html(enemyOption.dataset.maxHp || 0)}，护甲 ${html(enemyOption.dataset.armor || 0)}；敌人选择决定输出目标。</span>
+    `;
+  }
 }
 
 function formatDelta(value, unit = '') {
@@ -253,7 +327,7 @@ function renderAll(result, sources) {
 }
 
 async function runSkillTest() {
-  const scenario = readScenario();
+  let scenario = readScenario();
   const sources = readSources();
   setStatus('正在读取技能、Buff、关卡和敌人数据...');
   const [skillPack, buffPack, levelsDocument, enemiesDocument, playerDocument] = await Promise.all([
@@ -263,6 +337,10 @@ async function runSkillTest() {
     fetchJson(sources.enemyPath),
     fetchJson(sources.playerPath)
   ]);
+  populateLevelSelect(levelsDocument, scenario.levelIndex);
+  populateEnemySelect([enemiesDocument], scenario.enemyIdOverride);
+  syncSelectionSummaries();
+  scenario = readScenario();
 
   selectedCandidateIndex = 0;
   lastSources = sources;
@@ -314,6 +392,9 @@ function bindEvents() {
   };
   dom.kpModeSelect.addEventListener('change', syncKpInputs);
   syncKpInputs();
+
+  dom.levelSelect.addEventListener('change', syncSelectionSummaries);
+  dom.enemySelect.addEventListener('change', syncSelectionSummaries);
 
   dom.runSkillTestBtn.addEventListener('click', () => {
     runSkillTest().catch(error => setStatus(error?.message || String(error), 'error'));

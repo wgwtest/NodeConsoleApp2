@@ -89,7 +89,8 @@ h2 {
 }
 
 .control-strip,
-.source-strip {
+.source-strip,
+.level-context-strip {
   display: grid;
   align-items: end;
   gap: 10px;
@@ -100,14 +101,41 @@ h2 {
 }
 
 .control-strip {
-  grid-template-columns: 72px 190px 86px 86px 104px 70px 100px 122px 104px 104px;
-  border-radius: 12px 12px 6px 6px;
+  grid-template-columns: 190px 86px 86px 104px 70px 100px 122px 104px 104px;
+  border-radius: 6px 6px 12px 12px;
 }
 
 .source-strip {
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  margin-top: 8px;
-  border-radius: 6px 6px 12px 12px;
+  border-radius: 12px 12px 6px 6px;
+}
+
+.level-context-strip {
+  grid-template-columns: 260px minmax(280px, 1fr) 260px minmax(280px, 1fr);
+  border-top: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.summary-panel {
+  min-height: 36px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.summary-panel b {
+  font-size: 13px;
+}
+
+.summary-panel span {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 label {
