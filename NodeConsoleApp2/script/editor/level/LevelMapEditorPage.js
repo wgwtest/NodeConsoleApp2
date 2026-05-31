@@ -261,7 +261,7 @@ export class LevelMapEditorPage {
         this.workspaceFactory = options.workspaceFactory;
         this.mapSourceUrl = options.mapSourceUrl || '../assets/map_packs/authoring/story_pack_v1/package.json';
         this.levelSourceUrl = options.levelSourceUrl || '../assets/data/levels.json';
-        this.enemySourceUrl = options.enemySourceUrl || '../assets/data/enemies.json';
+        this.enemySourceUrl = options.enemySourceUrl || '../assets/enemy_packs/current/enemies.json';
         this.navigateTo = options.navigateTo || ((url) => {
             if (typeof this.window?.location?.assign === 'function') {
                 this.window.location.assign(url);

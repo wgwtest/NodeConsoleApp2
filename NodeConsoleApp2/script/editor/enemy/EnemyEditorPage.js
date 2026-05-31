@@ -1,5 +1,8 @@
 import EnemyWorkspace from './EnemyWorkspace.js';
 
+const runtimeEnemyPath = 'assets/enemy_packs/current/enemies.json';
+const legacyRuntimeEnemyPath = 'assets/data/enemies.json';
+
 function asObject(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
@@ -60,7 +63,8 @@ function normalizeEnemyLibraryPath(value) {
 function isEnemyLibraryPath(filePath) {
     const normalized = normalizeEnemyLibraryPath(filePath);
     const fileName = normalized.split('/').pop() || '';
-    return normalized === 'assets/data/enemies.json'
+    return normalized === runtimeEnemyPath
+        || normalized === legacyRuntimeEnemyPath
         || /^enemies(?:_\d{8}_\d{6})?\.json$/u.test(fileName);
 }
 
@@ -69,8 +73,10 @@ function isEnemyAuthoringPath(filePath) {
 }
 
 function sortEnemyLibraryPaths(left, right) {
-    if (left === 'assets/data/enemies.json') return -1;
-    if (right === 'assets/data/enemies.json') return 1;
+    if (left === runtimeEnemyPath) return -1;
+    if (right === runtimeEnemyPath) return 1;
+    if (left === legacyRuntimeEnemyPath) return 1;
+    if (right === legacyRuntimeEnemyPath) return -1;
     const leftAuthoring = isEnemyAuthoringPath(left);
     const rightAuthoring = isEnemyAuthoringPath(right);
     if (leftAuthoring && !rightAuthoring) return -1;
@@ -83,11 +89,11 @@ export class EnemyEditorPage {
         this.document = options.document || globalThis.document;
         this.fetchImpl = options.fetchImpl || globalThis.fetch?.bind(globalThis);
         this.workspaceFactory = options.workspaceFactory || ((raw, context) => new EnemyWorkspace(raw, context));
-        this.defaultEnemyPath = options.defaultEnemyPath || 'assets/data/enemies.json';
+        this.defaultEnemyPath = options.defaultEnemyPath || runtimeEnemyPath;
         this.defaultSkillPath = options.defaultSkillPath || 'assets/data/skills_enemy_v1.json';
         this.defaultLevelPath = options.defaultLevelPath || 'assets/data/levels.json';
         this.defaultMapPackPath = options.defaultMapPackPath || 'assets/data/level_map_pack_v1.json';
-        this.defaultSourceUrl = options.defaultSourceUrl || '../assets/data/enemies.json';
+        this.defaultSourceUrl = options.defaultSourceUrl || '../assets/enemy_packs/current/enemies.json';
         this.workspace = null;
         this.selectedEnemyId = null;
         this.context = {};
@@ -557,7 +563,7 @@ export class EnemyEditorPage {
 
     async publishRuntime() {
         const content = this.buildExportContent();
-        const result = await this.writeProjectJson('assets/data/enemies.json', content);
+        const result = await this.writeProjectJson(runtimeEnemyPath, content);
         this.setStatus(`已发布到主流程：${result.path}`);
         return result;
     }

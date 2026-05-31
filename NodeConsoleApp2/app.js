@@ -13,6 +13,7 @@ const allowedJsonWriteRoots = [
   'assets/data/',
   'assets/skill_packs/authoring/',
   'assets/enemy_packs/authoring/',
+  'assets/enemy_packs/current/',
   'DOC/CODEX_DOC/'
 ];
 const skillAuthoringRoot = 'assets/skill_packs/authoring/';

@@ -31,14 +31,8 @@ Open:
 
 - Chapter-three enemy ecosystem plan:
   `NodeConsoleApp2/docs/superpowers/plans/2026-05-26-chapter-three-enemy-ecosystem.md`
-- Enemy role and counter matrix:
-  `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/31-流派敌人职责与反制矩阵(content_counter_matrix)-设计说明.md`
-- Enemy growth and mechanic model:
-  `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/32-敌人成长与机制模型(enemy_growth_mechanic_model)-设计说明.md`
-- Chapter-three mechanic roster model:
-  `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/33-三章敌人机制池与数值带(enemy_mechanic_roster_model)-设计说明.md`
-- Enemy design V2 migration table:
-  `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/34-敌人设计V2机制映射与迁移表(enemy_design_v2_migration)-设计说明.md`
+- Enemy system design source of truth:
+  `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/11-敌人系统(enemy_design)-设计说明.md`
 - WBS-3.4 plan:
   `NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/26-WBS-3.4-三章关卡敌人与技能平衡.md`
 

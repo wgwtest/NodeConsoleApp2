@@ -31,7 +31,7 @@
     },
     "enemies": {
       "kind": "enemies",
-      "path": "enemies.json"
+      "path": "/assets/enemy_packs/current/enemies.json"
     },
     "levels": {
       "kind": "levels",
@@ -64,7 +64,7 @@
     },
     "enemySkills": "skills_enemy_v1.json",
     "items": "items.json",
-    "enemies": "enemies.json",
+    "enemies": "/assets/enemy_packs/current/enemies.json",
     "levels": "levels.json",
     "levelMapPack": "../assets/map_packs/current/story_pack_v1/package.json",
     "player": "player.json",

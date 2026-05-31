@@ -31,7 +31,7 @@
   - `NodeConsoleApp2/assets/data/levels.json`
   - Replace primary enemies and enemy-pool members for `level_3_5` through `level_3_8`.
 - Modify docs only if implementation differs from the design matrix:
-  - `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/31-流派敌人职责与反制矩阵(content_counter_matrix)-设计说明.md`
+  - `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/11-敌人系统(enemy_design)-设计说明.md`
   - `NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/26-WBS-3.4-三章关卡敌人与技能平衡.md`
 
 Do not modify these files in this implementation pass:
@@ -738,7 +738,7 @@ If the total test count differs because other tests were added, the command must
 ### Task 6: Update Matrix Documentation With Implemented Status
 
 **Files:**
-- Modify: `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/31-流派敌人职责与反制矩阵(content_counter_matrix)-设计说明.md`
+- Modify: `NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/11-敌人系统(enemy_design)-设计说明.md`
 - Modify: `NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/26-WBS-3.4-三章关卡敌人与技能平衡.md`
 
 - [ ] **Step 1: Mark third-chapter P0 enemy implementation complete in the matrix doc**
@@ -858,7 +858,7 @@ NodeConsoleApp2/assets/map_packs/current/story_pack_v1/levels.json
 NodeConsoleApp2/assets/map_packs/authoring/story_pack_v1/levels.json
 NodeConsoleApp2/assets/data/levels.json
 NodeConsoleApp2/test/campaign_balance_content.test.mjs
-NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/31-流派敌人职责与反制矩阵(content_counter_matrix)-设计说明.md
+NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/11-敌人系统(enemy_design)-设计说明.md
 NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/26-WBS-3.4-三章关卡敌人与技能平衡.md
 ```
 
@@ -869,7 +869,7 @@ NodeConsoleApp2/tools/acceptance_click_smoke.mjs
 NodeConsoleApp2/test/acceptance_click_smoke_contract.test.mjs
 NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/README.md
 NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/README.md
-NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/30-三章关卡敌人与技能平衡(content_balance_campaign)-设计说明.md
+NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/11-敌人系统(enemy_design)-设计说明.md
 ```
 
 ---
@@ -892,7 +892,7 @@ git add \
   NodeConsoleApp2/assets/map_packs/authoring/story_pack_v1/levels.json \
   NodeConsoleApp2/assets/data/levels.json \
   NodeConsoleApp2/test/campaign_balance_content.test.mjs \
-  NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/31-流派敌人职责与反制矩阵\(content_counter_matrix\)-设计说明.md \
+  NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/11-敌人系统\(enemy_design\)-设计说明.md \
   NodeConsoleApp2/DOC/CODEX_DOC/03_研制计划/26-WBS-3.4-三章关卡敌人与技能平衡.md
 ```
 
@@ -904,7 +904,7 @@ git add \
   NodeConsoleApp2/test/acceptance_click_smoke_contract.test.mjs \
   NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/README.md \
   NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/README.md \
-  NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/30-三章关卡敌人与技能平衡\(content_balance_campaign\)-设计说明.md
+  NodeConsoleApp2/DOC/CODEX_DOC/02_设计说明/S6_敌人系统与编辑器/11-敌人系统\(enemy_design\)-设计说明.md
 ```
 
 - [ ] **Step 2: Confirm staged diff**

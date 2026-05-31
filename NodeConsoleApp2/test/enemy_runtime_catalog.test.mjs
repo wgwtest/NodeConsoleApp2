@@ -4,7 +4,8 @@ import path from 'node:path';
 import { test } from 'node:test';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
-const runtimeEnemyPath = path.join(projectRoot, 'assets', 'data', 'enemies.json');
+const runtimeEnemyPath = path.join(projectRoot, 'assets', 'enemy_packs', 'current', 'enemies.json');
+const dataConfigPath = path.join(projectRoot, 'assets', 'data', 'config.json');
 const authoringEnemyRoot = path.join(projectRoot, 'assets', 'enemy_packs', 'authoring');
 const runtimeLevelPaths = [
   path.join(projectRoot, 'assets', 'data', 'levels.json'),
@@ -16,6 +17,10 @@ const runtimeMapPaths = [
   path.join(projectRoot, 'assets', 'map_packs', 'authoring', 'story_pack_v1', 'maps.json'),
   path.join(projectRoot, 'assets', 'data', 'level_map_pack_v1.authoring.json')
 ];
+const expectedStoryLevelIds = Array.from({ length: 3 }, (_, chapterIndex) => {
+  const chapter = chapterIndex + 1;
+  return Array.from({ length: 10 }, (_, levelIndex) => `level_${chapter}_${levelIndex + 1}`);
+}).flat();
 
 async function readJson(filePath) {
   return JSON.parse(await fs.readFile(filePath, 'utf8'));
@@ -48,7 +53,7 @@ test('运行时敌人目录不再发布 enemy_acceptance 测试敌人', async ()
   const newestAuthoringEnemies = await readNewestAuthoringEnemyDocument();
 
   for (const [sourceName, enemies] of [
-    ['assets/data/enemies.json', runtimeEnemies],
+    ['assets/enemy_packs/current/enemies.json', runtimeEnemies],
     ['最新敌人工作稿', newestAuthoringEnemies]
   ]) {
     assert.deepEqual(
@@ -56,6 +61,44 @@ test('运行时敌人目录不再发布 enemy_acceptance 测试敌人', async ()
       [],
       `${sourceName} 不应再包含 enemy_acceptance_*`
     );
+  }
+});
+
+test('runtime data config reads enemies from the current enemy pack', async () => {
+  const dataConfig = await readJson(dataConfigPath);
+
+  assert.equal(dataConfig.contentRegistry?.enemies?.path, '/assets/enemy_packs/current/enemies.json');
+  assert.equal(dataConfig.sources?.enemies, '/assets/enemy_packs/current/enemies.json');
+});
+
+test('runtime current enemy pack publishes the V2 authoring roster', async () => {
+  const runtimeEnemies = await readJson(runtimeEnemyPath);
+  const authoringEnemies = await readJson(path.join(authoringEnemyRoot, 'enemies_20260531_000000.json'));
+
+  assert.deepEqual(Object.keys(runtimeEnemies).sort(), Object.keys(authoringEnemies).sort());
+  assert.equal(Object.keys(runtimeEnemies).length, 30);
+  assert.equal(Object.values(runtimeEnemies).every(enemy => enemy.tags?.includes('v2_candidate')), true);
+});
+
+test('story levels reference the V2 candidate assigned to each level', async () => {
+  const authoringEnemies = await readJson(path.join(authoringEnemyRoot, 'enemies_20260531_000000.json'));
+  const candidateByLevel = new Map(
+    Object.values(authoringEnemies).map(enemy => [enemy.candidateForLevel, enemy.id])
+  );
+
+  for (const filePath of runtimeLevelPaths) {
+    const levelsDocument = await readJson(filePath);
+    const label = path.relative(projectRoot, filePath);
+
+    for (const levelId of expectedStoryLevelIds) {
+      const expectedEnemyId = candidateByLevel.get(levelId);
+      const level = levelsDocument.levels?.[levelId];
+      const poolId = level?.waves?.[0]?.enemyPoolId;
+      const firstMemberId = levelsDocument.enemyPools?.[poolId]?.members?.[0]?.templateId;
+
+      assert.equal(level?.primaryEnemy?.templateId, expectedEnemyId, `${label} ${levelId} primaryEnemy should use V2`);
+      assert.equal(firstMemberId, expectedEnemyId, `${label} ${levelId} first pool member should use V2`);
+    }
   }
 });
 

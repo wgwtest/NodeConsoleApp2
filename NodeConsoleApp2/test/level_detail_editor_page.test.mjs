@@ -196,7 +196,7 @@ function createEmptyPageContext(options = {}) {
             document,
             mapSourceUrl: options.mapSourceUrl || '../assets/map_packs/authoring/story_pack_v1/package.json',
             levelSourceUrl: options.levelSourceUrl || '../assets/data/levels.json',
-            enemySourceUrl: options.enemySourceUrl || '../assets/data/enemies.json',
+            enemySourceUrl: options.enemySourceUrl || '../assets/enemy_packs/current/enemies.json',
             fetchImpl: options.fetchImpl
         });
         page.bind();
@@ -234,7 +234,7 @@ test('level detail editor loads package-local maps, levels, asset manifest, and 
         ['../assets/map_packs/authoring/story_pack_v1/maps.json', buildMapDoc()],
         ['../assets/map_packs/authoring/story_pack_v1/levels.json', buildLevelsDoc()],
         ['../assets/map_packs/authoring/story_pack_v1/asset-manifest.json', { backgrounds: [] }],
-        ['../assets/data/enemies.json', buildEnemiesDoc()]
+        ['../assets/enemy_packs/current/enemies.json', buildEnemiesDoc()]
     ]);
     const fetchImpl = async (url) => {
         fetchedUrls.push(url);
@@ -258,7 +258,7 @@ test('level detail editor loads package-local maps, levels, asset manifest, and 
             '../assets/map_packs/authoring/story_pack_v1/maps.json',
             '../assets/map_packs/authoring/story_pack_v1/levels.json',
             '../assets/map_packs/authoring/story_pack_v1/asset-manifest.json',
-            '../assets/data/enemies.json'
+            '../assets/enemy_packs/current/enemies.json'
         ]);
         assert.equal(document.getElementById('levelNameInput').value, '森林边缘');
         assert.equal(document.getElementById('enemyTemplateSelect').value, 'goblin_story_headhunter');
