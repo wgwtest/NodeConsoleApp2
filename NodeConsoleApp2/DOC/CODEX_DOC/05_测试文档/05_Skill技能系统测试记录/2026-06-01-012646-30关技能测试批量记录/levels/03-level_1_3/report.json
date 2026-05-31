@@ -1,0 +1,5293 @@
+{
+  "meta": {
+    "artifactKind": "skill_tester_record",
+    "timestamp": "2026-06-01-012646",
+    "createdBy": "skill_tester"
+  },
+  "sources": {
+    "skillPackPath": "assets/skill_packs/authoring/skills_melee_v4_5_sword_bleed_window_standard_v2_20260529_013420.json",
+    "buffPackPath": "assets/data/buffs_v2_7.json",
+    "levelsPath": "assets/data/levels.json",
+    "enemyPath": "assets/data/enemies.json",
+    "playerPath": "assets/data/player.json"
+  },
+  "scenario": {
+    "testType": "result_optimization",
+    "kpMode": "assumed_per_level",
+    "assumedInitialKp": 5,
+    "assumedKpPerLevel": 3,
+    "manualKp": 0,
+    "apBudget": 5,
+    "maxTurns": 12,
+    "focus": "sword",
+    "maxBuilds": 80,
+    "maxCombosPerBuild": 16,
+    "maxCandidates": 10,
+    "levelIndex": 3,
+    "levelId": "level_1_3"
+  },
+  "result": {
+    "context": {
+      "levelIndex": 3,
+      "level": {
+        "id": "level_1_3",
+        "name": "北侧树冠",
+        "nodeLabel": "1-3",
+        "chapterTitle": "幽暗森林"
+      },
+      "enemyId": "goblin_story_headhunter",
+      "enemyName": "哥布林追猎手",
+      "kpMode": "assumed_per_level",
+      "kpBudget": 14,
+      "assumedInitialKp": 5,
+      "assumedKpPerLevel": 3,
+      "initialSkillPoints": 5,
+      "actualThroughCurrent": 9,
+      "actualBeforeCurrent": 6,
+      "enemy": {
+        "hp": 65,
+        "maxHp": 65,
+        "armorTotal": 16,
+        "bodyParts": {
+          "head": {
+            "current": 4,
+            "max": 4,
+            "weakness": 1.2
+          },
+          "chest": {
+            "current": 8,
+            "max": 8,
+            "weakness": 1
+          },
+          "abdomen": {
+            "current": 4,
+            "max": 4,
+            "weakness": 1.1
+          },
+          "arm": {
+            "current": 0,
+            "max": 0,
+            "weakness": 1
+          },
+          "leg": {
+            "current": 0,
+            "max": 0,
+            "weakness": 0.9
+          }
+        },
+        "buffs": {}
+      }
+    },
+    "allSkillCount": 54,
+    "focusedSkillCount": 19,
+    "buildCount": 80,
+    "candidateCount": 10,
+    "findings": [
+      {
+        "id": "bleed_no_consume",
+        "level": "info",
+        "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+      }
+    ],
+    "candidates": [
+      {
+        "score": 106,
+        "build": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_sword_parry_growth_v2",
+            "skill_hit_me_if_you_dare",
+            "skill_1771769351059",
+            "skill_shockwave_copy_1770042951717",
+            "skill_sword_blood_stagger_rework_v1"
+          ],
+          "skillNames": [
+            "剑击",
+            "连刺",
+            "浅割",
+            "招架姿态",
+            "反手割裂",
+            "锯齿斩",
+            "撕裂伤口",
+            "失血踉跄"
+          ],
+          "kpUsed": 14,
+          "kpRemaining": 0,
+          "maxTier": 5,
+          "mechanics": {
+            "appliesBleed": true,
+            "readsBuffRemaining": false,
+            "consumesBuffRemaining": false,
+            "heals": false,
+            "controls": true
+          }
+        },
+        "combo": {
+          "skillIds": [
+            "skill_hit_me_if_you_dare",
+            "skill_double_thrust",
+            "skill_1771769351059",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1"
+          ],
+          "skillNames": [
+            "反手割裂",
+            "剑击",
+            "锯齿斩",
+            "连刺",
+            "浅割"
+          ],
+          "apUsed": 5,
+          "apRemaining": 0
+        },
+        "simulation": {
+          "killed": true,
+          "turnsToKill": 2,
+          "metrics": {
+            "averageApUsed": 5,
+            "averageApUsage": 1,
+            "totalHpDamage": 65,
+            "finalArmorTotal": 0
+          },
+          "final": {
+            "player": {
+              "hp": 100,
+              "maxHp": 100,
+              "armorTotal": 20,
+              "bodyParts": {
+                "chest": {
+                  "current": 20,
+                  "max": 20,
+                  "weakness": 1
+                }
+              },
+              "buffs": {
+                "buff_counter": {
+                  "id": "buff_counter",
+                  "remaining": 1,
+                  "stacks": 1
+                }
+              }
+            },
+            "enemy": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 6,
+                  "stacks": 1
+                }
+              }
+            }
+          },
+          "findings": [
+            {
+              "id": "bleed_no_consume",
+              "level": "info",
+              "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+            }
+          ],
+          "turns": [
+            {
+              "turn": 1,
+              "usedSkillIds": [
+                "skill_hit_me_if_you_dare",
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_shallow_cut_rework_v1"
+              ],
+              "usedSkillNames": [
+                "反手割裂",
+                "剑击",
+                "锯齿斩",
+                "连刺",
+                "浅割"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 65,
+                "maxHp": 65,
+                "armorTotal": 16,
+                "bodyParts": {
+                  "head": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.2
+                  },
+                  "chest": {
+                    "current": 8,
+                    "max": 8,
+                    "weakness": 1
+                  },
+                  "abdomen": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.1
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {}
+              },
+              "after": {
+                "hp": 39,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 3,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -26,
+                "armor": -16,
+                "bleed": 3
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "amount": 6,
+                  "armorDamage": 4,
+                  "hpDamage": 2,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 1
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "buffId": "buff_counter",
+                  "target": "player",
+                  "remaining": 1
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 8,
+                  "hpDamage": 2,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 4,
+                  "hpDamage": 0,
+                  "bodyPart": "abdomen"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 3
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 4
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 5
+                }
+              ]
+            },
+            {
+              "turn": 2,
+              "usedSkillIds": [
+                "skill_hit_me_if_you_dare",
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_shallow_cut_rework_v1"
+              ],
+              "usedSkillNames": [
+                "反手割裂",
+                "剑击",
+                "锯齿斩",
+                "连刺",
+                "浅割"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 39,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 3,
+                    "stacks": 1
+                  }
+                }
+              },
+              "after": {
+                "hp": 0,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 6,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -39,
+                "armor": 0,
+                "bleed": 3
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "amount": 6,
+                  "armorDamage": 0,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 4
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "buffId": "buff_counter",
+                  "target": "player",
+                  "remaining": 1
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 0,
+                  "hpDamage": 10,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 0,
+                  "hpDamage": 4,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 6
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 7
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 2
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "score": 106,
+        "build": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_sword_parry_growth_v2",
+            "skill_1771769351059",
+            "skill_shockwave_copy_1770042951717",
+            "skill_execute_copy_1770043820577"
+          ],
+          "skillNames": [
+            "剑击",
+            "连刺",
+            "浅割",
+            "招架姿态",
+            "锯齿斩",
+            "撕裂伤口",
+            "血涌斩"
+          ],
+          "kpUsed": 14,
+          "kpRemaining": 0,
+          "maxTier": 5,
+          "mechanics": {
+            "appliesBleed": true,
+            "readsBuffRemaining": true,
+            "consumesBuffRemaining": false,
+            "heals": false,
+            "controls": false
+          }
+        },
+        "combo": {
+          "skillIds": [
+            "skill_1771769351059",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_execute_copy_1770043820577"
+          ],
+          "skillNames": [
+            "锯齿斩",
+            "连刺",
+            "浅割",
+            "血涌斩"
+          ],
+          "apUsed": 5,
+          "apRemaining": 0
+        },
+        "simulation": {
+          "killed": true,
+          "turnsToKill": 2,
+          "metrics": {
+            "averageApUsed": 5,
+            "averageApUsage": 1,
+            "totalHpDamage": 65,
+            "finalArmorTotal": 0
+          },
+          "final": {
+            "player": {
+              "hp": 100,
+              "maxHp": 100,
+              "armorTotal": 20,
+              "bodyParts": {
+                "chest": {
+                  "current": 20,
+                  "max": 20,
+                  "weakness": 1
+                }
+              },
+              "buffs": {}
+            },
+            "enemy": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 4,
+                  "stacks": 1
+                }
+              }
+            }
+          },
+          "findings": [
+            {
+              "id": "bleed_no_consume",
+              "level": "info",
+              "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+            }
+          ],
+          "turns": [
+            {
+              "turn": 1,
+              "usedSkillIds": [
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_shallow_cut_rework_v1",
+                "skill_execute_copy_1770043820577"
+              ],
+              "usedSkillNames": [
+                "锯齿斩",
+                "连刺",
+                "浅割",
+                "血涌斩"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 65,
+                "maxHp": 65,
+                "armorTotal": 16,
+                "bodyParts": {
+                  "head": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.2
+                  },
+                  "chest": {
+                    "current": 8,
+                    "max": 8,
+                    "weakness": 1
+                  },
+                  "abdomen": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.1
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {}
+              },
+              "after": {
+                "hp": 40,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -25,
+                "armor": -16,
+                "bleed": 2
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 4,
+                  "hpDamage": 0,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 2
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 5,
+                  "hpDamage": 0,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 3,
+                  "hpDamage": 2,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 4,
+                  "hpDamage": 3,
+                  "bodyPart": "abdomen"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 3
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 6,
+                  "armorDamage": 0,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 5
+                }
+              ]
+            },
+            {
+              "turn": 2,
+              "usedSkillIds": [
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_shallow_cut_rework_v1",
+                "skill_execute_copy_1770043820577"
+              ],
+              "usedSkillNames": [
+                "锯齿斩",
+                "连刺",
+                "浅割",
+                "血涌斩"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 40,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "after": {
+                "hp": 0,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 4,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -40,
+                "armor": 0,
+                "bleed": 2
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 0,
+                  "hpDamage": 4,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 4
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 5
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 6,
+                  "armorDamage": 0,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 12,
+                  "armorDamage": 0,
+                  "hpDamage": 12,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 1
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "score": 106,
+        "build": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_sword_parry_growth_v2",
+            "skill_1771769351059",
+            "skill_shockwave_copy_1770042951717",
+            "skill_execute_copy_1770043820577"
+          ],
+          "skillNames": [
+            "剑击",
+            "连刺",
+            "浅割",
+            "招架姿态",
+            "锯齿斩",
+            "撕裂伤口",
+            "血涌斩"
+          ],
+          "kpUsed": 14,
+          "kpRemaining": 0,
+          "maxTier": 5,
+          "mechanics": {
+            "appliesBleed": true,
+            "readsBuffRemaining": true,
+            "consumesBuffRemaining": false,
+            "heals": false,
+            "controls": false
+          }
+        },
+        "combo": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_1771769351059",
+            "skill_sword_flurry_growth_v2",
+            "skill_execute_copy_1770043820577"
+          ],
+          "skillNames": [
+            "剑击",
+            "锯齿斩",
+            "连刺",
+            "血涌斩"
+          ],
+          "apUsed": 5,
+          "apRemaining": 0
+        },
+        "simulation": {
+          "killed": true,
+          "turnsToKill": 2,
+          "metrics": {
+            "averageApUsed": 5,
+            "averageApUsage": 1,
+            "totalHpDamage": 65,
+            "finalArmorTotal": 0
+          },
+          "final": {
+            "player": {
+              "hp": 100,
+              "maxHp": 100,
+              "armorTotal": 20,
+              "bodyParts": {
+                "chest": {
+                  "current": 20,
+                  "max": 20,
+                  "weakness": 1
+                }
+              },
+              "buffs": {}
+            },
+            "enemy": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 2,
+                  "stacks": 1
+                }
+              }
+            }
+          },
+          "findings": [
+            {
+              "id": "bleed_no_consume",
+              "level": "info",
+              "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+            }
+          ],
+          "turns": [
+            {
+              "turn": 1,
+              "usedSkillIds": [
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_execute_copy_1770043820577"
+              ],
+              "usedSkillNames": [
+                "剑击",
+                "锯齿斩",
+                "连刺",
+                "血涌斩"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 65,
+                "maxHp": 65,
+                "armorTotal": 16,
+                "bodyParts": {
+                  "head": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.2
+                  },
+                  "chest": {
+                    "current": 8,
+                    "max": 8,
+                    "weakness": 1
+                  },
+                  "abdomen": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.1
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {}
+              },
+              "after": {
+                "hp": 40,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 1,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -25,
+                "armor": -16,
+                "bleed": 1
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 4,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 4,
+                  "hpDamage": 0,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 2
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 4,
+                  "hpDamage": 1,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 4,
+                  "hpDamage": 1,
+                  "bodyPart": "abdomen"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 6,
+                  "armorDamage": 0,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 6,
+                  "armorDamage": 0,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 5
+                }
+              ]
+            },
+            {
+              "turn": 2,
+              "usedSkillIds": [
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_execute_copy_1770043820577"
+              ],
+              "usedSkillNames": [
+                "剑击",
+                "锯齿斩",
+                "连刺",
+                "血涌斩"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 40,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 1,
+                    "stacks": 1
+                  }
+                }
+              },
+              "after": {
+                "hp": 0,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -40,
+                "armor": 0,
+                "bleed": 1
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 0,
+                  "hpDamage": 10,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 0,
+                  "hpDamage": 4,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 3
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 6,
+                  "armorDamage": 0,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 1
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "score": 106,
+        "build": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_sword_parry_growth_v2",
+            "skill_1771769351059",
+            "skill_shockwave_copy_1770042951717",
+            "skill_execute_copy_1770043820577"
+          ],
+          "skillNames": [
+            "剑击",
+            "连刺",
+            "浅割",
+            "招架姿态",
+            "锯齿斩",
+            "撕裂伤口",
+            "血涌斩"
+          ],
+          "kpUsed": 14,
+          "kpRemaining": 0,
+          "maxTier": 5,
+          "mechanics": {
+            "appliesBleed": true,
+            "readsBuffRemaining": true,
+            "consumesBuffRemaining": false,
+            "heals": false,
+            "controls": false
+          }
+        },
+        "combo": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_1771769351059",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_execute_copy_1770043820577"
+          ],
+          "skillNames": [
+            "剑击",
+            "锯齿斩",
+            "浅割",
+            "血涌斩"
+          ],
+          "apUsed": 5,
+          "apRemaining": 0
+        },
+        "simulation": {
+          "killed": true,
+          "turnsToKill": 2,
+          "metrics": {
+            "averageApUsed": 5,
+            "averageApUsage": 1,
+            "totalHpDamage": 65,
+            "finalArmorTotal": 0
+          },
+          "final": {
+            "player": {
+              "hp": 100,
+              "maxHp": 100,
+              "armorTotal": 20,
+              "bodyParts": {
+                "chest": {
+                  "current": 20,
+                  "max": 20,
+                  "weakness": 1
+                }
+              },
+              "buffs": {}
+            },
+            "enemy": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 4,
+                  "stacks": 1
+                }
+              }
+            }
+          },
+          "findings": [
+            {
+              "id": "bleed_no_consume",
+              "level": "info",
+              "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+            }
+          ],
+          "turns": [
+            {
+              "turn": 1,
+              "usedSkillIds": [
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_shallow_cut_rework_v1",
+                "skill_execute_copy_1770043820577"
+              ],
+              "usedSkillNames": [
+                "剑击",
+                "锯齿斩",
+                "浅割",
+                "血涌斩"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 65,
+                "maxHp": 65,
+                "armorTotal": 16,
+                "bodyParts": {
+                  "head": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.2
+                  },
+                  "chest": {
+                    "current": 8,
+                    "max": 8,
+                    "weakness": 1
+                  },
+                  "abdomen": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.1
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {}
+              },
+              "after": {
+                "hp": 40,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -25,
+                "armor": -16,
+                "bleed": 2
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 4,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 4,
+                  "hpDamage": 0,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 2
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 4,
+                  "hpDamage": 3,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 3
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 6,
+                  "armorDamage": 4,
+                  "hpDamage": 2,
+                  "bodyPart": "abdomen"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 5
+                }
+              ]
+            },
+            {
+              "turn": 2,
+              "usedSkillIds": [
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_shallow_cut_rework_v1",
+                "skill_execute_copy_1770043820577"
+              ],
+              "usedSkillNames": [
+                "剑击",
+                "锯齿斩",
+                "浅割",
+                "血涌斩"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 40,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "after": {
+                "hp": 0,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 4,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -40,
+                "armor": 0,
+                "bleed": 2
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 0,
+                  "hpDamage": 10,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 0,
+                  "hpDamage": 4,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 4
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 5
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 6,
+                  "armorDamage": 0,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_execute_copy_1770043820577",
+                  "amount": 12,
+                  "armorDamage": 0,
+                  "hpDamage": 12,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 1
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "score": 106,
+        "build": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_1771769351059",
+            "skill_sword_followup_growth_v2",
+            "skill_shockwave_copy_1770042951717",
+            "skill_sword_blood_stagger_rework_v1"
+          ],
+          "skillNames": [
+            "剑击",
+            "连刺",
+            "浅割",
+            "锯齿斩",
+            "追击剑势",
+            "撕裂伤口",
+            "失血踉跄"
+          ],
+          "kpUsed": 14,
+          "kpRemaining": 0,
+          "maxTier": 5,
+          "mechanics": {
+            "appliesBleed": true,
+            "readsBuffRemaining": false,
+            "consumesBuffRemaining": false,
+            "heals": false,
+            "controls": true
+          }
+        },
+        "combo": {
+          "skillIds": [
+            "skill_1771769351059",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_sword_followup_growth_v2"
+          ],
+          "skillNames": [
+            "锯齿斩",
+            "连刺",
+            "浅割",
+            "追击剑势"
+          ],
+          "apUsed": 5,
+          "apRemaining": 0
+        },
+        "simulation": {
+          "killed": true,
+          "turnsToKill": 2,
+          "metrics": {
+            "averageApUsed": 5,
+            "averageApUsage": 1,
+            "totalHpDamage": 65,
+            "finalArmorTotal": 0
+          },
+          "final": {
+            "player": {
+              "hp": 100,
+              "maxHp": 100,
+              "armorTotal": 20,
+              "bodyParts": {
+                "chest": {
+                  "current": 20,
+                  "max": 20,
+                  "weakness": 1
+                }
+              },
+              "buffs": {}
+            },
+            "enemy": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 5,
+                  "stacks": 1
+                }
+              }
+            }
+          },
+          "findings": [
+            {
+              "id": "bleed_no_consume",
+              "level": "info",
+              "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+            }
+          ],
+          "turns": [
+            {
+              "turn": 1,
+              "usedSkillIds": [
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_shallow_cut_rework_v1",
+                "skill_sword_followup_growth_v2"
+              ],
+              "usedSkillNames": [
+                "锯齿斩",
+                "连刺",
+                "浅割",
+                "追击剑势"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 65,
+                "maxHp": 65,
+                "armorTotal": 16,
+                "bodyParts": {
+                  "head": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.2
+                  },
+                  "chest": {
+                    "current": 8,
+                    "max": 8,
+                    "weakness": 1
+                  },
+                  "abdomen": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.1
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {}
+              },
+              "after": {
+                "hp": 37,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -28,
+                "armor": -16,
+                "bleed": 2
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 4,
+                  "hpDamage": 0,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 2
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 5,
+                  "hpDamage": 0,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 3,
+                  "hpDamage": 2,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 4,
+                  "hpDamage": 3,
+                  "bodyPart": "abdomen"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 3
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 5
+                }
+              ]
+            },
+            {
+              "turn": 2,
+              "usedSkillIds": [
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_shallow_cut_rework_v1",
+                "skill_sword_followup_growth_v2"
+              ],
+              "usedSkillNames": [
+                "锯齿斩",
+                "连刺",
+                "浅割",
+                "追击剑势"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 37,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "after": {
+                "hp": 0,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 5,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -37,
+                "armor": 0,
+                "bleed": 3
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 0,
+                  "hpDamage": 4,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 4
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 5
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "score": 106,
+        "build": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_1771769351059",
+            "skill_sword_followup_growth_v2",
+            "skill_shockwave_copy_1770042951717",
+            "skill_sword_blood_stagger_rework_v1"
+          ],
+          "skillNames": [
+            "剑击",
+            "连刺",
+            "浅割",
+            "锯齿斩",
+            "追击剑势",
+            "撕裂伤口",
+            "失血踉跄"
+          ],
+          "kpUsed": 14,
+          "kpRemaining": 0,
+          "maxTier": 5,
+          "mechanics": {
+            "appliesBleed": true,
+            "readsBuffRemaining": false,
+            "consumesBuffRemaining": false,
+            "heals": false,
+            "controls": true
+          }
+        },
+        "combo": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_1771769351059",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_followup_growth_v2"
+          ],
+          "skillNames": [
+            "剑击",
+            "锯齿斩",
+            "连刺",
+            "追击剑势"
+          ],
+          "apUsed": 5,
+          "apRemaining": 0
+        },
+        "simulation": {
+          "killed": true,
+          "turnsToKill": 2,
+          "metrics": {
+            "averageApUsed": 5,
+            "averageApUsage": 1,
+            "totalHpDamage": 65,
+            "finalArmorTotal": 0
+          },
+          "final": {
+            "player": {
+              "hp": 100,
+              "maxHp": 100,
+              "armorTotal": 20,
+              "bodyParts": {
+                "chest": {
+                  "current": 20,
+                  "max": 20,
+                  "weakness": 1
+                }
+              },
+              "buffs": {}
+            },
+            "enemy": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 3,
+                  "stacks": 1
+                }
+              }
+            }
+          },
+          "findings": [
+            {
+              "id": "bleed_no_consume",
+              "level": "info",
+              "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+            }
+          ],
+          "turns": [
+            {
+              "turn": 1,
+              "usedSkillIds": [
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_followup_growth_v2"
+              ],
+              "usedSkillNames": [
+                "剑击",
+                "锯齿斩",
+                "连刺",
+                "追击剑势"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 65,
+                "maxHp": 65,
+                "armorTotal": 16,
+                "bodyParts": {
+                  "head": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.2
+                  },
+                  "chest": {
+                    "current": 8,
+                    "max": 8,
+                    "weakness": 1
+                  },
+                  "abdomen": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.1
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {}
+              },
+              "after": {
+                "hp": 34,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 1,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -31,
+                "armor": -16,
+                "bleed": 1
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 4,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 4,
+                  "hpDamage": 0,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 2
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 4,
+                  "hpDamage": 1,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 4,
+                  "hpDamage": 1,
+                  "bodyPart": "abdomen"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 5
+                }
+              ]
+            },
+            {
+              "turn": 2,
+              "usedSkillIds": [
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_followup_growth_v2"
+              ],
+              "usedSkillNames": [
+                "剑击",
+                "锯齿斩",
+                "连刺",
+                "追击剑势"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 34,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 1,
+                    "stacks": 1
+                  }
+                }
+              },
+              "after": {
+                "hp": 0,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 3,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -34,
+                "armor": 0,
+                "bleed": 2
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 0,
+                  "hpDamage": 10,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 0,
+                  "hpDamage": 4,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 3
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 1,
+                  "bodyPart": "head"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "score": 106,
+        "build": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_1771769351059",
+            "skill_sword_followup_growth_v2",
+            "skill_shockwave_copy_1770042951717",
+            "skill_sword_blood_stagger_rework_v1"
+          ],
+          "skillNames": [
+            "剑击",
+            "连刺",
+            "浅割",
+            "锯齿斩",
+            "追击剑势",
+            "撕裂伤口",
+            "失血踉跄"
+          ],
+          "kpUsed": 14,
+          "kpRemaining": 0,
+          "maxTier": 5,
+          "mechanics": {
+            "appliesBleed": true,
+            "readsBuffRemaining": false,
+            "consumesBuffRemaining": false,
+            "heals": false,
+            "controls": true
+          }
+        },
+        "combo": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_1771769351059",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_sword_followup_growth_v2"
+          ],
+          "skillNames": [
+            "剑击",
+            "锯齿斩",
+            "浅割",
+            "追击剑势"
+          ],
+          "apUsed": 5,
+          "apRemaining": 0
+        },
+        "simulation": {
+          "killed": true,
+          "turnsToKill": 2,
+          "metrics": {
+            "averageApUsed": 5,
+            "averageApUsage": 1,
+            "totalHpDamage": 65,
+            "finalArmorTotal": 0
+          },
+          "final": {
+            "player": {
+              "hp": 100,
+              "maxHp": 100,
+              "armorTotal": 20,
+              "bodyParts": {
+                "chest": {
+                  "current": 20,
+                  "max": 20,
+                  "weakness": 1
+                }
+              },
+              "buffs": {}
+            },
+            "enemy": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 5,
+                  "stacks": 1
+                }
+              }
+            }
+          },
+          "findings": [
+            {
+              "id": "bleed_no_consume",
+              "level": "info",
+              "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+            }
+          ],
+          "turns": [
+            {
+              "turn": 1,
+              "usedSkillIds": [
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_shallow_cut_rework_v1",
+                "skill_sword_followup_growth_v2"
+              ],
+              "usedSkillNames": [
+                "剑击",
+                "锯齿斩",
+                "浅割",
+                "追击剑势"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 65,
+                "maxHp": 65,
+                "armorTotal": 16,
+                "bodyParts": {
+                  "head": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.2
+                  },
+                  "chest": {
+                    "current": 8,
+                    "max": 8,
+                    "weakness": 1
+                  },
+                  "abdomen": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.1
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {}
+              },
+              "after": {
+                "hp": 37,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -28,
+                "armor": -16,
+                "bleed": 2
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 4,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 4,
+                  "hpDamage": 0,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 2
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 4,
+                  "hpDamage": 3,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 3
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 4,
+                  "hpDamage": 5,
+                  "bodyPart": "abdomen"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 5
+                }
+              ]
+            },
+            {
+              "turn": 2,
+              "usedSkillIds": [
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_shallow_cut_rework_v1",
+                "skill_sword_followup_growth_v2"
+              ],
+              "usedSkillNames": [
+                "剑击",
+                "锯齿斩",
+                "浅割",
+                "追击剑势"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 37,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "after": {
+                "hp": 0,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 5,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -37,
+                "armor": 0,
+                "bleed": 3
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 0,
+                  "hpDamage": 10,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 0,
+                  "hpDamage": 4,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 4
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 5
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "score": 106,
+        "build": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_1771769351059",
+            "skill_sword_deep_cut_rework_v1",
+            "skill_shockwave_copy_1770042951717",
+            "skill_sword_blood_stagger_rework_v1"
+          ],
+          "skillNames": [
+            "剑击",
+            "连刺",
+            "浅割",
+            "锯齿斩",
+            "深切",
+            "撕裂伤口",
+            "失血踉跄"
+          ],
+          "kpUsed": 14,
+          "kpRemaining": 0,
+          "maxTier": 5,
+          "mechanics": {
+            "appliesBleed": true,
+            "readsBuffRemaining": false,
+            "consumesBuffRemaining": false,
+            "heals": false,
+            "controls": true
+          }
+        },
+        "combo": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_1771769351059",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_deep_cut_rework_v1"
+          ],
+          "skillNames": [
+            "剑击",
+            "锯齿斩",
+            "连刺",
+            "深切"
+          ],
+          "apUsed": 5,
+          "apRemaining": 0
+        },
+        "simulation": {
+          "killed": true,
+          "turnsToKill": 2,
+          "metrics": {
+            "averageApUsed": 5,
+            "averageApUsage": 1,
+            "totalHpDamage": 65,
+            "finalArmorTotal": 0
+          },
+          "final": {
+            "player": {
+              "hp": 100,
+              "maxHp": 100,
+              "armorTotal": 20,
+              "bodyParts": {
+                "chest": {
+                  "current": 20,
+                  "max": 20,
+                  "weakness": 1
+                }
+              },
+              "buffs": {}
+            },
+            "enemy": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 6,
+                  "stacks": 1
+                }
+              }
+            }
+          },
+          "findings": [
+            {
+              "id": "bleed_no_consume",
+              "level": "info",
+              "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+            }
+          ],
+          "turns": [
+            {
+              "turn": 1,
+              "usedSkillIds": [
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_deep_cut_rework_v1"
+              ],
+              "usedSkillNames": [
+                "剑击",
+                "锯齿斩",
+                "连刺",
+                "深切"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 65,
+                "maxHp": 65,
+                "armorTotal": 16,
+                "bodyParts": {
+                  "head": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.2
+                  },
+                  "chest": {
+                    "current": 8,
+                    "max": 8,
+                    "weakness": 1
+                  },
+                  "abdomen": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.1
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {}
+              },
+              "after": {
+                "hp": 40,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 3,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -25,
+                "armor": -16,
+                "bleed": 3
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 4,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 4,
+                  "hpDamage": 0,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 2
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 4,
+                  "hpDamage": 1,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 4,
+                  "hpDamage": 1,
+                  "bodyPart": "abdomen"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_deep_cut_rework_v1",
+                  "amount": 12,
+                  "armorDamage": 0,
+                  "hpDamage": 12,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_deep_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 4
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 5
+                }
+              ]
+            },
+            {
+              "turn": 2,
+              "usedSkillIds": [
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_deep_cut_rework_v1"
+              ],
+              "usedSkillNames": [
+                "剑击",
+                "锯齿斩",
+                "连刺",
+                "深切"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 40,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 3,
+                    "stacks": 1
+                  }
+                }
+              },
+              "after": {
+                "hp": 0,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 6,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -40,
+                "armor": 0,
+                "bleed": 3
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 0,
+                  "hpDamage": 10,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 0,
+                  "hpDamage": 4,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 5
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_deep_cut_rework_v1",
+                  "amount": 12,
+                  "armorDamage": 0,
+                  "hpDamage": 12,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_deep_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 7
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 4
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "score": 106,
+        "build": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_sword_parry_growth_v2",
+            "skill_hit_me_if_you_dare",
+            "skill_1771769351059",
+            "skill_sword_followup_growth_v2",
+            "skill_sword_deep_cut_rework_v1"
+          ],
+          "skillNames": [
+            "剑击",
+            "连刺",
+            "浅割",
+            "招架姿态",
+            "反手割裂",
+            "锯齿斩",
+            "追击剑势",
+            "深切"
+          ],
+          "kpUsed": 14,
+          "kpRemaining": 0,
+          "maxTier": 4,
+          "mechanics": {
+            "appliesBleed": true,
+            "readsBuffRemaining": false,
+            "consumesBuffRemaining": false,
+            "heals": false,
+            "controls": false
+          }
+        },
+        "combo": {
+          "skillIds": [
+            "skill_hit_me_if_you_dare",
+            "skill_double_thrust",
+            "skill_1771769351059",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1"
+          ],
+          "skillNames": [
+            "反手割裂",
+            "剑击",
+            "锯齿斩",
+            "连刺",
+            "浅割"
+          ],
+          "apUsed": 5,
+          "apRemaining": 0
+        },
+        "simulation": {
+          "killed": true,
+          "turnsToKill": 2,
+          "metrics": {
+            "averageApUsed": 5,
+            "averageApUsage": 1,
+            "totalHpDamage": 65,
+            "finalArmorTotal": 0
+          },
+          "final": {
+            "player": {
+              "hp": 100,
+              "maxHp": 100,
+              "armorTotal": 20,
+              "bodyParts": {
+                "chest": {
+                  "current": 20,
+                  "max": 20,
+                  "weakness": 1
+                }
+              },
+              "buffs": {
+                "buff_counter": {
+                  "id": "buff_counter",
+                  "remaining": 1,
+                  "stacks": 1
+                }
+              }
+            },
+            "enemy": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 6,
+                  "stacks": 1
+                }
+              }
+            }
+          },
+          "findings": [
+            {
+              "id": "bleed_no_consume",
+              "level": "info",
+              "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+            }
+          ],
+          "turns": [
+            {
+              "turn": 1,
+              "usedSkillIds": [
+                "skill_hit_me_if_you_dare",
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_shallow_cut_rework_v1"
+              ],
+              "usedSkillNames": [
+                "反手割裂",
+                "剑击",
+                "锯齿斩",
+                "连刺",
+                "浅割"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 65,
+                "maxHp": 65,
+                "armorTotal": 16,
+                "bodyParts": {
+                  "head": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.2
+                  },
+                  "chest": {
+                    "current": 8,
+                    "max": 8,
+                    "weakness": 1
+                  },
+                  "abdomen": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.1
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {}
+              },
+              "after": {
+                "hp": 39,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 3,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -26,
+                "armor": -16,
+                "bleed": 3
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "amount": 6,
+                  "armorDamage": 4,
+                  "hpDamage": 2,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 1
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "buffId": "buff_counter",
+                  "target": "player",
+                  "remaining": 1
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 8,
+                  "hpDamage": 2,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 4,
+                  "hpDamage": 0,
+                  "bodyPart": "abdomen"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 3
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 4
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 5
+                }
+              ]
+            },
+            {
+              "turn": 2,
+              "usedSkillIds": [
+                "skill_hit_me_if_you_dare",
+                "skill_double_thrust",
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_shallow_cut_rework_v1"
+              ],
+              "usedSkillNames": [
+                "反手割裂",
+                "剑击",
+                "锯齿斩",
+                "连刺",
+                "浅割"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 39,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 3,
+                    "stacks": 1
+                  }
+                }
+              },
+              "after": {
+                "hp": 0,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 6,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -39,
+                "armor": 0,
+                "bleed": 3
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "amount": 6,
+                  "armorDamage": 0,
+                  "hpDamage": 6,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 4
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_hit_me_if_you_dare",
+                  "buffId": "buff_counter",
+                  "target": "player",
+                  "remaining": 1
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_double_thrust",
+                  "amount": 10,
+                  "armorDamage": 0,
+                  "hpDamage": 10,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 0,
+                  "hpDamage": 4,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 6
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 7
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 2
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "score": 106,
+        "build": {
+          "skillIds": [
+            "skill_double_thrust",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_sword_parry_growth_v2",
+            "skill_hit_me_if_you_dare",
+            "skill_1771769351059",
+            "skill_sword_followup_growth_v2",
+            "skill_sword_deep_cut_rework_v1"
+          ],
+          "skillNames": [
+            "剑击",
+            "连刺",
+            "浅割",
+            "招架姿态",
+            "反手割裂",
+            "锯齿斩",
+            "追击剑势",
+            "深切"
+          ],
+          "kpUsed": 14,
+          "kpRemaining": 0,
+          "maxTier": 4,
+          "mechanics": {
+            "appliesBleed": true,
+            "readsBuffRemaining": false,
+            "consumesBuffRemaining": false,
+            "heals": false,
+            "controls": false
+          }
+        },
+        "combo": {
+          "skillIds": [
+            "skill_1771769351059",
+            "skill_sword_flurry_growth_v2",
+            "skill_sword_shallow_cut_rework_v1",
+            "skill_sword_followup_growth_v2"
+          ],
+          "skillNames": [
+            "锯齿斩",
+            "连刺",
+            "浅割",
+            "追击剑势"
+          ],
+          "apUsed": 5,
+          "apRemaining": 0
+        },
+        "simulation": {
+          "killed": true,
+          "turnsToKill": 2,
+          "metrics": {
+            "averageApUsed": 5,
+            "averageApUsage": 1,
+            "totalHpDamage": 65,
+            "finalArmorTotal": 0
+          },
+          "final": {
+            "player": {
+              "hp": 100,
+              "maxHp": 100,
+              "armorTotal": 20,
+              "bodyParts": {
+                "chest": {
+                  "current": 20,
+                  "max": 20,
+                  "weakness": 1
+                }
+              },
+              "buffs": {}
+            },
+            "enemy": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 5,
+                  "stacks": 1
+                }
+              }
+            }
+          },
+          "findings": [
+            {
+              "id": "bleed_no_consume",
+              "level": "info",
+              "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+            }
+          ],
+          "turns": [
+            {
+              "turn": 1,
+              "usedSkillIds": [
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_shallow_cut_rework_v1",
+                "skill_sword_followup_growth_v2"
+              ],
+              "usedSkillNames": [
+                "锯齿斩",
+                "连刺",
+                "浅割",
+                "追击剑势"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 65,
+                "maxHp": 65,
+                "armorTotal": 16,
+                "bodyParts": {
+                  "head": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.2
+                  },
+                  "chest": {
+                    "current": 8,
+                    "max": 8,
+                    "weakness": 1
+                  },
+                  "abdomen": {
+                    "current": 4,
+                    "max": 4,
+                    "weakness": 1.1
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {}
+              },
+              "after": {
+                "hp": 37,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -28,
+                "armor": -16,
+                "bleed": 2
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 4,
+                  "hpDamage": 0,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 2
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 5,
+                  "hpDamage": 0,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 3,
+                  "hpDamage": 2,
+                  "bodyPart": "chest"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 4,
+                  "hpDamage": 3,
+                  "bodyPart": "abdomen"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 3
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_tick",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "hpDamage": 5
+                }
+              ]
+            },
+            {
+              "turn": 2,
+              "usedSkillIds": [
+                "skill_1771769351059",
+                "skill_sword_flurry_growth_v2",
+                "skill_sword_shallow_cut_rework_v1",
+                "skill_sword_followup_growth_v2"
+              ],
+              "usedSkillNames": [
+                "锯齿斩",
+                "连刺",
+                "浅割",
+                "追击剑势"
+              ],
+              "apUsed": 5,
+              "apRemaining": 0,
+              "skipped": [],
+              "before": {
+                "hp": 37,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 2,
+                    "stacks": 1
+                  }
+                }
+              },
+              "after": {
+                "hp": 0,
+                "maxHp": 65,
+                "armorTotal": 0,
+                "bodyParts": {
+                  "head": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.2,
+                    "status": "BROKEN"
+                  },
+                  "chest": {
+                    "current": 0,
+                    "max": 8,
+                    "weakness": 1,
+                    "status": "BROKEN"
+                  },
+                  "abdomen": {
+                    "current": 0,
+                    "max": 4,
+                    "weakness": 1.1,
+                    "status": "BROKEN"
+                  },
+                  "arm": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 1
+                  },
+                  "leg": {
+                    "current": 0,
+                    "max": 0,
+                    "weakness": 0.9
+                  }
+                },
+                "buffs": {
+                  "buff_bleed": {
+                    "id": "buff_bleed",
+                    "remaining": 5,
+                    "stacks": 1
+                  }
+                }
+              },
+              "delta": {
+                "hp": -37,
+                "armor": 0,
+                "bleed": 3
+              },
+              "events": [
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_1771769351059",
+                  "amount": 4,
+                  "armorDamage": 0,
+                  "hpDamage": 4,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_1771769351059",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 4
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_flurry_growth_v2",
+                  "amount": 5,
+                  "armorDamage": 0,
+                  "hpDamage": 5,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "amount": 7,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "buff_apply",
+                  "skillId": "skill_sword_shallow_cut_rework_v1",
+                  "buffId": "buff_bleed",
+                  "target": "enemy",
+                  "remaining": 5
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 9,
+                  "bodyPart": "head"
+                },
+                {
+                  "type": "armor_damage",
+                  "skillId": "skill_sword_followup_growth_v2",
+                  "amount": 9,
+                  "armorDamage": 0,
+                  "hpDamage": 7,
+                  "bodyPart": "head"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "best": {
+      "score": 106,
+      "build": {
+        "skillIds": [
+          "skill_double_thrust",
+          "skill_sword_flurry_growth_v2",
+          "skill_sword_shallow_cut_rework_v1",
+          "skill_sword_parry_growth_v2",
+          "skill_hit_me_if_you_dare",
+          "skill_1771769351059",
+          "skill_shockwave_copy_1770042951717",
+          "skill_sword_blood_stagger_rework_v1"
+        ],
+        "skillNames": [
+          "剑击",
+          "连刺",
+          "浅割",
+          "招架姿态",
+          "反手割裂",
+          "锯齿斩",
+          "撕裂伤口",
+          "失血踉跄"
+        ],
+        "kpUsed": 14,
+        "kpRemaining": 0,
+        "maxTier": 5,
+        "mechanics": {
+          "appliesBleed": true,
+          "readsBuffRemaining": false,
+          "consumesBuffRemaining": false,
+          "heals": false,
+          "controls": true
+        }
+      },
+      "combo": {
+        "skillIds": [
+          "skill_hit_me_if_you_dare",
+          "skill_double_thrust",
+          "skill_1771769351059",
+          "skill_sword_flurry_growth_v2",
+          "skill_sword_shallow_cut_rework_v1"
+        ],
+        "skillNames": [
+          "反手割裂",
+          "剑击",
+          "锯齿斩",
+          "连刺",
+          "浅割"
+        ],
+        "apUsed": 5,
+        "apRemaining": 0
+      },
+      "simulation": {
+        "killed": true,
+        "turnsToKill": 2,
+        "metrics": {
+          "averageApUsed": 5,
+          "averageApUsage": 1,
+          "totalHpDamage": 65,
+          "finalArmorTotal": 0
+        },
+        "final": {
+          "player": {
+            "hp": 100,
+            "maxHp": 100,
+            "armorTotal": 20,
+            "bodyParts": {
+              "chest": {
+                "current": 20,
+                "max": 20,
+                "weakness": 1
+              }
+            },
+            "buffs": {
+              "buff_counter": {
+                "id": "buff_counter",
+                "remaining": 1,
+                "stacks": 1
+              }
+            }
+          },
+          "enemy": {
+            "hp": 0,
+            "maxHp": 65,
+            "armorTotal": 0,
+            "bodyParts": {
+              "head": {
+                "current": 0,
+                "max": 4,
+                "weakness": 1.2,
+                "status": "BROKEN"
+              },
+              "chest": {
+                "current": 0,
+                "max": 8,
+                "weakness": 1,
+                "status": "BROKEN"
+              },
+              "abdomen": {
+                "current": 0,
+                "max": 4,
+                "weakness": 1.1,
+                "status": "BROKEN"
+              },
+              "arm": {
+                "current": 0,
+                "max": 0,
+                "weakness": 1
+              },
+              "leg": {
+                "current": 0,
+                "max": 0,
+                "weakness": 0.9
+              }
+            },
+            "buffs": {
+              "buff_bleed": {
+                "id": "buff_bleed",
+                "remaining": 6,
+                "stacks": 1
+              }
+            }
+          }
+        },
+        "findings": [
+          {
+            "id": "bleed_no_consume",
+            "level": "info",
+            "text": "循环建立了流血窗口，但没有消耗窗口的终结动作。"
+          }
+        ],
+        "turns": [
+          {
+            "turn": 1,
+            "usedSkillIds": [
+              "skill_hit_me_if_you_dare",
+              "skill_double_thrust",
+              "skill_1771769351059",
+              "skill_sword_flurry_growth_v2",
+              "skill_sword_shallow_cut_rework_v1"
+            ],
+            "usedSkillNames": [
+              "反手割裂",
+              "剑击",
+              "锯齿斩",
+              "连刺",
+              "浅割"
+            ],
+            "apUsed": 5,
+            "apRemaining": 0,
+            "skipped": [],
+            "before": {
+              "hp": 65,
+              "maxHp": 65,
+              "armorTotal": 16,
+              "bodyParts": {
+                "head": {
+                  "current": 4,
+                  "max": 4,
+                  "weakness": 1.2
+                },
+                "chest": {
+                  "current": 8,
+                  "max": 8,
+                  "weakness": 1
+                },
+                "abdomen": {
+                  "current": 4,
+                  "max": 4,
+                  "weakness": 1.1
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {}
+            },
+            "after": {
+              "hp": 39,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 3,
+                  "stacks": 1
+                }
+              }
+            },
+            "delta": {
+              "hp": -26,
+              "armor": -16,
+              "bleed": 3
+            },
+            "events": [
+              {
+                "type": "armor_damage",
+                "skillId": "skill_hit_me_if_you_dare",
+                "amount": 6,
+                "armorDamage": 4,
+                "hpDamage": 2,
+                "bodyPart": "head"
+              },
+              {
+                "type": "buff_apply",
+                "skillId": "skill_hit_me_if_you_dare",
+                "buffId": "buff_bleed",
+                "target": "enemy",
+                "remaining": 1
+              },
+              {
+                "type": "buff_apply",
+                "skillId": "skill_hit_me_if_you_dare",
+                "buffId": "buff_counter",
+                "target": "player",
+                "remaining": 1
+              },
+              {
+                "type": "armor_damage",
+                "skillId": "skill_double_thrust",
+                "amount": 10,
+                "armorDamage": 8,
+                "hpDamage": 2,
+                "bodyPart": "chest"
+              },
+              {
+                "type": "armor_damage",
+                "skillId": "skill_1771769351059",
+                "amount": 4,
+                "armorDamage": 4,
+                "hpDamage": 0,
+                "bodyPart": "abdomen"
+              },
+              {
+                "type": "buff_apply",
+                "skillId": "skill_1771769351059",
+                "buffId": "buff_bleed",
+                "target": "enemy",
+                "remaining": 3
+              },
+              {
+                "type": "armor_damage",
+                "skillId": "skill_sword_flurry_growth_v2",
+                "amount": 5,
+                "armorDamage": 0,
+                "hpDamage": 5,
+                "bodyPart": "head"
+              },
+              {
+                "type": "armor_damage",
+                "skillId": "skill_sword_flurry_growth_v2",
+                "amount": 5,
+                "armorDamage": 0,
+                "hpDamage": 5,
+                "bodyPart": "head"
+              },
+              {
+                "type": "armor_damage",
+                "skillId": "skill_sword_shallow_cut_rework_v1",
+                "amount": 7,
+                "armorDamage": 0,
+                "hpDamage": 7,
+                "bodyPart": "head"
+              },
+              {
+                "type": "buff_apply",
+                "skillId": "skill_sword_shallow_cut_rework_v1",
+                "buffId": "buff_bleed",
+                "target": "enemy",
+                "remaining": 4
+              },
+              {
+                "type": "buff_tick",
+                "buffId": "buff_bleed",
+                "target": "enemy",
+                "hpDamage": 5
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "usedSkillIds": [
+              "skill_hit_me_if_you_dare",
+              "skill_double_thrust",
+              "skill_1771769351059",
+              "skill_sword_flurry_growth_v2",
+              "skill_sword_shallow_cut_rework_v1"
+            ],
+            "usedSkillNames": [
+              "反手割裂",
+              "剑击",
+              "锯齿斩",
+              "连刺",
+              "浅割"
+            ],
+            "apUsed": 5,
+            "apRemaining": 0,
+            "skipped": [],
+            "before": {
+              "hp": 39,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 3,
+                  "stacks": 1
+                }
+              }
+            },
+            "after": {
+              "hp": 0,
+              "maxHp": 65,
+              "armorTotal": 0,
+              "bodyParts": {
+                "head": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.2,
+                  "status": "BROKEN"
+                },
+                "chest": {
+                  "current": 0,
+                  "max": 8,
+                  "weakness": 1,
+                  "status": "BROKEN"
+                },
+                "abdomen": {
+                  "current": 0,
+                  "max": 4,
+                  "weakness": 1.1,
+                  "status": "BROKEN"
+                },
+                "arm": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 1
+                },
+                "leg": {
+                  "current": 0,
+                  "max": 0,
+                  "weakness": 0.9
+                }
+              },
+              "buffs": {
+                "buff_bleed": {
+                  "id": "buff_bleed",
+                  "remaining": 6,
+                  "stacks": 1
+                }
+              }
+            },
+            "delta": {
+              "hp": -39,
+              "armor": 0,
+              "bleed": 3
+            },
+            "events": [
+              {
+                "type": "armor_damage",
+                "skillId": "skill_hit_me_if_you_dare",
+                "amount": 6,
+                "armorDamage": 0,
+                "hpDamage": 6,
+                "bodyPart": "head"
+              },
+              {
+                "type": "buff_apply",
+                "skillId": "skill_hit_me_if_you_dare",
+                "buffId": "buff_bleed",
+                "target": "enemy",
+                "remaining": 4
+              },
+              {
+                "type": "buff_apply",
+                "skillId": "skill_hit_me_if_you_dare",
+                "buffId": "buff_counter",
+                "target": "player",
+                "remaining": 1
+              },
+              {
+                "type": "armor_damage",
+                "skillId": "skill_double_thrust",
+                "amount": 10,
+                "armorDamage": 0,
+                "hpDamage": 10,
+                "bodyPart": "head"
+              },
+              {
+                "type": "armor_damage",
+                "skillId": "skill_1771769351059",
+                "amount": 4,
+                "armorDamage": 0,
+                "hpDamage": 4,
+                "bodyPart": "head"
+              },
+              {
+                "type": "buff_apply",
+                "skillId": "skill_1771769351059",
+                "buffId": "buff_bleed",
+                "target": "enemy",
+                "remaining": 6
+              },
+              {
+                "type": "armor_damage",
+                "skillId": "skill_sword_flurry_growth_v2",
+                "amount": 5,
+                "armorDamage": 0,
+                "hpDamage": 5,
+                "bodyPart": "head"
+              },
+              {
+                "type": "armor_damage",
+                "skillId": "skill_sword_flurry_growth_v2",
+                "amount": 5,
+                "armorDamage": 0,
+                "hpDamage": 5,
+                "bodyPart": "head"
+              },
+              {
+                "type": "armor_damage",
+                "skillId": "skill_sword_shallow_cut_rework_v1",
+                "amount": 7,
+                "armorDamage": 0,
+                "hpDamage": 7,
+                "bodyPart": "head"
+              },
+              {
+                "type": "buff_apply",
+                "skillId": "skill_sword_shallow_cut_rework_v1",
+                "buffId": "buff_bleed",
+                "target": "enemy",
+                "remaining": 7
+              },
+              {
+                "type": "buff_tick",
+                "buffId": "buff_bleed",
+                "target": "enemy",
+                "hpDamage": 2
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
