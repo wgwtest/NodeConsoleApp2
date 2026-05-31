@@ -1357,7 +1357,8 @@ class CoreEngine {
             const planned = this.enemyPlanner.planTurn({
                 enemy,
                 player: this.data.playerData,
-                playerBodyParts: playerRuntimeBodyParts
+                playerBodyParts: playerRuntimeBodyParts,
+                turnNumber: this.currentTurn
             });
             if (planned) out.push(planned);
         });
