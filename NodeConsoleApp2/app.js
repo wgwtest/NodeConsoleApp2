@@ -33,6 +33,7 @@ const runtimeSkillPackPath = skillPackKindConfigs.player.runtimePath;
 const mimeTypes = new Map([
   ['.html', 'text/html; charset=utf-8'],
   ['.js', 'text/javascript; charset=utf-8'],
+  ['.mjs', 'text/javascript; charset=utf-8'],
   ['.css', 'text/css; charset=utf-8'],
   ['.json', 'application/json; charset=utf-8'],
   ['.png', 'image/png'],
@@ -404,13 +405,27 @@ async function listRecentSkillJsonFiles(limit = 20, kind = 'player') {
 
 function createServer() {
   return http.createServer(async (req, res) => {
-    const parsedUrl = new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`);
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`);
+    } catch {
+      res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Bad Request');
+      return;
+    }
     if (parsedUrl.pathname === skillEditorFileRoute) {
       handleSkillEditorFile(req, res, parsedUrl);
       return;
     }
 
-    const urlPath = decodeURIComponent(parsedUrl.pathname);
+    let urlPath;
+    try {
+      urlPath = decodeURIComponent(parsedUrl.pathname);
+    } catch {
+      res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Bad Request');
+      return;
+    }
 
     if (urlPath === '/api/skill-packs/recent' && req.method === 'GET') {
       try {

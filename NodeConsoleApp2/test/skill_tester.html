@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>技能测试器</title>
+  <link rel="stylesheet" href="../script/editor/skill_tester/skill_tester.css">
+</head>
+<body>
+  <main class="tester-shell">
+    <header class="tester-header">
+      <div>
+        <p class="eyebrow">Skill Tester</p>
+        <h1>技能测试器</h1>
+      </div>
+      <nav class="header-links" aria-label="工具链接">
+        <a href="./skill_editor_test_v3.html">技能编辑器</a>
+        <a href="./enemy_editor_v1.html">敌人编辑器</a>
+      </nav>
+    </header>
+
+    <section class="source-strip" aria-label="数据源">
+      <label>
+        <span>技能包</span>
+        <input id="skillPackPathInput" type="text" value="assets/skill_packs/authoring/skills_melee_v4_5_sword_bleed_window_standard_v2_20260529_013420.json">
+      </label>
+      <label>
+        <span>Buff 包</span>
+        <input id="buffPackPathInput" type="text" value="assets/data/buffs_v2_7.json">
+      </label>
+      <label>
+        <span>关卡包</span>
+        <input id="levelsPathInput" type="text" value="assets/data/levels.json">
+      </label>
+      <label>
+        <span>敌人包</span>
+        <input id="enemyPathInput" type="text" value="assets/data/enemies.json">
+      </label>
+      <label>
+        <span>玩家</span>
+        <input id="playerPathInput" type="text" value="assets/data/player.json">
+      </label>
+    </section>
+
+    <section id="levelContextStrip" class="level-context-strip" aria-label="关卡与敌人选择">
+      <input id="levelIndexInput" type="hidden" value="5">
+      <label>
+        <span>KP 关卡</span>
+        <select id="levelSelect">
+          <option value="5" selected>读取关卡包后选择</option>
+        </select>
+      </label>
+      <div id="levelSummaryPanel" class="summary-panel">
+        <b>关卡用于 KP</b>
+        <span>读取关卡包后显示奖励与累计 KP。</span>
+      </div>
+      <label>
+        <span>输出目标</span>
+        <select id="enemySelect">
+          <option value="">读取敌人包后选择</option>
+        </select>
+      </label>
+      <div id="enemySummaryPanel" class="summary-panel">
+        <b>敌人独立选择</b>
+        <span>敌人包决定输出循环目标。</span>
+      </div>
+    </section>
+
+    <section class="control-strip" aria-label="测试条件">
+      <label>
+        <span>KP 模式</span>
+        <select id="kpModeSelect">
+          <option value="assumed_per_level" selected>初始 5KP + 3KP/关</option>
+          <option value="actual_player_plus_rewards">玩家初始 + 实际奖励</option>
+          <option value="manual">手动 KP</option>
+        </select>
+      </label>
+      <label>
+        <span>初始 KP</span>
+        <input id="initialKpInput" type="number" min="0" value="5">
+      </label>
+      <label>
+        <span>每关 KP</span>
+        <input id="perLevelKpInput" type="number" min="0" value="3">
+      </label>
+      <label>
+        <span>手动 KP 值</span>
+        <input id="manualKpInput" type="number" min="0" value="15">
+      </label>
+      <label>
+        <span>AP</span>
+        <input id="apBudgetInput" type="number" min="1" max="12" value="5">
+      </label>
+      <label>
+        <span>回合上限</span>
+        <input id="turnLimitInput" type="number" min="1" max="40" value="12">
+      </label>
+      <label>
+        <span>技能范围</span>
+        <select id="skillFocusSelect">
+          <option value="sword" selected>剑系</option>
+          <option value="bleed">流血相关</option>
+          <option value="all">全部技能</option>
+        </select>
+      </label>
+      <button id="runSkillTestBtn" class="primary" type="button">运行测试</button>
+      <button id="saveSkillTestRecordBtn" type="button">保存记录</button>
+    </section>
+
+    <div id="statusLine" class="status-line" role="status">等待运行。</div>
+
+    <section class="workbench">
+      <aside id="contextPanel" class="panel context-panel" aria-label="关卡上下文"></aside>
+
+      <section class="panel candidate-panel" aria-label="候选构筑">
+        <div class="panel-title">
+          <h2>候选构筑</h2>
+          <span id="candidateCountBadge" class="badge">0</span>
+        </div>
+        <div id="candidateList" class="candidate-list"></div>
+      </section>
+
+      <section class="panel replay-panel" aria-label="回合回放">
+        <div class="panel-title">
+          <h2>回合回放</h2>
+          <span id="selectedCandidateBadge" class="badge neutral">未选择</span>
+        </div>
+        <div class="table-wrap">
+          <table id="turnReplayTable">
+            <thead>
+              <tr>
+                <th>回合</th>
+                <th>技能组合</th>
+                <th>AP</th>
+                <th>HP 变化</th>
+                <th>护甲变化</th>
+                <th>流血窗口</th>
+                <th>事件 / 跳过</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="findings-block">
+          <h2>发现</h2>
+          <ul id="findingList"></ul>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="../script/editor/skill_tester/skillTesterApp.mjs"></script>
+</body>
+</html>
