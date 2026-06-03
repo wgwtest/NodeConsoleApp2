@@ -73,8 +73,18 @@ function normalizePresentation(entity) {
     const battleSpriteRef = source.battleSpriteRef === undefined || source.battleSpriteRef === null
         ? ''
         : String(source.battleSpriteRef).trim();
+    const defaultAnimation = source.defaultAnimation === undefined || source.defaultAnimation === null
+        ? ''
+        : String(source.defaultAnimation).trim();
+    const frameAnimations = source.frameAnimations && typeof source.frameAnimations === 'object'
+        ? source.frameAnimations
+        : null;
 
-    return battleSpriteRef ? { battleSpriteRef } : {};
+    const output = {};
+    if (battleSpriteRef) output.battleSpriteRef = battleSpriteRef;
+    if (defaultAnimation) output.defaultAnimation = defaultAnimation;
+    if (frameAnimations) output.frameAnimations = frameAnimations;
+    return output;
 }
 
 function normalizeCombatant(entity, fallbackId) {

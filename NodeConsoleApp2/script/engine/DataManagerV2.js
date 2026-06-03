@@ -440,6 +440,29 @@ class DataManager {
         return JSON.parse(JSON.stringify(value ?? null));
     }
 
+    _getDefaultPlayerPresentation() {
+        const playerTemplate = (this.gameConfig && this.gameConfig.player && this.gameConfig.player.default)
+            ? this.gameConfig.player.default
+            : null;
+        const presentation = playerTemplate?.presentation;
+        return (presentation && typeof presentation === 'object' && !Array.isArray(presentation))
+            ? presentation
+            : null;
+    }
+
+    _ensurePlayerPresentation(player) {
+        if (!player || typeof player !== 'object') return player;
+        if (player.presentation && typeof player.presentation === 'object' && !Array.isArray(player.presentation)) {
+            return player;
+        }
+
+        const defaultPresentation = this._getDefaultPlayerPresentation();
+        if (defaultPresentation) {
+            player.presentation = this._clonePlain(defaultPresentation);
+        }
+        return player;
+    }
+
     _asObject(value) {
         return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
     }
@@ -586,7 +609,10 @@ class DataManager {
     }
 
     get playerData() {
-        return this.dataConfig.global ? this.dataConfig.global.player : null;
+        if (!this.dataConfig.global) return null;
+        const player = this.dataConfig.global.player;
+        this._ensurePlayerPresentation(player);
+        return player;
     }
 
     get currentLevelData() {

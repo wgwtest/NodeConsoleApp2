@@ -26,6 +26,8 @@ export class FighterPresenter {
 
         this.spriteContainer = fighterRoot?.querySelector('.character-sprite-container') || fighterRoot || null;
         this.bodyLayer = this.spriteContainer?.querySelector?.('.sprite-layer.body') || null;
+        this.frameSequenceLayer = this.spriteContainer?.querySelector?.('.sprite-frame-sequence') || null;
+        this.frameSequenceState = null;
         this.shadow = fighterRoot?.querySelector('.character-shadow') || null;
         this.effectAnchor = fighterRoot?.querySelector('.effect-anchor') || fighterRoot || null;
         this.hpBar = hudRoot?.querySelector('.bar.hp span') || null;
@@ -47,6 +49,7 @@ export class FighterPresenter {
         this._syncHp(snapshot);
         this._syncArmor(snapshot.bodyParts);
         this._syncBattleSprite(snapshot.presentation);
+        this._syncFrameAnimation(snapshot.presentation);
         if (this.fighterRoot) {
             this.fighterRoot.classList.add('is-idle');
         }
@@ -171,6 +174,155 @@ export class FighterPresenter {
         this.bodyLayer.style.backgroundSize = 'contain';
         this.bodyLayer.style.backgroundPosition = 'bottom center';
         this.bodyLayer.style.backgroundRepeat = 'no-repeat';
+    }
+
+    _syncFrameAnimation(presentation) {
+        const resolved = this._resolveFrameAnimation(presentation);
+        if (!resolved) {
+            this._removeFrameSequenceLayer();
+            return;
+        }
+
+        const { key, clip, start, end, fps } = resolved;
+        const firstFrameSrc = this._buildFrameSource(clip, start);
+        if (!firstFrameSrc) {
+            this._removeFrameSequenceLayer();
+            return;
+        }
+
+        const layer = this._ensureFrameSequenceLayer();
+        if (!layer) return;
+
+        layer.dataset.animationKey = key;
+        layer.dataset.frameStart = String(start);
+        layer.dataset.frameEnd = String(end);
+        layer.dataset.frameFps = String(fps);
+        layer.src = firstFrameSrc;
+        this._applyFrameLayerLayout(layer, clip);
+
+        if (this.bodyLayer) {
+            this.bodyLayer.style.backgroundImage = 'none';
+        }
+
+        this._startFrameSequence({ key, clip, start, end, fps, layer });
+    }
+
+    _resolveFrameAnimation(presentation) {
+        const frameAnimations = presentation?.frameAnimations;
+        if (!frameAnimations || typeof frameAnimations !== 'object') return null;
+
+        const requestedKey = typeof presentation?.defaultAnimation === 'string'
+            ? presentation.defaultAnimation.trim()
+            : '';
+        const key = requestedKey && frameAnimations[requestedKey]
+            ? requestedKey
+            : Object.keys(frameAnimations)[0];
+        const clip = key ? frameAnimations[key] : null;
+        if (!clip || typeof clip !== 'object') return null;
+
+        const start = Math.max(1, Math.floor(Number(clip.start ?? 1) || 1));
+        const end = Math.max(start, Math.floor(Number(clip.end ?? start) || start));
+        const fps = Math.max(1, Number(clip.fps ?? 12) || 12);
+        return { key, clip, start, end, fps };
+    }
+
+    _ensureFrameSequenceLayer() {
+        if (this.frameSequenceLayer?.parentNode) return this.frameSequenceLayer;
+        if (!this.spriteContainer || !globalThis.document?.createElement) return null;
+
+        const layer = document.createElement('img');
+        layer.className = 'sprite-frame-sequence';
+        layer.alt = '';
+        layer.draggable = false;
+        layer.decoding = 'async';
+        layer.loading = 'eager';
+        this.spriteContainer.appendChild(layer);
+        this.frameSequenceLayer = layer;
+        return layer;
+    }
+
+    _removeFrameSequenceLayer() {
+        this._stopFrameSequence();
+        this.frameSequenceLayer?.remove?.();
+        this.frameSequenceLayer = null;
+    }
+
+    _startFrameSequence({ key, clip, start, end, fps, layer }) {
+        const signature = JSON.stringify({ key, start, end, fps, basePath: clip.basePath, filePattern: clip.filePattern });
+        if (this.frameSequenceState?.signature === signature) return;
+
+        this._stopFrameSequence();
+        this._preloadFrameSequence({ clip, start, end });
+
+        if (typeof globalThis.requestAnimationFrame !== 'function') {
+            this.frameSequenceState = { signature, frame: start, rafId: null };
+            return;
+        }
+
+        const frameMs = 1000 / fps;
+        const state = {
+            signature,
+            frame: start,
+            lastTime: 0,
+            rafId: null
+        };
+
+        const tick = (time) => {
+            if (this.frameSequenceState !== state) return;
+            if (!state.lastTime) state.lastTime = time;
+
+            if (time - state.lastTime >= frameMs) {
+                state.lastTime = time;
+                state.frame = state.frame >= end ? start : state.frame + 1;
+                const frameSrc = this._buildFrameSource(clip, state.frame);
+                if (frameSrc) layer.src = frameSrc;
+            }
+
+            state.rafId = globalThis.requestAnimationFrame(tick);
+        };
+
+        this.frameSequenceState = state;
+        state.rafId = globalThis.requestAnimationFrame(tick);
+    }
+
+    _stopFrameSequence() {
+        const state = this.frameSequenceState;
+        if (state?.rafId && typeof globalThis.cancelAnimationFrame === 'function') {
+            globalThis.cancelAnimationFrame(state.rafId);
+        }
+        this.frameSequenceState = null;
+    }
+
+    _preloadFrameSequence({ clip, start, end }) {
+        if (typeof globalThis.Image !== 'function') return;
+        for (let frame = start; frame <= end; frame += 1) {
+            const src = this._buildFrameSource(clip, frame);
+            if (!src) continue;
+            const image = new globalThis.Image();
+            image.src = src;
+        }
+    }
+
+    _buildFrameSource(clip, frameIndex) {
+        if (Array.isArray(clip.frames)) {
+            return typeof clip.frames[frameIndex - 1] === 'string' ? clip.frames[frameIndex - 1] : '';
+        }
+
+        const basePath = typeof clip.basePath === 'string' ? clip.basePath.trim().replace(/[\\\/]+$/u, '') : '';
+        const filePattern = typeof clip.filePattern === 'string' ? clip.filePattern.trim() : '';
+        if (!basePath || !filePattern) return '';
+
+        const fileName = filePattern.replace(/\{index\}/gu, String(frameIndex));
+        return `${basePath}/${fileName}`;
+    }
+
+    _applyFrameLayerLayout(layer, clip) {
+        if (!layer) return;
+        const scale = Number(clip.scale ?? 1);
+        const offsetX = Number(clip.offsetX ?? 0) || 0;
+        const offsetY = Number(clip.offsetY ?? 0) || 0;
+        layer.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${Number.isFinite(scale) && scale > 0 ? scale : 1})`;
+        layer.style.transformOrigin = 'center bottom';
     }
 
     _playGuardTemplate(context = {}) {

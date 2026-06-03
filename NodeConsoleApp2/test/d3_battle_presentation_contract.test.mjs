@@ -6,6 +6,9 @@ import { Buffer } from 'node:buffer';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const presentationDir = path.join(repoRoot, 'script', 'ui', 'presentation');
+const dataManagerPath = path.join(repoRoot, 'script', 'engine', 'DataManagerV2.js');
+const contentPackOverrideStorePath = path.join(repoRoot, 'script', 'tooling', 'ContentPackOverrideStore.js');
+const currentEnemyPackPath = path.join(repoRoot, 'assets', 'enemy_packs', 'current', 'enemies.json');
 const controllerPath = path.join(presentationDir, 'BattlePresentationController.js');
 const presenterPath = path.join(presentationDir, 'FighterPresenter.js');
 const animationDriverPath = path.join(presentationDir, 'BattleAnimationDriver.js');
@@ -56,6 +59,13 @@ async function importBattlePresentationControllerModule() {
     return import(moduleUrl(source));
 }
 
+async function importFreshDataManagerModule() {
+    const contentPackOverrideStoreUrl = moduleUrl(readUtf8(contentPackOverrideStorePath));
+    let source = readUtf8(dataManagerPath);
+    source = rewriteImport(source, '../tooling/ContentPackOverrideStore.js', contentPackOverrideStoreUrl);
+    return import(moduleUrl(source));
+}
+
 class FakeStyle {
     constructor() {
         this.properties = new Map();
@@ -97,6 +107,8 @@ class FakeNode {
         this.classList = new FakeClassList(this);
         this.dataset = {};
         this.style = new FakeStyle();
+        this.children = [];
+        this.parentNode = null;
         this._selectors = new Map();
         this._selectorAll = new Map();
     }
@@ -111,7 +123,11 @@ class FakeNode {
     }
 
     querySelector(selector) {
-        return this._selectors.has(selector) ? this._selectors.get(selector) : null;
+        if (this._selectors.has(selector)) return this._selectors.get(selector);
+        if (selector === '.sprite-frame-sequence') {
+            return this.children.find(child => child.className === 'sprite-frame-sequence') || null;
+        }
+        return null;
     }
 
     querySelectorAll(selector) {
@@ -120,6 +136,18 @@ class FakeNode {
 
     closest() {
         return null;
+    }
+
+    appendChild(node) {
+        this.children.push(node);
+        node.parentNode = this;
+        return node;
+    }
+
+    remove() {
+        if (!this.parentNode) return;
+        this.parentNode.children = this.parentNode.children.filter(child => child !== this);
+        this.parentNode = null;
     }
 }
 
@@ -166,6 +194,226 @@ test('BattlePresentationController 依赖的展示配置文件必须存在', () 
     );
 });
 
+test('FighterPresenter mounts default walk frame sequence for the player', async () => {
+    const originalDocument = globalThis.document;
+    globalThis.document = {
+        createElement(tagName) {
+            const node = new FakeNode('');
+            node.tagName = String(tagName).toUpperCase();
+            node.setAttribute = (name, value) => {
+                node[name] = String(value);
+            };
+            return node;
+        }
+    };
+
+    try {
+        const { FighterPresenter } = await importFighterPresenterModule();
+        const fighter = createFighterFixture('player-character');
+        const presenter = new FighterPresenter({
+            side: 'self',
+            fighterRoot: fighter.root,
+            hudRoot: new FakeNode('player-hud')
+        });
+
+        presenter.syncVisualState({
+            id: 'player',
+            hp: 100,
+            maxHp: 100,
+            bodyParts: {},
+            presentation: {
+                battleSpriteRef: '../source/character/walk/walk_1.png',
+                defaultAnimation: 'walk',
+                frameAnimations: {
+                    walk: {
+                        basePath: '../source/character/walk',
+                        filePattern: 'walk_{index}.png',
+                        start: 1,
+                        end: 61,
+                        fps: 12,
+                        loop: true
+                    }
+                }
+            }
+        });
+
+        const frameLayer = fighter.container.querySelector('.sprite-frame-sequence');
+        assert.ok(frameLayer, 'expected frame sequence layer to be mounted');
+        assert.equal(frameLayer.dataset.animationKey, 'walk');
+        assert.equal(frameLayer.dataset.frameStart, '1');
+        assert.equal(frameLayer.dataset.frameEnd, '61');
+        assert.equal(frameLayer.dataset.frameFps, '12');
+        assert.equal(frameLayer.src, '../source/character/walk/walk_1.png');
+        assert.equal(fighter.body.style.backgroundImage, 'none');
+    } finally {
+        globalThis.document = originalDocument;
+    }
+});
+
+test('BattlePresentationController forwards player frame sequence presentation', async () => {
+    const originalDocument = globalThis.document;
+    globalThis.document = {
+        createElement(tagName) {
+            const node = new FakeNode('');
+            node.tagName = String(tagName).toUpperCase();
+            node.setAttribute = (name, value) => {
+                node[name] = String(value);
+            };
+            return node;
+        }
+    };
+
+    try {
+        const { BattlePresentationController } = await importBattlePresentationControllerModule();
+        const fixture = createBattleRowFixture();
+        const controller = new BattlePresentationController({
+            root: fixture.root,
+            sceneRoot: fixture.scene
+        });
+
+        controller.handleBattleStart({
+            player: {
+                id: 'player',
+                hp: 100,
+                maxHp: 100,
+                bodyParts: {},
+                buffs: [],
+                presentation: {
+                    battleSpriteRef: '../source/character/walk/walk_1.png',
+                    defaultAnimation: 'walk',
+                    frameAnimations: {
+                        walk: {
+                            basePath: '../source/character/walk',
+                            filePattern: 'walk_{index}.png',
+                            start: 1,
+                            end: 61,
+                            fps: 12,
+                            loop: true
+                        }
+                    }
+                }
+            },
+            enemies: []
+        });
+
+        const frameLayer = fixture.player.container.querySelector('.sprite-frame-sequence');
+        assert.ok(frameLayer, 'expected player frame sequence layer to be mounted');
+        assert.equal(frameLayer.dataset.animationKey, 'walk');
+        assert.equal(frameLayer.src, '../source/character/walk/walk_1.png');
+    } finally {
+        globalThis.document = originalDocument;
+    }
+});
+
+test('DataManagerV2 copies default player frame presentation into new-game player data', async () => {
+    const { default: dataManager } = await importFreshDataManagerModule();
+    const presentation = {
+        battleSpriteRef: '../source/character/walk/walk_1.png',
+        defaultAnimation: 'walk',
+        frameAnimations: {
+            walk: {
+                basePath: '../source/character/walk',
+                filePattern: 'walk_{index}.png',
+                start: 1,
+                end: 61,
+                fps: 12,
+                loop: true,
+                scale: 2.1
+            }
+        }
+    };
+
+    dataManager.gameConfig = {
+        player: {
+            default: {
+                stats: { hp: 100, maxHp: 100, ap: 4, maxAp: 6 },
+                skills: { skillTreeId: 'melee_v4_5', skillPoints: 0, learned: [] },
+                resources: { exp: 0, gold: 0 },
+                bodyParts: {},
+                equipment: {},
+                inventory: [],
+                presentation
+            }
+        }
+    };
+
+    const player = dataManager.createNewGame('Tester');
+
+    assert.deepEqual(player.presentation, presentation);
+    assert.notEqual(player.presentation, presentation);
+});
+
+test('Current enemy pack battle sprite refs point at existing character art', () => {
+    const pack = JSON.parse(readUtf8(currentEnemyPackPath));
+    const enemies = Array.isArray(pack?.enemies)
+        ? pack.enemies
+        : Object.values(pack && typeof pack === 'object' ? pack : {});
+    assert.ok(enemies.length > 0, 'current enemy pack should contain enemies');
+
+    const badRefs = [];
+    for (const enemy of enemies) {
+        const ref = typeof enemy?.presentation?.battleSpriteRef === 'string'
+            ? enemy.presentation.battleSpriteRef
+            : '';
+        if (!ref || ref.includes('??')) {
+            badRefs.push(`${enemy?.id || 'unknown'}:${ref || '<missing>'}`);
+            continue;
+        }
+
+        const normalizedRef = ref.replace(/^\.\.\//u, '');
+        const filePath = path.join(repoRoot, normalizedRef);
+        if (!fs.existsSync(filePath)) {
+            badRefs.push(`${enemy?.id || 'unknown'}:${ref}`);
+        }
+    }
+
+    assert.deepEqual(badRefs, []);
+});
+
+test('DataManagerV2 backfills default frame presentation for saved player data', async () => {
+    const { default: dataManager } = await importFreshDataManagerModule();
+    const presentation = {
+        battleSpriteRef: '../source/character/walk/walk_1.png',
+        defaultAnimation: 'walk',
+        frameAnimations: {
+            walk: {
+                basePath: '../source/character/walk',
+                filePattern: 'walk_{index}.png',
+                start: 1,
+                end: 61,
+                fps: 12,
+                loop: true,
+                scale: 2.1
+            }
+        }
+    };
+
+    dataManager.gameConfig = {
+        player: {
+            default: {
+                stats: { hp: 100, maxHp: 100, ap: 4, maxAp: 6 },
+                skills: { skillTreeId: 'melee_v4_5', skillPoints: 0, learned: [] },
+                resources: { exp: 0, gold: 0 },
+                bodyParts: {},
+                equipment: {},
+                inventory: [],
+                presentation
+            }
+        }
+    };
+    dataManager.dataConfig.global = {
+        player: {
+            id: 'saved_player',
+            name: 'Saved',
+            stats: { hp: 80, maxHp: 100 }
+        }
+    };
+
+    const player = dataManager.playerData;
+
+    assert.deepEqual(player.presentation, presentation);
+    assert.notEqual(player.presentation, presentation);
+});
 test('FighterPresenter 仍暴露模板驱动入口', () => {
     const presenterSource = readUtf8(presenterPath);
 

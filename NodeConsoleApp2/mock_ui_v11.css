@@ -332,7 +332,9 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 350px;
+  gap: clamp(56px, 14%, 120px);
+  padding: 0 24px;
+  box-sizing: border-box;
   z-index: 2;
 }
 
@@ -341,7 +343,8 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  width: 240px;
+  width: 150px;
+  flex: 0 0 150px;
   height: 320px;
   opacity: 1;
   transition: opacity 0.3s ease;
@@ -372,8 +375,19 @@ main { flex: 1; padding: 16px 24px; display: grid; grid-template-rows: 500px 300
   transition: transform 0.3s ease;
 }
 
+.sprite-frame-sequence {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  pointer-events: none;
+  transition: transform 0.3s ease;
+}
+
 .player-character .sprite-layer.body { 
-  background-image: url('source/character/%E4%B8%BB%E8%A7%92-001-%E7%8A%B6%E6%80%81001-%E6%AD%A3%E5%B8%B8%E7%8A%B6%E6%80%81.png'); 
+  background-image: none; 
   clip-path: none; 
   box-shadow: none; 
 }

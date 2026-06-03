@@ -34,6 +34,21 @@
             "arm": null,
             "leg": null
         },
+        "presentation": {
+            "battleSpriteRef": "../source/character/walk/walk_1.png",
+            "defaultAnimation": "walk",
+            "frameAnimations": {
+                "walk": {
+                    "basePath": "../source/character/walk",
+                    "filePattern": "walk_{index}.png",
+                    "start": 1,
+                    "end": 61,
+                    "fps": 12,
+                    "loop": true,
+                    "scale": 2.1
+                }
+            }
+        },
         "inventory": []
     }
 }
