@@ -118,6 +118,25 @@ h2 {
   box-shadow: none;
 }
 
+.enemy-target-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 74px;
+  align-items: end;
+  gap: 8px;
+}
+
+.target-lock-btn {
+  padding: 0 8px;
+  color: var(--accent-dark);
+  border-color: rgba(15, 139, 141, 0.45);
+}
+
+.target-lock-btn.is-locked {
+  color: #fff;
+  border-color: var(--accent-dark);
+  background: var(--accent);
+}
+
 .summary-panel {
   min-height: 36px;
   display: grid;

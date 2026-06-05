@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>技能测试器</title>
-  <link rel="stylesheet" href="../script/editor/skill_tester/skill_tester.css">
+  <link rel="stylesheet" href="../script/editor/skill_tester/skill_tester.css?v=enemy-target-lock-v3">
 </head>
 <body>
   <main class="tester-shell">
@@ -34,7 +34,7 @@
       </label>
       <label>
         <span>敌人包</span>
-        <input id="enemyPathInput" type="text" value="assets/data/enemies.json">
+        <input id="enemyPathInput" type="text" value="assets/enemy_packs/current/enemies.json">
       </label>
       <label>
         <span>玩家</span>
@@ -52,17 +52,20 @@
       </label>
       <div id="levelSummaryPanel" class="summary-panel">
         <b>关卡用于 KP</b>
-        <span>读取关卡包后显示奖励与累计 KP。</span>
+        <span>读取关卡包后显示奖励、累计 KP 和原始敌人。</span>
       </div>
-      <label>
-        <span>输出目标</span>
-        <select id="enemySelect">
-          <option value="">读取敌人包后选择</option>
-        </select>
-      </label>
+      <div class="enemy-target-control">
+        <label>
+          <span>输出目标</span>
+          <select id="enemySelect">
+            <option value="">读取敌人包后选择</option>
+          </select>
+        </label>
+        <button id="enemyLockBtn" class="target-lock-btn" type="button" aria-pressed="false" data-lock-label="锁定" data-unlock-label="解锁">锁定</button>
+      </div>
       <div id="enemySummaryPanel" class="summary-panel">
-        <b>敌人独立选择</b>
-        <span>敌人包决定输出循环目标。</span>
+        <b>输出目标跟随关卡</b>
+        <span>未锁定时随关卡变化；锁定后保留手动敌人。</span>
       </div>
     </section>
 
@@ -149,6 +152,6 @@
     </section>
   </main>
 
-  <script type="module" src="../script/editor/skill_tester/skillTesterApp.mjs"></script>
+  <script type="module" src="../script/editor/skill_tester/skillTesterApp.mjs?v=enemy-target-lock-v3"></script>
 </body>
 </html>

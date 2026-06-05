@@ -15,6 +15,7 @@ test('skill tester page exposes the required workbench controls', async () => {
     'levelIndexInput',
     'levelSelect',
     'enemySelect',
+    'enemyLockBtn',
     'kpModeSelect',
     'initialKpInput',
     'perLevelKpInput',
@@ -39,6 +40,9 @@ test('skill tester page exposes the required workbench controls', async () => {
   assert.match(html, /skill_tester\.css/u);
   assert.match(html, /初始 5KP \+ 3KP\/关/u);
   assert.match(html, /id=["']playerPathInput["']/u);
+  assert.match(html, /assets\/enemy_packs\/current\/enemies\.json/u);
+  assert.match(html, /data-lock-label/u);
+  assert.match(html, /data-unlock-label/u);
 });
 
 test('skill tester page orders package selection before KP and enemy context controls', async () => {
@@ -57,4 +61,12 @@ test('skill tester page orders package selection before KP and enemy context con
 test('skill tester app and stylesheet files exist', async () => {
   await fs.access(appPath);
   await fs.access(cssPath);
+});
+
+test('skill tester app renders dataset attributes with html-safe kebab names', async () => {
+  const app = await fs.readFile(appPath, 'utf8');
+
+  assert.match(app, /function toDataAttributeName/u);
+  assert.match(app, /data-\$\{toDataAttributeName\(key\)\}/u);
+  assert.doesNotMatch(app, /data-\$\{key\}/u);
 });

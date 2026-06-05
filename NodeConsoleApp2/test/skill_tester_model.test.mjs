@@ -107,6 +107,7 @@ test('level options expose story rows for KP selection without route-only levels
   assert.deepEqual(options.map(option => option.levelIndex), [1, 2]);
   assert.deepEqual(options.map(option => option.kp), [1, 2]);
   assert.equal(options[1].nodeLabel, '1-2');
+  assert.deepEqual(options.map(option => option.enemyId), ['enemy_a', 'enemy_b']);
 });
 
 test('enemy options expose enemy package rows for independent target selection', () => {

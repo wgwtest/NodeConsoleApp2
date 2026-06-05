@@ -5,7 +5,7 @@ import {
   formatSkillTestTimestamp,
   listEnemyOptions,
   listStoryLevelOptions
-} from './skillTesterModel.mjs';
+} from './skillTesterModel.mjs?v=enemy-target-lock-v3';
 
 const dom = {};
 let lastResult = null;
@@ -13,6 +13,7 @@ let selectedCandidateIndex = 0;
 let lastSources = null;
 let lastLevelOptions = [];
 let lastEnemyOptions = [];
+let enemyTargetLocked = false;
 
 function $(id) {
   return document.getElementById(id);
@@ -23,6 +24,7 @@ function bindDom() {
     'levelIndexInput',
     'levelSelect',
     'enemySelect',
+    'enemyLockBtn',
     'kpModeSelect',
     'initialKpInput',
     'perLevelKpInput',
@@ -60,6 +62,13 @@ function html(value) {
     .replace(/'/gu, '&#39;');
 }
 
+function toDataAttributeName(key) {
+  return String(key || '')
+    .replace(/([a-z0-9])([A-Z])/gu, '$1-$2')
+    .replace(/_/gu, '-')
+    .toLowerCase();
+}
+
 function readNumber(id, fallback) {
   const value = Number(dom[id]?.value);
   return Number.isFinite(value) ? value : fallback;
@@ -69,7 +78,7 @@ function readScenario() {
   const selectedLevelIndex = readNumber('levelSelect', readNumber('levelIndexInput', 5));
   return {
     levelIndex: selectedLevelIndex,
-    enemyIdOverride: dom.enemySelect?.value || null,
+    enemyIdOverride: enemyTargetLocked ? (dom.enemySelect?.value || null) : null,
     kpMode: dom.kpModeSelect.value,
     assumedInitialKp: readNumber('initialKpInput', 5),
     assumedKpPerLevel: readNumber('perLevelKpInput', 3),
@@ -109,7 +118,7 @@ function replaceOptions(select, options, selectedValue) {
   select.innerHTML = options.map(option => {
     const selected = String(option.value) === normalizedSelected ? ' selected' : '';
     const dataset = Object.entries(option.dataset || {})
-      .map(([key, value]) => ` data-${key}="${html(value)}"`)
+      .map(([key, value]) => ` data-${toDataAttributeName(key)}="${html(value)}"`)
       .join('');
     return `<option value="${html(option.value)}"${selected}${dataset}>${html(option.label)}</option>`;
   }).join('');
@@ -125,7 +134,8 @@ function populateLevelSelect(levelsDocument, preferredLevelIndex) {
       id: option.id,
       kp: option.kp,
       name: option.name,
-      node: option.nodeLabel
+      node: option.nodeLabel,
+      enemyId: option.enemyId || ''
     }
   })), preferredLevelIndex);
   dom.levelIndexInput.value = dom.levelSelect.value || preferredLevelIndex || 1;
@@ -133,6 +143,9 @@ function populateLevelSelect(levelsDocument, preferredLevelIndex) {
 
 function populateEnemySelect(enemyDocuments, preferredEnemyId) {
   lastEnemyOptions = listEnemyOptions(enemyDocuments);
+  const selectedEnemyId = enemyTargetLocked
+    ? preferredEnemyId
+    : getSelectedLevelEnemyId();
   replaceOptions(dom.enemySelect, lastEnemyOptions.map(option => ({
     value: option.id,
     label: `${option.name} (${option.id})`,
@@ -143,10 +156,34 @@ function populateEnemySelect(enemyDocuments, preferredEnemyId) {
       armor: option.armorTotal,
       name: option.name
     }
-  })), preferredEnemyId);
+  })), selectedEnemyId || preferredEnemyId);
+}
+
+function getSelectedLevelEnemyId() {
+  const levelIndex = String(dom.levelSelect?.value || '');
+  const levelOption = lastLevelOptions.find(option => String(option.levelIndex) === levelIndex);
+  return levelOption?.enemyId || dom.levelSelect?.selectedOptions?.[0]?.dataset?.enemyId || '';
+}
+
+function syncEnemyToSelectedLevel() {
+  if (enemyTargetLocked || !dom.enemySelect) return;
+  const enemyId = getSelectedLevelEnemyId();
+  if (enemyId && [...dom.enemySelect.options].some(option => option.value === enemyId)) {
+    dom.enemySelect.value = enemyId;
+  }
+}
+
+function updateEnemyLockButton() {
+  if (!dom.enemyLockBtn) return;
+  dom.enemyLockBtn.setAttribute('aria-pressed', enemyTargetLocked ? 'true' : 'false');
+  dom.enemyLockBtn.textContent = enemyTargetLocked
+    ? (dom.enemyLockBtn.dataset.unlockLabel || '解锁')
+    : (dom.enemyLockBtn.dataset.lockLabel || '锁定');
+  dom.enemyLockBtn.classList.toggle('is-locked', enemyTargetLocked);
 }
 
 function syncSelectionSummaries() {
+  syncEnemyToSelectedLevel();
   const levelOption = dom.levelSelect?.selectedOptions?.[0];
   const enemyOption = dom.enemySelect?.selectedOptions?.[0];
 
@@ -157,15 +194,16 @@ function syncSelectionSummaries() {
   if (levelOption) {
     dom.levelSummaryPanel.innerHTML = `
       <b>${html(levelOption.dataset.node || `第 ${dom.levelSelect.value} 关`)} ${html(levelOption.dataset.name || '')}</b>
-      <span>本关奖励 ${html(levelOption.dataset.kp || 0)} KP；关卡选择只参与 KP 预算。</span>
+      <span>本关奖励 ${html(levelOption.dataset.kp || 0)} KP；未锁定时输出目标跟随本关原始敌人。</span>
     `;
   }
   if (enemyOption) {
     dom.enemySummaryPanel.innerHTML = `
       <b>${html(enemyOption.dataset.name || enemyOption.value)}</b>
-      <span>HP ${html(enemyOption.dataset.hp || 0)}/${html(enemyOption.dataset.maxHp || 0)}，护甲 ${html(enemyOption.dataset.armor || 0)}；敌人选择决定输出目标。</span>
+      <span>HP ${html(enemyOption.dataset.hp || 0)}/${html(enemyOption.dataset.maxHp || 0)}，护甲 ${html(enemyOption.dataset.armor || 0)}；${enemyTargetLocked ? '已锁定为手动输出目标。' : '跟随当前关卡原始敌人。'}</span>
     `;
   }
+  updateEnemyLockButton();
 }
 
 function formatDelta(value, unit = '') {
@@ -394,7 +432,14 @@ function bindEvents() {
   syncKpInputs();
 
   dom.levelSelect.addEventListener('change', syncSelectionSummaries);
-  dom.enemySelect.addEventListener('change', syncSelectionSummaries);
+  dom.enemySelect.addEventListener('change', () => {
+    enemyTargetLocked = true;
+    syncSelectionSummaries();
+  });
+  dom.enemyLockBtn?.addEventListener('click', () => {
+    enemyTargetLocked = !enemyTargetLocked;
+    syncSelectionSummaries();
+  });
 
   dom.runSkillTestBtn.addEventListener('click', () => {
     runSkillTest().catch(error => setStatus(error?.message || String(error), 'error'));
