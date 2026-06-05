@@ -39,6 +39,7 @@ test('enemy V2 候选包为 30 个正式关卡生成机制化主敌', async () =
   );
 
   for (const enemy of enemies) {
+    assert.match(enemy.name || '', /[\u4e00-\u9fff]/u, `${enemy.id} should use a Chinese display name`);
     assert.match(enemy.id, /^(enemy|boss)_v2_c[123]_\d{2}_/u, `${enemy.id} 应使用 V2 章节语义 ID`);
     assert.equal(enemy.tags?.includes('v2_candidate'), true, `${enemy.id} 应标记为候选敌人`);
     assert.equal(enemy.stats?.hp > 0, true, `${enemy.id} 应有 HP`);

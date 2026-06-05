@@ -1,7 +1,7 @@
 {
   "enemy_v2_c1_01_razor_initiate": {
     "id": "enemy_v2_c1_01_razor_initiate",
-    "name": "Chapter 1 01 Razor Initiate",
+    "name": "林缘剃刃新手",
     "stats": {
       "hp": 72,
       "maxHp": 72,
@@ -144,7 +144,7 @@
   },
   "enemy_v2_c1_02_path_cutthroat": {
     "id": "enemy_v2_c1_02_path_cutthroat",
-    "name": "Chapter 1 02 Path Cutthroat",
+    "name": "密径割喉者",
     "stats": {
       "hp": 95,
       "maxHp": 95,
@@ -285,7 +285,7 @@
   },
   "enemy_v2_c1_03_canopy_bleeder": {
     "id": "enemy_v2_c1_03_canopy_bleeder",
-    "name": "Chapter 1 03 Canopy Bleeder",
+    "name": "树冠放血客",
     "stats": {
       "hp": 92,
       "maxHp": 92,
@@ -432,7 +432,7 @@
   },
   "enemy_v2_c1_04_telegraph_bruiser": {
     "id": "enemy_v2_c1_04_telegraph_bruiser",
-    "name": "Chapter 1 04 Telegraph Bruiser",
+    "name": "预兆重击手",
     "stats": {
       "hp": 115,
       "maxHp": 115,
@@ -578,7 +578,7 @@
   },
   "enemy_v2_c1_05_thorn_mender": {
     "id": "enemy_v2_c1_05_thorn_mender",
-    "name": "Chapter 1 05 Thorn Mender",
+    "name": "荆棘修补者",
     "stats": {
       "hp": 108,
       "maxHp": 108,
@@ -726,7 +726,7 @@
   },
   "enemy_v2_c1_06_barkshield_guard": {
     "id": "enemy_v2_c1_06_barkshield_guard",
-    "name": "Chapter 1 06 Barkshield Guard",
+    "name": "树皮盾卫",
     "stats": {
       "hp": 118,
       "maxHp": 118,
@@ -869,7 +869,7 @@
   },
   "enemy_v2_c1_07_field_medic": {
     "id": "enemy_v2_c1_07_field_medic",
-    "name": "Chapter 1 07 Field Medic",
+    "name": "林地战地医",
     "stats": {
       "hp": 110,
       "maxHp": 110,
@@ -1013,7 +1013,7 @@
   },
   "enemy_v2_c1_08_bramble_counter": {
     "id": "enemy_v2_c1_08_bramble_counter",
-    "name": "Chapter 1 08 Bramble Counter",
+    "name": "棘丛反击哨",
     "stats": {
       "hp": 125,
       "maxHp": 125,
@@ -1160,7 +1160,7 @@
   },
   "enemy_v2_c1_09_bark_gate_elite": {
     "id": "enemy_v2_c1_09_bark_gate_elite",
-    "name": "Chapter 1 09 Bark Gate Elite",
+    "name": "树门精锐卫",
     "stats": {
       "hp": 180,
       "maxHp": 180,
@@ -1310,7 +1310,7 @@
   },
   "boss_v2_c1_10_ruin_bruiser": {
     "id": "boss_v2_c1_10_ruin_bruiser",
-    "name": "Chapter 1 10 Ruin Bruiser",
+    "name": "废墟碎骨者",
     "stats": {
       "hp": 310,
       "maxHp": 310,
@@ -1467,7 +1467,7 @@
   },
   "enemy_v2_c2_01_frost_skirmisher": {
     "id": "enemy_v2_c2_01_frost_skirmisher",
-    "name": "Chapter 2 01 Frost Skirmisher",
+    "name": "霜径游击兵",
     "stats": {
       "hp": 190,
       "maxHp": 190,
@@ -1609,7 +1609,7 @@
   },
   "enemy_v2_c2_02_frost_blood_raider": {
     "id": "enemy_v2_c2_02_frost_blood_raider",
-    "name": "Chapter 2 02 Frost Blood Raider",
+    "name": "霜血掠袭者",
     "stats": {
       "hp": 260,
       "maxHp": 260,
@@ -1750,7 +1750,7 @@
   },
   "enemy_v2_c2_03_iceplate_guard": {
     "id": "enemy_v2_c2_03_iceplate_guard",
-    "name": "Chapter 2 03 Iceplate Guard",
+    "name": "冰甲守卫",
     "stats": {
       "hp": 250,
       "maxHp": 250,
@@ -1891,7 +1891,7 @@
   },
   "enemy_v2_c2_04_canyon_breaker": {
     "id": "enemy_v2_c2_04_canyon_breaker",
-    "name": "Chapter 2 04 Canyon Breaker",
+    "name": "寒峡破阵者",
     "stats": {
       "hp": 245,
       "maxHp": 245,
@@ -2038,7 +2038,7 @@
   },
   "enemy_v2_c2_05_frostbone_mender": {
     "id": "enemy_v2_c2_05_frostbone_mender",
-    "name": "Chapter 2 05 Frostbone Mender",
+    "name": "霜骨缝补师",
     "stats": {
       "hp": 265,
       "maxHp": 265,
@@ -2185,7 +2185,7 @@
   },
   "enemy_v2_c2_06_chill_hexer": {
     "id": "enemy_v2_c2_06_chill_hexer",
-    "name": "Chapter 2 06 Chill Hexer",
+    "name": "寒咒术士",
     "stats": {
       "hp": 230,
       "maxHp": 230,
@@ -2332,7 +2332,7 @@
   },
   "enemy_v2_c2_07_rotplate_guard": {
     "id": "enemy_v2_c2_07_rotplate_guard",
-    "name": "Chapter 2 07 Rotplate Guard",
+    "name": "腐甲守卫",
     "stats": {
       "hp": 240,
       "maxHp": 240,
@@ -2479,7 +2479,7 @@
   },
   "enemy_v2_c2_08_ice_counter_sentinel": {
     "id": "enemy_v2_c2_08_ice_counter_sentinel",
-    "name": "Chapter 2 08 Ice Counter Sentinel",
+    "name": "冰哨反制者",
     "stats": {
       "hp": 280,
       "maxHp": 280,
@@ -2627,7 +2627,7 @@
   },
   "enemy_v2_c2_09_gatebreaker_knight": {
     "id": "enemy_v2_c2_09_gatebreaker_knight",
-    "name": "Chapter 2 09 Gatebreaker Knight",
+    "name": "破门骑士",
     "stats": {
       "hp": 380,
       "maxHp": 380,
@@ -2785,7 +2785,7 @@
   },
   "boss_v2_c2_10_frozen_centurion": {
     "id": "boss_v2_c2_10_frozen_centurion",
-    "name": "Chapter 2 10 Frozen Centurion",
+    "name": "冰封百夫长",
     "stats": {
       "hp": 540,
       "maxHp": 540,
@@ -2950,7 +2950,7 @@
   },
   "enemy_v2_c3_01_dusk_runner": {
     "id": "enemy_v2_c3_01_dusk_runner",
-    "name": "Chapter 3 01 Dusk Runner",
+    "name": "暮影奔袭者",
     "stats": {
       "hp": 390,
       "maxHp": 390,
@@ -3097,7 +3097,7 @@
   },
   "enemy_v2_c3_02_plague_caller": {
     "id": "enemy_v2_c3_02_plague_caller",
-    "name": "Chapter 3 02 Plague Caller",
+    "name": "疫雾唤咒者",
     "stats": {
       "hp": 510,
       "maxHp": 510,
@@ -3244,7 +3244,7 @@
   },
   "enemy_v2_c3_03_twilight_reaver": {
     "id": "enemy_v2_c3_03_twilight_reaver",
-    "name": "Chapter 3 03 Twilight Reaver",
+    "name": "暮光劫掠者",
     "stats": {
       "hp": 620,
       "maxHp": 620,
@@ -3392,7 +3392,7 @@
   },
   "enemy_v2_c3_04_graveplate_bastion": {
     "id": "enemy_v2_c3_04_graveplate_bastion",
-    "name": "Chapter 3 04 Graveplate Bastion",
+    "name": "墓甲堡垒",
     "stats": {
       "hp": 565,
       "maxHp": 565,
@@ -3546,7 +3546,7 @@
   },
   "enemy_v2_c3_05_blood_rite_acolyte": {
     "id": "enemy_v2_c3_05_blood_rite_acolyte",
-    "name": "Chapter 3 05 Blood Rite Acolyte",
+    "name": "血仪侍僧",
     "stats": {
       "hp": 560,
       "maxHp": 560,
@@ -3703,7 +3703,7 @@
   },
   "enemy_v2_c3_06_mire_chain_jailer": {
     "id": "enemy_v2_c3_06_mire_chain_jailer",
-    "name": "Chapter 3 06 Mire Chain Jailer",
+    "name": "泥沼锁链狱卒",
     "stats": {
       "hp": 505,
       "maxHp": 505,
@@ -3860,7 +3860,7 @@
   },
   "enemy_v2_c3_07_twilight_warden": {
     "id": "enemy_v2_c3_07_twilight_warden",
-    "name": "Chapter 3 07 Twilight Warden",
+    "name": "暮光守望者",
     "stats": {
       "hp": 585,
       "maxHp": 585,
@@ -4019,7 +4019,7 @@
   },
   "enemy_v2_c3_08_plague_standard": {
     "id": "enemy_v2_c3_08_plague_standard",
-    "name": "Chapter 3 08 Plague Standard",
+    "name": "疫旗执掌者",
     "stats": {
       "hp": 545,
       "maxHp": 545,
@@ -4176,7 +4176,7 @@
   },
   "enemy_v2_c3_09_twilight_gate_elite": {
     "id": "enemy_v2_c3_09_twilight_gate_elite",
-    "name": "Chapter 3 09 Twilight Gate Elite",
+    "name": "暮门精锐",
     "stats": {
       "hp": 770,
       "maxHp": 770,
@@ -4347,7 +4347,7 @@
   },
   "boss_v2_c3_10_twilight_bastion": {
     "id": "boss_v2_c3_10_twilight_bastion",
-    "name": "Chapter 3 10 Twilight Bastion",
+    "name": "暮光堡垒",
     "stats": {
       "hp": 1050,
       "maxHp": 1050,
