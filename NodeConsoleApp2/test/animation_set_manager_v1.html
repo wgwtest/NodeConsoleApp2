@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>动画集管理器 v1</title>
+    <style>
+        :root {
+            --bg: #eef1ee;
+            --panel: #fbfcf8;
+            --panel-2: #f4f6f1;
+            --ink: #20251f;
+            --muted: #6d746a;
+            --line: #d5dacf;
+            --line-strong: #aeb8aa;
+            --green: #247a4c;
+            --amber: #a65f1e;
+            --red: #ad3d35;
+            --shadow: 0 16px 36px rgba(38, 45, 36, .12);
+            color-scheme: light;
+            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            color: var(--ink);
+            background:
+                linear-gradient(90deg, rgba(32, 37, 31, .035) 1px, transparent 1px) 0 0 / 28px 28px,
+                linear-gradient(0deg, rgba(32, 37, 31, .03) 1px, transparent 1px) 0 0 / 28px 28px,
+                var(--bg);
+        }
+
+        button, input, select { font: inherit; }
+        button { cursor: pointer; }
+
+        .app { height: 100vh; display: grid; grid-template-rows: 58px minmax(0, 1fr); }
+        .topbar {
+            display: grid;
+            grid-template-columns: 320px minmax(520px, 1fr);
+            align-items: center;
+            gap: 18px;
+            padding: 0 18px;
+            background: #1f251f;
+            color: #f4f6f1;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(244, 246, 241, .32);
+            background: #2f382f;
+            font-weight: 800;
+        }
+        .brand-title strong { display: block; font-size: 16px; }
+        .brand-title span { display: block; margin-top: 4px; color: #bac4b5; font-size: 11px; }
+        .search {
+            height: 36px;
+            display: grid;
+            grid-template-columns: 24px minmax(220px, 1fr) 260px 260px;
+            gap: 8px;
+            align-items: center;
+            padding: 0 10px;
+            background: rgba(244, 246, 241, .08);
+            border: 1px solid rgba(244, 246, 241, .18);
+        }
+        .search input {
+            width: 100%;
+            border: 0;
+            outline: 0;
+            color: #f4f6f1;
+            background: transparent;
+        }
+        .path-input {
+            width: 100%;
+            height: 26px;
+            border: 1px solid rgba(244, 246, 241, .2);
+            background: rgba(244, 246, 241, .08);
+            color: #dfe8dd;
+            padding: 0 7px;
+            font-size: 11px;
+        }
+        .actions { display: flex; align-items: center; gap: 8px; }
+        .btn {
+            height: 34px;
+            padding: 0 12px;
+            border: 1px solid var(--line-strong);
+            background: var(--panel);
+            color: var(--ink);
+        }
+        .btn.dark { border-color: #465144; background: #344037; color: #f4f6f1; }
+        .btn.primary { border-color: #114d2f; background: var(--green); color: white; }
+        #status {
+            overflow: hidden;
+            color: #cbd3c5;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+        }
+
+        .layout {
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 312px minmax(560px, 1fr) 392px;
+            gap: 12px;
+            padding: 12px;
+        }
+        .panel {
+            min-width: 0;
+            min-height: 0;
+            background: rgba(251, 252, 248, .94);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+        }
+        .panel-head {
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            background: var(--panel-2);
+        }
+        .panel-head h2 { margin: 0; font-size: 14px; }
+        .panel-head small { color: var(--muted); }
+        .filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 12px;
+            border-bottom: 1px solid var(--line);
+        }
+        .filters select, .import-form input, .import-form select, .owner-create input, .owner-create select {
+            width: 100%;
+            height: 32px;
+            border: 1px solid var(--line);
+            background: white;
+            color: var(--ink);
+            padding: 0 8px;
+        }
+        .owner-tree { height: calc(100vh - 58px - 24px - 49px - 57px); overflow: auto; padding: 8px; }
+        .owner-create {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            padding: 12px;
+            border-bottom: 1px solid var(--line);
+            background: #f8faf5;
+        }
+        .owner-create-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #4f594d;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .owner-group h3 {
+            margin: 8px 4px 8px;
+            color: #596354;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .owner-card {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px 10px;
+            margin-bottom: 8px;
+            padding: 11px 10px;
+            border: 1px solid var(--line);
+            background: white;
+            text-align: left;
+        }
+        .owner-card.active { border-color: #375c4b; background: #eef7ef; box-shadow: inset 3px 0 0 var(--green); }
+        .asset-main { min-width: 0; }
+        .asset-main strong { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .asset-main span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .asset-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip, .badge {
+            min-height: 22px;
+            display: inline-flex;
+            align-items: center;
+            padding: 0 7px;
+            border: 1px solid var(--line);
+            background: #f8faf4;
+            color: var(--muted);
+            font-size: 11px;
+            white-space: nowrap;
+        }
+        .badge.ready { border-color: rgba(36, 122, 76, .35); background: #e8f4ec; color: var(--green); }
+        .badge.warn { border-color: rgba(166, 95, 30, .35); background: #fff2df; color: var(--amber); }
+        .badge.error { border-color: rgba(173, 61, 53, .35); background: #ffe9e6; color: var(--red); }
+
+        .workspace { display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); }
+        .summary {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 18px;
+            padding: 16px;
+            border-bottom: 1px solid var(--line);
+            background: white;
+        }
+        .summary h1 { margin: 0; font-size: 22px; }
+        .summary p { margin: 7px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(90px, 1fr));
+            gap: 8px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--line);
+            background: #f8faf5;
+        }
+        .metric { min-height: 62px; padding: 9px 10px; border: 1px solid var(--line); background: white; }
+        .metric span { display: block; color: var(--muted); font-size: 11px; }
+        .metric strong { display: block; margin-top: 7px; font-size: 19px; }
+        .set-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--line);
+            background: #fff;
+        }
+        .set-pill {
+            min-height: 30px;
+            border: 1px solid var(--line);
+            background: #f8faf5;
+            color: var(--ink);
+            padding: 0 10px;
+            font-size: 12px;
+        }
+        .set-pill.active { border-color: #375c4b; background: #e8f4ec; color: var(--green); }
+        .import-form {
+            display: grid;
+            grid-template-columns: 140px minmax(260px, 1fr) auto;
+            gap: 8px;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--line);
+            background: #f8faf5;
+        }
+        .import-form input, .clip-properties input {
+            width: 100%;
+            height: 32px;
+            border: 1px solid var(--line);
+            background: white;
+            color: var(--ink);
+            padding: 0 8px;
+        }
+        .clip-properties {
+            display: grid;
+            grid-template-columns: 74px 1fr;
+            gap: 8px;
+            align-items: center;
+            padding: 12px;
+            background: white;
+        }
+        .clip-properties label { color: #4f594d; font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .clip-properties .check-field { justify-content: flex-start; }
+        .check-field { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--muted); font-size: 12px; }
+        .check-field input { width: auto; height: auto; }
+        .table-wrap { overflow: auto; padding: 0 16px 16px; }
+        table { width: 100%; min-width: 760px; border-collapse: collapse; background: white; border: 1px solid var(--line); }
+        th, td { height: 42px; padding: 0 10px; border-bottom: 1px solid var(--line); text-align: left; font-size: 12px; white-space: nowrap; }
+        th { position: sticky; top: 0; z-index: 1; color: #4f594d; background: #edf1ea; }
+        td.mono, .mono { font-family: Consolas, monospace; }
+        tr.selected-row { background: #eef7ef; }
+        .delete-clip-btn {
+            height: 28px;
+            border-color: rgba(173, 61, 53, .35);
+            color: var(--red);
+            background: #fff7f5;
+        }
+        .delete-clip-btn:hover { border-color: var(--red); background: #ffe9e6; }
+
+        .rightcol { min-height: 0; display: grid; grid-template-rows: minmax(330px, .85fr) auto auto minmax(180px, .5fr) minmax(160px, .38fr); gap: 12px; }
+        .preview { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+        .stage {
+            position: relative;
+            margin: 14px;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border: 1px solid #cbd4c8;
+            background:
+                linear-gradient(45deg, #dfe5dc 25%, transparent 25%) 0 0 / 22px 22px,
+                linear-gradient(-45deg, #dfe5dc 25%, transparent 25%) 0 11px / 22px 22px,
+                linear-gradient(45deg, transparent 75%, #dfe5dc 75%) 11px -11px / 22px 22px,
+                linear-gradient(-45deg, transparent 75%, #dfe5dc 75%) -11px 0 / 22px 22px,
+                #f5f7f1;
+        }
+        #clipPreviewCanvas {
+            width: min(260px, 72%);
+            aspect-ratio: 1;
+            image-rendering: auto;
+            background: rgba(255, 255, 255, .58);
+            border: 1px solid rgba(31, 37, 31, .18);
+        }
+        .transport { display: grid; grid-template-columns: auto auto auto 1fr auto; gap: 8px; align-items: center; padding: 0 14px 14px; }
+        .icon-btn { width: 34px; height: 34px; border: 1px solid var(--line-strong); background: white; color: var(--ink); }
+        .icon-btn.active { border-color: #114d2f; background: var(--green); color: white; }
+        .icon-btn:disabled { cursor: default; opacity: .45; }
+        .timeline {
+            width: 100%;
+            height: 10px;
+            overflow: hidden;
+            appearance: none;
+            border: 1px solid #c7d0c3;
+            background: #d9dfd3;
+        }
+        .timeline::-webkit-progress-bar { background: #d9dfd3; }
+        .timeline::-webkit-progress-value { background: var(--green); }
+        .timeline::-moz-progress-bar { background: var(--green); }
+        .action-operations { min-height: 0; }
+        .operation-body {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            padding: 12px;
+            background: white;
+        }
+        .operation-body .btn {
+            width: 100%;
+            height: 36px;
+            text-align: center;
+        }
+        .refs, .issues { overflow: auto; padding: 10px 12px 12px; }
+        .ref-row, .issue-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; min-height: 34px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+        .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); }
+        .dot.warn { background: var(--amber); }
+        .dot.error { background: var(--red); }
+        .muted { color: var(--muted); }
+        #manifestOutput { display: none; }
+
+        @media (max-width: 1280px) {
+            .layout { grid-template-columns: 280px minmax(520px, 1fr); }
+            .rightcol { display: none; }
+            .import-form { grid-template-columns: 1fr; }
+            .clip-properties { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark">AM</div>
+                <div class="brand-title">
+                    <strong>动画集管理器</strong>
+                    <span>Animation Set Manager / S9 动画资产管理</span>
+                </div>
+            </div>
+            <label class="search">
+                <span>⌕</span>
+                <input id="animationSetSearchInput" placeholder="搜索 ownerId / animationSetRef / clip key">
+                <input id="animationSetPathInput" class="path-input" value="assets/data/animation_sets_v1.json" aria-label="动画配置路径" readonly>
+                <span id="configFileLabel">配置文件：assets/data/animation_sets_v1.json</span>
+                <span id="status">自动保存待命</span>
+            </label>
+        </header>
+
+        <main class="layout">
+            <aside class="panel">
+                <div class="panel-head">
+                    <h2>对象列表</h2>
+                    <small>animation config</small>
+                </div>
+                <div class="filters">
+                    <select id="ownerTypeFilter" aria-label="对象类型筛选">
+                        <option value="">全部对象</option>
+                        <option value="player">玩家</option>
+                        <option value="enemy">敌人</option>
+                        <option value="ally">友军</option>
+                        <option value="effect">特效</option>
+                    </select>
+                    <select id="statusFilter" aria-label="状态筛选">
+                        <option value="">全部状态</option>
+                        <option value="ready">ready</option>
+                        <option value="warning">warning</option>
+                        <option value="error">error</option>
+                    </select>
+                </div>
+                <div class="owner-create">
+                    <div class="owner-create-title">
+                        <span>新建对象</span>
+                        <span class="muted">写入配置</span>
+                    </div>
+                    <select id="newOwnerTypeInput" aria-label="新对象类型">
+                        <option value="player">玩家</option>
+                        <option value="enemy">敌人</option>
+                        <option value="ally">友军</option>
+                        <option value="effect">特效</option>
+                    </select>
+                    <input id="newOwnerDisplayNameInput" placeholder="名称，例如 主角002">
+                    <button id="createOwnerBtn" class="btn primary" type="button">新建对象</button>
+                </div>
+                <div id="ownerTree" class="owner-tree"></div>
+            </aside>
+
+            <section class="panel workspace">
+                <div class="summary">
+                    <div>
+                        <h1 id="selectedOwnerTitle">未选择对象</h1>
+                        <p id="selectedOwnerDescription">读取动画配置后，这里显示具体对象、对象下的动画集和动作。</p>
+                    </div>
+                    <span id="ownerStatusBadge" class="badge">idle</span>
+                </div>
+                <div class="summary-grid">
+                    <div class="metric"><span>对象数</span><strong id="metricOwnerCount">0</strong></div>
+                    <div class="metric"><span>动画集数</span><strong id="metricSetCount">0</strong></div>
+                    <div class="metric"><span>动作数</span><strong id="metricClipCount">0</strong></div>
+                    <div class="metric"><span>异常数</span><strong id="metricIssueCount">0</strong></div>
+                </div>
+                <div id="ownerAnimationSetList" class="set-strip"></div>
+                <div class="detail">
+                    <div class="import-form">
+                        <input id="newClipKeyInput" placeholder="动作 key，例如 dodge">
+                        <input id="localFrameDirectoryInput" placeholder="本地帧目录，例如 C:\frames\player-dodge">
+                        <button id="importClipBtn" class="btn primary" type="button">新增动作并导入到当前对象</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>key</th>
+                                    <th>状态</th>
+                                    <th>sourceDir</th>
+                                    <th>sheet</th>
+                                    <th>frames</th>
+                                    <th>fps</th>
+                                    <th>loop</th>
+                                    <th>returnTo</th>
+                                    <th>offset</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clipTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="rightcol">
+                <section class="panel preview">
+                    <div class="panel-head">
+                        <div>
+                            <h2 id="clipPreviewTitle">动作预览</h2>
+                            <small id="clipPreviewMeta">sheet + manifest</small>
+                        </div>
+                        <span id="previewFrameCount" class="badge ready">0 frames</span>
+                    </div>
+                    <div class="stage">
+                        <canvas id="clipPreviewCanvas" width="512" height="512" aria-label="动作帧预览"></canvas>
+                    </div>
+                    <div class="transport">
+                        <button id="playPreviewBtn" class="icon-btn" type="button" title="播放">▶</button>
+                        <button id="pausePreviewBtn" class="icon-btn" type="button" title="暂停">Ⅱ</button>
+                        <button id="resetPreviewBtn" class="icon-btn" type="button" title="回到第一帧">↺</button>
+                        <progress id="previewTimeline" class="timeline" max="0" value="0" aria-label="动作播放进度"></progress>
+                        <span id="previewFrameLabel" class="mono">0 / 0</span>
+                    </div>
+                </section>
+
+                <section id="actionPropertiesPanel" class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <h2>动作属性</h2>
+                            <small id="selectedClipPropertyTitle">当前动作</small>
+                        </div>
+                    </div>
+                    <div class="clip-properties">
+                        <label for="selectedClipFpsInput">FPS</label>
+                        <input id="selectedClipFpsInput" type="number" min="1" max="60" value="12" aria-label="选中动作 fps">
+                        <label class="check-field"><input id="selectedClipLoopInput" type="checkbox">loop</label>
+                        <input id="selectedClipReturnToInput" placeholder="returnTo">
+                    </div>
+                </section>
+
+                <section id="actionOperationPanel" class="panel action-operations">
+                    <div class="panel-head">
+                        <div>
+                            <h2>动作操作区</h2>
+                            <small>针对当前选中的动作</small>
+                        </div>
+                    </div>
+                    <div class="operation-body">
+                        <button id="buildSelectedBtn" class="btn" type="button">重建选中动作资源</button>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <h2>引用关系</h2>
+                            <small>谁正在使用当前动画集</small>
+                        </div>
+                    </div>
+                    <div id="referenceList" class="refs"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <h2>校验报告</h2>
+                            <small>资源路径和构建状态</small>
+                        </div>
+                    </div>
+                    <div id="issueList" class="issues"></div>
+                </section>
+            </aside>
+        </main>
+    </div>
+    <pre id="manifestOutput"></pre>
+    <!-- animation asset endpoints: /api/animation-assets/frames, /api/animation-assets/write -->
+    <script type="module">
+        import { AnimationSetManagerPage } from '../script/editor/animation_set/index.js';
+
+        const page = new AnimationSetManagerPage({ document, fetchImpl: window.fetch.bind(window) });
+        page.bind();
+        page.loadDefault().catch(error => page.setStatus(`读取失败：${error.message}`));
+        window.animationSetManagerPage = page;
+    </script>
+</body>
+</html>

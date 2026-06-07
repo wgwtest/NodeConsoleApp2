@@ -28,6 +28,8 @@ export class FighterPresenter {
         this.bodyLayer = this.spriteContainer?.querySelector?.('.sprite-layer.body') || null;
         this.frameSequenceLayer = this.spriteContainer?.querySelector?.('.sprite-frame-sequence') || null;
         this.frameSequenceState = null;
+        this.frameSequencePreloadCache = new Map();
+        this.frameSheetCache = new Map();
         this.shadow = fighterRoot?.querySelector('.character-shadow') || null;
         this.effectAnchor = fighterRoot?.querySelector('.effect-anchor') || fighterRoot || null;
         this.hpBar = hudRoot?.querySelector('.bar.hp span') || null;
@@ -184,25 +186,25 @@ export class FighterPresenter {
         }
 
         const { key, clip, start, end, fps } = resolved;
+        if (this._hasFrameSheet(clip)) {
+            this._syncFrameSheetAnimation({ key, clip, start, end, fps });
+            return;
+        }
+
         const firstFrameSrc = this._buildFrameSource(clip, start);
         if (!firstFrameSrc) {
             this._removeFrameSequenceLayer();
             return;
         }
 
-        const layer = this._ensureFrameSequenceLayer();
+        const layer = this._ensureFrameSequenceLayer('img');
         if (!layer) return;
 
         layer.dataset.animationKey = key;
         layer.dataset.frameStart = String(start);
         layer.dataset.frameEnd = String(end);
         layer.dataset.frameFps = String(fps);
-        layer.src = firstFrameSrc;
         this._applyFrameLayerLayout(layer, clip);
-
-        if (this.bodyLayer) {
-            this.bodyLayer.style.backgroundImage = 'none';
-        }
 
         this._startFrameSequence({ key, clip, start, end, fps, layer });
     }
@@ -226,16 +228,24 @@ export class FighterPresenter {
         return { key, clip, start, end, fps };
     }
 
-    _ensureFrameSequenceLayer() {
-        if (this.frameSequenceLayer?.parentNode) return this.frameSequenceLayer;
+    _ensureFrameSequenceLayer(tagName = 'img') {
+        const desiredTag = String(tagName || 'img').toUpperCase();
+        if (this.frameSequenceLayer?.parentNode) {
+            if (!this.frameSequenceLayer.tagName || this.frameSequenceLayer.tagName === desiredTag) {
+                return this.frameSequenceLayer;
+            }
+            this._removeFrameSequenceLayer();
+        }
         if (!this.spriteContainer || !globalThis.document?.createElement) return null;
 
-        const layer = document.createElement('img');
+        const layer = document.createElement(tagName);
         layer.className = 'sprite-frame-sequence';
-        layer.alt = '';
-        layer.draggable = false;
-        layer.decoding = 'async';
-        layer.loading = 'eager';
+        if (tagName === 'img') {
+            layer.alt = '';
+            layer.draggable = false;
+            layer.decoding = 'async';
+            layer.loading = 'eager';
+        }
         this.spriteContainer.appendChild(layer);
         this.frameSequenceLayer = layer;
         return layer;
@@ -247,28 +257,220 @@ export class FighterPresenter {
         this.frameSequenceLayer = null;
     }
 
+    _hasFrameSheet(clip) {
+        if (!clip || typeof clip !== 'object') return false;
+        const sheetRef = typeof clip.sheetRef === 'string' ? clip.sheetRef.trim() : '';
+        const frameWidth = Math.floor(Number(clip.frameWidth ?? 0) || 0);
+        const frameHeight = Math.floor(Number(clip.frameHeight ?? 0) || 0);
+        return Boolean(sheetRef && frameWidth > 0 && frameHeight > 0);
+    }
+
+    _syncFrameSheetAnimation({ key, clip, start, end, fps }) {
+        const layer = this._ensureFrameSequenceLayer('canvas');
+        if (!layer) return;
+
+        const sheetRef = typeof clip.sheetRef === 'string' ? clip.sheetRef.trim() : '';
+        const frameWidth = Math.max(1, Math.floor(Number(clip.frameWidth ?? 0) || 0));
+        const frameHeight = Math.max(1, Math.floor(Number(clip.frameHeight ?? 0) || 0));
+        const columns = Math.max(1, Math.floor(Number(clip.sheetColumns ?? clip.columns ?? 1) || 1));
+        const rows = Math.max(1, Math.floor(Number(clip.sheetRows ?? clip.rows ?? Math.ceil((end - start + 1) / columns)) || 1));
+        if (!sheetRef || frameWidth <= 0 || frameHeight <= 0) {
+            this._removeFrameSequenceLayer();
+            return;
+        }
+
+        layer.width = frameWidth;
+        layer.height = frameHeight;
+        layer.dataset.animationKey = key;
+        layer.dataset.frameStart = String(start);
+        layer.dataset.frameEnd = String(end);
+        layer.dataset.frameFps = String(fps);
+        layer.dataset.frameSheet = sheetRef;
+        layer.dataset.frameSheetColumns = String(columns);
+        layer.dataset.frameSheetRows = String(rows);
+        this._applyFrameLayerLayout(layer, clip);
+
+        this._startFrameSheetSequence({
+            key,
+            clip,
+            start,
+            end,
+            fps,
+            layer,
+            sheetRef,
+            frameWidth,
+            frameHeight,
+            columns
+        });
+    }
+
+    _startFrameSheetSequence({ key, clip, start, end, fps, layer, sheetRef, frameWidth, frameHeight, columns }) {
+        const signature = JSON.stringify({ key, start, end, fps, sheetRef, frameWidth, frameHeight, columns });
+        if (this.frameSequenceState?.signature === signature) return;
+
+        this._stopFrameSequence();
+        layer.style.opacity = '0';
+        layer.dataset.frameLoading = '1';
+        delete layer.dataset.frameReady;
+        delete layer.dataset.frameFirstReady;
+        delete layer.dataset.frameError;
+
+        const state = {
+            signature,
+            frame: start,
+            lastTime: 0,
+            rafId: null,
+            loading: true,
+            sheetImage: null
+        };
+        this.frameSequenceState = state;
+
+        const drawFrame = (frameIndex) => {
+            if (this.frameSequenceState !== state) return;
+            const image = state.sheetImage;
+            const context = typeof layer.getContext === 'function' ? layer.getContext('2d') : null;
+            if (!image || !context) return;
+            const offset = Math.max(0, frameIndex - start);
+            const sx = (offset % columns) * frameWidth;
+            const sy = Math.floor(offset / columns) * frameHeight;
+            context.clearRect?.(0, 0, frameWidth, frameHeight);
+            context.drawImage(image, sx, sy, frameWidth, frameHeight, 0, 0, frameWidth, frameHeight);
+        };
+
+        const activate = (image) => {
+            if (this.frameSequenceState !== state) return;
+            state.sheetImage = image;
+            state.loading = false;
+            drawFrame(start);
+            layer.style.opacity = '1';
+            delete layer.dataset.frameLoading;
+            layer.dataset.frameFirstReady = '1';
+            layer.dataset.frameReady = '1';
+            if (this.bodyLayer) {
+                this.bodyLayer.style.backgroundImage = 'none';
+            }
+
+            if (typeof globalThis.requestAnimationFrame !== 'function') {
+                return;
+            }
+            state.rafId = globalThis.requestAnimationFrame(tick);
+        };
+
+        const preload = this._preloadFrameSheet(sheetRef);
+        if (preload?.then) {
+            preload.then(activate).catch(error => {
+                if (this.frameSequenceState !== state) return;
+                console.warn('[FighterPresenter] Failed to preload frame sheet:', error);
+                state.loading = false;
+                layer.dataset.frameError = '1';
+            });
+        }
+
+        if (typeof globalThis.requestAnimationFrame !== 'function') {
+            return;
+        }
+
+        const frameMs = 1000 / fps;
+        const tick = (time) => {
+            if (this.frameSequenceState !== state || state.loading) return;
+            if (!state.lastTime) state.lastTime = time;
+
+            if (time - state.lastTime >= frameMs) {
+                state.lastTime = time;
+                state.frame = state.frame >= end ? start : state.frame + 1;
+                drawFrame(state.frame);
+            }
+
+            state.rafId = globalThis.requestAnimationFrame(tick);
+        };
+    }
+
     _startFrameSequence({ key, clip, start, end, fps, layer }) {
         const signature = JSON.stringify({ key, start, end, fps, basePath: clip.basePath, filePattern: clip.filePattern });
         if (this.frameSequenceState?.signature === signature) return;
 
         this._stopFrameSequence();
-        this._preloadFrameSequence({ clip, start, end });
-
-        if (typeof globalThis.requestAnimationFrame !== 'function') {
-            this.frameSequenceState = { signature, frame: start, rafId: null };
-            return;
+        const sources = [];
+        for (let frame = start; frame <= end; frame += 1) {
+            const src = this._buildFrameSource(clip, frame);
+            if (src) sources.push(src);
         }
+        if (sources.length === 0) return;
 
-        const frameMs = 1000 / fps;
+        layer.src = sources[0];
+        layer.style.opacity = '0';
+        layer.dataset.frameLoading = '1';
+        delete layer.dataset.frameReady;
+
         const state = {
             signature,
             frame: start,
             lastTime: 0,
-            rafId: null
+            rafId: null,
+            loading: true,
+            firstFrameReady: false
+        };
+        this.frameSequenceState = state;
+
+        const showFirstFrame = () => {
+            if (this.frameSequenceState !== state) return;
+
+            state.firstFrameReady = true;
+            layer.src = sources[0];
+            layer.style.opacity = '1';
+            layer.dataset.frameFirstReady = '1';
+            if (this.bodyLayer) {
+                this.bodyLayer.style.backgroundImage = 'none';
+            }
         };
 
-        const tick = (time) => {
+        const activate = () => {
             if (this.frameSequenceState !== state) return;
+
+            if (!state.firstFrameReady) {
+                showFirstFrame();
+            }
+            state.loading = false;
+            delete layer.dataset.frameLoading;
+            layer.dataset.frameReady = '1';
+
+            if (typeof globalThis.requestAnimationFrame !== 'function') {
+                return;
+            }
+
+            state.rafId = globalThis.requestAnimationFrame(tick);
+        };
+
+        const firstFramePreload = this._preloadFrameSource(sources[0]);
+        if (firstFramePreload?.then) {
+            firstFramePreload.then(showFirstFrame).catch(error => {
+                if (this.frameSequenceState !== state) return;
+                console.warn('[FighterPresenter] Failed to preload first frame:', error);
+                layer.dataset.frameError = '1';
+            });
+        } else {
+            showFirstFrame();
+        }
+
+        const preload = this._preloadFrameSequence(sources);
+        if (preload?.then) {
+            preload.then(activate).catch(error => {
+                if (this.frameSequenceState !== state) return;
+                console.warn('[FighterPresenter] Failed to preload frame sequence:', error);
+                state.loading = false;
+                layer.dataset.frameError = '1';
+            });
+        } else {
+            activate();
+        }
+
+        if (typeof globalThis.requestAnimationFrame !== 'function') {
+            return;
+        }
+
+        const frameMs = 1000 / fps;
+        const tick = (time) => {
+            if (this.frameSequenceState !== state || state.loading) return;
             if (!state.lastTime) state.lastTime = time;
 
             if (time - state.lastTime >= frameMs) {
@@ -280,9 +482,6 @@ export class FighterPresenter {
 
             state.rafId = globalThis.requestAnimationFrame(tick);
         };
-
-        this.frameSequenceState = state;
-        state.rafId = globalThis.requestAnimationFrame(tick);
     }
 
     _stopFrameSequence() {
@@ -293,14 +492,79 @@ export class FighterPresenter {
         this.frameSequenceState = null;
     }
 
-    _preloadFrameSequence({ clip, start, end }) {
-        if (typeof globalThis.Image !== 'function') return;
-        for (let frame = start; frame <= end; frame += 1) {
-            const src = this._buildFrameSource(clip, frame);
-            if (!src) continue;
-            const image = new globalThis.Image();
-            image.src = src;
+    _preloadFrameSequence(sources) {
+        if (typeof globalThis.Image !== 'function') return null;
+        return Promise.all(sources.map(src => this._preloadFrameSource(src)));
+    }
+
+    _preloadFrameSheet(src) {
+        if (typeof globalThis.Image !== 'function') return null;
+        if (this.frameSheetCache.has(src)) {
+            return this.frameSheetCache.get(src);
         }
+
+        const promise = new Promise((resolve, reject) => {
+            const image = new globalThis.Image();
+            let settled = false;
+            const settle = (callback, value) => {
+                if (settled) return;
+                settled = true;
+                callback(value);
+            };
+            const resolveDecoded = () => {
+                if (typeof image.decode === 'function') {
+                    image.decode()
+                        .then(() => settle(resolve, image))
+                        .catch(error => settle(reject, error));
+                    return;
+                }
+                settle(resolve, image);
+            };
+
+            image.onload = resolveDecoded;
+            image.onerror = () => settle(reject, new Error(`Failed to load frame sheet: ${src}`));
+            image.src = src;
+            if (image.complete && image.naturalWidth > 0) {
+                resolveDecoded();
+            }
+        });
+        this.frameSheetCache.set(src, promise);
+        return promise;
+    }
+
+    _preloadFrameSource(src) {
+        if (typeof globalThis.Image !== 'function') return null;
+        if (this.frameSequencePreloadCache.has(src)) {
+            return this.frameSequencePreloadCache.get(src);
+        }
+
+        const promise = new Promise((resolve, reject) => {
+            const image = new globalThis.Image();
+            let settled = false;
+            const settle = (callback, value) => {
+                if (settled) return;
+                settled = true;
+                callback(value);
+            };
+            const resolveDecoded = () => {
+                if (typeof image.decode === 'function') {
+                    image.decode()
+                        .then(() => settle(resolve, src))
+                        .catch(error => settle(reject, error));
+                    return;
+                }
+                settle(resolve, src);
+            };
+
+            image.onload = resolveDecoded;
+            image.onerror = () => settle(reject, new Error(`Failed to load frame: ${src}`));
+            image.src = src;
+            if (image.complete && image.naturalWidth > 0) {
+                resolveDecoded();
+            }
+        });
+        this.frameSequencePreloadCache.set(src, promise);
+        return promise;
     }
 
     _buildFrameSource(clip, frameIndex) {

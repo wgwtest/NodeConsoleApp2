@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "id": "animation_sets_v1",
+    "name": "Animation Set Ledger",
+    "updatedAt": "2026-06-06T00:00:00+08:00"
+  },
+  "animationSets": [
+    {
+      "id": "player_001_default",
+      "ownerType": "player",
+      "ownerId": "player_001",
+      "displayName": "主角001 默认动画集",
+      "defaultAnimation": "walk",
+      "status": "ready",
+      "updatedAt": "2026-06-07T13:08:16.906Z",
+      "clips": {
+        "walk": {
+          "key": "walk",
+          "sourceDir": "source/character/walk",
+          "sheetRef": "../source/character/walk/walk_sheet.png",
+          "manifestRef": "../source/character/walk/walk_sheet.json",
+          "frameWidth": 512,
+          "frameHeight": 512,
+          "columns": 8,
+          "rows": 8,
+          "frameCount": 61,
+          "fps": 12,
+          "loop": true,
+          "returnTo": null,
+          "scale": 2.1,
+          "offset": {
+            "x": 0,
+            "y": 0
+          },
+          "status": "ready"
+        },
+        "idle": {
+          "key": "idle",
+          "sourceDir": "source/character/主角-001-状态-001-idle",
+          "sheetRef": "../source/character/主角-001-状态-001-idle/idle_sheet.png",
+          "manifestRef": "../source/character/主角-001-状态-001-idle/idle_sheet.json",
+          "frameWidth": 512,
+          "frameHeight": 512,
+          "columns": 8,
+          "rows": 8,
+          "frameCount": 61,
+          "fps": 16,
+          "loop": true,
+          "returnTo": null,
+          "scale": 2.1,
+          "offset": {
+            "x": 0,
+            "y": 0
+          },
+          "status": "ready"
+        },
+        "attack": {
+          "key": "attack",
+          "sourceDir": "source/character/主角-001-状态-001-attack",
+          "sheetRef": "../source/character/主角-001-状态-001-attack/attack_sheet.png",
+          "manifestRef": "../source/character/主角-001-状态-001-attack/attack_sheet.json",
+          "frameWidth": 512,
+          "frameHeight": 512,
+          "columns": 8,
+          "rows": 8,
+          "frameCount": 61,
+          "fps": 18,
+          "loop": true,
+          "returnTo": null,
+          "scale": 2.1,
+          "offset": {
+            "x": 0,
+            "y": -4
+          },
+          "status": "ready"
+        },
+        "hitted": {
+          "key": "hitted",
+          "sourceDir": "source/character/player_001-hitted",
+          "fps": 12,
+          "loop": true,
+          "returnTo": null,
+          "status": "ready",
+          "sheetRef": "../source/character/player_001-hitted/hitted_sheet.png",
+          "manifestRef": "../source/character/player_001-hitted/hitted_sheet.json",
+          "frameWidth": 512,
+          "frameHeight": 512,
+          "columns": 8,
+          "rows": 8,
+          "frameCount": 61,
+          "scale": 1,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      },
+      "references": [
+        {
+          "type": "player",
+          "id": "player",
+          "field": "animationSetRef"
+        },
+        {
+          "type": "mock",
+          "id": "mock_ui_v11",
+          "field": "presentation.defaultAnimation"
+        },
+        {
+          "type": "runtime",
+          "id": "BattlePresentationController",
+          "field": "resolveClip"
+        }
+      ]
+    },
+    {
+      "id": "enemy_001_default",
+      "ownerType": "enemy",
+      "ownerId": "enemy_001",
+      "displayName": "敌人001 默认动画集",
+      "defaultAnimation": "attack1",
+      "status": "ready",
+      "updatedAt": "2026-06-06T00:00:00+08:00",
+      "clips": {
+        "attack1": {
+          "key": "attack1",
+          "sourceDir": "source/character/敌人-001-状态001-正常状态-attack1",
+          "sheetRef": "../source/character/敌人-001-状态001-正常状态-attack1/attack1_sheet.png",
+          "manifestRef": "../source/character/敌人-001-状态001-正常状态-attack1/attack1_sheet.json",
+          "frameWidth": 512,
+          "frameHeight": 512,
+          "columns": 8,
+          "rows": 8,
+          "frameCount": 61,
+          "fps": 12,
+          "loop": true,
+          "returnTo": null,
+          "scale": 2.1,
+          "offset": {
+            "x": 0,
+            "y": 0
+          },
+          "status": "ready"
+        }
+      },
+      "references": [
+        {
+          "type": "enemy",
+          "id": "enemy_v2_c1_01_razor_initiate",
+          "field": "presentation.defaultAnimation"
+        },
+        {
+          "type": "enemyAction",
+          "id": "enemy_v2_c1_01_razor_initiate.attack",
+          "animationKey": "attack1"
+        },
+        {
+          "type": "runtime",
+          "id": "BattlePresentationController",
+          "field": "resolveClip"
+        }
+      ]
+    }
+  ]
+}

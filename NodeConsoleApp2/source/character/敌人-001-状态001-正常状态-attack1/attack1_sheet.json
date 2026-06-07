@@ -1,0 +1,11 @@
+{
+  "id": "enemy_001_attack1",
+  "sheet": "attack1_sheet.png",
+  "frameWidth": 512,
+  "frameHeight": 512,
+  "frameCount": 61,
+  "columns": 8,
+  "rows": 8,
+  "width": 4096,
+  "height": 4096
+}

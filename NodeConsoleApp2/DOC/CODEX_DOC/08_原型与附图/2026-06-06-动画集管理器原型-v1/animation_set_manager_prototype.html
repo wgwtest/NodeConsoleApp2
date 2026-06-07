@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>动画集管理器原型 v1</title>
+  <style>
+    :root {
+      --bg: #eef1ee;
+      --panel: #fbfcf8;
+      --panel-2: #f4f6f1;
+      --ink: #20251f;
+      --muted: #6d746a;
+      --line: #d5dacf;
+      --line-strong: #aeb8aa;
+      --green: #247a4c;
+      --blue: #2b6388;
+      --amber: #a65f1e;
+      --red: #ad3d35;
+      --charcoal: #2b302a;
+      --shadow: 0 16px 36px rgba(38, 45, 36, .12);
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(32, 37, 31, .035) 1px, transparent 1px) 0 0 / 28px 28px,
+        linear-gradient(0deg, rgba(32, 37, 31, .03) 1px, transparent 1px) 0 0 / 28px 28px,
+        var(--bg);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 58px 1fr;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 320px 1fr auto;
+      align-items: center;
+      gap: 18px;
+      padding: 0 18px;
+      background: #1f251f;
+      color: #f4f6f1;
+      border-bottom: 1px solid #0f130f;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(244, 246, 241, .32);
+      background: #2f382f;
+      color: #f4f6f1;
+      font-weight: 800;
+    }
+
+    .brand-title {
+      min-width: 0;
+    }
+
+    .brand-title strong {
+      display: block;
+      font-size: 16px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .brand-title span {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #bac4b5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .search {
+      height: 36px;
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      max-width: 620px;
+      padding: 0 10px;
+      background: rgba(244, 246, 241, .08);
+      border: 1px solid rgba(244, 246, 241, .18);
+    }
+
+    .search input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      color: #f4f6f1;
+      background: transparent;
+    }
+
+    .search input::placeholder {
+      color: #aeb8aa;
+    }
+
+    .kbd {
+      padding: 2px 6px;
+      color: #cbd3c5;
+      border: 1px solid rgba(244, 246, 241, .22);
+      font-size: 11px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      color: var(--ink);
+      cursor: default;
+    }
+
+    .btn.dark {
+      border-color: #465144;
+      background: #344037;
+      color: #f4f6f1;
+    }
+
+    .btn.primary {
+      border-color: #114d2f;
+      background: #247a4c;
+      color: white;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 312px minmax(520px, 1fr) 392px;
+      gap: 12px;
+      padding: 12px;
+      min-height: 0;
+    }
+
+    .panel {
+      min-width: 0;
+      min-height: 0;
+      background: rgba(251, 252, 248, .94);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    .panel-head small {
+      color: var(--muted);
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .filters select,
+    .mini-input {
+      width: 100%;
+      height: 32px;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      padding: 0 8px;
+    }
+
+    .asset-list {
+      overflow: auto;
+      height: calc(100vh - 58px - 12px - 12px - 49px - 57px);
+      padding: 8px;
+    }
+
+    .asset-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 10px;
+      padding: 11px 10px;
+      margin-bottom: 8px;
+      border: 1px solid var(--line);
+      background: white;
+    }
+
+    .asset-card.active {
+      border-color: #375c4b;
+      background: #eef7ef;
+      box-shadow: inset 3px 0 0 var(--green);
+    }
+
+    .asset-main {
+      min-width: 0;
+    }
+
+    .asset-main strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .asset-main span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge {
+      align-self: start;
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 7px;
+      border: 1px solid var(--line);
+      background: #f8faf4;
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .badge.ready {
+      border-color: rgba(36, 122, 76, .35);
+      background: #e8f4ec;
+      color: var(--green);
+    }
+
+    .badge.warn {
+      border-color: rgba(166, 95, 30, .35);
+      background: #fff2df;
+      color: var(--amber);
+    }
+
+    .badge.error {
+      border-color: rgba(173, 61, 53, .35);
+      background: #ffe9e6;
+      color: var(--red);
+    }
+
+    .asset-meta {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 7px;
+      border: 1px solid #d8ded2;
+      background: #f7f8f4;
+      color: #5e675b;
+      font-size: 11px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 0;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+    }
+
+    .summary h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    .summary p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(90px, 1fr));
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #f8faf5;
+    }
+
+    .metric {
+      min-height: 62px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      background: white;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 7px;
+      font-size: 19px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 10px 16px 0;
+      background: white;
+    }
+
+    .tab {
+      height: 34px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      background: #f7f8f4;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tab.active {
+      background: var(--panel);
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .detail {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      background: var(--panel);
+    }
+
+    .detail-toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .path {
+      min-width: 0;
+      color: var(--muted);
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      padding: 0 16px 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+      background: white;
+      border: 1px solid var(--line);
+    }
+
+    th,
+    td {
+      height: 42px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      color: #4f594d;
+      background: #edf1ea;
+      font-weight: 700;
+    }
+
+    td.mono {
+      font-family: Consolas, monospace;
+      color: #4a5348;
+    }
+
+    .rightcol {
+      display: grid;
+      grid-template-rows: minmax(330px, .95fr) minmax(210px, .65fr) minmax(180px, .45fr);
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .preview {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 0;
+    }
+
+    .stage {
+      position: relative;
+      margin: 14px;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid #cbd4c8;
+      background:
+        linear-gradient(45deg, #dfe5dc 25%, transparent 25%) 0 0 / 22px 22px,
+        linear-gradient(-45deg, #dfe5dc 25%, transparent 25%) 0 11px / 22px 22px,
+        linear-gradient(45deg, transparent 75%, #dfe5dc 75%) 11px -11px / 22px 22px,
+        linear-gradient(-45deg, transparent 75%, #dfe5dc 75%) -11px 0 / 22px 22px,
+        #f5f7f1;
+    }
+
+    .sprite-window {
+      width: min(230px, 58%);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: rgba(255, 255, 255, .58);
+      border: 1px solid rgba(31, 37, 31, .18);
+    }
+
+    .sprite-window img {
+      width: 760%;
+      max-width: none;
+      transform: translateX(43%);
+      image-rendering: auto;
+    }
+
+    .stage-caption {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .transport {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 0 14px 14px;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line-strong);
+      background: white;
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+    }
+
+    .timeline {
+      height: 8px;
+      background: #d9dfd3;
+      border: 1px solid #c7d0c3;
+      position: relative;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 52%;
+      background: var(--green);
+    }
+
+    .kv {
+      padding: 12px 14px 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .kv-item {
+      border: 1px solid var(--line);
+      background: white;
+      padding: 8px;
+      min-width: 0;
+    }
+
+    .kv-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .kv-item strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .refs,
+    .issues {
+      overflow: auto;
+      padding: 10px 12px 12px;
+    }
+
+    .ref-row,
+    .issue-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      align-items: center;
+      min-height: 34px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .dot.warn {
+      background: var(--amber);
+    }
+
+    .dot.error {
+      background: var(--red);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    @media (max-width: 1200px) {
+      .layout {
+        grid-template-columns: 280px minmax(460px, 1fr);
+      }
+
+      .rightcol {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">AM</div>
+        <div class="brand-title">
+          <strong>动画集管理</strong>
+          <span>Animation Set Manager / S9 动画资产管理</span>
+        </div>
+      </div>
+      <label class="search">
+        <span>⌕</span>
+        <input value="" placeholder="搜索 animationSetRef / ownerId / clip key">
+        <span class="kbd">Ctrl K</span>
+      </label>
+      <div class="actions">
+        <button class="btn dark">校验全部</button>
+        <button class="btn dark">批量构建</button>
+        <button class="btn primary">导入帧序列</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel">
+        <div class="panel-head">
+          <h2>动画集台账</h2>
+          <small>4 sets</small>
+        </div>
+        <div class="filters">
+          <select>
+            <option>全部归属</option>
+            <option>玩家</option>
+            <option>敌人</option>
+            <option>友军</option>
+          </select>
+          <select>
+            <option>全部状态</option>
+            <option>ready</option>
+            <option>warning</option>
+            <option>error</option>
+          </select>
+          <input class="mini-input" value="player_001" aria-label="对象筛选">
+          <input class="mini-input" value="idle attack" aria-label="动作筛选">
+        </div>
+        <div class="asset-list">
+          <article class="asset-card active">
+            <div class="asset-main">
+              <strong>player_001_default</strong>
+              <span>主角001 默认动画集</span>
+            </div>
+            <span class="badge ready">ready</span>
+            <div class="asset-meta">
+              <span class="chip">owner: player</span>
+              <span class="chip">clips: 3</span>
+              <span class="chip">default: idle</span>
+            </div>
+          </article>
+
+          <article class="asset-card">
+            <div class="asset-main">
+              <strong>enemy_001_default</strong>
+              <span>敌人001 默认动画集</span>
+            </div>
+            <span class="badge ready">ready</span>
+            <div class="asset-meta">
+              <span class="chip">owner: enemy</span>
+              <span class="chip">clips: 1</span>
+              <span class="chip">default: attack1</span>
+            </div>
+          </article>
+
+          <article class="asset-card">
+            <div class="asset-main">
+              <strong>ally_guide_proto</strong>
+              <span>引导友军临时动画集</span>
+            </div>
+            <span class="badge warn">warning</span>
+            <div class="asset-meta">
+              <span class="chip">owner: ally</span>
+              <span class="chip">clips: 2</span>
+              <span class="chip">missing hit</span>
+            </div>
+          </article>
+
+          <article class="asset-card">
+            <div class="asset-main">
+              <strong>fx_bloodneedle_001</strong>
+              <span>血脉针效果动画集</span>
+            </div>
+            <span class="badge error">error</span>
+            <div class="asset-meta">
+              <span class="chip">owner: effect</span>
+              <span class="chip">clips: 1</span>
+              <span class="chip">sheet missing</span>
+            </div>
+          </article>
+        </div>
+      </aside>
+
+      <section class="panel workspace">
+        <div class="summary">
+          <div>
+            <h1>player_001_default</h1>
+            <p>归属 player / player_001。用于主角在战斗运行时的默认等待、行走和攻击动作。角色配置只保存 animationSetRef。</p>
+          </div>
+          <span class="badge ready">已发布到运行时索引</span>
+        </div>
+
+        <div class="summary-grid">
+          <div class="metric"><span>Clip 总数</span><strong>3</strong></div>
+          <div class="metric"><span>默认动作</span><strong>idle</strong></div>
+          <div class="metric"><span>引用数量</span><strong>5</strong></div>
+          <div class="metric"><span>资源状态</span><strong>Ready</strong></div>
+        </div>
+
+        <div class="detail">
+          <div>
+            <div class="tabs">
+              <div class="tab active">Clips</div>
+              <div class="tab">引用关系</div>
+              <div class="tab">构建历史</div>
+              <div class="tab">Manifest</div>
+            </div>
+            <div class="detail-toolbar">
+              <div class="path">animationSetRef: player_001_default / source: source/character/主角-001-状态-001-*</div>
+              <div>
+                <button class="btn">新增 clip</button>
+                <button class="btn">重建选中</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>key</th>
+                  <th>状态</th>
+                  <th>sourceDir</th>
+                  <th>sheet</th>
+                  <th>frames</th>
+                  <th>fps</th>
+                  <th>loop</th>
+                  <th>returnTo</th>
+                  <th>offset</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono">idle</td>
+                  <td><span class="badge ready">ready</span></td>
+                  <td class="mono">主角-001-状态-001-idle</td>
+                  <td class="mono">idle_sheet.png</td>
+                  <td>61</td>
+                  <td>16</td>
+                  <td>true</td>
+                  <td class="muted">-</td>
+                  <td>0, 0</td>
+                </tr>
+                <tr>
+                  <td class="mono">walk</td>
+                  <td><span class="badge ready">ready</span></td>
+                  <td class="mono">source/character/walk</td>
+                  <td class="mono">walk_sheet.png</td>
+                  <td>61</td>
+                  <td>16</td>
+                  <td>true</td>
+                  <td class="muted">-</td>
+                  <td>0, 0</td>
+                </tr>
+                <tr>
+                  <td class="mono">attack</td>
+                  <td><span class="badge ready">ready</span></td>
+                  <td class="mono">主角-001-状态-001-attack</td>
+                  <td class="mono">attack_sheet.png</td>
+                  <td>61</td>
+                  <td>18</td>
+                  <td>false</td>
+                  <td class="mono">idle</td>
+                  <td>0, -4</td>
+                </tr>
+                <tr>
+                  <td class="mono">hit</td>
+                  <td><span class="badge warn">missing</span></td>
+                  <td class="mono muted">未导入</td>
+                  <td class="mono muted">未构建</td>
+                  <td>-</td>
+                  <td>16</td>
+                  <td>false</td>
+                  <td class="mono">idle</td>
+                  <td>0, 0</td>
+                </tr>
+                <tr>
+                  <td class="mono">dead</td>
+                  <td><span class="badge warn">planned</span></td>
+                  <td class="mono muted">未导入</td>
+                  <td class="mono muted">未构建</td>
+                  <td>-</td>
+                  <td>12</td>
+                  <td>false</td>
+                  <td class="muted">last frame</td>
+                  <td>0, 0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <aside class="rightcol">
+        <section class="panel preview">
+          <div class="panel-head">
+            <div>
+              <h2>Clip 预览</h2>
+              <small>walk / sheet + manifest</small>
+            </div>
+            <span class="badge ready">61 frames</span>
+          </div>
+          <div class="stage">
+            <div class="sprite-window">
+              <img src="../../../../source/character/walk/walk_sheet.png" alt="walk sheet preview">
+            </div>
+            <div class="stage-caption">
+              <span class="chip">frame 32</span>
+              <span class="chip">fps 16</span>
+              <span class="chip">loop</span>
+            </div>
+          </div>
+          <div class="transport">
+            <button class="icon-btn" title="播放">▶</button>
+            <div class="timeline"></div>
+            <button class="icon-btn" title="重播">↻</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>引用关系</h2>
+              <small>谁正在使用这个动画集</small>
+            </div>
+            <span class="badge">5 refs</span>
+          </div>
+          <div class="refs">
+            <div class="ref-row"><span class="dot"></span><strong>player.json</strong><span class="mono">animationSetRef</span></div>
+            <div class="ref-row"><span class="dot"></span><strong>basic_attack</strong><span class="mono">attack</span></div>
+            <div class="ref-row"><span class="dot"></span><strong>mock_ui_v11</strong><span class="mono">runtime</span></div>
+            <div class="ref-row"><span class="dot warn"></span><strong>skill: bloodneedle</strong><span class="mono">attack</span></div>
+            <div class="ref-row"><span class="dot"></span><strong>BattlePresentation</strong><span class="mono">resolveClip</span></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>校验报告</h2>
+              <small>构建前后资源健康度</small>
+            </div>
+            <span class="badge warn">2 warnings</span>
+          </div>
+          <div class="issues">
+            <div class="issue-row"><span class="dot"></span><strong>walk_sheet.png</strong><span class="muted">ready</span></div>
+            <div class="issue-row"><span class="dot"></span><strong>idle frame count</strong><span class="muted">61</span></div>
+            <div class="issue-row"><span class="dot warn"></span><strong>hit clip missing</strong><span class="muted">fallback idle</span></div>
+            <div class="issue-row"><span class="dot warn"></span><strong>dead clip planned</strong><span class="muted">not built</span></div>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

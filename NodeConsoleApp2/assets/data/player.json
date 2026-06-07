@@ -13,18 +13,42 @@
         "skills": {
             "skillTreeId": "melee_v4_5",
             "skillPoints": 5,
-            "learned": ["skill_heal", "skill_heavy_swing", "skill_savage_charge"]
+            "learned": [
+                "skill_heal",
+                "skill_heavy_swing",
+                "skill_savage_charge"
+            ]
         },
         "resources": {
             "exp": 0,
             "gold": 0
         },
         "bodyParts": {
-            "head":       { "current": 0, "max": 20, "weakness": 1.5 },
-            "chest":      { "current": 10, "max": 20, "weakness": 1.0 },
-            "abdomen":    { "current": 0, "max": 20, "weakness": 1.1 },
-            "arm":        { "current": 0, "max": 20, "weakness": 1.0 },
-            "leg":        { "current": 20, "max": 20, "weakness": 1.0 }
+            "head": {
+                "current": 0,
+                "max": 20,
+                "weakness": 1.5
+            },
+            "chest": {
+                "current": 10,
+                "max": 20,
+                "weakness": 1
+            },
+            "abdomen": {
+                "current": 0,
+                "max": 20,
+                "weakness": 1.1
+            },
+            "arm": {
+                "current": 0,
+                "max": 20,
+                "weakness": 1
+            },
+            "leg": {
+                "current": 20,
+                "max": 20,
+                "weakness": 1
+            }
         },
         "equipment": {
             "weapon": null,
@@ -45,7 +69,13 @@
                     "end": 61,
                     "fps": 12,
                     "loop": true,
-                    "scale": 2.1
+                    "scale": 2.1,
+                    "sheetRef": "../source/character/walk/walk_sheet.png",
+                    "frameWidth": 512,
+                    "frameHeight": 512,
+                    "sheetColumns": 8,
+                    "sheetRows": 8,
+                    "frameCount": 61
                 }
             }
         },

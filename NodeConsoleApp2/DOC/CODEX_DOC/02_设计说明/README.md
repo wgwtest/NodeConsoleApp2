@@ -11,7 +11,7 @@
 本轮参考 `CodeFactoryV2` 的正式设计说明组织方式，将原先扁平的 `NN-主题-设计说明.md` 文档池改为：
 
 1. `00_总纲/`：跨子系统总设计、文档治理和粒度规则。
-2. `S1-S8` 子系统目录：按游戏功能边界组织主设计与专题设计。
+2. `S1-S9` 子系统目录：按游戏功能边界组织主设计与专题设计。
 3. 子系统 README：作为每个子系统的稳定入口，说明范围、当前文档和排除边界。
 
 ## 2. 阅读顺序
@@ -27,6 +27,7 @@
 9. [S6_敌人系统与编辑器/README](./S6_敌人系统与编辑器/README.md)
 10. [S7_数据存档与内容契约/README](./S7_数据存档与内容契约/README.md)
 11. [S8_UI与交互基线/README](./S8_UI与交互基线/README.md)
+12. [S9_动画资产管理/README](./S9_动画资产管理/README.md)
 
 ## 3. 子系统目录
 
@@ -41,6 +42,7 @@
 | `S6` | `S6_敌人系统与编辑器/` | 敌人系统、敌人模板、敌人 AI 语义、敌人编辑器 |
 | `S7` | `S7_数据存档与内容契约/` | 数据结构、本地存档、内容装载、跨模块配置契约 |
 | `S8` | `S8_UI与交互基线/` | UI 基线、时间线界面、战斗场景、Spine 素材与展示协作 |
+| `S9` | `S9_动画资产管理/` | 动画集、帧序列导入、图集构建、动画资产台账、预览和运行时解析接口 |
 
 ## 4. 现有设计文档索引
 
@@ -66,6 +68,7 @@
 | [13-道具系统(item_design)-设计说明](./S2_战斗运行时/13-道具系统(item_design)-设计说明.md) | 道具系统设计 |
 | [14-时间线机制(timeline_design)-设计说明](./S2_战斗运行时/14-时间线机制(timeline_design)-设计说明.md) | 时间线机制设计 |
 | [20-对战演出与动画展示层(battle_presentation)-设计说明](./S2_战斗运行时/20-对战演出与动画展示层(battle_presentation)-设计说明.md) | 战斗展示层和动画展示设计 |
+| [21-帧序列动画播放器与动画集配置补充设计](./S2_战斗运行时/21-帧序列动画播放器与动画集配置补充设计.md) | 帧序列动画播放器、动画集配置和资源格式边界 |
 
 ### 4.4 S3 关卡地图与编辑器
 
@@ -119,6 +122,12 @@
 | [21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明](./S8_UI与交互基线/21-Spine素材制作工程与导入边界(spine_asset_pipeline)-设计说明.md) | Spine 素材制作工程与导入边界 |
 | [22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明](./S8_UI与交互基线/22-主工程与SpineAssets协作规则(game_spine_assets_collaboration)-设计说明.md) | 主工程与 SpineAssets 协作规则 |
 | [23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明](./S8_UI与交互基线/23-Spine样本bundle导入probe与降级壳(spine_bundle_probe_and_fallback)-设计说明.md) | Spine bundle 导入 probe 与降级壳 |
+
+### 4.10 S9 动画资产管理
+
+| 文件 | 主题 |
+| --- | --- |
+| [30-动画集管理器(animation_set_manager)-设计说明](./S9_动画资产管理/30-动画集管理器(animation_set_manager)-设计说明.md) | 动画集管理器的数据台账、工具化构建、服务化接口和独立管理界面 |
 
 ## 5. 使用规则
 

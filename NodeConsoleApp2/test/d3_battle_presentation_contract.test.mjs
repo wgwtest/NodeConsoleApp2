@@ -9,6 +9,7 @@ const presentationDir = path.join(repoRoot, 'script', 'ui', 'presentation');
 const dataManagerPath = path.join(repoRoot, 'script', 'engine', 'DataManagerV2.js');
 const contentPackOverrideStorePath = path.join(repoRoot, 'script', 'tooling', 'ContentPackOverrideStore.js');
 const currentEnemyPackPath = path.join(repoRoot, 'assets', 'enemy_packs', 'current', 'enemies.json');
+const playerDataPath = path.join(repoRoot, 'assets', 'data', 'player.json');
 const controllerPath = path.join(presentationDir, 'BattlePresentationController.js');
 const presenterPath = path.join(presentationDir, 'FighterPresenter.js');
 const animationDriverPath = path.join(presentationDir, 'BattleAnimationDriver.js');
@@ -109,6 +110,15 @@ class FakeNode {
         this.style = new FakeStyle();
         this.children = [];
         this.parentNode = null;
+        this.tagName = '';
+        this.width = 0;
+        this.height = 0;
+        this.context2d = {
+            clearCalls: [],
+            drawCalls: [],
+            clearRect: (...args) => this.context2d.clearCalls.push(args),
+            drawImage: (...args) => this.context2d.drawCalls.push(args)
+        };
         this._selectors = new Map();
         this._selectorAll = new Map();
     }
@@ -148,6 +158,10 @@ class FakeNode {
         if (!this.parentNode) return;
         this.parentNode.children = this.parentNode.children.filter(child => child !== this);
         this.parentNode = null;
+    }
+
+    getContext(type) {
+        return type === '2d' ? this.context2d : null;
     }
 }
 
@@ -250,6 +264,259 @@ test('FighterPresenter mounts default walk frame sequence for the player', async
     }
 });
 
+test('FighterPresenter waits for frame sequence preload before playback', async () => {
+    const originalDocument = globalThis.document;
+    const originalImage = globalThis.Image;
+    const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
+    const originalCancelAnimationFrame = globalThis.cancelAnimationFrame;
+    const createdImages = [];
+    const rafCallbacks = [];
+
+    class FakeImage {
+        constructor() {
+            this.complete = false;
+            this.naturalWidth = 0;
+            this.naturalHeight = 0;
+            createdImages.push(this);
+        }
+
+        set src(value) {
+            this._src = value;
+        }
+
+        get src() {
+            return this._src;
+        }
+
+        decode() {
+            return new Promise(resolve => {
+                this._resolveDecode = resolve;
+            });
+        }
+    }
+
+    const flush = () => new Promise(resolve => setTimeout(resolve, 0));
+    const loadImage = async (src) => {
+        const image = createdImages.find(item => item.src === src);
+        assert.ok(image, `expected preload image for ${src}`);
+        image.complete = true;
+        image.naturalWidth = 512;
+        image.naturalHeight = 512;
+        image.onload?.();
+        image._resolveDecode?.();
+        await flush();
+    };
+
+    globalThis.document = {
+        createElement(tagName) {
+            const node = new FakeNode('');
+            node.tagName = String(tagName).toUpperCase();
+            node.setAttribute = (name, value) => {
+                node[name] = String(value);
+            };
+            return node;
+        }
+    };
+    globalThis.Image = FakeImage;
+    globalThis.requestAnimationFrame = callback => {
+        rafCallbacks.push(callback);
+        return rafCallbacks.length;
+    };
+    globalThis.cancelAnimationFrame = () => {};
+
+    try {
+        const { FighterPresenter } = await importFighterPresenterModule();
+        const fighter = createFighterFixture('enemy-character');
+        const presenter = new FighterPresenter({
+            side: 'enemy',
+            fighterRoot: fighter.root,
+            hudRoot: new FakeNode('enemy-hud')
+        });
+
+        presenter.syncVisualState({
+            id: 'enemy_1',
+            hp: 72,
+            maxHp: 72,
+            bodyParts: {},
+            presentation: {
+                battleSpriteRef: '../source/character/enemy.png',
+                defaultAnimation: 'attack1',
+                frameAnimations: {
+                    attack1: {
+                        basePath: '../source/character/enemy-attack',
+                        filePattern: 'attack_{index}.png',
+                        start: 1,
+                        end: 3,
+                        fps: 12,
+                        loop: true
+                    }
+                }
+            }
+        });
+
+        const frameLayer = fighter.container.querySelector('.sprite-frame-sequence');
+        assert.ok(frameLayer, 'expected frame sequence layer to be mounted');
+        assert.equal(frameLayer.dataset.frameLoading, '1');
+        assert.equal(frameLayer.dataset.frameReady, undefined);
+        assert.equal(frameLayer.style.opacity, '0');
+        assert.equal(frameLayer.src, '../source/character/enemy-attack/attack_1.png');
+        assert.equal(rafCallbacks.length, 0);
+
+        await loadImage('../source/character/enemy-attack/attack_1.png');
+        assert.equal(frameLayer.dataset.frameFirstReady, '1');
+        assert.equal(frameLayer.dataset.frameReady, undefined);
+        assert.equal(frameLayer.dataset.frameLoading, '1');
+        assert.equal(frameLayer.style.opacity, '1');
+        assert.equal(fighter.body.style.backgroundImage, 'none');
+        assert.equal(rafCallbacks.length, 0);
+
+        await loadImage('../source/character/enemy-attack/attack_2.png');
+        await loadImage('../source/character/enemy-attack/attack_3.png');
+        await flush();
+        assert.equal(frameLayer.dataset.frameReady, '1');
+        assert.equal(frameLayer.dataset.frameLoading, undefined);
+        assert.equal(rafCallbacks.length, 1);
+
+        rafCallbacks.shift()(1000);
+        assert.equal(frameLayer.src, '../source/character/enemy-attack/attack_1.png');
+        rafCallbacks.shift()(1100);
+        assert.equal(frameLayer.src, '../source/character/enemy-attack/attack_2.png');
+    } finally {
+        globalThis.document = originalDocument;
+        globalThis.Image = originalImage;
+        globalThis.requestAnimationFrame = originalRequestAnimationFrame;
+        globalThis.cancelAnimationFrame = originalCancelAnimationFrame;
+    }
+});
+
+test('FighterPresenter plays frame sheets from one decoded image', async () => {
+    const originalDocument = globalThis.document;
+    const originalImage = globalThis.Image;
+    const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
+    const originalCancelAnimationFrame = globalThis.cancelAnimationFrame;
+    const createdImages = [];
+    const rafCallbacks = [];
+
+    class FakeImage {
+        constructor() {
+            this.complete = false;
+            this.naturalWidth = 0;
+            this.naturalHeight = 0;
+            createdImages.push(this);
+        }
+
+        set src(value) {
+            this._src = value;
+        }
+
+        get src() {
+            return this._src;
+        }
+
+        decode() {
+            return new Promise(resolve => {
+                this._resolveDecode = resolve;
+            });
+        }
+    }
+
+    const flush = () => new Promise(resolve => setTimeout(resolve, 0));
+    const loadSheet = async (src) => {
+        const image = createdImages.find(item => item.src === src);
+        assert.ok(image, `expected sheet preload image for ${src}`);
+        image.complete = true;
+        image.naturalWidth = 1024;
+        image.naturalHeight = 1024;
+        image.onload?.();
+        image._resolveDecode?.();
+        await flush();
+    };
+
+    globalThis.document = {
+        createElement(tagName) {
+            const node = new FakeNode('');
+            node.tagName = String(tagName).toUpperCase();
+            node.setAttribute = (name, value) => {
+                node[name] = String(value);
+            };
+            return node;
+        }
+    };
+    globalThis.Image = FakeImage;
+    globalThis.requestAnimationFrame = callback => {
+        rafCallbacks.push(callback);
+        return rafCallbacks.length;
+    };
+    globalThis.cancelAnimationFrame = () => {};
+
+    try {
+        const { FighterPresenter } = await importFighterPresenterModule();
+        const fighter = createFighterFixture('enemy-character');
+        const presenter = new FighterPresenter({
+            side: 'enemy',
+            fighterRoot: fighter.root,
+            hudRoot: new FakeNode('enemy-hud')
+        });
+
+        presenter.syncVisualState({
+            id: 'enemy_1',
+            hp: 72,
+            maxHp: 72,
+            bodyParts: {},
+            presentation: {
+                battleSpriteRef: '../source/character/enemy.png',
+                defaultAnimation: 'attack1',
+                frameAnimations: {
+                    attack1: {
+                        sheetRef: '../source/character/enemy-attack/attack1_sheet.png',
+                        frameWidth: 512,
+                        frameHeight: 512,
+                        sheetColumns: 2,
+                        sheetRows: 2,
+                        start: 1,
+                        end: 3,
+                        fps: 12,
+                        loop: true
+                    }
+                }
+            }
+        });
+
+        const frameLayer = fighter.container.querySelector('.sprite-frame-sequence');
+        assert.ok(frameLayer, 'expected frame sheet layer to be mounted');
+        assert.equal(frameLayer.tagName, 'CANVAS');
+        assert.equal(frameLayer.width, 512);
+        assert.equal(frameLayer.height, 512);
+        assert.equal(frameLayer.dataset.animationKey, 'attack1');
+        assert.equal(frameLayer.dataset.frameSheet, '../source/character/enemy-attack/attack1_sheet.png');
+        assert.equal(frameLayer.dataset.frameLoading, '1');
+        assert.equal(frameLayer.dataset.frameReady, undefined);
+        assert.equal(createdImages.length, 1);
+        assert.equal(createdImages[0].src, '../source/character/enemy-attack/attack1_sheet.png');
+        assert.equal(rafCallbacks.length, 0);
+
+        await loadSheet('../source/character/enemy-attack/attack1_sheet.png');
+        assert.equal(frameLayer.dataset.frameReady, '1');
+        assert.equal(frameLayer.dataset.frameLoading, undefined);
+        assert.equal(frameLayer.style.opacity, '1');
+        assert.equal(fighter.body.style.backgroundImage, 'none');
+        assert.equal(frameLayer.context2d.drawCalls.length, 1);
+        assert.deepEqual(frameLayer.context2d.drawCalls[0].slice(1), [0, 0, 512, 512, 0, 0, 512, 512]);
+        assert.equal(rafCallbacks.length, 1);
+
+        rafCallbacks.shift()(1000);
+        assert.equal(frameLayer.context2d.drawCalls.length, 1);
+        rafCallbacks.shift()(1100);
+        assert.equal(frameLayer.context2d.drawCalls.length, 2);
+        assert.deepEqual(frameLayer.context2d.drawCalls[1].slice(1), [512, 0, 512, 512, 0, 0, 512, 512]);
+    } finally {
+        globalThis.document = originalDocument;
+        globalThis.Image = originalImage;
+        globalThis.requestAnimationFrame = originalRequestAnimationFrame;
+        globalThis.cancelAnimationFrame = originalCancelAnimationFrame;
+    }
+});
+
 test('BattlePresentationController forwards player frame sequence presentation', async () => {
     const originalDocument = globalThis.document;
     globalThis.document = {
@@ -300,6 +567,65 @@ test('BattlePresentationController forwards player frame sequence presentation',
         assert.ok(frameLayer, 'expected player frame sequence layer to be mounted');
         assert.equal(frameLayer.dataset.animationKey, 'walk');
         assert.equal(frameLayer.src, '../source/character/walk/walk_1.png');
+    } finally {
+        globalThis.document = originalDocument;
+    }
+});
+
+test('BattlePresentationController forwards enemy frame sequence presentation', async () => {
+    const originalDocument = globalThis.document;
+    globalThis.document = {
+        createElement(tagName) {
+            const node = new FakeNode('');
+            node.tagName = String(tagName).toUpperCase();
+            node.setAttribute = (name, value) => {
+                node[name] = String(value);
+            };
+            return node;
+        }
+    };
+
+    try {
+        const { BattlePresentationController } = await importBattlePresentationControllerModule();
+        const fixture = createBattleRowFixture();
+        const controller = new BattlePresentationController({
+            root: fixture.root,
+            sceneRoot: fixture.scene
+        });
+
+        controller.handleBattleStart({
+            player: { id: 'player', hp: 100, maxHp: 100, bodyParts: {}, buffs: [] },
+            enemies: [{
+                id: 'enemy_1',
+                hp: 72,
+                maxHp: 72,
+                bodyParts: {},
+                buffs: [],
+                presentation: {
+                    battleSpriteRef: '../source/character/敌人-001-状态001-正常状态.png',
+                    defaultAnimation: 'attack1',
+                    frameAnimations: {
+                        attack1: {
+                            basePath: '../source/character/敌人-001-状态001-正常状态-attack1',
+                            filePattern: 'attack_{index}.png',
+                            start: 1,
+                            end: 61,
+                            fps: 12,
+                            loop: true
+                        }
+                    }
+                }
+            }]
+        });
+
+        const frameLayer = fixture.enemy.container.querySelector('.sprite-frame-sequence');
+        assert.ok(frameLayer, 'expected enemy frame sequence layer to be mounted');
+        assert.equal(frameLayer.dataset.animationKey, 'attack1');
+        assert.equal(frameLayer.dataset.frameStart, '1');
+        assert.equal(frameLayer.dataset.frameEnd, '61');
+        assert.equal(frameLayer.dataset.frameFps, '12');
+        assert.equal(frameLayer.src, '../source/character/敌人-001-状态001-正常状态-attack1/attack_1.png');
+        assert.equal(fixture.enemy.body.style.backgroundImage, 'none');
     } finally {
         globalThis.document = originalDocument;
     }
@@ -364,6 +690,72 @@ test('Current enemy pack battle sprite refs point at existing character art', ()
         const filePath = path.join(repoRoot, normalizedRef);
         if (!fs.existsSync(filePath)) {
             badRefs.push(`${enemy?.id || 'unknown'}:${ref}`);
+        }
+
+        const frameAnimations = enemy?.presentation?.frameAnimations;
+        if (!frameAnimations || typeof frameAnimations !== 'object') continue;
+        for (const [animationKey, clip] of Object.entries(frameAnimations)) {
+            const sheetRef = typeof clip?.sheetRef === 'string' ? clip.sheetRef : '';
+            if (sheetRef) {
+                const normalizedSheetRef = sheetRef.replace(/^\.\.\//u, '');
+                const sheetPath = path.join(repoRoot, normalizedSheetRef);
+                if (!fs.existsSync(sheetPath)) {
+                    badRefs.push(`${enemy?.id || 'unknown'}:${animationKey}:${sheetRef}`);
+                }
+            }
+
+            const basePath = typeof clip?.basePath === 'string' ? clip.basePath : '';
+            const filePattern = typeof clip?.filePattern === 'string' ? clip.filePattern : '';
+            const start = Math.max(1, Math.floor(Number(clip?.start ?? 1) || 1));
+            const end = Math.max(start, Math.floor(Number(clip?.end ?? start) || start));
+            if (!basePath || !filePattern || basePath.includes('??') || filePattern.includes('??')) {
+                badRefs.push(`${enemy?.id || 'unknown'}:${animationKey}:<invalid-frame-pattern>`);
+                continue;
+            }
+
+            for (const frameIndex of [start, end]) {
+                const frameRef = `${basePath.replace(/[\\\/]+$/u, '')}/${filePattern.replace(/\{index\}/gu, String(frameIndex))}`;
+                const normalizedFrameRef = frameRef.replace(/^\.\.\//u, '');
+                const framePath = path.join(repoRoot, normalizedFrameRef);
+                if (!fs.existsSync(framePath)) {
+                    badRefs.push(`${enemy?.id || 'unknown'}:${animationKey}:${frameRef}`);
+                }
+            }
+        }
+    }
+
+    assert.deepEqual(badRefs, []);
+});
+
+test('Player frame animation sheet refs point at existing character art', () => {
+    const playerPack = JSON.parse(readUtf8(playerDataPath));
+    const frameAnimations = playerPack?.default?.presentation?.frameAnimations;
+    assert.ok(frameAnimations && typeof frameAnimations === 'object', 'player frame animations should exist');
+
+    const badRefs = [];
+    for (const [animationKey, clip] of Object.entries(frameAnimations)) {
+        const sheetRef = typeof clip?.sheetRef === 'string' ? clip.sheetRef : '';
+        if (sheetRef) {
+            const normalizedSheetRef = sheetRef.replace(/^\.\.\//u, '');
+            const sheetPath = path.join(repoRoot, normalizedSheetRef);
+            if (!fs.existsSync(sheetPath)) {
+                badRefs.push(`${animationKey}:${sheetRef}`);
+            }
+        }
+
+        const basePath = typeof clip?.basePath === 'string' ? clip.basePath : '';
+        const filePattern = typeof clip?.filePattern === 'string' ? clip.filePattern : '';
+        const start = Math.max(1, Math.floor(Number(clip?.start ?? 1) || 1));
+        const end = Math.max(start, Math.floor(Number(clip?.end ?? start) || start));
+        if (!basePath || !filePattern) continue;
+
+        for (const frameIndex of [start, end]) {
+            const frameRef = `${basePath.replace(/[\\\/]+$/u, '')}/${filePattern.replace(/\{index\}/gu, String(frameIndex))}`;
+            const normalizedFrameRef = frameRef.replace(/^\.\.\//u, '');
+            const framePath = path.join(repoRoot, normalizedFrameRef);
+            if (!fs.existsSync(framePath)) {
+                badRefs.push(`${animationKey}:${frameRef}`);
+            }
         }
     }
 

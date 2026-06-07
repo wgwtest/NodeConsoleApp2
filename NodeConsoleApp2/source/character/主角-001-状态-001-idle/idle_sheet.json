@@ -1,0 +1,11 @@
+{
+  "id": "主角-001-状态-001-idle_idle",
+  "sheet": "idle_sheet.png",
+  "frameWidth": 512,
+  "frameHeight": 512,
+  "frameCount": 61,
+  "columns": 8,
+  "rows": 8,
+  "width": 4096,
+  "height": 4096
+}

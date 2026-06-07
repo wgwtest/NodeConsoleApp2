@@ -1,0 +1,11 @@
+{
+  "id": "walk_walk",
+  "sheet": "walk_sheet.png",
+  "frameWidth": 512,
+  "frameHeight": 512,
+  "frameCount": 61,
+  "columns": 8,
+  "rows": 8,
+  "width": 4096,
+  "height": 4096
+}
