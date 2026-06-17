@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enemy Editor Contract Prototype</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef1ed;
+      --paper: #fffdfa;
+      --paper-soft: #f7f5ef;
+      --ink: #1e231f;
+      --muted: #6f766f;
+      --line: #d7d9d2;
+      --line-strong: #b8beb6;
+      --green: #1f6f52;
+      --red: #a43c30;
+      --amber: #a66b18;
+      --blue: #345f7f;
+      --steel: #3d4640;
+      --shadow: 0 18px 50px rgba(30, 35, 31, 0.13);
+      --mono: "Cascadia Mono", "Consolas", monospace;
+      --sans: "Aptos", "Segoe UI", "Microsoft YaHei", sans-serif;
+      --serif: "Georgia", "STSong", serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(30, 35, 31, 0.04) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(30, 35, 31, 0.04) 1px, transparent 1px),
+        radial-gradient(circle at 12% 8%, rgba(166, 107, 24, 0.10), transparent 30%),
+        var(--bg);
+      background-size: 28px 28px, 28px 28px, 100% 100%, 100% 100%;
+      font-family: var(--sans);
+    }
+
+    button,
+    input,
+    select,
+    textarea { font: inherit; }
+
+    button {
+      min-height: 34px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      padding: 7px 11px;
+      color: #fff;
+      background: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: default;
+      white-space: nowrap;
+    }
+
+    button.secondary {
+      color: var(--ink);
+      background: #fff;
+      border-color: var(--line);
+    }
+
+    button.publish { background: var(--green); }
+    button.danger { background: var(--red); }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    input,
+    select { height: 34px; padding: 0 9px; }
+    textarea { min-height: 74px; padding: 9px; resize: none; line-height: 1.45; }
+
+    .page {
+      height: 100vh;
+      padding: 12px;
+      display: grid;
+      grid-template-rows: 92px minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .topbar,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 253, 250, 0.96);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr) 420px;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .brand {
+      border-radius: 7px;
+      padding: 12px;
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(30, 35, 31, 0.96), rgba(67, 52, 42, 0.96)),
+        linear-gradient(90deg, transparent 0, rgba(255,255,255,0.12) 50%, transparent 100%);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 6px 0 0;
+      color: rgba(255, 255, 255, 0.74);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .toolbar-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr 1.1fr;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .tool {
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper-soft);
+    }
+
+    .tool-title,
+    .label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+
+    .tool-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 6px;
+      min-width: 0;
+    }
+
+    .schema-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .schema-card {
+      min-width: 0;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    .schema-card b {
+      display: block;
+      font-family: var(--mono);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .schema-card span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .workspace {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 318px minmax(580px, 1fr) 390px;
+      gap: 10px;
+    }
+
+    .panel {
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .panel-head {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(247, 245, 239, 0.86);
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .scroll {
+      min-height: 0;
+      overflow: auto;
+      padding: 10px;
+    }
+
+    .enemy-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .enemy-row {
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .enemy-row.active {
+      border-color: rgba(31, 111, 82, 0.55);
+      background: #f0f8f3;
+      box-shadow: inset 3px 0 0 var(--green);
+    }
+
+    .level-badge {
+      height: 42px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      background: var(--paper-soft);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .enemy-name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .enemy-name strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+
+    .enemy-row small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-family: var(--mono);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 21px;
+      padding: 3px 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f2f4f0;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .pill.enum { color: var(--blue); background: #e8f0f5; border-color: #c8dbe7; }
+    .pill.free { color: var(--steel); background: #f1f0ea; }
+    .pill.multi { color: var(--green); background: #e4f2ea; border-color: #c6dfd2; }
+    .pill.ref { color: var(--amber); background: #f7ecda; border-color: #e8d4ad; }
+    .pill.bad { color: var(--red); background: #f5e3df; border-color: #e1c2bb; }
+
+    .main-scroll {
+      min-height: 0;
+      overflow: hidden;
+      padding: 10px 12px 14px;
+      display: grid;
+      gap: 10px;
+      grid-template-rows: auto minmax(0, 1fr);
+      align-content: stretch;
+    }
+
+    .tabbar {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 6px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper-soft);
+    }
+
+    .tab-button {
+      min-width: 0;
+      height: 35px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tab-button.active {
+      color: #fff;
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    .tab-content {
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      align-content: start;
+    }
+
+    .section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .section-title {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    .section-body {
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .field {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .field.wide { grid-column: span 2; }
+    .field.full { grid-column: 1 / -1; }
+
+    .field-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      min-height: 37px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 120px repeat(5, minmax(0, 1fr));
+      gap: 7px;
+      align-items: stretch;
+    }
+
+    .stat-head,
+    .part-cell {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 7px;
+      background: #fff;
+    }
+
+    .stat-head {
+      background: var(--paper-soft);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .part-cell b {
+      display: block;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .part-cell span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .capability-list,
+    .intent-row,
+    .diagnostic-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .capability {
+      display: grid;
+      grid-template-columns: 160px 150px minmax(0, 1fr) 150px;
+      gap: 7px;
+      align-items: start;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    .intent-track {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .token {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 72px;
+      height: 28px;
+      border-radius: 6px;
+      color: #fff;
+      background: var(--steel);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .arrow {
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .right-grid {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .schema-table {
+      display: grid;
+      gap: 6px;
+    }
+
+    .schema-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 74px;
+      gap: 7px;
+      align-items: center;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      min-width: 0;
+    }
+
+    .schema-line code {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .check {
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      gap: 5px;
+    }
+
+    .check strong {
+      font-size: 12px;
+    }
+
+    .check span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .asset-box {
+      height: 168px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(31, 111, 82, 0.12), transparent 45%),
+        repeating-linear-gradient(135deg, #f5f2eb 0 8px, #ede9df 8px 16px);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 16px;
+    }
+
+    .asset-box strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .asset-box span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 1200px) {
+      body { overflow: auto; }
+      .page { height: auto; min-height: 100vh; }
+      .topbar,
+      .workspace { grid-template-columns: 1fr; }
+      .panel { min-height: 420px; }
+      .form-grid,
+      .stats-grid,
+      .capability { grid-template-columns: 1fr; }
+      .field.wide { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <h1>敌人设计工作台</h1>
+        <p>以 enemy pack schema 驱动编辑，不由界面猜字段。</p>
+      </div>
+
+      <div class="toolbar-grid">
+        <div class="tool">
+          <div class="tool-title">当前数据包</div>
+          <div class="tool-row">
+            <select>
+              <option>enemy_v2_story / current</option>
+            </select>
+            <button class="secondary">打开</button>
+          </div>
+        </div>
+        <div class="tool">
+          <div class="tool-title">版本动作</div>
+          <div class="tool-row">
+            <button class="secondary">保存草稿</button>
+            <button class="publish">发布</button>
+            <button class="secondary">导出</button>
+          </div>
+        </div>
+        <div class="tool">
+          <div class="tool-title">编辑状态</div>
+          <div class="tool-row">
+            <span class="pill multi">schema 已加载</span>
+            <span class="pill enum">30 enemies</span>
+            <span class="pill ref">57 tests pass</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="schema-strip">
+        <div class="schema-card">
+          <b>enemies_v2_1</b>
+          <span>$schemaVersion</span>
+        </div>
+        <div class="schema-card">
+          <b>7 / 26 / 20</b>
+          <span>race / class / tags</span>
+        </div>
+        <div class="schema-card">
+          <b>15 capability</b>
+          <span>enemy-owned mechanisms</span>
+        </div>
+        <div class="schema-card">
+          <b>27 intent tokens</b>
+          <span>fixed loop vocabulary</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>敌人库</h2>
+            <div class="hint">按 candidateForLevel 排序</div>
+          </div>
+          <button class="secondary">新增</button>
+        </div>
+        <div class="scroll">
+          <div class="enemy-list">
+            <div class="enemy-row active">
+              <div class="level-badge">1-1</div>
+              <div>
+                <div class="enemy-name"><strong>林缘剃刃新手</strong><span class="pill multi">fast</span></div>
+                <small>enemy_v2_c1_01_razor_initiate</small>
+              </div>
+            </div>
+            <div class="enemy-row">
+              <div class="level-badge">1-2</div>
+              <div>
+                <div class="enemy-name"><strong>密径割喉者</strong><span class="pill enum">bleed</span></div>
+                <small>enemy_v2_c1_02_path_cutthroat</small>
+              </div>
+            </div>
+            <div class="enemy-row">
+              <div class="level-badge">1-3</div>
+              <div>
+                <div class="enemy-name"><strong>树冠放血客</strong><span class="pill enum">dot</span></div>
+                <small>enemy_v2_c1_03_canopy_bleeder</small>
+              </div>
+            </div>
+            <div class="enemy-row">
+              <div class="level-badge">1-4</div>
+              <div>
+                <div class="enemy-name"><strong>预兆重击手</strong><span class="pill ref">telegraph</span></div>
+                <small>enemy_v2_c1_04_telegraph_bruiser</small>
+              </div>
+            </div>
+            <div class="enemy-row">
+              <div class="level-badge">1-5</div>
+              <div>
+                <div class="enemy-name"><strong>荆棘修补者</strong><span class="pill multi">repair</span></div>
+                <small>enemy_v2_c1_05_thorn_mender</small>
+              </div>
+            </div>
+            <div class="enemy-row">
+              <div class="level-badge">2-1</div>
+              <div>
+                <div class="enemy-name"><strong>铁壳守门人</strong><span class="pill enum">armor</span></div>
+                <small>enemy_v2_c2_01_iron_gate_guard</small>
+              </div>
+            </div>
+            <div class="enemy-row">
+              <div class="level-badge">3-1</div>
+              <div>
+                <div class="enemy-name"><strong>疫雾抛毒者</strong><span class="pill bad">poison</span></div>
+                <small>enemy_v2_c3_01_plague_caster</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>敌人设计</h2>
+            <div class="hint">当前对象：林缘剃刃新手 / level_1_1</div>
+          </div>
+          <div class="tool-row">
+            <button class="secondary">复制</button>
+            <button class="danger">废弃</button>
+          </div>
+        </div>
+
+        <div class="main-scroll">
+          <nav class="tabbar" aria-label="????????">
+            <button class="tab-button active" data-tab="identity">??</button>
+            <button class="tab-button" data-tab="stats">????</button>
+            <button class="tab-button" data-tab="capabilities">????</button>
+            <button class="tab-button" data-tab="intent">????</button>
+            <button class="tab-button" data-tab="pressure">????</button>
+            <button class="tab-button" data-tab="assets">????</button>
+          </nav>
+
+          <div class="tab-content">
+            <section class="section tab-panel active" data-panel="identity">
+              <div class="section-title">
+                <h3>????</h3>
+                <span class="pill enum">schema-bound</span>
+              </div>
+              <div class="section-body">
+                <div class="form-grid">
+                  <div class="field wide">
+                    <div class="field-head"><span class="label">???</span><span class="pill free">????</span></div>
+                    <input value="??????">
+                  </div>
+                  <div class="field wide">
+                    <div class="field-head"><span class="label">ID</span><span class="pill ref">???</span></div>
+                    <input value="enemy_v2_c1_01_razor_initiate">
+                  </div>
+                  <div class="field">
+                    <div class="field-head"><span class="label">??</span><span class="pill enum">??</span></div>
+                    <select><option>goblin</option><option>human</option><option>orc</option></select>
+                  </div>
+                  <div class="field">
+                    <div class="field-head"><span class="label">??</span><span class="pill enum">??</span></div>
+                    <select><option>scout</option><option>cutthroat</option><option>guard</option></select>
+                  </div>
+                  <div class="field">
+                    <div class="field-head"><span class="label">????</span><span class="pill ref">????</span></div>
+                    <select><option>level_1_1</option><option>level_1_2</option></select>
+                  </div>
+                  <div class="field">
+                    <div class="field-head"><span class="label">???</span><span class="pill ref">????</span></div>
+                    <select><option>drop_enemy_v2_candidate</option></select>
+                  </div>
+                  <div class="field full">
+                    <div class="field-head"><span class="label">??</span><span class="pill multi">????</span></div>
+                    <div class="tags">
+                      <span class="pill multi">v2_candidate</span>
+                      <span class="pill multi">chapter_1</span>
+                      <span class="pill multi">role_fast</span>
+                      <span class="pill multi">role_status</span>
+                      <span class="pill multi">pressure_basic</span>
+                      <button class="secondary">+ ??????</button>
+                    </div>
+                  </div>
+                  <div class="field full">
+                    <div class="field-head"><span class="label">????</span><span class="pill free">????</span></div>
+                    <textarea>level_1_1 ?????????????????????????? AP ?????????????? HP ???</textarea>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="section tab-panel" data-panel="stats">
+              <div class="section-title">
+                <h3>???????</h3>
+                <span class="pill enum">bodyParts ?? meta.enums</span>
+              </div>
+              <div class="section-body">
+                <div class="form-grid">
+                  <div class="field"><div class="field-head"><span class="label">HP</span><span class="pill free">??</span></div><input value="72"></div>
+                  <div class="field"><div class="field-head"><span class="label">Max HP</span><span class="pill free">??</span></div><input value="72"></div>
+                  <div class="field"><div class="field-head"><span class="label">AP</span><span class="pill free">??</span></div><input value="3"></div>
+                  <div class="field"><div class="field-head"><span class="label">Speed</span><span class="pill free">??</span></div><input value="14"></div>
+                </div>
+                <div class="stats-grid">
+                  <div class="stat-head">????<br>?? bodyParts ????</div>
+                  <div class="part-cell"><b>head</b><span>armor 3 / weak 1.0</span></div>
+                  <div class="part-cell"><b>chest</b><span>armor 5 / weak 1.25</span></div>
+                  <div class="part-cell"><b>abdomen</b><span>armor 2 / weak 1.0</span></div>
+                  <div class="part-cell"><b>arm</b><span>armor 2 / weak 1.0</span></div>
+                  <div class="part-cell"><b>leg</b><span>armor 2 / weak 1.0</span></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="section tab-panel" data-panel="capabilities">
+              <div class="section-title">
+                <h3>??????</h3>
+                <span class="pill enum">capabilities[].type ???</span>
+              </div>
+              <div class="section-body">
+                <div class="capability-list">
+                  <div class="capability">
+                    <div class="field"><div class="field-head"><span class="label">????</span><span class="pill enum">??</span></div><select><option>basic_attack</option></select></div>
+                    <div class="field"><div class="field-head"><span class="label">??</span><span class="pill free">????</span></div><input value="every_turn"></div>
+                    <div class="field"><div class="field-head"><span class="label">????</span><span class="pill free">????</span></div><input value="early_hp_pressure"></div>
+                    <div class="field"><div class="field-head"><span class="label">??</span><span class="pill multi">???</span></div><input value="guard, fast_kill"></div>
+                  </div>
+                  <div class="capability">
+                    <div class="field"><div class="field-head"><span class="label">????</span><span class="pill enum">??</span></div><select><option>bleed_apply</option></select></div>
+                    <div class="field"><div class="field-head"><span class="label">??</span><span class="pill free">????</span></div><input value="turn_2_pressure"></div>
+                    <div class="field"><div class="field-head"><span class="label">????</span><span class="pill free">????</span></div><input value="battle_local_hp_attrition"></div>
+                    <div class="field"><div class="field-head"><span class="label">??</span><span class="pill multi">???</span></div><input value="cleanse, healing, kill_before_tick"></div>
+                  </div>
+                  <button class="secondary">+ ?????</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="section tab-panel" data-panel="intent">
+              <div class="section-title">
+                <h3>??????</h3>
+                <span class="pill enum">intent tokens ?? meta.enums</span>
+              </div>
+              <div class="section-body">
+                <div class="intent-track">
+                  <span class="token">attack</span>
+                  <span class="arrow">?</span>
+                  <span class="token">bleed</span>
+                  <span class="arrow">?</span>
+                  <span class="token">attack</span>
+                  <span class="arrow">?</span>
+                  <span class="token">fallback: attack</span>
+                </div>
+                <div class="form-grid">
+                  <div class="field wide"><div class="field-head"><span class="label">??????</span><span class="pill free">????</span></div><input value="?????????"></div>
+                  <div class="field wide"><div class="field-head"><span class="label">????</span><span class="pill ref">enemy skill pack</span></div><input value="enemy_skill_rusty_shiv, skill_throw_stone"></div>
+                  <div class="field"><div class="field-head"><span class="label">????</span><span class="pill enum">??</span></div><select><option>true</option><option>false</option></select></div>
+                  <div class="field"><div class="field-head"><span class="label">fallback</span><span class="pill enum">??</span></div><select><option>attack</option><option>recover</option></select></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="section tab-panel" data-panel="pressure">
+              <div class="section-title">
+                <h3>????????</h3>
+                <span class="pill enum">runPressure / statePersistence</span>
+              </div>
+              <div class="section-body">
+                <div class="form-grid">
+                  <div class="field"><div class="field-head"><span class="label">????</span><span class="pill enum">??</span></div><select><option>hp_attrition</option><option>armor_attrition</option><option>none</option></select></div>
+                  <div class="field"><div class="field-head"><span class="label">????</span><span class="pill free">??</span></div><input value="12"></div>
+                  <div class="field wide"><div class="field-head"><span class="label">carryOver</span><span class="pill multi">????</span></div><input value="hp, armor"></div>
+                  <div class="field full"><div class="field-head"><span class="label">????</span><span class="pill multi">????</span></div><div class="tags"><span class="pill multi">bleed</span><span class="pill multi">poison</span><span class="pill multi">slow</span><span class="pill multi">vulnerable</span><span class="pill multi">stun</span><span class="pill multi">temporary_buff</span></div></div>
+                  <div class="field full"><div class="field-head"><span class="label">????</span><span class="pill free">????</span></div><textarea>??????? AP ????????????????????????????????????? HP ???????</textarea></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="section tab-panel" data-panel="assets">
+              <div class="section-title">
+                <h3>?????</h3>
+                <span class="pill ref">asset refs / skill refs</span>
+              </div>
+              <div class="section-body">
+                <div class="form-grid">
+                  <div class="field wide"><div class="field-head"><span class="label">battleSpriteRef</span><span class="pill ref">????</span></div><select><option>enemy_goblin_scout</option></select></div>
+                  <div class="field wide"><div class="field-head"><span class="label">mapPortraitRef</span><span class="pill ref">????</span></div><select><option>enemy_goblin_warrior</option></select></div>
+                  <div class="field wide"><div class="field-head"><span class="label">iconRef</span><span class="pill ref">????</span></div><input value=""></div>
+                  <div class="field wide"><div class="field-head"><span class="label">fallbackRaceClass</span><span class="pill free">????</span></div><input value="goblin:scout"></div>
+                </div>
+                <div class="asset-box">
+                  <div>
+                    <strong>??????????</strong>
+                    <span>??????????tab ???????????????/??????????????</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>规则与检查</h2>
+            <div class="hint">schema / 引用 / 发布前诊断</div>
+          </div>
+          <button class="secondary">运行检查</button>
+        </div>
+        <div class="scroll right-grid">
+          <div class="section">
+            <div class="section-title">
+              <h3>字段来源</h3>
+              <span class="pill enum">meta.fieldNotes</span>
+            </div>
+            <div class="section-body">
+              <div class="schema-table">
+                <div class="schema-line"><code>race</code><span class="pill enum">枚举</span></div>
+                <div class="schema-line"><code>class</code><span class="pill enum">枚举</span></div>
+                <div class="schema-line"><code>tags[]</code><span class="pill multi">多选</span></div>
+                <div class="schema-line"><code>capabilities[].type</code><span class="pill enum">枚举</span></div>
+                <div class="schema-line"><code>intentModel.pattern[]</code><span class="pill enum">枚举</span></div>
+                <div class="schema-line"><code>skills[]</code><span class="pill ref">引用</span></div>
+                <div class="schema-line"><code>description</code><span class="pill free">文本</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <h3>资产槽位</h3>
+              <span class="pill ref">引用选择</span>
+            </div>
+            <div class="section-body">
+              <div class="asset-box">
+                <div>
+                  <strong>原画/立绘不是空白大占位</strong>
+                  <span>这里应只显示已绑定资产、缺失诊断和选择按钮。没有资产时不占用主要编辑空间。</span>
+                </div>
+              </div>
+              <div class="field">
+                <div class="field-head"><span class="label">battleSpriteRef</span><span class="pill ref">asset ref</span></div>
+                <select><option>enemy_goblin_scout</option></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <h3>发布前检查</h3>
+              <span class="pill multi">blocking / warning</span>
+            </div>
+            <div class="section-body diagnostic-list">
+              <div class="check">
+                <strong>技能引用完整</strong>
+                <span>2 个技能均存在于 skills_enemy_v1.json。</span>
+                <span class="pill multi">通过</span>
+              </div>
+              <div class="check">
+                <strong>关卡适配唯一</strong>
+                <span>candidateForLevel=level_1_1，没有重复占用。</span>
+                <span class="pill multi">通过</span>
+              </div>
+              <div class="check">
+                <strong>跨关状态规则</strong>
+                <span>只继承 hp/armor；bleed/poison 等战后清除。</span>
+                <span class="pill multi">通过</span>
+              </div>
+              <div class="check">
+                <strong>能力解释完整</strong>
+                <span>basic_attack 与 bleed_apply 都声明了压力和反制。</span>
+                <span class="pill multi">通过</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+  <script>
+    const cn = {
+      identity: '\u8eab\u4efd',
+      stats: '\u6570\u503c\u90e8\u4f4d',
+      capabilities: '\u81ea\u8eab\u80fd\u529b',
+      intent: '\u610f\u56fe\u5faa\u73af',
+      pressure: '\u6d41\u7a0b\u538b\u529b',
+      assets: '\u8d44\u4ea7\u5f15\u7528',
+      baseIdentity: '\u57fa\u7840\u8eab\u4efd',
+      displayName: '\u663e\u793a\u540d',
+      freeText: '\u81ea\u7531\u586b\u5199',
+      lockedKey: '\u9501\u5b9a\u952e',
+      race: '\u79cd\u65cf',
+      className: '\u804c\u4e1a',
+      enumText: '\u679a\u4e3e',
+      levelRef: '\u9002\u914d\u5173\u5361',
+      levelRefType: '\u5173\u5361\u5f15\u7528',
+      dropTable: '\u6389\u843d\u8868',
+      refSelect: '\u5f15\u7528\u9009\u62e9',
+      tags: '\u6807\u7b7e',
+      multiEnum: '\u591a\u9009\u679a\u4e3e',
+      addEnumTag: '+ \u6dfb\u52a0\u679a\u4e3e\u6807\u7b7e',
+      designNote: '\u8bbe\u8ba1\u8bf4\u660e',
+      noteText: 'level_1_1 \u7684\u5feb\u901f\u5165\u95e8\u654c\u4eba\u3002\u7528\u57fa\u7840\u653b\u51fb\u548c\u8f7b\u6d41\u8840\u68c0\u67e5\u73a9\u5bb6\u662f\u5426\u80fd\u7528\u4f4e AP \u9632\u5fa1\u3001\u8865\u7532\u6216\u5feb\u901f\u51fb\u6740\u964d\u4f4e\u8de8\u5173 HP \u635f\u8017\u3002',
+      combatBudget: '\u6218\u6597\u9884\u7b97\u4e0e\u90e8\u4f4d',
+      numeric: '\u6570\u503c',
+      standardParts: '\u6807\u51c6\u90e8\u4f4d',
+      partNote: '\u53ea\u4ece bodyParts \u679a\u4e3e\u589e\u5220',
+      enemyCapability: '\u654c\u4eba\u81ea\u8eab\u80fd\u529b',
+      capabilityType: '\u80fd\u529b\u7c7b\u578b',
+      cadence: '\u8282\u594f',
+      pressureMade: '\u9020\u6210\u538b\u529b',
+      counterplay: '\u53cd\u5236',
+      tagGroup: '\u6807\u7b7e\u7ec4',
+      addCapability: '+ \u6dfb\u52a0\u80fd\u529b\u884c',
+      fixedIntent: '\u56fa\u5b9a\u610f\u56fe\u5faa\u73af',
+      intentTip: '\u610f\u56fe\u63d0\u793a\u6587\u672c',
+      intentTipValue: '\u6b63\u5728\u5bfb\u627e\u62a4\u7532\u8584\u5f31\u5904',
+      skillRefs: '\u6280\u80fd\u5f15\u7528',
+      visibleIntent: '\u53ef\u89c1\u610f\u56fe',
+      boolText: '\u5e03\u5c14',
+      pressurePersist: '\u6d41\u7a0b\u538b\u529b\u4e0e\u6301\u4e45\u5316',
+      pressureType: '\u538b\u529b\u7c7b\u578b',
+      expectedLoss: '\u9884\u671f\u635f\u8017',
+      afterBattleClear: '\u6218\u540e\u6e05\u9664',
+      failureSignal: '\u5931\u8d25\u4fe1\u53f7',
+      failureText: '\u73a9\u5bb6\u5982\u679c\u6ca1\u6709\u4f4e AP \u9632\u5fa1\u3001\u5feb\u901f\u51fb\u6740\u6216\u57fa\u7840\u6cbb\u7597\uff0c\u4f1a\u5728\u672c\u5173\u5185\u88ab\u6301\u7eed\u78e8\u8840\uff1b\u72b6\u6001\u6e05\u9664\u540e\uff0c\u53ea\u628a\u5df2\u7ecf\u635f\u5931\u7684 HP \u5e26\u5165\u540e\u7eed\u5173\u5361\u3002',
+      assetAndRefs: '\u8d44\u4ea7\u4e0e\u5f15\u7528',
+      assetPreviewTitle: '\u8d44\u4ea7\u9884\u89c8\u4e0d\u5360\u4e3b\u7f16\u8f91\u533a',
+      assetPreviewText: '\u53ea\u6709\u8fdb\u5165\u201c\u8d44\u4ea7\u5f15\u7528\u201d tab \u65f6\u624d\u663e\u793a\u9884\u89c8\u548c\u7ed1\u5b9a\u9879\uff0c\u907f\u514d\u8eab\u4efd/\u80fd\u529b\u7f16\u8f91\u65f6\u88ab\u5927\u7a7a\u767d\u533a\u57df\u6253\u65ad\u3002'
+    };
+
+    document.querySelector('.tabbar').innerHTML = [
+      ['identity', cn.identity],
+      ['stats', cn.stats],
+      ['capabilities', cn.capabilities],
+      ['intent', cn.intent],
+      ['pressure', cn.pressure],
+      ['assets', cn.assets]
+    ].map(([key, label], index) => `<button class="tab-button${index === 0 ? ' active' : ''}" data-tab="${key}">${label}</button>`).join('');
+
+    document.querySelector('.tab-content').innerHTML = `
+      <section class="section tab-panel active" data-panel="identity">
+        <div class="section-title"><h3>${cn.baseIdentity}</h3><span class="pill enum">schema-bound</span></div>
+        <div class="section-body">
+          <div class="form-grid">
+            <div class="field wide"><div class="field-head"><span class="label">${cn.displayName}</span><span class="pill free">${cn.freeText}</span></div><input value="\u6797\u7f18\u5243\u5203\u65b0\u624b"></div>
+            <div class="field wide"><div class="field-head"><span class="label">ID</span><span class="pill ref">${cn.lockedKey}</span></div><input value="enemy_v2_c1_01_razor_initiate"></div>
+            <div class="field"><div class="field-head"><span class="label">${cn.race}</span><span class="pill enum">${cn.enumText}</span></div><select><option>goblin</option><option>human</option><option>orc</option></select></div>
+            <div class="field"><div class="field-head"><span class="label">${cn.className}</span><span class="pill enum">${cn.enumText}</span></div><select><option>scout</option><option>cutthroat</option><option>guard</option></select></div>
+            <div class="field"><div class="field-head"><span class="label">${cn.levelRef}</span><span class="pill ref">${cn.levelRefType}</span></div><select><option>level_1_1</option><option>level_1_2</option></select></div>
+            <div class="field"><div class="field-head"><span class="label">${cn.dropTable}</span><span class="pill ref">${cn.refSelect}</span></div><select><option>drop_enemy_v2_candidate</option></select></div>
+            <div class="field full"><div class="field-head"><span class="label">${cn.tags}</span><span class="pill multi">${cn.multiEnum}</span></div><div class="tags"><span class="pill multi">v2_candidate</span><span class="pill multi">chapter_1</span><span class="pill multi">role_fast</span><span class="pill multi">role_status</span><span class="pill multi">pressure_basic</span><button class="secondary">${cn.addEnumTag}</button></div></div>
+            <div class="field full"><div class="field-head"><span class="label">${cn.designNote}</span><span class="pill free">${cn.freeText}</span></div><textarea>${cn.noteText}</textarea></div>
+          </div>
+        </div>
+      </section>
+      <section class="section tab-panel" data-panel="stats">
+        <div class="section-title"><h3>${cn.combatBudget}</h3><span class="pill enum">bodyParts \u6765\u81ea meta.enums</span></div>
+        <div class="section-body">
+          <div class="form-grid"><div class="field"><div class="field-head"><span class="label">HP</span><span class="pill free">${cn.numeric}</span></div><input value="72"></div><div class="field"><div class="field-head"><span class="label">Max HP</span><span class="pill free">${cn.numeric}</span></div><input value="72"></div><div class="field"><div class="field-head"><span class="label">AP</span><span class="pill free">${cn.numeric}</span></div><input value="3"></div><div class="field"><div class="field-head"><span class="label">Speed</span><span class="pill free">${cn.numeric}</span></div><input value="14"></div></div>
+          <div class="stats-grid"><div class="stat-head">${cn.standardParts}<br>${cn.partNote}</div><div class="part-cell"><b>head</b><span>armor 3 / weak 1.0</span></div><div class="part-cell"><b>chest</b><span>armor 5 / weak 1.25</span></div><div class="part-cell"><b>abdomen</b><span>armor 2 / weak 1.0</span></div><div class="part-cell"><b>arm</b><span>armor 2 / weak 1.0</span></div><div class="part-cell"><b>leg</b><span>armor 2 / weak 1.0</span></div></div>
+        </div>
+      </section>
+      <section class="section tab-panel" data-panel="capabilities">
+        <div class="section-title"><h3>${cn.enemyCapability}</h3><span class="pill enum">capabilities[].type ${cn.enumText}</span></div>
+        <div class="section-body"><div class="capability-list">
+          <div class="capability"><div class="field"><div class="field-head"><span class="label">${cn.capabilityType}</span><span class="pill enum">${cn.enumText}</span></div><select><option>basic_attack</option></select></div><div class="field"><div class="field-head"><span class="label">${cn.cadence}</span><span class="pill free">${cn.freeText}</span></div><input value="every_turn"></div><div class="field"><div class="field-head"><span class="label">${cn.pressureMade}</span><span class="pill free">${cn.freeText}</span></div><input value="early_hp_pressure"></div><div class="field"><div class="field-head"><span class="label">${cn.counterplay}</span><span class="pill multi">${cn.tagGroup}</span></div><input value="guard, fast_kill"></div></div>
+          <div class="capability"><div class="field"><div class="field-head"><span class="label">${cn.capabilityType}</span><span class="pill enum">${cn.enumText}</span></div><select><option>bleed_apply</option></select></div><div class="field"><div class="field-head"><span class="label">${cn.cadence}</span><span class="pill free">${cn.freeText}</span></div><input value="turn_2_pressure"></div><div class="field"><div class="field-head"><span class="label">${cn.pressureMade}</span><span class="pill free">${cn.freeText}</span></div><input value="battle_local_hp_attrition"></div><div class="field"><div class="field-head"><span class="label">${cn.counterplay}</span><span class="pill multi">${cn.tagGroup}</span></div><input value="cleanse, healing, kill_before_tick"></div></div>
+          <button class="secondary">${cn.addCapability}</button>
+        </div></div>
+      </section>
+      <section class="section tab-panel" data-panel="intent">
+        <div class="section-title"><h3>${cn.fixedIntent}</h3><span class="pill enum">intent tokens \u6765\u81ea meta.enums</span></div>
+        <div class="section-body"><div class="intent-track"><span class="token">attack</span><span class="arrow">\u2192</span><span class="token">bleed</span><span class="arrow">\u2192</span><span class="token">attack</span><span class="arrow">\u2192</span><span class="token">fallback: attack</span></div><div class="form-grid"><div class="field wide"><div class="field-head"><span class="label">${cn.intentTip}</span><span class="pill free">${cn.freeText}</span></div><input value="${cn.intentTipValue}"></div><div class="field wide"><div class="field-head"><span class="label">${cn.skillRefs}</span><span class="pill ref">enemy skill pack</span></div><input value="enemy_skill_rusty_shiv, skill_throw_stone"></div><div class="field"><div class="field-head"><span class="label">${cn.visibleIntent}</span><span class="pill enum">${cn.boolText}</span></div><select><option>true</option><option>false</option></select></div><div class="field"><div class="field-head"><span class="label">fallback</span><span class="pill enum">${cn.enumText}</span></div><select><option>attack</option><option>recover</option></select></div></div></div>
+      </section>
+      <section class="section tab-panel" data-panel="pressure">
+        <div class="section-title"><h3>${cn.pressurePersist}</h3><span class="pill enum">runPressure / statePersistence</span></div>
+        <div class="section-body"><div class="form-grid"><div class="field"><div class="field-head"><span class="label">${cn.pressureType}</span><span class="pill enum">${cn.enumText}</span></div><select><option>hp_attrition</option><option>armor_attrition</option><option>none</option></select></div><div class="field"><div class="field-head"><span class="label">${cn.expectedLoss}</span><span class="pill free">${cn.numeric}</span></div><input value="12"></div><div class="field wide"><div class="field-head"><span class="label">carryOver</span><span class="pill multi">${cn.multiEnum}</span></div><input value="hp, armor"></div><div class="field full"><div class="field-head"><span class="label">${cn.afterBattleClear}</span><span class="pill multi">${cn.multiEnum}</span></div><div class="tags"><span class="pill multi">bleed</span><span class="pill multi">poison</span><span class="pill multi">slow</span><span class="pill multi">vulnerable</span><span class="pill multi">stun</span><span class="pill multi">temporary_buff</span></div></div><div class="field full"><div class="field-head"><span class="label">${cn.failureSignal}</span><span class="pill free">${cn.freeText}</span></div><textarea>${cn.failureText}</textarea></div></div></div>
+      </section>
+      <section class="section tab-panel" data-panel="assets">
+        <div class="section-title"><h3>${cn.assetAndRefs}</h3><span class="pill ref">asset refs / skill refs</span></div>
+        <div class="section-body"><div class="form-grid"><div class="field wide"><div class="field-head"><span class="label">battleSpriteRef</span><span class="pill ref">${cn.refSelect}</span></div><select><option>enemy_goblin_scout</option></select></div><div class="field wide"><div class="field-head"><span class="label">mapPortraitRef</span><span class="pill ref">${cn.refSelect}</span></div><select><option>enemy_goblin_warrior</option></select></div><div class="field wide"><div class="field-head"><span class="label">iconRef</span><span class="pill ref">${cn.refSelect}</span></div><input value=""></div><div class="field wide"><div class="field-head"><span class="label">fallbackRaceClass</span><span class="pill free">${cn.freeText}</span></div><input value="goblin:scout"></div></div><div class="asset-box"><div><strong>${cn.assetPreviewTitle}</strong><span>${cn.assetPreviewText}</span></div></div></div>
+      </section>`;
+
+    const tabButtons = Array.from(document.querySelectorAll('[data-tab]'));
+    const tabPanels = Array.from(document.querySelectorAll('[data-panel]'));
+
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.tab;
+        tabButtons.forEach((item) => item.classList.toggle('active', item === button));
+        tabPanels.forEach((panel) => panel.classList.toggle('active', panel.dataset.panel === target));
+      });
+    });
+  </script>
+</body>
+</html>
