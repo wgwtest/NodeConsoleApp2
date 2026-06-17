@@ -195,7 +195,7 @@ test('自动点击验收脚本固定主流程与专项页面覆盖范围', async
 test('终局压力自动战斗在残血窗口应优先收尾而不是继续纯续航', async () => {
   const toolSource = await readProjectFile('tools/acceptance_click_smoke.mjs');
   const pressureEnemyBranch = toolSource.match(
-    /if \(checkpoint\.requirePressure\) \{\n\s+const playerBaseSpeed[\s\S]+?\n\s+return score;\n\s+\}/u
+    /if \(checkpoint\.requirePressure\) \{\r?\n\s+const playerBaseSpeed[\s\S]+?\r?\n\s+return score;\r?\n\s+\}/u
   )?.[0] || '';
 
   assert.match(pressureEnemyBranch, /terminalFinishWindow/u);
