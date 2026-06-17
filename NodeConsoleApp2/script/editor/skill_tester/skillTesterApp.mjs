@@ -5,7 +5,7 @@ import {
   formatSkillTestTimestamp,
   listEnemyOptions,
   listStoryLevelOptions
-} from './skillTesterModel.mjs?v=enemy-target-lock-v3';
+} from './skillTesterModel.mjs?v=tactic-dedupe-v1';
 
 const dom = {};
 let lastResult = null;
@@ -38,6 +38,7 @@ function bindDom() {
     'buffPackPathInput',
     'levelsPathInput',
     'enemyPathInput',
+    'enemySkillPathInput',
     'playerPathInput',
     'levelSummaryPanel',
     'enemySummaryPanel',
@@ -95,6 +96,7 @@ function readSources() {
     buffPackPath: dom.buffPackPathInput.value.trim(),
     levelsPath: dom.levelsPathInput.value.trim(),
     enemyPath: dom.enemyPathInput.value.trim(),
+    enemySkillPath: dom.enemySkillPathInput.value.trim(),
     playerPath: dom.playerPathInput.value.trim()
   };
 }
@@ -213,21 +215,37 @@ function formatDelta(value, unit = '') {
   return `<span class="${cls}">${sign}${Math.round(number)}${unit}</span>`;
 }
 
-function formatBuffWindow(turn) {
-  const before = turn.before?.buffs?.buff_bleed?.remaining || 0;
-  const after = turn.after?.buffs?.buff_bleed?.remaining || 0;
-  return `${before} -> ${after}`;
-}
-
 function summarizeEvents(turn) {
   const items = [];
+  const enemyBuffIds = new Set([
+    ...Object.keys(turn.before?.buffs || {}),
+    ...Object.keys(turn.after?.buffs || {})
+  ]);
+  for (const buffId of enemyBuffIds) {
+    const before = turn.before?.buffs?.[buffId]?.remaining || 0;
+    const after = turn.after?.buffs?.[buffId]?.remaining || 0;
+    if (before !== after) {
+      items.push(`敌方 ${buffId} ${before} -> ${after}`);
+    }
+  }
+  const playerBuffIds = new Set([
+    ...Object.keys(turn.playerBefore?.buffs || {}),
+    ...Object.keys(turn.playerAfter?.buffs || {})
+  ]);
+  for (const buffId of playerBuffIds) {
+    const before = turn.playerBefore?.buffs?.[buffId]?.remaining || 0;
+    const after = turn.playerAfter?.buffs?.[buffId]?.remaining || 0;
+    if (before !== after) {
+      items.push(`我方 ${buffId} ${before} -> ${after}`);
+    }
+  }
   for (const event of turn.events || []) {
     if (event.type === 'buff_apply') {
-      items.push(`施加 ${event.buffId}(${event.remaining})`);
+      items.push(`${event.target === 'player' ? '我方' : '敌方'}施加 ${event.buffId}(${event.remaining})`);
     } else if (event.type === 'buff_consume') {
       items.push(`消耗 ${event.buffId} ${event.consumed || 0}`);
     } else if (event.type === 'buff_tick') {
-      items.push(`${event.buffId} 结算 HP-${event.hpDamage || 0}`);
+      items.push(`${event.target === 'player' ? '我方' : '敌方'} ${event.buffId} 结算 HP-${event.hpDamage || 0}`);
     } else if (event.type === 'buff_trigger') {
       items.push(`${event.buffId} 触发 ${event.appliedBuffId}(${event.remaining})`);
     } else if (event.type === 'unsupported_effect') {
@@ -238,8 +256,17 @@ function summarizeEvents(turn) {
     items.push(`${skipped.name} 跳过：${skipped.reason}`);
   }
   return items.length
-    ? `<div class="event-list">${items.slice(0, 6).map(item => `<span>${html(item)}</span>`).join('')}</div>`
+    ? `<div class="event-list">${items.slice(0, 8).map(item => `<span>${html(item)}</span>`).join('')}</div>`
     : '无';
+}
+
+function formatEnemyAction(action) {
+  if (!action) return '无';
+  const intent = action.intentToken ? ` / ${action.intentToken}` : '';
+  const hp = action.delta?.hp ? `HP ${Math.round(action.delta.hp)}` : '';
+  const armor = action.delta?.armor ? `护甲 ${Math.round(action.delta.armor)}` : '';
+  const delta = [hp, armor].filter(Boolean).join('，') || '未造成损耗';
+  return `<span class="enemy-action-name">${html(action.skillName || action.skillId)}</span><span class="enemy-action-detail">${html(intent)}：${html(delta)}</span>`;
 }
 
 function renderContext(result, sources) {
@@ -260,6 +287,8 @@ function renderContext(result, sources) {
       <div class="metric"><b>${html(context.enemyName)}</b><span>敌人</span></div>
       <div class="metric"><b>${context.enemy.hp}/${context.enemy.maxHp}</b><span>敌人 HP</span></div>
       <div class="metric"><b>${context.enemy.armorTotal}</b><span>敌人护甲</span></div>
+      <div class="metric"><b>${result.best?.simulation?.final?.player?.hp ?? '-'}/${result.best?.simulation?.final?.player?.maxHp ?? '-'}</b><span>玩家最终 HP</span></div>
+      <div class="metric"><b>${result.best?.simulation?.metrics?.enemyActionCount ?? 0}</b><span>敌人行动</span></div>
       <div class="metric"><b>${result.focusedSkillCount}/${result.allSkillCount}</b><span>技能范围</span></div>
       <div class="metric"><b>${result.builds.length}</b><span>合法构筑</span></div>
     </div>
@@ -268,6 +297,7 @@ function renderContext(result, sources) {
       <div><b>Buff</b> ${html(sources.buffPackPath)}</div>
       <div><b>关卡</b> ${html(sources.levelsPath)}</div>
       <div><b>敌人</b> ${html(sources.enemyPath)}</div>
+      <div><b>敌人技能</b> ${html(sources.enemySkillPath)}</div>
       <div><b>玩家</b> ${html(sources.playerPath)}</div>
     </div>
   `;
@@ -284,9 +314,20 @@ function renderCandidates(result) {
     const skillNames = candidate.build.skills.map(skill => skill.name || skill.id).join('、');
     const loopNames = candidate.combo.skills.map(skill => skill.name || skill.id).join(' + ');
     const warningCount = candidate.simulation.findings.filter(item => item.level === 'warning').length;
+    const duplicateBuildCount = Number(candidate.duplicateBuildCount || 1);
+    const unusedSkillNames = Array.isArray(candidate.unusedSkillNames) ? candidate.unusedSkillNames : [];
+    const duplicateChip = duplicateBuildCount > 1
+      ? `<span class="chip warn">同打法 x${duplicateBuildCount}</span>`
+      : '';
+    const duplicateDetail = unusedSkillNames.length
+      ? `<span class="candidate-duplicate-detail">未进入循环：${html(unusedSkillNames.slice(0, 8).join('、'))}</span>`
+      : '';
     const killText = candidate.simulation.killed
       ? `${candidate.simulation.turnsToKill} 回合击败`
       : `剩 ${candidate.simulation.final.enemy.hp} HP`;
+    const playerText = candidate.simulation.playerDefeated
+      ? '玩家失败'
+      : `玩家 ${candidate.simulation.final.player.hp} HP`;
     return `
       <button class="candidate ${index === selectedCandidateIndex ? 'is-selected' : ''}" type="button" data-candidate-index="${index}">
         <span class="candidate-head">
@@ -297,10 +338,13 @@ function renderCandidates(result) {
           <span class="chip">KP ${candidate.build.kpUsed}/${result.context.kpBudget}</span>
           <span class="chip">AP ${candidate.combo.apUsed}</span>
           <span class="chip ${candidate.simulation.killed ? 'good' : 'warn'}">${killText}</span>
+          <span class="chip ${candidate.simulation.playerDefeated ? 'warn' : 'good'}">${playerText}</span>
           <span class="chip ${warningCount ? 'warn' : 'good'}">问题 ${warningCount}</span>
+          ${duplicateChip}
         </span>
         <span class="candidate-skills">${html(skillNames)}</span>
         <span class="candidate-loop">循环：${html(loopNames)}</span>
+        ${duplicateDetail}
       </button>
     `;
   }).join('');
@@ -318,7 +362,7 @@ function renderReplay(result) {
   const tbody = dom.turnReplayTable.querySelector('tbody');
   if (!candidate) {
     dom.selectedCandidateBadge.textContent = '未选择';
-    tbody.innerHTML = '<tr><td colspan="7">暂无回放。</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8">暂无回放。</td></tr>';
     renderFindings(result.findings || []);
     return;
   }
@@ -326,13 +370,14 @@ function renderReplay(result) {
   dom.selectedCandidateBadge.textContent = `方案 ${selectedCandidateIndex + 1}`;
   tbody.innerHTML = candidate.simulation.turns.map(turn => `
     <tr>
-      <td>${turn.turn}</td>
-      <td>${turn.usedSkillNames.length ? html(turn.usedSkillNames.join(' + ')) : '无'}</td>
-      <td>${turn.apUsed}/${readNumber('apBudgetInput', 5)}</td>
-      <td>${turn.before.hp} -> ${turn.after.hp} (${formatDelta(turn.delta.hp)})</td>
-      <td>${turn.before.armorTotal} -> ${turn.after.armorTotal} (${formatDelta(turn.delta.armor)})</td>
-      <td>${html(formatBuffWindow(turn))}</td>
-      <td>${summarizeEvents(turn)}</td>
+      <td class="replay-cell replay-cell--turn">${turn.turn}</td>
+      <td class="replay-cell replay-cell--player-skill">${turn.usedSkillNames.length ? html(turn.usedSkillNames.join(' + ')) : '无'}</td>
+      <td class="replay-cell replay-cell--enemy-hp">${turn.before.hp} -> ${turn.after.hp} (${formatDelta(turn.delta.hp)})</td>
+      <td class="replay-cell replay-cell--enemy-armor">${turn.before.armorTotal} -> ${turn.after.armorTotal} (${formatDelta(turn.delta.armor)})</td>
+      <td class="replay-cell replay-cell--enemy-action">${formatEnemyAction(turn.enemyAction)}</td>
+      <td class="replay-cell replay-cell--player-state">HP ${turn.playerBefore?.hp ?? '-'} -> ${turn.playerAfter?.hp ?? '-'}<br>护甲 ${turn.playerBefore?.armorTotal ?? '-'} -> ${turn.playerAfter?.armorTotal ?? '-'}</td>
+      <td class="replay-cell replay-cell--ap">${turn.apUsed}/${readNumber('apBudgetInput', 5)}</td>
+      <td class="replay-cell replay-cell--settlement">${summarizeEvents(turn)}</td>
     </tr>
   `).join('');
 
@@ -368,11 +413,12 @@ async function runSkillTest() {
   let scenario = readScenario();
   const sources = readSources();
   setStatus('正在读取技能、Buff、关卡和敌人数据...');
-  const [skillPack, buffPack, levelsDocument, enemiesDocument, playerDocument] = await Promise.all([
+  const [skillPack, buffPack, levelsDocument, enemiesDocument, enemySkillPack, playerDocument] = await Promise.all([
     fetchJson(sources.skillPackPath),
     fetchJson(sources.buffPackPath),
     fetchJson(sources.levelsPath),
     fetchJson(sources.enemyPath),
+    fetchJson(sources.enemySkillPath),
     fetchJson(sources.playerPath)
   ]);
   populateLevelSelect(levelsDocument, scenario.levelIndex);
@@ -385,6 +431,7 @@ async function runSkillTest() {
   lastResult = analyzeSkillTestScenario({
     ...scenario,
     skillPack,
+    enemySkillPack,
     buffPack,
     levelsDocument,
     enemyDocuments: [enemiesDocument],

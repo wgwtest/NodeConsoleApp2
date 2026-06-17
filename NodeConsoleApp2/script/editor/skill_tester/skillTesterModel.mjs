@@ -366,7 +366,16 @@ function createCombatant(entity, fallbackHp = 100) {
     hp,
     maxHp,
     bodyParts: createBodyParts(entity?.bodyParts),
-    buffs: {}
+    buffs: {},
+    stats: {
+      ...(entity?.stats || {}),
+      hp,
+      maxHp,
+      ap: toFiniteNumber(entity?.stats?.ap ?? entity?.ap, 0),
+      speed: toFiniteNumber(entity?.stats?.speed ?? entity?.speed, 0)
+    },
+    skills: Array.isArray(entity?.skills) ? [...entity.skills] : [],
+    intentModel: deepClone(entity?.intentModel)
   };
 }
 
@@ -537,6 +546,14 @@ function resolveActionTarget(actionDef, player, enemy) {
   return enemy;
 }
 
+function resolveActionTargetForActor(actionDef, actor, target) {
+  const spec = actionDef?.target?.spec;
+  if (actionDef?.target?.binding?.mode === 'explicit' && spec?.subject === 'SUBJECT_SELF') {
+    return actor;
+  }
+  return target;
+}
+
 function validateSkillRequirements(skill, enemy) {
   const targetBuff = skill?.requirements?.targetBuff;
   if (targetBuff?.buffId) {
@@ -664,6 +681,121 @@ function executeSkill(skill, player, enemy) {
   return events;
 }
 
+function executeSkillFromActor(skill, actor, target, events, eventBase = {}) {
+  const actions = Array.isArray(skill?.actions) ? skill.actions : [];
+  for (const actionDef of actions) {
+    const actionTarget = resolveActionTargetForActor(actionDef, actor, target);
+    const effect = actionDef?.effect || {};
+    const repeat = Math.max(1, Math.trunc(toFiniteNumber(effect?.repeat?.count, 1)));
+    for (let index = 0; index < repeat; index += 1) {
+      const bodyPart = pickTargetPart(actionTarget, skill, effect);
+      const amount = computeEffectAmount(effect, {
+        player: actor,
+        enemy: target,
+        target: actionTarget,
+        skillTarget: target,
+        bodyPart
+      });
+      const targetLabel = actionTarget === target ? 'target' : 'actor';
+
+      switch (effect.effectType) {
+      case 'DMG_ARMOR': {
+        const outcome = applyArmorDamage(actionTarget, bodyPart, amount);
+        events.push({ ...eventBase, type: 'armor_damage', skillId: skill.id, target: targetLabel, amount, ...outcome });
+        break;
+      }
+      case 'DMG_HP': {
+        const outcome = applyArmorDamage(actionTarget, bodyPart, amount);
+        events.push({ ...eventBase, type: 'hp_damage', skillId: skill.id, target: targetLabel, amount, ...outcome });
+        break;
+      }
+      case 'HEAL': {
+        const hpDelta = applyHpDelta(actionTarget, Math.max(0, amount));
+        events.push({ ...eventBase, type: 'heal', skillId: skill.id, target: targetLabel, heal: Math.max(0, hpDelta) });
+        break;
+      }
+      case 'ARMOR_ADD': {
+        const outcome = applyArmorAdd(actionTarget, bodyPart, amount);
+        events.push({ ...eventBase, type: 'armor_add', skillId: skill.id, target: targetLabel, amount, ...outcome });
+        break;
+      }
+      default:
+        events.push({ ...eventBase, type: 'unsupported_effect', skillId: skill.id, effectType: effect.effectType || '(empty)' });
+        break;
+      }
+    }
+  }
+
+  applySkillBuffRefs(skill, actor, target, events);
+  return events;
+}
+
+function makeBuffAdapter(entity) {
+  return {
+    has(buffId) {
+      return getBuffRemaining(entity, buffId) > 0 || getBuffStacks(entity, buffId) > 0;
+    },
+    getStacks(buffId) {
+      return getBuffStacks(entity, buffId);
+    }
+  };
+}
+
+function buildPlannerEnemyState(enemyState) {
+  return {
+    ...enemyState,
+    hp: enemyState.hp,
+    maxHp: enemyState.maxHp,
+    stats: {
+      ...enemyState.stats,
+      hp: enemyState.hp,
+      maxHp: enemyState.maxHp
+    },
+    buffs: makeBuffAdapter(enemyState)
+  };
+}
+
+function buildPlannerPlayerState(playerState) {
+  return {
+    ...playerState,
+    hp: playerState.hp,
+    maxHp: playerState.maxHp,
+    stats: {
+      ...playerState.stats,
+      hp: playerState.hp,
+      maxHp: playerState.maxHp
+    }
+  };
+}
+
+function executeEnemyTurn({ enemyState, playerState, enemySkillById, turn, events }) {
+  if (!enemyState?.skills?.length || !enemySkillById?.size) return null;
+  const planner = new EnemyActionPlanner({
+    getSkillConfig: skillId => enemySkillById.get(skillId)
+  });
+  const plan = planner.planTurn({
+    enemy: buildPlannerEnemyState(enemyState),
+    player: buildPlannerPlayerState(playerState),
+    playerBodyParts: playerState.bodyParts,
+    turnNumber: turn
+  });
+  const skill = plan?.skillId ? enemySkillById.get(plan.skillId) : null;
+  if (!plan || !skill) return null;
+
+  const before = snapshotEntity(playerState);
+  executeSkillFromActor(skill, enemyState, playerState, events, {
+    source: 'enemy',
+    enemyAction: true
+  });
+  const after = snapshotEntity(playerState);
+  return {
+    ...plan,
+    before,
+    after,
+    delta: makeDelta(before, after)
+  };
+}
+
 function triggerEnemyActionPre(enemy, events) {
   if (getBuffRemaining(enemy, 'buff_tear_wound') <= 0) return;
   const buff = addBuff(enemy, {
@@ -697,6 +829,24 @@ function settleTurnEnd(enemy, events) {
   for (const buffId of Object.keys(enemy.buffs)) {
     if (buffId === 'buff_bleed') continue;
     tickBuffRemaining(enemy, buffId, 1);
+  }
+}
+
+function settlePlayerTurnEnd(player, events) {
+  if (getBuffRemaining(player, 'buff_bleed') > 0) {
+    const hpDelta = applyHpDelta(player, -5);
+    events.push({
+      type: 'buff_tick',
+      buffId: 'buff_bleed',
+      target: 'player',
+      hpDamage: Math.abs(hpDelta)
+    });
+    tickBuffRemaining(player, 'buff_bleed', 1);
+  }
+
+  for (const buffId of Object.keys(player.buffs)) {
+    if (buffId === 'buff_bleed') continue;
+    tickBuffRemaining(player, buffId, 1);
   }
 }
 
@@ -754,18 +904,29 @@ function collectSimulationFindings({ turns, killed, final, apBudget }) {
     });
   }
 
+  if (final.player.hp <= 0) {
+    findings.push({
+      id: 'player_defeated',
+      level: 'warning',
+      text: '玩家在敌人反击压力下被击败。'
+    });
+  }
+
   return findings;
 }
 
 export function simulateSkillLoop({
   skills,
+  enemySkills = [],
   loopSkillIds,
   enemy,
   player = null,
   apBudget = 5,
-  maxTurns = 12
+  maxTurns = 12,
+  enemyActionMode = 'enabled'
 } = {}) {
   const skillById = new Map((Array.isArray(skills) ? skills : []).map(skill => [skill.id, skill]));
+  const enemySkillById = new Map((Array.isArray(enemySkills) ? enemySkills : []).map(skill => [skill.id, skill]));
   const loopSkills = (Array.isArray(loopSkillIds) ? loopSkillIds : [])
     .map(id => skillById.get(id))
     .filter(Boolean);
@@ -779,9 +940,12 @@ export function simulateSkillLoop({
   const turns = [];
   const turnLimit = Math.max(1, Math.trunc(toFiniteNumber(maxTurns, 12)));
   const budget = Math.max(0, toFiniteNumber(apBudget, 5));
+  const initialPlayerArmorTotal = getArmorTotal(playerState);
+  const initialPlayerHp = playerState.hp;
 
-  for (let turn = 1; turn <= turnLimit && enemyState.hp > 0; turn += 1) {
+  for (let turn = 1; turn <= turnLimit && enemyState.hp > 0 && playerState.hp > 0; turn += 1) {
     const before = snapshotEntity(enemyState);
+    const playerBefore = snapshotEntity(playerState);
     const usedSkillIds = [];
     const skipped = [];
     const events = [];
@@ -804,12 +968,27 @@ export function simulateSkillLoop({
       if (enemyState.hp <= 0) break;
     }
 
+    let enemyAction = null;
+    if (enemyState.hp > 0 && enemyActionMode !== 'disabled') {
+      enemyAction = executeEnemyTurn({
+        enemyState,
+        playerState,
+        enemySkillById,
+        turn,
+        events
+      });
+    }
+
     if (enemyState.hp > 0) {
       triggerEnemyActionPre(enemyState, events);
       settleTurnEnd(enemyState, events);
     }
+    if (playerState.hp > 0) {
+      settlePlayerTurnEnd(playerState, events);
+    }
 
     const after = snapshotEntity(enemyState);
+    const playerAfter = snapshotEntity(playerState);
     turns.push({
       turn,
       usedSkillIds,
@@ -819,7 +998,11 @@ export function simulateSkillLoop({
       skipped,
       before,
       after,
+      playerBefore,
+      playerAfter,
+      enemyAction,
       delta: makeDelta(before, after),
+      playerDelta: makeDelta(playerBefore, playerAfter),
       events
     });
   }
@@ -829,12 +1012,14 @@ export function simulateSkillLoop({
     enemy: snapshotEntity(enemyState)
   };
   const killed = enemyState.hp <= 0;
+  const playerDefeated = playerState.hp <= 0;
   const averageApUsed = turns.length
     ? turns.reduce((sum, turn) => sum + turn.apUsed, 0) / turns.length
     : 0;
 
   const result = {
     killed,
+    playerDefeated,
     turnsToKill: killed ? turns.length : null,
     turns,
     final,
@@ -842,7 +1027,10 @@ export function simulateSkillLoop({
       averageApUsed,
       averageApUsage: budget > 0 ? averageApUsed / budget : 0,
       totalHpDamage: Math.max(0, toFiniteNumber(enemy?.stats?.hp ?? enemy?.hp, final.enemy.maxHp) - final.enemy.hp),
-      finalArmorTotal: final.enemy.armorTotal
+      finalArmorTotal: final.enemy.armorTotal,
+      playerHpLost: Math.max(0, initialPlayerHp - final.player.hp),
+      playerArmorLost: Math.max(0, initialPlayerArmorTotal - final.player.armorTotal),
+      enemyActionCount: turns.filter(turn => turn.enemyAction).length
     }
   };
   result.findings = collectSimulationFindings({ turns, killed, final, apBudget: budget });
@@ -858,6 +1046,83 @@ function scoreCandidate(simulation, build, combo, context) {
   const diversityScore = Math.min(4, new Set(combo.skillIds).size) * 4;
   const issuePenalty = simulation.findings.filter(item => item.level === 'warning').length * 7;
   return Math.round(killScore + apScore + kpScore + diversityScore - issuePenalty);
+}
+
+function createTacticKey(candidate) {
+  const comboKey = (candidate.combo?.skillIds || []).join('+');
+  const replayKey = (candidate.simulation?.turns || []).map(turn => [
+    (turn.usedSkillIds || []).join('+') || '-',
+    turn.enemyAction?.skillId || '-',
+    Math.round(toFiniteNumber(turn.after?.hp, 0)),
+    Math.round(toFiniteNumber(turn.after?.armorTotal, 0)),
+    Math.round(toFiniteNumber(turn.playerAfter?.hp, 0)),
+    Math.round(toFiniteNumber(turn.playerAfter?.armorTotal, 0))
+  ].join(':')).join('/');
+  const final = candidate.simulation?.final || {};
+  const outcomeKey = [
+    candidate.simulation?.killed ? 'enemy_down' : 'enemy_alive',
+    candidate.simulation?.playerDefeated ? 'player_down' : 'player_alive',
+    candidate.simulation?.turnsToKill ?? 'no_kill',
+    Math.round(toFiniteNumber(final.enemy?.hp, 0)),
+    Math.round(toFiniteNumber(final.enemy?.armorTotal, 0)),
+    Math.round(toFiniteNumber(final.player?.hp, 0)),
+    Math.round(toFiniteNumber(final.player?.armorTotal, 0))
+  ].join(':');
+  return `${comboKey}::${replayKey}::${outcomeKey}`;
+}
+
+function summarizeBuildForTactic(build = {}) {
+  return {
+    skillIds: build.skillIds || [],
+    skillNames: summarizeSkillList(build.skills),
+    kpUsed: build.kpUsed,
+    kpRemaining: build.kpRemaining,
+    maxTier: build.maxTier,
+    score: build.score
+  };
+}
+
+function collectUnusedTacticSkills(candidates, comboSkillIds) {
+  const comboSet = new Set(comboSkillIds || []);
+  const skillById = new Map();
+  for (const candidate of candidates) {
+    for (const skill of candidate.build?.skills || []) {
+      if (!skill?.id || comboSet.has(skill.id) || skillById.has(skill.id)) continue;
+      skillById.set(skill.id, skill.name || skill.id);
+    }
+  }
+  return {
+    unusedSkillIds: [...skillById.keys()],
+    unusedSkillNames: [...skillById.values()]
+  };
+}
+
+function foldDuplicateTactics(sortedCandidates) {
+  const groups = new Map();
+  for (const candidate of sortedCandidates) {
+    const tacticKey = createTacticKey(candidate);
+    if (!groups.has(tacticKey)) groups.set(tacticKey, []);
+    groups.get(tacticKey).push(candidate);
+  }
+
+  return [...groups.entries()].map(([tacticKey, group]) => {
+    const representative = group[0];
+    const buildByKey = new Map();
+    for (const candidate of group) {
+      const key = (candidate.build?.skillIds || []).join('|');
+      if (!buildByKey.has(key)) buildByKey.set(key, candidate.build);
+    }
+    const duplicateBuilds = [...buildByKey.values()].map(summarizeBuildForTactic);
+    const unused = collectUnusedTacticSkills(group, representative.combo?.skillIds || []);
+    return {
+      ...representative,
+      tacticKey,
+      duplicateBuildCount: duplicateBuilds.length,
+      duplicateBuilds,
+      unusedSkillIds: unused.unusedSkillIds,
+      unusedSkillNames: unused.unusedSkillNames
+    };
+  });
 }
 
 export function filterSkillsForFocus(skills, focus = 'sword') {
@@ -893,6 +1158,7 @@ export function analyzeSkillTestScenario({
   enemyDocuments,
   playerDocument = null,
   skillPack,
+  enemySkillPack = null,
   levelIndex = 5,
   enemyIdOverride = null,
   kpMode = 'assumed_per_level',
@@ -918,6 +1184,7 @@ export function analyzeSkillTestScenario({
     manualKp
   });
   const allSkills = normalizeSkillPack(skillPack);
+  const enemySkills = normalizeSkillPack(enemySkillPack);
   const focusedSkills = filterSkillsForFocus(allSkills, focus);
   const builds = enumeratePurchasableBuilds(focusedSkills, { kpBudget: context.kpBudget, maxBuilds });
   const candidates = [];
@@ -927,8 +1194,10 @@ export function analyzeSkillTestScenario({
     for (const combo of combos) {
       const simulation = simulateSkillLoop({
         skills: build.skills,
+        enemySkills,
         loopSkillIds: combo.skillIds,
         enemy: context.enemy,
+        player: playerDocument?.default || playerDocument,
         apBudget,
         maxTurns
       });
@@ -942,6 +1211,9 @@ export function analyzeSkillTestScenario({
   }
 
   candidates.sort((a, b) => b.score - a.score || (a.simulation.turnsToKill ?? 999) - (b.simulation.turnsToKill ?? 999));
+  const foldedCandidates = foldDuplicateTactics(candidates);
+  const visibleCandidates = foldedCandidates.slice(0, Math.max(1, maxCandidates));
+  const best = visibleCandidates[0] || null;
 
   const modelComparableKp = context.initialSkillPoints + context.actualThroughCurrent;
   const findings = [
@@ -953,7 +1225,7 @@ export function analyzeSkillTestScenario({
           text: `平衡模型 KP=${context.kpBudget}，当前玩家初始+关卡累计 KP=${modelComparableKp}，两者差异需要单独审定。`
         }]
       : []),
-    ...(candidates[0]?.simulation?.findings || [])
+    ...(best?.simulation?.findings || [])
   ];
 
   return {
@@ -965,8 +1237,10 @@ export function analyzeSkillTestScenario({
     allSkillCount: allSkills.length,
     focusedSkillCount: focusedSkills.length,
     builds,
-    candidates: candidates.slice(0, Math.max(1, maxCandidates)),
-    best: candidates[0] || null,
+    rawCandidateCount: candidates.length,
+    foldedCandidateCount: foldedCandidates.length,
+    candidates: visibleCandidates,
+    best,
     findings
   };
 }
@@ -1030,6 +1304,11 @@ function summarizeSkillList(skills = []) {
 function compactCandidate(candidate) {
   return {
     score: candidate.score,
+    tacticKey: candidate.tacticKey,
+    duplicateBuildCount: candidate.duplicateBuildCount || 1,
+    duplicateBuilds: candidate.duplicateBuilds || [],
+    unusedSkillIds: candidate.unusedSkillIds || [],
+    unusedSkillNames: candidate.unusedSkillNames || [],
     build: {
       skillIds: candidate.build?.skillIds || [],
       skillNames: summarizeSkillList(candidate.build?.skills),
@@ -1062,9 +1341,12 @@ export function compactSkillTestResultForRecord(result = {}) {
     allSkillCount: result.allSkillCount,
     focusedSkillCount: result.focusedSkillCount,
     buildCount: Array.isArray(result.builds) ? result.builds.length : 0,
+    rawCandidateCount: result.rawCandidateCount,
+    foldedCandidateCount: result.foldedCandidateCount,
     candidateCount: candidates.length,
     findings: result.findings || [],
     candidates: candidates.slice(0, 12).map(compactCandidate),
     best: result.best ? compactCandidate(result.best) : null
   };
 }
+import EnemyActionPlanner from '../../engine/EnemyActionPlanner.mjs';

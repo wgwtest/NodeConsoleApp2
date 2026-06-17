@@ -245,6 +245,63 @@ test('simulateSkillLoop applies armor overflow to HP and settles bleed at turn e
   assert.equal(result.turns[0].delta.armor, -5);
 });
 
+test('simulateSkillLoop resolves enemy intent actions and applies pressure to the player', () => {
+  const playerSkills = [
+    {
+      id: 'safe_cut',
+      name: 'Safe Cut',
+      costs: { ap: 1 },
+      actions: [{ effect: { effectType: 'DMG_ARMOR', amountType: 'ABS', amount: 5 } }],
+      buffRefs: {}
+    }
+  ];
+  const enemySkills = [
+    {
+      id: 'enemy_club',
+      name: 'Enemy Club',
+      target: {
+        subject: 'SUBJECT_ENEMY',
+        scope: 'SCOPE_PART',
+        selection: { candidateParts: ['chest'] }
+      },
+      costs: { ap: 1 },
+      actions: [{ effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 12 } }],
+      buffRefs: {}
+    }
+  ];
+
+  const result = simulateSkillLoop({
+    skills: playerSkills,
+    enemySkills,
+    loopSkillIds: ['safe_cut'],
+    enemy: {
+      id: 'enemy_training',
+      name: 'Intent Enemy',
+      stats: { hp: 60, maxHp: 60, ap: 3, speed: 10 },
+      bodyParts: { chest: { current: 20, max: 20, weakness: 1 } },
+      skills: ['enemy_club'],
+      intentModel: { pattern: ['attack'], fallback: 'attack' }
+    },
+    player: {
+      id: 'player',
+      name: 'Player',
+      stats: { hp: 30, maxHp: 30 },
+      bodyParts: { chest: { current: 5, max: 5, weakness: 1 } }
+    },
+    apBudget: 5,
+    maxTurns: 1,
+    enemyActionMode: 'enabled'
+  });
+
+  assert.equal(result.turns.length, 1);
+  assert.equal(result.turns[0].enemyAction.skillId, 'enemy_club');
+  assert.equal(result.turns[0].enemyAction.intentToken, 'attack');
+  assert.equal(result.final.player.armorTotal, 0);
+  assert.equal(result.final.player.hp, 23);
+  assert.equal(result.metrics.playerHpLost, 7);
+  assert.equal(result.metrics.enemyActionCount, 1);
+});
+
 test('createSkillTestRecordPath includes date and time in record directory', () => {
   const recordPath = createSkillTestRecordPath('2026-05-30-123456');
   assert.equal(
@@ -299,6 +356,77 @@ test('compactSkillTestResultForRecord keeps replay evidence without bulky source
   assert.deepEqual(compact.candidates[0].build.skillNames, ['A']);
   assert.deepEqual(compact.candidates[0].combo.skillNames, ['A']);
   assert.equal(compact.candidates[0].simulation.turns.length, 1);
+});
+
+test('analyzeSkillTestScenario folds duplicate replay tactics and keeps unused build evidence', () => {
+  const skills = [
+    {
+      id: 'skill_sword_base',
+      name: '基础剑击',
+      editorMeta: { growthTrack: 'sword', growthTier: 1 },
+      unlock: { cost: { kp: 1 } },
+      prerequisites: [],
+      costs: { ap: 2 },
+      actions: [{ effect: { effectType: 'DMG_ARMOR', amountType: 'ABS', amount: 10 } }],
+      buffRefs: {}
+    },
+    {
+      id: 'skill_sword_finish',
+      name: '终结斩',
+      editorMeta: { growthTrack: 'sword', growthTier: 1 },
+      unlock: { cost: { kp: 1 } },
+      prerequisites: [],
+      costs: { ap: 2 },
+      actions: [{ effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 8 } }],
+      buffRefs: {}
+    },
+    {
+      id: 'skill_sword_extra_a',
+      name: '未用追击',
+      editorMeta: { growthTrack: 'sword', growthTier: 1 },
+      unlock: { cost: { kp: 1 } },
+      prerequisites: [],
+      costs: { ap: 6 },
+      actions: [{ effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 20 } }],
+      buffRefs: {}
+    },
+    {
+      id: 'skill_sword_extra_b',
+      name: '未用深切',
+      editorMeta: { growthTrack: 'sword', growthTier: 1 },
+      unlock: { cost: { kp: 1 } },
+      prerequisites: [],
+      costs: { ap: 6 },
+      actions: [{ effect: { effectType: 'DMG_HP', amountType: 'ABS', amount: 20 } }],
+      buffRefs: {}
+    }
+  ];
+
+  const result = analyzeSkillTestScenario({
+    skillPack: { skills },
+    levelsDocument: makeLevelsDocument(),
+    enemyDocuments,
+    playerDocument: { default: { skills: { skillPoints: 4, learned: [] } } },
+    levelIndex: 1,
+    kpMode: 'manual',
+    manualKp: 4,
+    apBudget: 4,
+    maxTurns: 2,
+    focus: 'sword',
+    maxBuilds: 30,
+    maxCombosPerBuild: 20,
+    maxCandidates: 10
+  });
+
+  const tacticKeys = result.candidates.map(candidate => candidate.tacticKey);
+  assert.equal(new Set(tacticKeys).size, tacticKeys.length);
+
+  const duplicate = result.candidates.find(candidate => candidate.duplicateBuildCount > 1);
+  assert.ok(duplicate, '需要聚合至少一个由多个构筑命中的相同打法');
+  assert.deepEqual(duplicate.combo.skillIds, ['skill_sword_base', 'skill_sword_finish']);
+  assert.ok(duplicate.unusedSkillNames.includes('未用追击'));
+  assert.ok(duplicate.unusedSkillNames.includes('未用深切'));
+  assert.equal(result.rawCandidateCount > result.candidates.length, true);
 });
 
 test('analyzeSkillTestScenario defaults to at most ten candidate loops', () => {

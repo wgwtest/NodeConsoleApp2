@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>技能测试器</title>
-  <link rel="stylesheet" href="../script/editor/skill_tester/skill_tester.css?v=enemy-target-lock-v3">
+  <link rel="stylesheet" href="../script/editor/skill_tester/skill_tester.css?v=tactic-dedupe-v1">
 </head>
 <body>
   <main class="tester-shell">
@@ -35,6 +35,10 @@
       <label>
         <span>敌人包</span>
         <input id="enemyPathInput" type="text" value="assets/enemy_packs/current/enemies.json">
+      </label>
+      <label>
+        <span>敌人技能包</span>
+        <input id="enemySkillPathInput" type="text" value="assets/data/skills_enemy_v1.json">
       </label>
       <label>
         <span>玩家</span>
@@ -110,11 +114,11 @@
       <button id="saveSkillTestRecordBtn" type="button">保存记录</button>
     </section>
 
+    <section id="contextPanel" class="panel context-panel context-strip-panel" aria-label="测试上下文"></section>
+
     <div id="statusLine" class="status-line" role="status">等待运行。</div>
 
     <section class="workbench">
-      <aside id="contextPanel" class="panel context-panel" aria-label="关卡上下文"></aside>
-
       <section class="panel candidate-panel" aria-label="候选构筑">
         <div class="panel-title">
           <h2>候选构筑</h2>
@@ -133,12 +137,13 @@
             <thead>
               <tr>
                 <th>回合</th>
-                <th>技能组合</th>
+                <th>我方技能组合</th>
+                <th>敌方 HP</th>
+                <th>敌方护甲</th>
+                <th>敌方行动</th>
+                <th>我方状态</th>
                 <th>AP</th>
-                <th>HP 变化</th>
-                <th>护甲变化</th>
-                <th>流血窗口</th>
-                <th>事件 / 跳过</th>
+                <th>结算 / 状态</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -152,6 +157,6 @@
     </section>
   </main>
 
-  <script type="module" src="../script/editor/skill_tester/skillTesterApp.mjs?v=enemy-target-lock-v3"></script>
+  <script type="module" src="../script/editor/skill_tester/skillTesterApp.mjs?v=tactic-dedupe-v1"></script>
 </body>
 </html>

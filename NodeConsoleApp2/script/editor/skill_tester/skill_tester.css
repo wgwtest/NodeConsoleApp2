@@ -215,7 +215,7 @@ button.primary {
 
 .status-line {
   min-height: 34px;
-  margin: 12px 0;
+  margin: 8px 0 12px;
   padding: 8px 12px;
   color: var(--muted);
   background: rgba(255, 255, 255, 0.7);
@@ -238,23 +238,70 @@ button.primary {
 
 .workbench {
   display: grid;
-  grid-template-columns: 300px 430px minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 3fr) minmax(0, 7fr);
   gap: 14px;
   align-items: start;
 }
 
 .panel {
-  min-height: 240px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
   box-shadow: var(--shadow);
 }
 
+.candidate-panel,
+.replay-panel {
+  min-height: 240px;
+}
+
 .context-panel,
 .candidate-panel,
 .replay-panel {
   padding: 14px;
+}
+
+.context-strip-panel {
+  min-height: 0;
+  margin-top: 12px;
+}
+
+.context-strip-panel .panel-title {
+  margin-bottom: 10px;
+}
+
+.context-strip-panel .metric-grid {
+  grid-template-columns: repeat(13, minmax(72px, 1fr));
+  gap: 6px;
+}
+
+.context-strip-panel .metric {
+  min-height: 52px;
+  padding: 7px;
+}
+
+.context-strip-panel .metric b {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.context-strip-panel .metric span {
+  font-size: 11px;
+}
+
+.context-strip-panel .source-list {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  margin-top: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.context-strip-panel .source-list div {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .panel-title {
@@ -323,7 +370,7 @@ button.primary {
 .candidate-list {
   display: grid;
   gap: 9px;
-  max-height: calc(100vh - 250px);
+  max-height: calc(100vh - 430px);
   overflow: auto;
   padding-right: 4px;
 }
@@ -367,6 +414,12 @@ button.primary {
   line-height: 1.45;
 }
 
+.candidate-duplicate-detail {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .candidate-meta {
   display: flex;
   flex-wrap: wrap;
@@ -407,8 +460,9 @@ button.primary {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 860px;
+  min-width: 1120px;
   background: #fff;
+  table-layout: fixed;
 }
 
 th,
@@ -429,6 +483,78 @@ th {
   background: var(--panel-soft);
   font-size: 12px;
   font-weight: 900;
+}
+
+th:nth-child(1),
+.replay-cell--turn {
+  width: 46px;
+  text-align: center;
+}
+
+th:nth-child(2),
+.replay-cell--player-skill {
+  width: 27%;
+}
+
+th:nth-child(3),
+th:nth-child(4),
+.replay-cell--enemy-hp,
+.replay-cell--enemy-armor {
+  width: 116px;
+}
+
+th:nth-child(5),
+.replay-cell--enemy-action {
+  width: 18%;
+}
+
+th:nth-child(6),
+.replay-cell--player-state {
+  width: 132px;
+}
+
+th:nth-child(7),
+.replay-cell--ap {
+  width: 58px;
+  text-align: center;
+}
+
+th:nth-child(8),
+.replay-cell--settlement {
+  width: 20%;
+}
+
+.replay-cell--player-skill {
+  color: var(--ink);
+  background: #f7fbff;
+  font-weight: 800;
+}
+
+.replay-cell--enemy-hp,
+.replay-cell--enemy-armor,
+.replay-cell--enemy-action {
+  background: #fffaf3;
+}
+
+.replay-cell--player-state {
+  color: #2f4d6f;
+  background: #f5f9ff;
+  font-weight: 700;
+}
+
+.replay-cell--settlement {
+  background: var(--panel-soft);
+}
+
+.enemy-action-name {
+  display: block;
+  margin-bottom: 2px;
+  font-weight: 900;
+}
+
+.enemy-action-detail {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 tbody tr:last-child td {
@@ -497,6 +623,14 @@ tbody tr:last-child td {
 
 @media (max-width: 1300px) {
   .workbench {
-    grid-template-columns: 280px 360px minmax(0, 1fr);
+    grid-template-columns: minmax(280px, 3fr) minmax(0, 7fr);
+  }
+
+  .context-strip-panel .metric-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .context-strip-panel .source-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
