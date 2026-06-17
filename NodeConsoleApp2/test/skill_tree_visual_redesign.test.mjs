@@ -140,7 +140,12 @@ test('active melee skill pack hides runtime-only sample and acceptance nodes fro
     'skill_1771952067028',
     'skill_1771952147024',
     'skill_1771952209174',
-    'skill_demo_hp_guard',
+    'skill_demo_hp_guard'
+  ]) {
+    assert.equal(byId[skillId], undefined, `${skillId} should not be published in the active runtime skill pack`);
+  }
+
+  for (const skillId of [
     'skill_demo_armor_guard',
     'skill_demo_on_hit_armor',
     'skill_demo_enemy_head_tap',

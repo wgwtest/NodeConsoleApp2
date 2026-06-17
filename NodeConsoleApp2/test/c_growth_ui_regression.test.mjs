@@ -45,6 +45,18 @@ async function loadDataJson(relativePath) {
   return JSON.parse(raw);
 }
 
+function getEnemyById(enemyDocument, enemyId) {
+  if (!enemyDocument || !enemyId) return null;
+  if (enemyDocument[enemyId]) return enemyDocument[enemyId];
+  if (Array.isArray(enemyDocument.enemies)) {
+    return enemyDocument.enemies.find(enemy => enemy?.id === enemyId) || null;
+  }
+  if (enemyDocument.enemies && typeof enemyDocument.enemies === 'object') {
+    return enemyDocument.enemies[enemyId] || Object.values(enemyDocument.enemies).find(enemy => enemy?.id === enemyId) || null;
+  }
+  return null;
+}
+
 function createSystemModalFixture() {
   const dom = new JSDOM(`
     <!DOCTYPE html>
@@ -563,7 +575,9 @@ test('UI_SkillPanel 会把剑砍的 random_single 视为可落槽的单目标模
     assert.notEqual(panel.formatTargetText(slash), '目标配置错误');
 
     panel.selectedSkill = slash;
-    panel.initMatrixRows(enemiesData.enemy_v2_c1_01_razor_initiate);
+    const firstEnemy = getEnemyById(enemiesData, 'enemy_v2_c1_01_razor_initiate');
+    assert.ok(firstEnemy, '缺少第一关 V2 敌人配置');
+    panel.initMatrixRows(firstEnemy);
     panel.highlightValidSlots();
 
     const highlighted = [...document.querySelectorAll('.slot-placeholder.highlight-valid')]
@@ -612,7 +626,9 @@ test('UI_SkillPanel 会让重拳在第一关敌人身上至少有一个可用敌
     });
 
     panel.selectedSkill = punch;
-    panel.initMatrixRows(enemiesData.enemy_v2_c1_01_razor_initiate);
+    const firstEnemy = getEnemyById(enemiesData, 'enemy_v2_c1_01_razor_initiate');
+    assert.ok(firstEnemy, '缺少第一关 V2 敌人配置');
+    panel.initMatrixRows(firstEnemy);
     panel.highlightValidSlots();
 
     const highlighted = [...document.querySelectorAll('.slot-placeholder.highlight-valid')]

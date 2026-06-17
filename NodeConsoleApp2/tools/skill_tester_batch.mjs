@@ -16,7 +16,7 @@ export const DEFAULT_BATCH_SOURCES = Object.freeze({
   skillPackPath: 'assets/skill_packs/authoring/skills_melee_v4_5_sword_bleed_window_standard_v2_20260529_013420.json',
   buffPackPath: 'assets/data/buffs_v2_7.json',
   levelsPath: 'assets/data/levels.json',
-  enemyPath: 'assets/data/enemies.json',
+  enemyPath: 'assets/enemy_packs/current/enemies.json',
   playerPath: 'assets/data/player.json'
 });
 
