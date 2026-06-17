@@ -8,9 +8,12 @@ import { JSDOM } from 'jsdom';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const modelPath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'AnimationSetWorkspace.js');
+const catalogPath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'AnimationSetCatalog.js');
+const widgetsPath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'AnimationSetConsumerWidgets.js');
 const pagePath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'AnimationSetManagerPage.js');
 const indexPath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'index.js');
 const dataPath = path.join(projectRoot, 'assets', 'data', 'animation_sets_v1.json');
+const catalogDataPath = path.join(projectRoot, 'assets', 'data', 'animation_catalog_v1.json');
 const pageHtmlPath = path.join(projectRoot, 'test', 'animation_set_manager_v1.html');
 
 async function importSourceModule(filePath) {
@@ -18,8 +21,11 @@ async function importSourceModule(filePath) {
     let source = await fsp.readFile(filePath, 'utf8');
     if (filePath === pagePath) {
         const workspaceSource = await fsp.readFile(modelPath, 'utf8');
+        const catalogSource = await fsp.readFile(catalogPath, 'utf8');
         const workspaceEncoded = Buffer.from(workspaceSource, 'utf8').toString('base64');
+        const catalogEncoded = Buffer.from(catalogSource, 'utf8').toString('base64');
         source = source.replace("'./AnimationSetWorkspace.js'", `'data:text/javascript;base64,${workspaceEncoded}'`);
+        source = source.replace("'./AnimationSetCatalog.js'", `'data:text/javascript;base64,${catalogEncoded}'`);
     }
     const encoded = Buffer.from(source, 'utf8').toString('base64');
     return import(`data:text/javascript;base64,${encoded}`);
@@ -177,6 +183,81 @@ test('AnimationSetWorkspace can create a concrete owner with an empty default an
     });
     assert.equal(nextSet.ownerId, 'enemy_003');
     assert.throws(() => workspace.createOwner({ ownerType: 'enemy', displayName: '' }), /名称/u);
+});
+
+test('AnimationSetCatalog publishes a clean read-only catalog and registry resolves clips', async () => {
+    const { buildAnimationCatalog, AnimationSetRegistry } = await importSourceModule(catalogPath);
+    const catalog = buildAnimationCatalog(buildFixtureDocument());
+
+    assert.equal(catalog.schemaVersion, 1);
+    assert.equal(catalog.meta.id, 'animation_catalog_v1');
+    assert.equal(catalog.generatedFrom.id, 'animation_sets_v1');
+    assert.deepEqual(catalog.animationSets.map(set => set.id), ['player_001_default', 'enemy_001_default']);
+    assert.equal(catalog.animationSets[0].clips.attack.key, 'attack');
+    assert.equal(catalog.animationSets[0].clips.attack.sourceDir, undefined);
+    assert.equal(catalog.animationSets[0].clips.attack.references, undefined);
+    assert.equal(catalog.animationSets[0].references, undefined);
+    assert.equal(catalog.animationSets[1].clips.hit, undefined, 'missing clips must not be published as consumable assets');
+
+    const registry = new AnimationSetRegistry(catalog);
+    assert.deepEqual(registry.listAnimationSets({ ownerType: 'enemy' }).map(set => set.id), ['enemy_001_default']);
+    assert.deepEqual(registry.listClips('player_001_default').map(clip => clip.key), ['walk', 'idle', 'attack']);
+    assert.equal(registry.findAnimationSetsByOwner('player', 'player_001')[0].id, 'player_001_default');
+    assert.equal(registry.getDefaultAnimation('player_001_default'), 'walk');
+    assert.match(registry.resolveClip('player_001_default', 'attack').sheetRef, /attack_sheet\.png$/u);
+    assert.equal(registry.resolveClip('player_001_default', '').key, 'walk');
+    assert.deepEqual(registry.validateAnimationRef('player_001_default', 'attack'), { ok: true });
+    assert.deepEqual(registry.validateAnimationRef('player_001_default', 'missing'), {
+        ok: false,
+        reason: 'missing_clip',
+        animationSetRef: 'player_001_default',
+        animationKey: 'missing'
+    });
+});
+
+test('AnimationSetConsumerWidgets builds reusable picker preview and binding view models', async () => {
+    const { buildAnimationCatalog, AnimationSetRegistry } = await importSourceModule(catalogPath);
+    const {
+        buildAnimationSetPickerModel,
+        buildAnimationClipPickerModel,
+        buildAnimationPreviewModel,
+        buildAnimationBindingTableModel
+    } = await importSourceModule(widgetsPath);
+    const registry = new AnimationSetRegistry(buildAnimationCatalog(buildFixtureDocument()));
+
+    const setPicker = buildAnimationSetPickerModel(registry, {
+        ownerType: 'player',
+        selectedAnimationSetRef: 'player_001_default'
+    });
+    assert.deepEqual(setPicker.options.map(option => option.value), ['player_001_default']);
+    assert.equal(setPicker.options[0].selected, true);
+
+    const clipPicker = buildAnimationClipPickerModel(registry, {
+        animationSetRef: 'player_001_default',
+        selectedAnimationKey: 'attack'
+    });
+    assert.deepEqual(clipPicker.options.map(option => option.value), ['walk', 'idle', 'attack']);
+    assert.equal(clipPicker.options[2].selected, true);
+
+    const preview = buildAnimationPreviewModel(registry, {
+        animationSetRef: 'player_001_default',
+        animationKey: 'attack'
+    });
+    assert.equal(preview.available, true);
+    assert.equal(preview.clip.key, 'attack');
+    assert.match(preview.clip.sheetRef, /attack_sheet\.png$/u);
+
+    const bindingTable = buildAnimationBindingTableModel(registry, {
+        animationSetRef: 'player_001_default',
+        bindings: { idle: 'walk', attack: 'attack', hit: 'missing' },
+        rows: [
+            { event: 'idle', label: 'Idle' },
+            { event: 'attack', label: 'Attack' },
+            { event: 'hit', label: 'Hit' }
+        ]
+    });
+    assert.deepEqual(bindingTable.rows.map(row => row.valid), [true, true, false]);
+    assert.equal(bindingTable.rows[2].validation.reason, 'missing_clip');
 });
 
 test('animation set runtime asset file contains the provided player and enemy frame sequences', () => {
@@ -372,6 +453,7 @@ test('AnimationSetManagerPage imports a local frame directory as a new independe
     assert.equal(page.workspace.resolveClip('player_001_default', 'dodge').sourceDir, 'source/character/player_001-dodge');
     assert.equal(page.workspace.resolveClip('player_001_default', 'dodge').fps, 12);
     assert.equal(page.workspace.resolveClip('player_001_default', 'dodge').loop, true);
+    assert.equal(page.workspace.resolveClip('player_001_default', 'dodge').assetManagement.ownsSourceDir, true);
     assert(calls.some(call => call.url === '/api/animation-assets/import-local-directory'));
     assert(calls.some(call => call.url.includes('/api/animation-assets/frames?dir=source%2Fcharacter%2Fplayer_001-dodge')));
     const writeCall = calls.find(call => call.url === '/api/animation-assets/write');
@@ -444,7 +526,6 @@ test('AnimationSetManagerPage deletes a clip row after confirmation and removes 
         if (String(url) === '/api/animation-assets/delete') {
             const payload = JSON.parse(options.body);
             assert.deepEqual(payload.paths, [
-                'source/character/主角-001-状态-001-attack',
                 'source/character/主角-001-状态-001-attack/attack_sheet.png',
                 'source/character/主角-001-状态-001-attack/attack_sheet.json'
             ]);
@@ -487,6 +568,62 @@ test('AnimationSetManagerPage deletes a clip row after confirmation and removes 
     const writtenDocument = JSON.parse(JSON.parse(ledgerWrite.options.body).content);
     const writtenPlayerSet = writtenDocument.animationSets.find(item => item.id === 'player_001_default');
     assert.equal(writtenPlayerSet.clips.attack, undefined);
+});
+
+test('AnimationSetManagerPage deletes imported source directories only when the clip owns them', async () => {
+    const { AnimationSetManagerPage } = await importSourceModule(pagePath);
+    const html = await fsp.readFile(pageHtmlPath, 'utf8');
+    const dom = new JSDOM(html, {
+        url: 'http://127.0.0.1:3106/test/animation_set_manager_v1.html',
+        pretendToBeVisual: true
+    });
+    const document = buildFixtureDocument();
+    document.animationSets[0].clips.dodge = {
+        key: 'dodge',
+        sourceDir: 'source/character/player_001-dodge',
+        sheetRef: '../source/character/player_001-dodge/dodge_sheet.png',
+        manifestRef: '../source/character/player_001-dodge/dodge_sheet.json',
+        frameCount: 2,
+        fps: 12,
+        loop: true,
+        status: 'ready',
+        assetManagement: { ownsSourceDir: true }
+    };
+    const calls = [];
+    const fetchImpl = async (url, options = {}) => {
+        calls.push({ url: String(url), options });
+        if (String(url).startsWith('/__skill_editor_file') && options.method !== 'POST') {
+            return {
+                ok: true,
+                json: async () => ({ content: JSON.stringify(document), path: 'assets/data/animation_sets_v1.json' })
+            };
+        }
+        if (String(url) === '/api/animation-assets/delete') {
+            return { ok: true, json: async () => ({ ok: true, deleted: JSON.parse(options.body).paths }) };
+        }
+        if (String(url) === '/__skill_editor_file' && options.method === 'POST') {
+            return { ok: true, json: async () => ({ ok: true, path: 'assets/data/animation_sets_v1.json' }) };
+        }
+        throw new Error(`unexpected fetch ${url}`);
+    };
+    dom.window.HTMLCanvasElement.prototype.getContext = () => ({ clearRect() {}, drawImage() {} });
+    const page = new AnimationSetManagerPage({
+        document: dom.window.document,
+        fetchImpl,
+        confirmImpl: () => true
+    });
+
+    page.bind();
+    await page.loadDefault();
+    await page.deleteClipWithConfirmation('player_001_default', 'dodge');
+
+    const deleteCall = calls.find(call => call.url === '/api/animation-assets/delete');
+    assert.ok(deleteCall, 'missing asset delete call');
+    assert.deepEqual(JSON.parse(deleteCall.options.body).paths, [
+        'source/character/player_001-dodge/dodge_sheet.png',
+        'source/character/player_001-dodge/dodge_sheet.json',
+        'source/character/player_001-dodge'
+    ]);
 });
 
 test('AnimationSetManagerPage creates a new owner record and persists the config', async () => {
@@ -577,6 +714,72 @@ test('AnimationSetManagerPage preview advances spritesheet frames on canvas', as
     assert.equal(dom.window.document.getElementById('previewTimeline').max, 60);
 });
 
+test('AnimationSetManagerPage rejects inconsistent frame dimensions before writing a sheet', async () => {
+    const { AnimationSetManagerPage } = await importSourceModule(pagePath);
+    const html = await fsp.readFile(pageHtmlPath, 'utf8');
+    const dom = new JSDOM(html, {
+        url: 'http://127.0.0.1:3106/test/animation_set_manager_v1.html',
+        pretendToBeVisual: true
+    });
+    const calls = [];
+    const fetchImpl = async (url, options = {}) => {
+        calls.push({ url: String(url), options });
+        if (String(url).startsWith('/__skill_editor_file') && options.method !== 'POST') {
+            return {
+                ok: true,
+                json: async () => ({ content: JSON.stringify(buildFixtureDocument()), path: 'assets/data/animation_sets_v1.json' })
+            };
+        }
+        if (String(url).startsWith('/api/animation-assets/frames')) {
+            return {
+                ok: true,
+                json: async () => ({
+                    ok: true,
+                    directory: 'source/character/主角-001-状态-001-attack',
+                    frameCount: 2,
+                    frames: [
+                        { name: '001.png', path: 'source/character/主角-001-状态-001-attack/001.png' },
+                        { name: '002.png', path: 'source/character/主角-001-状态-001-attack/002.png' }
+                    ]
+                })
+            };
+        }
+        if (String(url) === '/api/animation-assets/write') {
+            throw new Error('sheet write should not be called for invalid frame dimensions');
+        }
+        if (String(url) === '/__skill_editor_file' && options.method === 'POST') {
+            return { ok: true, json: async () => ({ ok: true, path: 'assets/data/animation_sets_v1.json' }) };
+        }
+        throw new Error(`unexpected fetch ${url}`);
+    };
+    dom.window.HTMLCanvasElement.prototype.getContext = () => ({ clearRect() {}, drawImage() {} });
+    const page = new AnimationSetManagerPage({
+        document: dom.window.document,
+        fetchImpl,
+        ImageCtor: class FakeImage {
+            set src(value) {
+                this._src = value;
+                this.width = String(value).includes('002.png') ? 256 : 512;
+                this.height = 512;
+                setTimeout(() => this.onload?.(), 0);
+            }
+            get src() {
+                return this._src;
+            }
+        }
+    });
+
+    page.bind();
+    await page.loadDefault();
+    page.selectedClipKey = 'attack';
+
+    await assert.rejects(() => page.buildSelectedClip(), /帧尺寸不一致/u);
+    assert.equal(calls.some(call => call.url === '/api/animation-assets/write'), false);
+    const clip = page.workspace.resolveClip('player_001_default', 'attack');
+    assert.equal(clip.status, 'error');
+    assert.match(clip.buildState.errors[0], /帧尺寸不一致/u);
+});
+
 test('AnimationSetManagerPage transport shows playback state and stops one-shot clips at the end', async () => {
     const { AnimationSetManagerPage } = await importSourceModule(pagePath);
     const html = await fsp.readFile(pageHtmlPath, 'utf8');
@@ -634,5 +837,17 @@ test('AnimationSetManagerPage transport shows playback state and stops one-shot 
 test('animation set editor index exports workspace and page modules', async () => {
     const source = fs.readFileSync(indexPath, 'utf8');
     assert.match(source, /AnimationSetWorkspace/u);
+    assert.match(source, /AnimationSetCatalog/u);
+    assert.match(source, /AnimationSetRegistry/u);
+    assert.match(source, /AnimationSetConsumerWidgets/u);
     assert.match(source, /AnimationSetManagerPage/u);
+});
+
+test('animation set manager keeps preview and validation tools available on medium width screens', async () => {
+    const html = await fsp.readFile(pageHtmlPath, 'utf8');
+
+    assert.doesNotMatch(html, /\.rightcol\s*\{\s*display:\s*none/u);
+    assert.match(html, /grid-column:\s*1\s*\/\s*-1/u);
+    assert.match(html, /id="actionPropertiesPanel"/u);
+    assert.match(html, /id="actionOperationPanel"/u);
 });

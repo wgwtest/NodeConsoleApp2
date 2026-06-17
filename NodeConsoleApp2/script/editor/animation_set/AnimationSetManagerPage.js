@@ -1,4 +1,5 @@
 import AnimationSetWorkspace from './AnimationSetWorkspace.js';
+import { buildAnimationCatalog } from './AnimationSetCatalog.js';
 
 function createElement(doc, tagName, className = '') {
     const element = doc.createElement(tagName);
@@ -66,6 +67,23 @@ function normalizeAssetDeletePath(value) {
     return normalizeString(value, '').replace(/\\/g, '/').replace(/^(\.\.\/)+/u, '');
 }
 
+function clipOwnsSourceDir(clip) {
+    return Boolean(clip?.assetManagement?.ownsSourceDir);
+}
+
+function setClipBuildError(animationSet, clip, error) {
+    const message = error?.message || String(error || '构建失败。');
+    clip.status = 'error';
+    clip.buildState = {
+        ...(clip.buildState && typeof clip.buildState === 'object' ? clip.buildState : {}),
+        status: 'error',
+        errors: [message],
+        updatedAt: new Date().toISOString()
+    };
+    animationSet.status = 'error';
+    return message;
+}
+
 function compareFrameNames(left, right) {
     const leftNumber = Number((String(left).match(/(\d+)(?=\.png$)/iu) || [])[1]);
     const rightNumber = Number((String(right).match(/(\d+)(?=\.png$)/iu) || [])[1]);
@@ -105,6 +123,7 @@ export class AnimationSetManagerPage {
             || globalThis.cancelAnimationFrame?.bind(globalThis)
             || clearTimeout;
         this.defaultDataPath = options.defaultDataPath || 'assets/data/animation_sets_v1.json';
+        this.catalogDataPath = options.catalogDataPath || 'assets/data/animation_catalog_v1.json';
         this.currentDataPath = this.defaultDataPath;
         this.workspace = null;
         this.selectedOwnerType = '';
@@ -671,7 +690,11 @@ export class AnimationSetManagerPage {
             fps: 12,
             loop: true,
             returnTo: null,
-            status: 'planned'
+            status: 'planned',
+            assetManagement: {
+                importedBy: 'animation_set_manager',
+                ownsSourceDir: true
+            }
         });
         this.selectedSetId = animationSet.id;
         this.selectedClipKey = clip.key;
@@ -697,11 +720,13 @@ export class AnimationSetManagerPage {
     }
 
     collectClipAssetPaths(clip) {
-        return [
-            normalizeAssetDeletePath(clip?.sourceDir),
+        const paths = [
             normalizeAssetDeletePath(clip?.sheetRef),
             normalizeAssetDeletePath(clip?.manifestRef)
         ].filter(Boolean);
+        const sourceDir = normalizeAssetDeletePath(clip?.sourceDir);
+        if (sourceDir && clipOwnsSourceDir(clip)) paths.push(sourceDir);
+        return paths;
     }
 
     async deleteClipWithConfirmation(animationSetId, clipKey) {
@@ -709,7 +734,8 @@ export class AnimationSetManagerPage {
         if (!animationSet) throw new Error('未找到动画集。');
         const clip = animationSet.clips[clipKey];
         if (!clip) throw new Error('未找到动作。');
-        const confirmed = this.confirmImpl(`确认删除 ${animationSet.id}/${clip.key}？这会同时删除已复制到项目内的帧目录和构建产物。`);
+        const sourceDirNote = clipOwnsSourceDir(clip) ? '，并删除由管理器导入的项目内帧目录' : '';
+        const confirmed = this.confirmImpl(`确认删除 ${animationSet.id}/${clip.key}？这会删除构建产物${sourceDirNote}。`);
         if (!confirmed) return null;
         const assetPaths = this.collectClipAssetPaths(clip);
         if (assetPaths.length) {
@@ -754,17 +780,24 @@ export class AnimationSetManagerPage {
         const clip = this.workspace.resolveClip(animationSet.id, this.selectedClipKey);
         if (!clip) throw new Error('未选择 clip。');
         if (!clip.sourceDir) throw new Error(`${clip.key} 缺少 sourceDir。`);
-        this.setStatus(`正在扫描 ${clip.sourceDir}`);
-        const frameInfo = await this.fetchFrameInfo(clip.sourceDir);
-        if (!frameInfo.frames.length) throw new Error(`${clip.sourceDir} 未找到 PNG 帧。`);
-        this.setStatus(`正在构建 ${clip.key}：${frameInfo.frameCount} 帧`);
-        const built = await this.buildSheetFromFrames(clip, frameInfo);
-        await this.writeBuiltAssets(built);
-        this.applyBuiltClip(animationSet, clip, built, frameInfo);
-        await this.saveLedger('动作资源已自动保存');
-        this.render();
-        this.setStatus(`动作资源已自动保存：${animationSet.id}/${clip.key}，${frameInfo.frameCount} 帧`);
-        return built;
+        try {
+            this.setStatus(`正在扫描 ${clip.sourceDir}`);
+            const frameInfo = await this.fetchFrameInfo(clip.sourceDir);
+            if (!frameInfo.frames.length) throw new Error(`${clip.sourceDir} 未找到 PNG 帧。`);
+            this.setStatus(`正在构建 ${clip.key}：${frameInfo.frameCount} 帧`);
+            const built = await this.buildSheetFromFrames(clip, frameInfo);
+            await this.writeBuiltAssets(built);
+            this.applyBuiltClip(animationSet, clip, built, frameInfo);
+            await this.saveLedger('动作资源已自动保存');
+            this.render();
+            this.setStatus(`动作资源已自动保存：${animationSet.id}/${clip.key}，${frameInfo.frameCount} 帧`);
+            return built;
+        } catch (error) {
+            const message = setClipBuildError(animationSet, clip, error);
+            this.render();
+            this.setStatus(`动作资源构建失败：${message}`);
+            throw error;
+        }
     }
 
     async fetchFrameInfo(sourceDir) {
@@ -791,10 +824,22 @@ export class AnimationSetManagerPage {
     }
 
     async buildSheetFromFrames(clip, frameInfo) {
-        const firstImage = await this.loadImage(relativeAssetUrl(frameInfo.frames[0].path));
+        const frameImages = [];
+        for (const frame of frameInfo.frames) {
+            frameImages.push(await this.loadImage(relativeAssetUrl(frame.path)));
+        }
+        const firstImage = frameImages[0];
         const frameWidth = Number(firstImage.naturalWidth || firstImage.width || clip.frameWidth || 512);
         const frameHeight = Number(firstImage.naturalHeight || firstImage.height || clip.frameHeight || 512);
         const frameCount = frameInfo.frames.length;
+        frameImages.forEach((image, index) => {
+            const width = Number(image.naturalWidth || image.width || 0);
+            const height = Number(image.naturalHeight || image.height || 0);
+            if (width !== frameWidth || height !== frameHeight) {
+                const frameName = frameInfo.frames[index]?.name || `#${index + 1}`;
+                throw new Error(`帧尺寸不一致：${frameName} 为 ${width}x${height}，期望 ${frameWidth}x${frameHeight}。`);
+            }
+        });
         const columns = Math.max(1, Number(clip.columns || Math.ceil(Math.sqrt(frameCount))));
         const rows = Math.max(1, Math.ceil(frameCount / columns));
         const canvas = this.document.createElement('canvas');
@@ -803,8 +848,8 @@ export class AnimationSetManagerPage {
         const context = canvas.getContext('2d');
         if (!context) throw new Error('无法创建 canvas 2D context。');
         context.drawImage(firstImage, 0, 0, frameWidth, frameHeight);
-        for (let index = 1; index < frameInfo.frames.length; index += 1) {
-            const image = await this.loadImage(relativeAssetUrl(frameInfo.frames[index].path));
+        for (let index = 1; index < frameImages.length; index += 1) {
+            const image = frameImages[index];
             const x = (index % columns) * frameWidth;
             const y = Math.floor(index / columns) * frameHeight;
             context.drawImage(image, x, y, frameWidth, frameHeight);
@@ -866,24 +911,47 @@ export class AnimationSetManagerPage {
         target.rows = built.manifest.rows;
         target.frameCount = frameInfo.frameCount;
         target.status = 'ready';
+        target.buildState = {
+            status: 'ready',
+            errors: [],
+            updatedAt: new Date().toISOString()
+        };
         animationSet.status = Object.values(animationSet.clips).some(item => item.status !== 'ready') ? 'warning' : 'ready';
     }
 
     async saveLedger(reason = '配置已自动保存') {
         if (!this.workspace) return null;
+        const document = this.workspace.exportDocument();
         const response = await this.fetchImpl('/__skill_editor_file', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 path: this.currentDataPath,
-                content: JSON.stringify(this.workspace.exportDocument(), null, 2)
+                content: JSON.stringify(document, null, 2)
             })
         });
         if (!response?.ok) throw new Error(`动画配置写回失败：${response?.status || 'unknown'}`);
         const body = await response.json();
         if (body.ok === false) throw new Error(body.error || '动画配置写回失败。');
+        await this.publishCatalog(document);
         this.setConfigFileLabel(body.path || this.currentDataPath);
         this.setStatus(`${reason}。`);
+        return body;
+    }
+
+    async publishCatalog(document) {
+        const catalog = buildAnimationCatalog(document);
+        const response = await this.fetchImpl('/__skill_editor_file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                path: this.catalogDataPath,
+                content: JSON.stringify(catalog, null, 2)
+            })
+        });
+        if (!response?.ok) throw new Error(`animation catalog write failed: ${response?.status || 'unknown'}`);
+        const body = await response.json();
+        if (body.ok === false) throw new Error(body.error || 'animation catalog write failed.');
         return body;
     }
 }

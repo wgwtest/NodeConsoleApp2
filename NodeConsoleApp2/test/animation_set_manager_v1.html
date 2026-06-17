@@ -339,8 +339,16 @@
         #manifestOutput { display: none; }
 
         @media (max-width: 1280px) {
+            body { overflow: auto; }
+            .app { height: auto; min-height: 100vh; }
             .layout { grid-template-columns: 280px minmax(520px, 1fr); }
-            .rightcol { display: none; }
+            .rightcol {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(260px, 1fr));
+                grid-template-rows: auto auto auto;
+            }
+            .preview { min-height: 330px; }
             .import-form { grid-template-columns: 1fr; }
             .clip-properties { grid-template-columns: 1fr; }
         }
