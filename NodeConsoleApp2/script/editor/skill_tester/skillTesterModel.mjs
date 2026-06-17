@@ -39,7 +39,8 @@ export function listStoryLevelOptions(levelsDocument) {
     name: level.name || level.title || level.id,
     nodeLabel: level.flow?.nodeLabel || `${index + 1}`,
     order: toFiniteNumber(level.flow?.order, index + 1),
-    kp: Math.max(0, toFiniteNumber(level.rewards?.kp, 0))
+    kp: Math.max(0, toFiniteNumber(level.rewards?.kp, 0)),
+    enemyId: resolveLevelEnemyId(level, levelsDocument)
   }));
 }
 
