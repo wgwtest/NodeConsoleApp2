@@ -37,6 +37,20 @@ class FakeClassList {
         names.forEach(name => this.classes.delete(name));
         this.element.className = [...this.classes].join(' ');
     }
+
+    contains(name) {
+        return this.classes.has(name);
+    }
+
+    toggle(name, force) {
+        const shouldAdd = force === undefined ? !this.classes.has(name) : Boolean(force);
+        if (shouldAdd) {
+            this.add(name);
+        } else {
+            this.remove(name);
+        }
+        return shouldAdd;
+    }
 }
 
 class FakeElement {
@@ -55,9 +69,13 @@ class FakeElement {
         this.innerHTML = '';
         this.src = '';
         this.type = '';
+        this.multiple = false;
+        this.selected = false;
+        this.checked = false;
     }
 
     appendChild(child) {
+        child.parentNode = this;
         this.children.push(child);
         this.textContent = this.children.map(item => item.textContent || '').join('\n');
         return child;
@@ -72,6 +90,7 @@ class FakeElement {
         this.attributes.set(name, String(value));
         if (name === 'src') this.src = String(value);
         if (name === 'class') this.className = String(value);
+        if (name === 'hidden') this.hidden = true;
     }
 
     getAttribute(name) {
@@ -82,6 +101,7 @@ class FakeElement {
     removeAttribute(name) {
         this.attributes.delete(name);
         if (name === 'src') this.src = '';
+        if (name === 'hidden') this.hidden = false;
     }
 
     addEventListener(type, handler) {
@@ -97,11 +117,14 @@ class FakeElement {
 }
 
 class FakeDocument {
-    constructor(ids) {
+    constructor(fixtures) {
         this.elements = new Map();
-        ids.forEach(id => {
-            const element = new FakeElement('div', this);
+        fixtures.forEach(fixture => {
+            const id = typeof fixture === 'string' ? fixture : fixture.id;
+            const tagName = typeof fixture === 'string' ? 'div' : fixture.tagName;
+            const element = new FakeElement(tagName, this);
             element.id = id;
+            element.multiple = Boolean(fixture.multiple);
             this.elements.set(id, element);
         });
     }
@@ -115,8 +138,23 @@ class FakeDocument {
     }
 }
 
-function collectIdsFromHtml(html) {
-    return [...html.matchAll(/id=["']([^"']+)["']/gu)].map(match => match[1]);
+function collectElementsFromHtml(html) {
+    return [...html.matchAll(/<([a-z][a-z0-9-]*)\b([^>]*\bid=["']([^"']+)["'][^>]*)>/giu)]
+        .map(match => ({
+            tagName: match[1],
+            id: match[3],
+            multiple: /\bmultiple\b/iu.test(match[2])
+        }));
+}
+
+function findChildByDataset(row, key, value) {
+    const stack = [...(row?.children || [])];
+    while (stack.length) {
+        const next = stack.shift();
+        if (next?.dataset?.[key] === value) return next;
+        stack.push(...(next?.children || []));
+    }
+    return null;
 }
 
 function installDomGlobals(document) {
@@ -156,6 +194,44 @@ function buildEnemies() {
                 portraitRef: 'enemy_goblin_hunter',
                 mapPortraitRef: 'enemy_goblin_hunter',
                 battleSpriteRef: 'enemy_goblin_hunter_spine'
+            },
+            capabilities: [
+                {
+                    type: 'basic_attack',
+                    cadence: 'every_turn',
+                    pressure: 'early_hp_pressure',
+                    counterplay: ['guard', 'fast_kill']
+                }
+            ],
+            intentModel: {
+                visible: true,
+                pattern: ['attack', 'bleed', 'attack'],
+                fallback: 'attack'
+            },
+            decisionModel: {
+                mode: 'intent_priority_table',
+                intentTimeline: ['attack', 'bleed', 'attack'],
+                fallbackIntent: 'attack',
+                actions: [
+                    {
+                        priority: 100,
+                        when: { always: true },
+                        intent: 'attack',
+                        skillId: 'skill_throw_stone',
+                        targetRule: 'player_weak_part',
+                        telegraph: false,
+                        fallbackIntent: 'attack'
+                    }
+                ]
+            },
+            runPressure: {
+                type: 'hp_attrition',
+                expectedDamageBudget: 12,
+                counterplay: ['healing', 'fast_kill']
+            },
+            statePersistence: {
+                carryOver: ['hp', 'armor'],
+                clearAfterBattle: ['bleed', 'poison', 'slow', 'vulnerable', 'stun', 'temporary_buff']
             }
         },
         goblin_story_medic: {
@@ -171,9 +247,51 @@ function buildEnemies() {
     };
 }
 
+function buildWrappedEnemiesWithEnums() {
+    return {
+        $schemaVersion: 'enemies_v2_1',
+        meta: {
+            enums: {
+                races: ['goblin', 'orc'],
+                classes: ['hunter', 'support'],
+                tags: ['story', 'pressure_bleed', 'role_fast'],
+                capabilityTypes: ['basic_attack', 'telegraph_countdown'],
+                capabilityCadences: ['every_turn', 'windup_1_turn'],
+                capabilityPressures: ['early_hp_pressure', 'readable_burst'],
+                counterplay: ['fast_kill', 'guard', 'interrupt'],
+                intentTokens: ['attack', 'bleed', 'heavy_attack', 'recover', 'telegraph'],
+                runPressureTypes: ['hp_attrition', 'armor_attrition'],
+                carryoverImpact: ['hp_loss', 'armor_loss'],
+                carryOver: ['hp', 'armor'],
+                clearAfterBattle: ['bleed', 'poison'],
+                decisionModelModes: ['intent_priority_table'],
+                decisionTargetRules: ['self', 'player', 'player_weak_part', 'fixed_part:head'],
+                decisionWhenTypes: ['always', 'self_hp_lte', 'self_hp_gte', 'previous_intent', 'turn_modulo'],
+                enemySkillIds: ['skill_throw_stone', 'enemy_skill_rusty_shiv']
+            },
+            enumDescriptions: {
+                capabilityCadences: {
+                    every_turn: '设计节奏：可持续出现；不是运行时触发器。',
+                    windup_1_turn: '设计节奏：先预兆一回合。'
+                },
+                capabilityPressures: {
+                    early_hp_pressure: '流程压力：稳定磨血。',
+                    readable_burst: '单关压力：可读爆发。'
+                },
+                counterplay: {
+                    fast_kill: '快速击杀以缩短磨血。',
+                    guard: '防御或格挡。',
+                    interrupt: '打断预兆。'
+                }
+            }
+        },
+        enemies: buildEnemies()
+    };
+}
+
 function createPageFixture() {
     const html = fs.readFileSync(pageHtmlPath, 'utf8');
-    const document = new FakeDocument(collectIdsFromHtml(html));
+    const document = new FakeDocument(collectElementsFromHtml(html));
     installDomGlobals(document);
     return { window: { document }, document };
 }
@@ -216,7 +334,270 @@ test('enemy editor page fixture contains required authoring controls', async () 
     ]) {
         assert.match(html, new RegExp(`id=["']${id}["']`), `页面缺少 #${id}`);
     }
+    for (const tabId of ['identity', 'stats', 'capabilities', 'intent', 'decision', 'pressure', 'assets']) {
+        assert.match(html, new RegExp(`data-editor-tab=["']${tabId}["']`), `page missing ${tabId} tab`);
+        assert.match(html, new RegExp(`data-editor-panel=["']${tabId}["']`), `page missing ${tabId} panel`);
+    }
+    for (const id of ['capabilitiesJsonInput', 'intentModelJsonInput', 'decisionModelJsonInput', 'runPressureJsonInput', 'statePersistenceJsonInput']) {
+        assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
+    }
     assert.doesNotMatch(html, /id=["']saveEnemyBtn["']/u, '页面不应再暴露“保存当前敌人”按钮');
+    for (const id of ['capabilityList', 'addCapabilityBtn', 'intentPatternList', 'addIntentTokenBtn', 'intentFallbackInput']) {
+        assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
+    }
+    for (const id of ['decisionModeInput', 'decisionActionList', 'addDecisionActionBtn']) {
+        assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
+    }
+    for (const id of ['runPressureTypeInput', 'runPressureDamageBudgetInput', 'runPressureCarryoverImpactInput', 'runPressureCounterplayInput', 'stateCarryOverInput', 'stateClearAfterBattleInput']) {
+        assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
+    }
+});
+
+test('EnemyEditorPage switches design tabs and keeps V2 design JSON editable', async () => {
+    const { page, dom } = await createPageContext();
+    page.loadDocument(buildEnemies());
+
+    const identityPanel = dom.window.document.getElementById('identityPanel');
+    const capabilitiesPanel = dom.window.document.getElementById('capabilitiesPanel');
+    const capabilitiesTab = dom.window.document.getElementById('capabilitiesTab');
+
+    assert.equal(identityPanel.hidden, false);
+    assert.equal(capabilitiesPanel.hidden, true);
+    assert.match(dom.window.document.getElementById('capabilitiesJsonInput').value, /basic_attack/);
+    assert.match(dom.window.document.getElementById('intentModelJsonInput').value, /bleed/);
+
+    capabilitiesTab.dispatchEvent(new Event('click'));
+
+    assert.equal(identityPanel.hidden, true);
+    assert.equal(capabilitiesPanel.hidden, false);
+    assert.equal(capabilitiesTab.getAttribute('aria-selected'), 'true');
+
+    dom.window.document.getElementById('capabilitiesJsonInput').value = JSON.stringify([
+        {
+            type: 'telegraph_countdown',
+            cadence: 'windup_2_turns',
+            pressure: 'delayed_high_damage',
+            counterplay: ['guard']
+        }
+    ], null, 2);
+    dom.window.document.getElementById('intentModelJsonInput').value = JSON.stringify({
+        visible: true,
+        pattern: ['telegraph', 'heavy_attack', 'recover'],
+        fallback: 'attack'
+    }, null, 2);
+    dom.window.document.getElementById('runPressureJsonInput').value = JSON.stringify({
+        type: 'armor_attrition',
+        expectedDamageBudget: 8,
+        counterplay: ['guard']
+    }, null, 2);
+    dom.window.document.getElementById('statePersistenceJsonInput').value = JSON.stringify({
+        carryOver: ['hp', 'armor'],
+        clearAfterBattle: ['bleed', 'poison']
+    }, null, 2);
+
+    page.syncCurrentEnemyFromForm();
+    const exported = page.workspace.exportDocument();
+    const enemy = exported.goblin_story_headhunter || exported.enemies?.goblin_story_headhunter;
+
+    assert.equal(enemy.capabilities[0].type, 'telegraph_countdown');
+    assert.deepEqual(enemy.intentModel.pattern, ['telegraph', 'heavy_attack', 'recover']);
+    assert.equal(enemy.runPressure.type, 'armor_attrition');
+    assert.deepEqual(enemy.statePersistence.clearAfterBattle, ['bleed', 'poison']);
+});
+
+test('EnemyEditorPage drives identity controls from enemy pack enums', async () => {
+    const { page, dom } = await createPageContext();
+    page.loadDocument(buildWrappedEnemiesWithEnums());
+
+    const raceSelect = dom.window.document.getElementById('enemyRaceInput');
+    const classSelect = dom.window.document.getElementById('enemyClassInput');
+    const tagSelect = dom.window.document.getElementById('enemyTagsInput');
+
+    assert.equal(raceSelect.tagName, 'SELECT');
+    assert.equal(classSelect.tagName, 'SELECT');
+    assert.equal(tagSelect.tagName, 'SELECT');
+    assert.equal(tagSelect.multiple, true);
+    assert.deepEqual(raceSelect.children.map(option => option.value), ['', 'goblin', 'orc']);
+    assert.deepEqual(classSelect.children.map(option => option.value), ['', 'hunter', 'support']);
+    assert.deepEqual(tagSelect.children.map(option => option.value), ['story', 'pressure_bleed', 'role_fast']);
+    assert.deepEqual(tagSelect.children.filter(option => option.selected).map(option => option.value), ['story']);
+
+    raceSelect.value = 'orc';
+    classSelect.value = 'support';
+    tagSelect.children.forEach(option => {
+        option.selected = option.value === 'pressure_bleed' || option.value === 'role_fast';
+    });
+
+    page.syncCurrentEnemyFromForm();
+    const exported = page.workspace.exportDocument();
+    const enemy = exported.enemies.goblin_story_headhunter;
+
+    assert.equal(enemy.race, 'orc');
+    assert.equal(enemy.class, 'support');
+    assert.deepEqual(enemy.tags, ['pressure_bleed', 'role_fast']);
+});
+
+test('EnemyEditorPage renders capabilities and intent loop as editable lists', async () => {
+    const { page, dom } = await createPageContext();
+    const wrapped = buildWrappedEnemiesWithEnums();
+    page.loadDocument({
+        ...wrapped,
+        meta: {
+            ...wrapped.meta,
+            enums: {
+                ...wrapped.meta.enums,
+                capabilityTypes: ['basic_attack', 'telegraph_countdown'],
+                intentTokens: ['attack', 'bleed', 'heavy_attack', 'recover', 'telegraph']
+            }
+        }
+    });
+
+    const capabilityList = dom.window.document.getElementById('capabilityList');
+    const intentPatternList = dom.window.document.getElementById('intentPatternList');
+    const fallbackSelect = dom.window.document.getElementById('intentFallbackInput');
+
+    assert.equal(capabilityList.children.length, 1);
+    assert.equal(findChildByDataset(capabilityList.children[0], 'capabilityField', 'type').value, 'basic_attack');
+    assert.equal(findChildByDataset(capabilityList.children[0], 'capabilityField', 'cadence').tagName, 'SELECT');
+    assert.equal(findChildByDataset(capabilityList.children[0], 'capabilityField', 'pressure').tagName, 'SELECT');
+    assert.equal(
+        findChildByDataset(capabilityList.children[0], 'capabilityField', 'cadence').children
+            .some(option => option.textContent.includes('不是运行时触发器')),
+        true
+    );
+    assert.equal(
+        findChildByDataset(capabilityList.children[0], 'capabilityField', 'pressure').children
+            .some(option => option.textContent.includes('稳定磨血')),
+        true
+    );
+    const counterplayGroup = findChildByDataset(capabilityList.children[0], 'capabilityField', 'counterplay');
+    assert.equal(counterplayGroup.tagName, 'DIV');
+    assert.match(capabilityList.children[0].textContent, /设计节奏/);
+    assert.match(capabilityList.children[0].textContent, /非运行时触发/);
+    assert.match(capabilityList.children[0].textContent, /玩家反制/);
+    assert.equal(counterplayGroup.children.some(child => child.textContent.includes('fast_kill')), true);
+    assert.match(capabilityList.textContent, /basic_attack/);
+    assert.match(capabilityList.textContent, /快速击杀以缩短磨血/);
+    assert.equal(intentPatternList.children.length, 3);
+    assert.deepEqual(
+        intentPatternList.children.map(row => row.children.find(child => child.dataset.intentField === 'token').value),
+        ['attack', 'bleed', 'attack']
+    );
+    assert.equal(fallbackSelect.value, 'attack');
+
+    findChildByDataset(capabilityList.children[0], 'capabilityField', 'type').value = 'telegraph_countdown';
+    findChildByDataset(capabilityList.children[0], 'capabilityField', 'cadence').value = 'windup_1_turn';
+    findChildByDataset(capabilityList.children[0], 'capabilityField', 'pressure').value = 'readable_burst';
+    findChildByDataset(capabilityList.children[0], 'capabilityField', 'counterplay').children.forEach(chip => {
+        const checkbox = chip.children.find(child => child.tagName === 'INPUT');
+        checkbox.checked = checkbox.value === 'guard' || checkbox.value === 'interrupt';
+    });
+    findChildByDataset(intentPatternList.children[1], 'intentField', 'token').value = 'heavy_attack';
+    fallbackSelect.value = 'recover';
+
+    page.syncCurrentEnemyFromForm();
+    const enemy = page.workspace.exportDocument().enemies.goblin_story_headhunter;
+
+    assert.deepEqual(enemy.capabilities[0], {
+        type: 'telegraph_countdown',
+        cadence: 'windup_1_turn',
+        pressure: 'readable_burst',
+        counterplay: ['guard', 'interrupt']
+    });
+    assert.deepEqual(enemy.intentModel.pattern, ['attack', 'heavy_attack', 'attack']);
+    assert.equal(enemy.intentModel.fallback, 'recover');
+});
+
+test('EnemyEditorPage renders decisionModel as an executable priority table', async () => {
+    const { page, dom } = await createPageContext();
+    page.loadDocument(buildWrappedEnemiesWithEnums());
+
+    const decisionTab = dom.window.document.getElementById('decisionTab');
+    const decisionPanel = dom.window.document.getElementById('decisionPanel');
+    const modeSelect = dom.window.document.getElementById('decisionModeInput');
+    const actionList = dom.window.document.getElementById('decisionActionList');
+
+    decisionTab.dispatchEvent(new Event('click'));
+
+    assert.equal(decisionPanel.hidden, false);
+    assert.equal(modeSelect.tagName, 'SELECT');
+    assert.equal(modeSelect.value, 'intent_priority_table');
+    assert.equal(actionList.children.length, 1);
+
+    const row = actionList.children[0];
+    assert.equal(findChildByDataset(row, 'decisionField', 'priority').value, '100');
+    assert.equal(findChildByDataset(row, 'decisionField', 'whenType').value, 'always');
+    assert.equal(findChildByDataset(row, 'decisionField', 'intent').value, 'attack');
+    assert.equal(findChildByDataset(row, 'decisionField', 'skillId').tagName, 'SELECT');
+    assert.equal(findChildByDataset(row, 'decisionField', 'skillId').value, 'skill_throw_stone');
+    assert.equal(findChildByDataset(row, 'decisionField', 'targetRule').value, 'player_weak_part');
+    assert.equal(findChildByDataset(row, 'decisionField', 'telegraph').checked, false);
+    assert.match(row.textContent, /ActionPriorityTable/);
+    assert.match(row.textContent, /when: always/);
+
+    findChildByDataset(row, 'decisionField', 'priority').value = '80';
+    findChildByDataset(row, 'decisionField', 'whenType').value = 'self_hp_lte';
+    findChildByDataset(row, 'decisionField', 'whenValue').value = '0.5';
+    findChildByDataset(row, 'decisionField', 'intent').value = 'bleed';
+    findChildByDataset(row, 'decisionField', 'skillId').value = 'enemy_skill_rusty_shiv';
+    findChildByDataset(row, 'decisionField', 'targetRule').value = 'fixed_part:head';
+    findChildByDataset(row, 'decisionField', 'telegraph').checked = true;
+
+    page.syncCurrentEnemyFromForm();
+    const enemy = page.workspace.exportDocument().enemies.goblin_story_headhunter;
+
+    assert.equal(enemy.decisionModel.mode, 'intent_priority_table');
+    assert.deepEqual(enemy.decisionModel.intentTimeline, ['attack', 'bleed', 'attack']);
+    assert.equal(enemy.decisionModel.actions[0].priority, 80);
+    assert.deepEqual(enemy.decisionModel.actions[0].when, { selfHpRatioLte: 0.5 });
+    assert.equal(enemy.decisionModel.actions[0].intent, 'bleed');
+    assert.equal(enemy.decisionModel.actions[0].skillId, 'enemy_skill_rusty_shiv');
+    assert.equal(enemy.decisionModel.actions[0].targetRule, 'fixed_part:head');
+    assert.equal(enemy.decisionModel.actions[0].telegraph, true);
+});
+
+test('EnemyEditorPage renders run pressure and persistence as enum controls', async () => {
+    const { page, dom } = await createPageContext();
+    page.loadDocument(buildWrappedEnemiesWithEnums());
+
+    const typeSelect = dom.window.document.getElementById('runPressureTypeInput');
+    const budgetInput = dom.window.document.getElementById('runPressureDamageBudgetInput');
+    const impactSelect = dom.window.document.getElementById('runPressureCarryoverImpactInput');
+    const counterplaySelect = dom.window.document.getElementById('runPressureCounterplayInput');
+    const carryOverSelect = dom.window.document.getElementById('stateCarryOverInput');
+    const clearSelect = dom.window.document.getElementById('stateClearAfterBattleInput');
+
+    assert.equal(typeSelect.tagName, 'SELECT');
+    assert.equal(impactSelect.multiple, true);
+    assert.equal(counterplaySelect.multiple, true);
+    assert.equal(carryOverSelect.multiple, true);
+    assert.equal(clearSelect.multiple, true);
+    assert.equal(typeSelect.value, 'hp_attrition');
+    assert.equal(String(budgetInput.value), '12');
+    assert.deepEqual(impactSelect.children.filter(option => option.selected).map(option => option.value), []);
+    assert.deepEqual(counterplaySelect.children.filter(option => option.selected).map(option => option.value), ['fast_kill', 'healing']);
+    assert.deepEqual(carryOverSelect.children.filter(option => option.selected).map(option => option.value), ['hp', 'armor']);
+    assert.deepEqual(clearSelect.children.filter(option => option.selected).map(option => option.value), ['bleed', 'poison', 'slow', 'vulnerable', 'stun', 'temporary_buff']);
+
+    typeSelect.value = 'armor_attrition';
+    budgetInput.value = '8';
+    impactSelect.children.forEach(option => { option.selected = option.value === 'armor_loss'; });
+    counterplaySelect.children.forEach(option => { option.selected = option.value === 'guard' || option.value === 'interrupt'; });
+    carryOverSelect.children.forEach(option => { option.selected = option.value === 'armor'; });
+    clearSelect.children.forEach(option => { option.selected = option.value === 'poison'; });
+
+    page.syncCurrentEnemyFromForm();
+    const enemy = page.workspace.exportDocument().enemies.goblin_story_headhunter;
+    assert.deepEqual(enemy.runPressure, {
+        type: 'armor_attrition',
+        carryoverImpact: ['armor_loss'],
+        expectedDamageBudget: 8,
+        counterplay: ['guard', 'interrupt']
+    });
+    assert.deepEqual(enemy.statePersistence, {
+        carryOver: ['armor'],
+        clearAfterBattle: ['poison']
+    });
 });
 
 test('EnemyEditorPage renders enemies and keeps current form changes in workspace before switching', async () => {

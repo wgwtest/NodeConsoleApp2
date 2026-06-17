@@ -54,6 +54,12 @@ class DataManager {
         return rawBuffs;
     }
 
+    _unwrapEnemyDefinitions(rawEnemies) {
+        if (!rawEnemies || typeof rawEnemies !== 'object') return {};
+        if (rawEnemies.enemies && typeof rawEnemies.enemies === 'object') return rawEnemies.enemies;
+        return rawEnemies;
+    }
+
     _unwrapLevelDefinitions(rawLevels) {
         if (!rawLevels || typeof rawLevels !== 'object') return {};
         if (rawLevels.levels && typeof rawLevels.levels === 'object') return rawLevels.levels;
@@ -216,6 +222,11 @@ class DataManager {
             case 'buffs':
                 if (!rawPack.buffs || typeof rawPack.buffs !== 'object') {
                     throw new Error('Buffs data must provide a buffs object.');
+                }
+                break;
+            case 'enemies':
+                if ((rawPack.$schemaVersion || rawPack.meta) && (!rawPack.enemies || typeof rawPack.enemies !== 'object')) {
+                    throw new Error('Wrapped enemies data must provide an enemies object.');
                 }
                 break;
             case 'levels':
@@ -1012,7 +1023,7 @@ class DataManager {
             ]);
 
             const items = itemsPack.raw;
-            const enemies = enemiesPack.raw;
+            const enemies = this._unwrapEnemyDefinitions(enemiesPack.raw);
             const buffs = buffsPack.raw;
             const rawLevelMapPack = levelMapPack ? levelMapPack.raw : null;
             const packageLevels = levelMapPack?.entry?.packageLevels || null;

@@ -36,6 +36,12 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function unwrapEnemies(document) {
+  return document?.enemies && typeof document.enemies === 'object'
+    ? document.enemies
+    : document;
+}
+
 function buildCandidateLevelDocument(levelsDocument, candidateEnemies) {
   const nextDocument = clone(levelsDocument);
   const levels = asObject(nextDocument.levels);
@@ -74,11 +80,12 @@ function buildCandidateLevelDocument(levelsDocument, candidateEnemies) {
 }
 
 test('EnemyWorkspace parses the V2 candidate pack and preserves design-only fields', async () => {
-  const candidateEnemies = await readJson('assets/enemy_packs/authoring/enemies_20260531_000000.json');
+  const candidatePack = await readJson('assets/enemy_packs/authoring/enemies_20260531_000000.json');
+  const candidateEnemies = unwrapEnemies(candidatePack);
   const enemySkillPack = await readJson('assets/data/skills_enemy_v1.json');
   const { EnemyWorkspace } = await importSourceModule('script/editor/enemy/EnemyWorkspace.js');
 
-  const workspace = new EnemyWorkspace(candidateEnemies, { skillCatalog: enemySkillPack });
+  const workspace = new EnemyWorkspace(candidatePack, { skillCatalog: enemySkillPack });
   const missingSkills = workspace.validateDocument()
     .filter(issue => issue.code === 'missing_skill_reference')
     .map(issue => `${issue.enemyId}:${issue.refId}`);
@@ -86,16 +93,20 @@ test('EnemyWorkspace parses the V2 candidate pack and preserves design-only fiel
 
   assert.deepEqual(missingSkills, []);
   assert.equal(workspace.listEnemies().length, 30);
+  assert.equal(exported.$schemaVersion, 'enemies_v2_1');
+  assert.equal(exported.meta?.selectedPackId, 'enemy_v2_story');
+  assert.equal(exported.enemies && typeof exported.enemies === 'object', true);
   for (const [enemyId, sourceEnemy] of Object.entries(candidateEnemies)) {
-    assert.deepEqual(exported[enemyId].capabilities, sourceEnemy.capabilities, `${enemyId} capabilities lost`);
-    assert.deepEqual(exported[enemyId].intentModel, sourceEnemy.intentModel, `${enemyId} intentModel lost`);
-    assert.deepEqual(exported[enemyId].runPressure, sourceEnemy.runPressure, `${enemyId} runPressure lost`);
-    assert.deepEqual(exported[enemyId].statePersistence, sourceEnemy.statePersistence, `${enemyId} statePersistence lost`);
+    assert.deepEqual(exported.enemies[enemyId].capabilities, sourceEnemy.capabilities, `${enemyId} capabilities lost`);
+    assert.deepEqual(exported.enemies[enemyId].intentModel, sourceEnemy.intentModel, `${enemyId} intentModel lost`);
+    assert.deepEqual(exported.enemies[enemyId].runPressure, sourceEnemy.runPressure, `${enemyId} runPressure lost`);
+    assert.deepEqual(exported.enemies[enemyId].statePersistence, sourceEnemy.statePersistence, `${enemyId} statePersistence lost`);
   }
 });
 
 test('DataManagerV2 instantiates all story levels against the V2 candidate pack', async () => {
-  const candidateEnemies = await readJson('assets/enemy_packs/authoring/enemies_20260531_000000.json');
+  const candidatePack = await readJson('assets/enemy_packs/authoring/enemies_20260531_000000.json');
+  const candidateEnemies = unwrapEnemies(candidatePack);
   const levelsDocument = await readJson('assets/map_packs/current/story_pack_v1/levels.json');
   const candidateLevelsDocument = buildCandidateLevelDocument(levelsDocument, candidateEnemies);
   const { default: dm } = await importSourceModule('script/engine/DataManagerV2.js');
@@ -134,7 +145,8 @@ test('DataManagerV2 instantiates all story levels against the V2 candidate pack'
 });
 
 test('EnemyActionPlanner can plan first-turn actions for V2 candidate enemies', async () => {
-  const candidateEnemies = await readJson('assets/enemy_packs/authoring/enemies_20260531_000000.json');
+  const candidatePack = await readJson('assets/enemy_packs/authoring/enemies_20260531_000000.json');
+  const candidateEnemies = unwrapEnemies(candidatePack);
   const enemySkillPack = await readJson('assets/data/skills_enemy_v1.json');
   const enemySkillMap = new Map((enemySkillPack.skills || []).map(skill => [skill.id, skill]));
   const { default: EnemyActionPlanner } = await importSourceModule('script/engine/EnemyActionPlanner.js');

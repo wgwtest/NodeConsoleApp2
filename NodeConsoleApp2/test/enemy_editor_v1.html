@@ -317,22 +317,30 @@
         }
 
         .tabs {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
             gap: 6px;
             margin-top: 10px;
-            flex-wrap: wrap;
+            padding: 6px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel-soft);
         }
 
         .tab {
+            min-width: 0;
             color: var(--muted);
-            background: #fff;
-            border-color: var(--line);
+            background: transparent;
+            border-color: transparent;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .tab.active {
+        .tab.active,
+        .tab[aria-selected="true"] {
             color: #fff;
-            background: var(--red);
-            border-color: var(--red);
+            background: var(--ink);
+            border-color: var(--ink);
         }
 
         .editor-body {
@@ -340,9 +348,13 @@
             overflow: auto;
             padding: 12px 14px;
             display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1fr);
             gap: 12px;
             align-content: start;
+        }
+
+        .editor-panel[hidden] {
+            display: none;
         }
 
         .section {
@@ -390,6 +402,163 @@
             min-height: 72px;
             resize: vertical;
             line-height: 1.45;
+        }
+
+        .list-toolbar {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .editable-list {
+            margin-top: 10px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .capability-row,
+        .intent-row,
+        .decision-row {
+            display: grid;
+            gap: 8px;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel-soft);
+        }
+
+        .capability-row {
+            grid-template-columns: minmax(150px, 0.75fr) minmax(150px, 0.75fr) minmax(170px, 0.9fr) minmax(260px, 1.25fr) auto;
+            align-items: start;
+        }
+
+        .capability-cell {
+            display: grid;
+            gap: 5px;
+            min-width: 0;
+        }
+
+        .capability-label {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .capability-cell select {
+            width: 100%;
+            min-height: 34px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            padding: 7px 8px;
+            outline: 0;
+            background: var(--panel);
+            color: var(--ink);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .check-chip-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 88px;
+            overflow: auto;
+            padding: 6px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: var(--panel);
+        }
+
+        .check-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            min-height: 25px;
+            padding: 3px 7px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: #fff;
+            color: var(--ink);
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .check-chip input {
+            width: 13px;
+            height: 13px;
+            margin: 0;
+        }
+
+        .intent-row {
+            grid-template-columns: 52px minmax(170px, 0.9fr) minmax(0, 1fr) auto;
+            align-items: end;
+        }
+
+        .decision-row {
+            grid-template-columns: minmax(78px, 0.4fr) minmax(120px, 0.7fr) minmax(110px, 0.55fr) minmax(120px, 0.7fr) minmax(170px, 1fr) minmax(150px, 0.9fr) minmax(120px, 0.7fr) auto auto;
+            align-items: start;
+        }
+
+        .row-index {
+            min-height: 34px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fff;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .token-help {
+            min-height: 34px;
+            padding: 7px 8px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fff;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .capability-help {
+            grid-column: 1 / -1;
+            padding: 7px 8px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fff;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .advanced-block {
+            margin-top: 12px;
+            border-top: 1px solid var(--line);
+            padding-top: 10px;
+        }
+
+        .advanced-block summary {
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .advanced-block textarea {
+            min-height: 220px;
+            font-family: "Cascadia Mono", "Consolas", monospace;
+            font-size: 12px;
+            line-height: 1.45;
+            white-space: pre;
+        }
+
+        .field select[multiple] {
+            min-height: 74px;
         }
 
         .art-block {
@@ -586,90 +755,122 @@
 
             <section class="editor">
                 <div class="editor-head">
-                    <h2>敌人模板</h2>
-                    <div class="note">主表单维护敌人真值，地图服务预览只消费派生摘要。</div>
-                    <div class="tabs">
-                        <button class="tab active" type="button">概览</button>
-                        <button class="tab" type="button">属性</button>
-                        <button class="tab" type="button">部位</button>
-                        <button class="tab" type="button">技能组</button>
-                        <button class="tab" type="button">原画资产</button>
-                        <button class="tab" type="button">地图服务</button>
-                        <button class="tab" type="button">高级 JSON</button>
+                    <h2>????</h2>
+                    <div class="note">???? schema ?????????? enemy pack ? meta.enums / meta.fieldNotes ???</div>
+                    <div class="tabs" role="tablist" aria-label="??????">
+                        <button id="identityTab" class="tab active" type="button" role="tab" aria-selected="true" data-editor-tab="identity">??</button>
+                        <button id="statsTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="stats">????</button>
+                        <button id="capabilitiesTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="capabilities">????</button>
+                        <button id="intentTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="intent">????</button>
+                        <button id="decisionTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="decision">????</button>
+                        <button id="pressureTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="pressure">????</button>
+                        <button id="assetsTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="assets">????</button>
                     </div>
                 </div>
 
                 <div class="editor-body">
-                    <section class="section">
-                        <h3>基础信息</h3>
+                    <section id="identityPanel" class="section editor-panel" role="tabpanel" data-editor-panel="identity">
+                        <h3>????</h3>
                         <div class="field-grid">
-                            <label class="field">
-                                <span>ID 创建后只读</span>
-                                <input id="enemyIdInput" readonly>
-                            </label>
-                            <label class="field">
-                                <span>名称</span>
-                                <input id="enemyNameInput">
-                            </label>
-                            <label class="field">
-                                <span>种族</span>
-                                <input id="enemyRaceInput">
-                            </label>
-                            <label class="field">
-                                <span>职业</span>
-                                <input id="enemyClassInput">
-                            </label>
-                            <label class="field">
-                                <span>标签</span>
-                                <input id="enemyTagsInput">
-                            </label>
+                            <label class="field"><span>ID ?????</span><input id="enemyIdInput" readonly></label>
+                            <label class="field"><span>??</span><input id="enemyNameInput"></label>
+                            <label class="field"><span>????? meta.enums.races?</span><select id="enemyRaceInput"></select></label>
+                            <label class="field"><span>????? meta.enums.classes?</span><select id="enemyClassInput"></select></label>
+                            <label class="field"><span>????? meta.enums.tags???????????</span><select id="enemyTagsInput" multiple></select></label>
                         </div>
-                        <div class="field-grid single">
-                            <label class="field">
-                                <span>备注</span>
-                                <textarea id="enemyDescriptionInput"></textarea>
-                            </label>
-                        </div>
+                        <div class="field-grid single"><label class="field"><span>????</span><textarea id="enemyDescriptionInput"></textarea></label></div>
                     </section>
 
-                    <section class="section">
-                        <h3>战斗属性</h3>
+                    <section id="statsPanel" class="section editor-panel" role="tabpanel" data-editor-panel="stats" hidden>
+                        <h3>???????</h3>
                         <div class="field-grid">
                             <label class="field"><span>stats.hp</span><input id="enemyHpInput" type="number"></label>
                             <label class="field"><span>stats.maxHp</span><input id="enemyMaxHpInput" type="number"></label>
                             <label class="field"><span>stats.ap</span><input id="enemyApInput" type="number"></label>
                             <label class="field"><span>stats.speed</span><input id="enemySpeedInput" type="number"></label>
                         </div>
-                        <div class="note">切换敌人、保存工作稿或发布主流程前会自动写回当前表单。</div>
+                        <div class="note">???????????????????? bodyParts ?????</div>
                     </section>
 
-                        <section class="section">
-                            <h3>原画资产</h3>
-                            <div class="art-block">
-                                <div class="art-frame">
-                                    <img id="artPreviewPortrait" alt="敌人立绘">
-                                </div>
-                                <div class="field-grid single">
-                                    <div id="artPreviewState" class="art-state">未绑定原画资产</div>
-                                    <label class="field">
-                                        <span>敌人原画 battleSpriteRef</span>
-                                        <select id="battleSpriteSelect"></select>
-                                    </label>
-                                    <div class="note">下拉优先加载完整角色原画；地图头像不是当前重点。</div>
-                                    <label class="field"><span>portraitRef</span><input id="portraitRefInput"></label>
-                                    <label class="field"><span>mapPortraitRef</span><input id="mapPortraitRefInput"></label>
-                                    <label class="field"><span>battleSpriteRef 手动路径</span><input id="battleSpriteRefInput"></label>
-                                    <label class="field"><span>iconRef</span><input id="iconRefInput"></label>
-                                </div>
-                            </div>
-                        </section>
+                    <section id="capabilitiesPanel" class="section editor-panel" role="tabpanel" data-editor-panel="capabilities" hidden>
+                        <h3>??????</h3>
+                        <div class="list-toolbar">
+                            <div class="note" id="capabilityListNote">Capability rows are the main editor. Advanced JSON is only a fallback.</div>
+                            <button id="addCapabilityBtn" type="button" class="secondary">Add capability</button>
+                        </div>
+                        <div id="capabilityList" class="editable-list"></div>
+                        <details class="advanced-block">
+                            <summary>Advanced JSON</summary>
+                            <label class="field"><span>capabilities JSON?type ??? meta.enums.capabilityTypes</span><textarea id="capabilitiesJsonInput"></textarea></label>
+                        </details>
+                    </section>
 
-                    <section class="section">
-                        <h3>技能组</h3>
-                        <label class="field">
-                            <span>skills[] 每行一个 skillId</span>
-                            <textarea id="skillListInput"></textarea>
-                        </label>
+                    <section id="intentPanel" class="section editor-panel" role="tabpanel" data-editor-panel="intent" hidden>
+                        <h3>??????</h3>
+                        <div class="list-toolbar">
+                            <div class="note" id="intentListNote">Intent rows show the fixed turn loop in order.</div>
+                            <button id="addIntentTokenBtn" type="button" class="secondary">Add intent</button>
+                        </div>
+                        <div id="intentPatternList" class="editable-list"></div>
+                        <div class="field-grid">
+                            <label class="field"><span>fallback intent</span><select id="intentFallbackInput"></select></label>
+                        </div>
+                        <details class="advanced-block">
+                            <summary>Advanced JSON</summary>
+                            <label class="field"><span>intentModel JSON?pattern / fallback ??? meta.enums.intentTokens</span><textarea id="intentModelJsonInput"></textarea></label>
+                        </details>
+                        <label class="field"><span>skills[] ???? skillId</span><textarea id="skillListInput"></textarea></label>
+                    </section>
+
+                    <section id="decisionPanel" class="section editor-panel" role="tabpanel" data-editor-panel="decision" hidden>
+                        <h3>??????</h3>
+                        <div class="list-toolbar">
+                            <div class="note" id="decisionListNote">Decision rows are executable ActionPriorityTable entries.</div>
+                            <button id="addDecisionActionBtn" type="button" class="secondary">Add action</button>
+                        </div>
+                        <div class="field-grid">
+                            <label class="field"><span>decisionModel.mode</span><select id="decisionModeInput"></select></label>
+                        </div>
+                        <div id="decisionActionList" class="editable-list"></div>
+                        <details class="advanced-block">
+                            <summary>Advanced JSON</summary>
+                            <label class="field"><span>decisionModel JSON?actions ??? meta.enums</span><textarea id="decisionModelJsonInput"></textarea></label>
+                        </details>
+                    </section>
+
+                    <section id="pressurePanel" class="section editor-panel" role="tabpanel" data-editor-panel="pressure" hidden>
+                        <h3>?????????</h3>
+                        <div class="field-grid">
+                            <label class="field"><span>runPressure.type</span><select id="runPressureTypeInput"></select></label>
+                            <label class="field"><span>expectedDamageBudget</span><input id="runPressureDamageBudgetInput" type="number"></label>
+                            <label class="field"><span>carryoverImpact</span><select id="runPressureCarryoverImpactInput" multiple></select></label>
+                            <label class="field"><span>runPressure.counterplay</span><select id="runPressureCounterplayInput" multiple></select></label>
+                            <label class="field"><span>statePersistence.carryOver</span><select id="stateCarryOverInput" multiple></select></label>
+                            <label class="field"><span>statePersistence.clearAfterBattle</span><select id="stateClearAfterBattleInput" multiple></select></label>
+                        </div>
+                        <details class="advanced-block">
+                            <summary>Advanced JSON</summary>
+                            <div class="field-grid">
+                                <label class="field"><span>runPressure JSON?type ??? meta.enums.runPressureTypes</span><textarea id="runPressureJsonInput"></textarea></label>
+                                <label class="field"><span>statePersistence JSON?carryOver / clearAfterBattle ??? meta.enums</span><textarea id="statePersistenceJsonInput"></textarea></label>
+                            </div>
+                        </details>
+                    </section>
+
+                    <section id="assetsPanel" class="section editor-panel" role="tabpanel" data-editor-panel="assets" hidden>
+                        <h3>????</h3>
+                        <div class="art-block">
+                            <div class="art-frame"><img id="artPreviewPortrait" alt="????"></div>
+                            <div class="field-grid single">
+                                <div id="artPreviewState" class="art-state">???????</div>
+                                <label class="field"><span>???? battleSpriteRef</span><select id="battleSpriteSelect"></select></label>
+                                <div class="note">???????? tab ??????????????????</div>
+                                <label class="field"><span>portraitRef</span><input id="portraitRefInput"></label>
+                                <label class="field"><span>mapPortraitRef</span><input id="mapPortraitRefInput"></label>
+                                <label class="field"><span>battleSpriteRef ????</span><input id="battleSpriteRefInput"></label>
+                                <label class="field"><span>iconRef</span><input id="iconRefInput"></label>
+                            </div>
+                        </div>
                     </section>
                 </div>
             </section>
@@ -713,6 +914,87 @@
             <textarea id="exportOutput" readonly></textarea>
         </footer>
     </div>
+
+    <script>
+        (() => {
+            const text = {
+                title: '\u654c\u4eba\u8bbe\u8ba1',
+                note: '\u4e3b\u8868\u5355\u6309 schema \u5206\u533a\u7f16\u8f91\uff0c\u5b57\u6bb5\u6765\u6e90\u7531 enemy pack \u7684 meta.enums / meta.fieldNotes \u51b3\u5b9a\u3002',
+                tabs: {
+                    identity: '\u8eab\u4efd',
+                    stats: '\u6570\u503c\u90e8\u4f4d',
+                    capabilities: '\u81ea\u8eab\u80fd\u529b',
+                    intent: '\u610f\u56fe\u5faa\u73af',
+                    decision: '\u884c\u4e3a\u51b3\u7b56',
+                    pressure: '\u6d41\u7a0b\u538b\u529b',
+                    assets: '\u8d44\u4ea7\u5f15\u7528'
+                },
+                headings: {
+                    identity: '\u57fa\u7840\u8eab\u4efd',
+                    stats: '\u6218\u6597\u6570\u503c\u4e0e\u90e8\u4f4d',
+                    capabilities: '\u654c\u4eba\u81ea\u8eab\u80fd\u529b',
+                    intent: '\u56fa\u5b9a\u610f\u56fe\u5faa\u73af',
+                    decision: '\u884c\u4e3a\u51b3\u7b56\u8868',
+                    pressure: '\u6d41\u7a0b\u538b\u529b\u4e0e\u8de8\u5173\u89c4\u5219',
+                    assets: '\u8d44\u4ea7\u5f15\u7528'
+                },
+                labels: {
+                    enemyIdInput: 'ID \u521b\u5efa\u540e\u53ea\u8bfb',
+                    enemyNameInput: '\u540d\u79f0',
+                    enemyRaceInput: '\u79cd\u65cf\uff08\u6765\u81ea meta.enums.races\uff09',
+                    enemyClassInput: '\u804c\u4e1a\uff08\u6765\u81ea meta.enums.classes\uff09',
+                    enemyTagsInput: '\u6807\u7b7e\uff08\u6765\u81ea meta.enums.tags\uff0c\u591a\u9009\u4e34\u65f6\u7528\u9017\u53f7\u5206\u9694\uff09',
+                    enemyDescriptionInput: '\u8bbe\u8ba1\u8bf4\u660e',
+                    capabilitiesJsonInput: 'capabilities JSON\uff1btype \u5e94\u6765\u81ea meta.enums.capabilityTypes',
+                    intentModelJsonInput: 'intentModel JSON\uff1bpattern / fallback \u5e94\u6765\u81ea meta.enums.intentTokens',
+                    decisionModelJsonInput: 'decisionModel JSON\uff1bactions \u5e94\u7531\u7ed3\u6784\u5316\u51b3\u7b56\u8868\u751f\u6210',
+                    skillListInput: 'skills[] \u6bcf\u884c\u4e00\u4e2a skillId',
+                    runPressureTypeInput: '\u6d41\u7a0b\u538b\u529b\u7c7b\u578b\uff08\u6765\u81ea meta.enums.runPressureTypes\uff09',
+                    runPressureDamageBudgetInput: '\u9884\u671f\u4f24\u5bb3\u9884\u7b97',
+                    runPressureCarryoverImpactInput: '\u8de8\u5173\u5f71\u54cd\uff08\u6765\u81ea meta.enums.carryoverImpact\uff09',
+                    runPressureCounterplayInput: '\u6d41\u7a0b\u538b\u529b\u53cd\u5236\uff08\u6765\u81ea meta.enums.counterplay\uff09',
+                    stateCarryOverInput: '\u5141\u8bb8\u8de8\u5173\u4fdd\u7559\uff08HP / \u62a4\u7532\uff09',
+                    stateClearAfterBattleInput: '\u6218\u540e\u6e05\u9664\u72b6\u6001',
+                    runPressureJsonInput: 'runPressure JSON\uff1btype \u5e94\u6765\u81ea meta.enums.runPressureTypes',
+                    statePersistenceJsonInput: 'statePersistence JSON\uff1bcarryOver / clearAfterBattle \u5e94\u6765\u81ea meta.enums',
+                    battleSpriteSelect: '\u654c\u4eba\u539f\u753b battleSpriteRef',
+                    portraitRefInput: 'portraitRef',
+                    mapPortraitRefInput: 'mapPortraitRef',
+                    battleSpriteRefInput: 'battleSpriteRef \u624b\u52a8\u8def\u5f84',
+                    iconRefInput: 'iconRef'
+                },
+                statsNote: '\u90e8\u4f4d\u62a4\u7532\u4ecd\u5728\u53f3\u4fa7\u6458\u8981\u4e2d\u9884\u89c8\uff1b\u540e\u7eed\u53ef\u6269\u5c55\u4e3a bodyParts \u884c\u7f16\u8f91\u5668\u3002',
+                capabilityNote: '\u81ea\u8eab\u80fd\u529b\u662f\u80fd\u529b\u58f0\u660e\u548c\u8bca\u65ad\u6807\u7b7e\uff1bcadence \u662f\u8bbe\u8ba1\u8282\u594f\uff0c\u4e0d\u662f\u8fd0\u884c\u65f6\u89e6\u53d1\u5668\uff1b\u5b9e\u9645\u56de\u5408\u987a\u5e8f\u770b\u610f\u56fe\u5faa\u73af\u3002',
+                intentNote: '\u6309\u56de\u5408\u987a\u5e8f\u5c55\u793a\u56fa\u5b9a\u610f\u56fe\u5faa\u73af\uff0c\u6bcf\u4e2a token \u90fd\u663e\u793a\u4e2d\u6587\u542b\u4e49\u3002',
+                decisionNote: '\u8fd9\u91cc\u624d\u662f\u8fd0\u884c\u65f6\u53ef\u6267\u884c\u7684 ActionPriorityTable\uff1bwhen \u7c7b\u578b\u6765\u81ea meta.enums.decisionWhenTypes\uff0cskillId \u6765\u81ea meta.enums.enemySkillIds \u5e76\u5fc5\u987b\u5728\u672c\u654c\u4eba skills[] \u4e2d\u3002',
+                assetNote: '\u8d44\u4ea7\u9884\u89c8\u53ea\u653e\u5728\u672c tab \u5185\uff0c\u4e0d\u5360\u7528\u8eab\u4efd\u3001\u80fd\u529b\u3001\u610f\u56fe\u7f16\u8f91\u7a7a\u95f4\u3002',
+                artState: '\u672a\u7ed1\u5b9a\u539f\u753b\u8d44\u6e90',
+                previewTitle: '\u89c4\u5219\u4e0e\u68c0\u67e5',
+                previewNote: 'schema / \u5f15\u7528 / \u53d1\u5e03\u524d\u8bca\u65ad\uff0c\u4e0d\u5199\u5165\u5730\u56fe\u5305\u3002'
+            };
+            const setText = (selector, value) => {
+                const node = document.querySelector(selector);
+                if (node) node.textContent = value;
+            };
+            setText('.editor-head h2', text.title);
+            setText('.editor-head .note', text.note);
+            Object.entries(text.tabs).forEach(([key, value]) => setText(`[data-editor-tab="${key}"]`, value));
+            Object.entries(text.headings).forEach(([key, value]) => setText(`[data-editor-panel="${key}"] h3`, value));
+            Object.entries(text.labels).forEach(([id, value]) => {
+                const input = document.getElementById(id);
+                const label = input?.closest('label')?.querySelector('span');
+                if (label) label.textContent = value;
+            });
+            setText('#statsPanel .note', text.statsNote);
+            setText('#capabilityListNote', text.capabilityNote);
+            setText('#intentListNote', text.intentNote);
+            setText('#decisionListNote', text.decisionNote);
+            setText('#assetsPanel .note', text.assetNote);
+            setText('#artPreviewState', text.artState);
+            setText('.preview .panel-head h2', text.previewTitle);
+            setText('.preview .panel-head .note', text.previewNote);
+        })();
+    </script>
 
     <script type="module">
         import { EnemyEditorPage } from '../script/editor/enemy/EnemyEditorPage.js';

@@ -26,6 +26,12 @@ async function readJson(filePath) {
   return JSON.parse(await fs.readFile(filePath, 'utf8'));
 }
 
+function unwrapEnemies(document) {
+  return document?.enemies && typeof document.enemies === 'object'
+    ? document.enemies
+    : document;
+}
+
 function collectWaveEnemyPoolIds(levelsDocument) {
   return Object.values(levelsDocument.levels || {})
     .flatMap(level => level.waves || [])
@@ -75,13 +81,19 @@ test('runtime current enemy pack publishes the V2 authoring roster', async () =>
   const runtimeEnemies = await readJson(runtimeEnemyPath);
   const authoringEnemies = await readJson(path.join(authoringEnemyRoot, 'enemies_20260531_000000.json'));
 
-  assert.deepEqual(Object.keys(runtimeEnemies).sort(), Object.keys(authoringEnemies).sort());
-  assert.equal(Object.keys(runtimeEnemies).length, 30);
-  assert.equal(Object.values(runtimeEnemies).every(enemy => enemy.tags?.includes('v2_candidate')), true);
+  const runtimeEnemyMap = unwrapEnemies(runtimeEnemies);
+  const authoringEnemyMap = unwrapEnemies(authoringEnemies);
+
+  assert.equal(runtimeEnemies.$schemaVersion, 'enemies_v2_1');
+  assert.equal(runtimeEnemies.meta?.contentDomain, 'enemy');
+  assert.deepEqual(Object.keys(runtimeEnemyMap).sort(), Object.keys(authoringEnemyMap).sort());
+  assert.equal(Object.keys(runtimeEnemyMap).length, 30);
+  assert.equal(Object.values(runtimeEnemyMap).every(enemy => enemy.tags?.includes('v2_candidate')), true);
 });
 
 test('story levels reference the V2 candidate assigned to each level', async () => {
-  const authoringEnemies = await readJson(path.join(authoringEnemyRoot, 'enemies_20260531_000000.json'));
+  const authoringEnemyPack = await readJson(path.join(authoringEnemyRoot, 'enemies_20260531_000000.json'));
+  const authoringEnemies = unwrapEnemies(authoringEnemyPack);
   const candidateByLevel = new Map(
     Object.values(authoringEnemies).map(enemy => [enemy.candidateForLevel, enemy.id])
   );

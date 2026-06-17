@@ -25,8 +25,104 @@ async function readJson(relativePath) {
   return JSON.parse(await fs.readFile(path.join(projectRoot, relativePath), 'utf8'));
 }
 
+function unwrapEnemies(document) {
+  return document?.enemies && typeof document.enemies === 'object'
+    ? document.enemies
+    : document;
+}
+
+test('enemy V2 candidate pack declares a standard data contract for editors', async () => {
+  const candidatePack = await readJson('assets/enemy_packs/authoring/enemies_20260531_000000.json');
+
+  assert.equal(candidatePack.$schemaVersion, 'enemies_v2_1');
+  assert.equal(candidatePack.meta?.contentDomain, 'enemy');
+  assert.equal(candidatePack.meta?.selectedPackId, 'enemy_v2_story');
+  assert.equal(candidatePack.enemies && typeof candidatePack.enemies === 'object', true);
+
+  const enums = candidatePack.meta?.enums || {};
+  for (const enumKey of [
+    'races',
+    'classes',
+    'tags',
+    'capabilityTypes',
+    'intentTokens',
+    'runPressureTypes',
+    'carryOver',
+    'clearAfterBattle',
+    'bodyParts',
+    'capabilityCadences',
+    'capabilityPressures',
+    'counterplay',
+    'carryoverImpact',
+    'decisionModelModes',
+    'decisionTargetRules',
+    'decisionWhenTypes',
+    'enemySkillIds'
+  ]) {
+    assert.equal(Array.isArray(enums[enumKey]), true, `meta.enums.${enumKey} must be an array`);
+    assert.equal(enums[enumKey].length > 0, true, `meta.enums.${enumKey} must not be empty`);
+  }
+
+  assert.equal(enums.races.includes('goblin'), true);
+  assert.equal(enums.classes.includes('scout'), true);
+  assert.equal(enums.tags.includes('v2_candidate'), true);
+  assert.equal(enums.capabilityTypes.includes('telegraph_countdown'), true);
+  assert.equal(enums.capabilityCadences.includes('intent_loop_slot'), true);
+  for (const unsupportedTrigger of [
+    'after_counter',
+    'after_mark',
+    'hp_50_percent',
+    'armor_break_phase',
+    'phase_2',
+    'phase_2_windup',
+    'phase_3',
+    'three_phases'
+  ]) {
+    assert.equal(
+      enums.capabilityCadences.includes(unsupportedTrigger),
+      false,
+      `meta.enums.capabilityCadences must not expose unsupported runtime trigger ${unsupportedTrigger}`
+    );
+  }
+  assert.equal(enums.intentTokens.includes('attack'), true);
+  assert.deepEqual(enums.decisionModelModes, ['intent_priority_table']);
+  assert.deepEqual(enums.decisionWhenTypes, [
+    'always',
+    'self_hp_lte',
+    'self_hp_gte',
+    'previous_intent',
+    'turn_modulo'
+  ]);
+  assert.deepEqual(enums.carryOver, allowedCarryOver);
+
+  const fieldNotes = candidatePack.meta?.fieldNotes || {};
+  for (const fieldKey of [
+    'enemies.*.race',
+    'enemies.*.class',
+    'enemies.*.tags[]',
+    'enemies.*.capabilities[].type',
+    'enemies.*.capabilities[].cadence',
+    'enemies.*.capabilities[].pressure',
+    'enemies.*.capabilities[].counterplay[]',
+    'enemies.*.decisionModel.mode',
+    'enemies.*.decisionModel.intentTimeline[]',
+    'enemies.*.decisionModel.actions[].when',
+    'enemies.*.decisionModel.actions[].intent',
+    'enemies.*.decisionModel.actions[].skillId',
+    'enemies.*.intentModel.pattern[]',
+    'enemies.*.runPressure.type',
+    'enemies.*.runPressure.carryoverImpact[]',
+    'enemies.*.runPressure.counterplay[]',
+    'enemies.*.statePersistence.carryOver[]'
+  ]) {
+    assert.equal(typeof fieldNotes[fieldKey], 'string', `meta.fieldNotes.${fieldKey} must explain edit rules`);
+    assert.match(fieldNotes[fieldKey], /meta\.enums/u, `${fieldKey} should reference meta.enums as the data source`);
+  }
+});
+
 test('enemy V2 候选包为 30 个正式关卡生成机制化主敌', async () => {
-  const candidateEnemies = await readJson('assets/enemy_packs/authoring/enemies_20260531_000000.json');
+  const candidatePack = await readJson('assets/enemy_packs/authoring/enemies_20260531_000000.json');
+  const candidateEnemies = unwrapEnemies(candidatePack);
   const enemySkills = await readJson('assets/data/skills_enemy_v1.json');
   const skillIds = new Set((enemySkills.skills || []).map(skill => skill.id));
   const enemies = Object.values(candidateEnemies);
@@ -51,11 +147,41 @@ test('enemy V2 候选包为 30 个正式关卡生成机制化主敌', async () =
     assert.equal(enemy.capabilities.length >= 1, true, `${enemy.id} 至少需要一个自身能力`);
     for (const capability of enemy.capabilities) {
       assert.equal(typeof capability.type, 'string', `${enemy.id} capability 应有 type`);
+      assert.equal(
+        candidatePack.meta.enums.capabilityCadences.includes(capability.cadence),
+        true,
+        `${enemy.id} capability cadence must come from meta.enums.capabilityCadences`
+      );
+      assert.equal(
+        candidatePack.meta.enums.capabilityPressures.includes(capability.pressure),
+        true,
+        `${enemy.id} capability pressure must come from meta.enums.capabilityPressures`
+      );
       assert.equal(Array.isArray(capability.counterplay), true, `${enemy.id} capability 应有 counterplay`);
+      for (const counterplay of capability.counterplay) {
+        assert.equal(
+          candidatePack.meta.enums.counterplay.includes(counterplay),
+          true,
+          `${enemy.id} capability counterplay must come from meta.enums.counterplay`
+        );
+      }
     }
 
     assert.equal(Array.isArray(enemy.intentModel?.pattern), true, `${enemy.id} 应声明意图循环`);
     assert.equal(enemy.intentModel.pattern.length >= 2, true, `${enemy.id} 意图循环不能为空`);
+    assert.equal(enemy.decisionModel?.mode, 'intent_priority_table', `${enemy.id} 应声明可执行 decisionModel`);
+    assert.deepEqual(enemy.decisionModel.intentTimeline, enemy.intentModel.pattern, `${enemy.id} decisionModel 应复用当前意图时间线`);
+    assert.equal(Array.isArray(enemy.decisionModel.actions), true, `${enemy.id} decisionModel.actions 应为数组`);
+    assert.equal(enemy.decisionModel.actions.length >= enemy.skills.length, true, `${enemy.id} decisionModel.actions 应覆盖敌人技能`);
+    for (const action of enemy.decisionModel.actions) {
+      assert.equal(typeof action.priority, 'number', `${enemy.id} decision action 应有 priority`);
+      assert.equal(typeof action.intent, 'string', `${enemy.id} decision action 应有 intent`);
+      assert.equal(skillIds.has(action.skillId), true, `${enemy.id} decision action 引用不存在技能 ${action.skillId}`);
+      assert.equal(candidatePack.meta.enums.enemySkillIds.includes(action.skillId), true, `${enemy.id} decision action skillId must come from meta.enums.enemySkillIds`);
+      assert.equal(enemy.skills.includes(action.skillId), true, `${enemy.id} decision action 必须引用该敌人 skills[] 内技能 ${action.skillId}`);
+      assert.equal(typeof action.targetRule, 'string', `${enemy.id} decision action 应有 targetRule`);
+      assert.equal(candidatePack.meta.enums.decisionTargetRules.includes(action.targetRule), true, `${enemy.id} decision action targetRule must come from meta.enums.decisionTargetRules`);
+    }
     assert.equal(typeof enemy.runPressure?.type, 'string', `${enemy.id} 应声明流程压力`);
     assert.deepEqual(enemy.statePersistence?.carryOver, allowedCarryOver, `${enemy.id} 跨关只继承 HP/护甲`);
     for (const clearedState of requiredClearAfterBattle) {

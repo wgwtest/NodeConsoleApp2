@@ -227,6 +227,28 @@ function normalizeAssetCatalog(value) {
     return result;
 }
 
+function normalizeEnemyPackDocument(rawDocument) {
+    const source = asObject(rawDocument);
+    const hasWrappedEnemies = source.enemies && typeof source.enemies === 'object' && !Array.isArray(source.enemies);
+    if (!hasWrappedEnemies) {
+        return {
+            isWrapped: false,
+            topLevel: {},
+            meta: null,
+            enemies: source
+        };
+    }
+
+    const topLevel = clone(source);
+    delete topLevel.enemies;
+    return {
+        isWrapped: true,
+        topLevel,
+        meta: source.meta && typeof source.meta === 'object' ? clone(source.meta) : null,
+        enemies: source.enemies
+    };
+}
+
 function normalizeSpriteAsset(asset) {
     const source = asObject(asset);
     const id = normalizeString(source.id, normalizeString(source.src, ''));
@@ -285,8 +307,41 @@ function inferDefaultPortraitRef(enemy) {
     return '';
 }
 
+function parseCandidateLevelOrder(enemy) {
+    const match = String(enemy?.candidateForLevel || '').match(/^level_(\d+)_(\d+)$/u);
+    if (!match) return null;
+    return {
+        chapter: Number(match[1]),
+        level: Number(match[2])
+    };
+}
+
+function compareEnemyFallbackOrder(left, right) {
+    const raceDiff = String(left.race || '').localeCompare(String(right.race || ''), 'zh-CN');
+    if (raceDiff !== 0) return raceDiff;
+    const classDiff = String(left.class || '').localeCompare(String(right.class || ''), 'zh-CN');
+    if (classDiff !== 0) return classDiff;
+    return String(left.id || '').localeCompare(String(right.id || ''), 'zh-CN');
+}
+
+function compareEnemyCatalogOrder(left, right) {
+    const leftLevel = parseCandidateLevelOrder(left);
+    const rightLevel = parseCandidateLevelOrder(right);
+    if (leftLevel && rightLevel) {
+        if (leftLevel.chapter !== rightLevel.chapter) return leftLevel.chapter - rightLevel.chapter;
+        if (leftLevel.level !== rightLevel.level) return leftLevel.level - rightLevel.level;
+    } else if (leftLevel || rightLevel) {
+        return leftLevel ? -1 : 1;
+    }
+    return compareEnemyFallbackOrder(left, right);
+}
+
 export class EnemyWorkspace {
     constructor(rawDocument = {}, context = {}) {
+        const packDocument = normalizeEnemyPackDocument(rawDocument);
+        this.isWrappedPack = packDocument.isWrapped;
+        this.packTopLevel = packDocument.topLevel;
+        this.meta = packDocument.meta;
         this.skillCatalog = normalizeSkillCatalog(context.skillCatalog);
         this.skillAliases = { ...DEFAULT_ENEMY_SKILL_ALIASES, ...asObject(context.skillAliases) };
         this.assetCatalog = normalizeAssetCatalog(context.assetCatalog);
@@ -297,30 +352,41 @@ export class EnemyWorkspace {
         this.mapPack = asObject(context.mapPack);
         this.enemies = {};
 
-        const source = asObject(rawDocument);
+        const source = asObject(packDocument.enemies);
         Object.keys(source).forEach((enemyId) => {
             this.enemies[enemyId] = normalizeEnemy(enemyId, source[enemyId]);
         });
     }
 
     exportDocument() {
+        if (this.isWrappedPack) {
+            const exported = {
+                ...clone(this.packTopLevel),
+                enemies: clone(this.enemies)
+            };
+            if (this.meta) exported.meta = clone(this.meta);
+            return exported;
+        }
         return clone(this.enemies);
     }
 
     listEnemies() {
         return Object.values(this.enemies)
-            .sort((left, right) => {
-                const raceDiff = String(left.race || '').localeCompare(String(right.race || ''), 'zh-CN');
-                if (raceDiff !== 0) return raceDiff;
-                const classDiff = String(left.class || '').localeCompare(String(right.class || ''), 'zh-CN');
-                if (classDiff !== 0) return classDiff;
-                return String(left.id || '').localeCompare(String(right.id || ''), 'zh-CN');
-            })
+            .sort(compareEnemyCatalogOrder)
             .map(enemy => clone(enemy));
     }
 
     getEnemy(enemyId) {
         return this.enemies[enemyId] ? clone(this.enemies[enemyId]) : null;
+    }
+
+    getEnumValues(enumKey) {
+        return uniqueStringList(this.meta?.enums?.[enumKey]);
+    }
+
+    getEnumDescription(enumKey, enumValue) {
+        const description = this.meta?.enumDescriptions?.[enumKey]?.[enumValue];
+        return typeof description === 'string' ? description.trim() : '';
     }
 
     updateEnemy(enemyId, updater) {

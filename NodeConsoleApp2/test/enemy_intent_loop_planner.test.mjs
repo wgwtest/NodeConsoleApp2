@@ -114,3 +114,100 @@ test('EnemyActionPlanner uses intent fallback when the active token has no legal
   assert.equal(action?.intentToken, 'bleed');
   assert.equal(action?.intentSource, 'fallback');
 });
+
+test('EnemyActionPlanner prioritizes legal decisionModel actions before generic scoring', async () => {
+  const { default: EnemyActionPlanner } = await importSourceModule('script/engine/EnemyActionPlanner.js');
+  const skills = {
+    heavy_attack: makeAttackSkill('heavy_attack', 30, 2),
+    bleed_cut: makeBleedSkill('bleed_cut', 4, 1)
+  };
+  const planner = new EnemyActionPlanner({ getSkillConfig: skillId => skills[skillId] || null });
+  const player = createPlayer();
+  const enemy = {
+    ...makeEnemy({
+      visible: true,
+      pattern: ['attack'],
+      fallback: 'attack'
+    }),
+    decisionModel: {
+      mode: 'intent_priority_table',
+      intentTimeline: ['attack'],
+      fallbackIntent: 'attack',
+      actions: [
+        {
+          priority: 100,
+          when: { always: true },
+          intent: 'bleed',
+          skillId: 'bleed_cut',
+          targetRule: 'player_weak_part',
+          telegraph: false,
+          fallbackIntent: 'attack'
+        },
+        {
+          priority: 10,
+          when: { always: true },
+          intent: 'attack',
+          skillId: 'heavy_attack',
+          targetRule: 'player_weak_part',
+          telegraph: false,
+          fallbackIntent: 'attack'
+        }
+      ]
+    }
+  };
+
+  const action = planner.planTurn({ enemy, player, playerBodyParts: player.bodyParts, turnNumber: 1 });
+
+  assert.equal(action?.skillId, 'bleed_cut');
+  assert.equal(action?.intentToken, 'bleed');
+  assert.equal(action?.intentSource, 'decisionModel');
+  assert.equal(action?.decisionPriority, 100);
+});
+
+test('EnemyActionPlanner falls back from decisionModel actions with unmet conditions or illegal skills', async () => {
+  const { default: EnemyActionPlanner } = await importSourceModule('script/engine/EnemyActionPlanner.js');
+  const skills = {
+    heavy_attack: makeAttackSkill('heavy_attack', 30, 2),
+    bleed_cut: makeBleedSkill('bleed_cut', 4, 1)
+  };
+  const planner = new EnemyActionPlanner({ getSkillConfig: skillId => skills[skillId] || null });
+  const player = createPlayer();
+  const enemy = {
+    ...makeEnemy({
+      visible: true,
+      pattern: ['attack'],
+      fallback: 'bleed'
+    }),
+    stats: { ap: 1, maxAp: 3, speed: 10 },
+    decisionModel: {
+      mode: 'intent_priority_table',
+      intentTimeline: ['attack'],
+      fallbackIntent: 'bleed',
+      actions: [
+        {
+          priority: 100,
+          when: { selfHpRatioLte: 0.25 },
+          intent: 'attack',
+          skillId: 'heavy_attack',
+          targetRule: 'player_weak_part',
+          fallbackIntent: 'bleed'
+        },
+        {
+          priority: 90,
+          when: { always: true },
+          intent: 'attack',
+          skillId: 'heavy_attack',
+          targetRule: 'player_weak_part',
+          fallbackIntent: 'bleed'
+        }
+      ]
+    }
+  };
+
+  const action = planner.planTurn({ enemy, player, playerBodyParts: player.bodyParts, turnNumber: 1 });
+
+  assert.equal(action?.skillId, 'bleed_cut');
+  assert.equal(action?.intentToken, 'bleed');
+  assert.equal(action?.intentSource, 'decisionFallback');
+}
+);

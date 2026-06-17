@@ -1,4 +1,4 @@
-# 敌人编辑器设计说明
+﻿# 敌人编辑器设计说明
 
 创建时间：2026-05-22
 
@@ -876,3 +876,38 @@ MVP 必须达成：
 4. 地图编辑器只消费敌人模板摘要和 `templateId`，不编辑敌人模板本体。
 5. 第一阶段不改动现有敌人文件结构，继续以 `assets/data/enemies.json` 为标准输入输出。
 6. 后续如需 authoring 快照和发布链，可以在不破坏当前文件结构的前提下增量加入。
+
+## 12. Data-Driven Enemy Editing
+
+The enemy editor must treat the enemy pack contract as its UI model. It should open both legacy bare records and wrapped `enemies_v2_1` packs, but when the source is wrapped it must preserve `$schemaVersion`, `meta`, and unknown top-level pack fields on export.
+
+Editor control rules:
+
+1. Race and class are enum selections from `meta.enums.races` and `meta.enums.classes`, not arbitrary text when those enums exist.
+2. Tags are multi-select values from `meta.enums.tags`; free-form tag entry is only a fallback for legacy packs without enum metadata.
+3. Capability type, capability cadence, capability pressure, counterplay, intent pattern token, fallback token, run pressure type, run pressure carry-over impact, carry-over state, clear-after-battle state, and body part IDs must be generated from `meta.enums`.
+4. Text inputs are for display names, descriptions, failure signals, free-form design explanations, and asset refs.
+5. The editor must never derive domain rules from current visible rows alone when `meta.enums` is present; the pack metadata is the authority.
+
+The main editor surface should show enum-backed controls first. Advanced JSON is a fallback inspection/edit surface and must have enough height to inspect object structure; it is not the primary authoring UI for capability rows, intent loops, executable decision actions, or run-pressure rules.
+
+Capability rows must not label `capabilities[].cadence` as a runtime trigger. The editor should show it as `设计节奏（非运行时触发）`, because runtime behavior is driven by `intentModel.pattern[]`, `decisionModel.actions[]`, and `EnemyActionPlanner`, not by `capabilities[].cadence`.
+
+
+Decision table controls are now a first-class tab:
+
+1. `decisionModel.mode` is selected from `meta.enums.decisionModelModes`.
+2. `decisionModel.actions[].when` is edited through `meta.enums.decisionWhenTypes`; the editor may only expose condition types already parsed by `EnemyActionPlanner`.
+3. `decisionModel.actions[].skillId` is selected from `meta.enums.enemySkillIds` and should also exist in the current enemy `skills[]`.
+4. `decisionModel.actions[].intent` and `fallbackIntent` are selected from `meta.enums.intentTokens`.
+5. `decisionModel.actions[].targetRule` is selected from `meta.enums.decisionTargetRules`.
+6. `intentModel.pattern[]` remains the visible fixed timeline; `decisionModel.actions[]` is the executable skill selection table.
+The editor must read enum explanations from meta.enumDescriptions when present:
+
+1. `meta.enumDescriptions.capabilityCadences`
+2. `meta.enumDescriptions.capabilityPressures`
+3. `meta.enumDescriptions.counterplay`
+
+This prevents UI labels such as `after_counter`, `phase_2`, or `hp_50_percent` from appearing as if they were implemented if-else triggers. If those meanings are needed later, they must be added to `decisionModel.actions[].when` and implemented in `EnemyActionPlanner` before the editor exposes them.
+
+This means layout work comes after the data contract. A clean UI is useful only if it is bound to the same schema that runtime, tests, and publishing consume.

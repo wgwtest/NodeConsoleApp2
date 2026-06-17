@@ -67,6 +67,47 @@ test('EnemyWorkspace normalizes enemies, preserves unknown fields, and exports r
     assert.deepEqual(exported.goblin_story_headhunter.customField, { keep: true });
 });
 
+test('EnemyWorkspace lists V2 enemies by candidate level progression', async () => {
+    const { EnemyWorkspace } = await importSourceModule(workspaceModulePath);
+    const workspace = new EnemyWorkspace({
+        late_enemy: {
+            id: 'late_enemy',
+            name: 'A late enemy',
+            race: 'aaa',
+            class: 'aaa',
+            candidateForLevel: 'level_2_1',
+            stats: { hp: 50, maxHp: 50, ap: 3, speed: 8 },
+            bodyParts: {},
+            skills: []
+        },
+        early_enemy: {
+            id: 'early_enemy',
+            name: 'Z early enemy',
+            race: 'zzz',
+            class: 'zzz',
+            candidateForLevel: 'level_1_2',
+            stats: { hp: 50, maxHp: 50, ap: 3, speed: 8 },
+            bodyParts: {},
+            skills: []
+        },
+        middle_enemy: {
+            id: 'middle_enemy',
+            name: 'M middle enemy',
+            race: 'mmm',
+            class: 'mmm',
+            candidateForLevel: 'level_1_10',
+            stats: { hp: 50, maxHp: 50, ap: 3, speed: 8 },
+            bodyParts: {},
+            skills: []
+        }
+    });
+
+    assert.deepEqual(
+        workspace.listEnemies().map(enemy => enemy.id),
+        ['early_enemy', 'middle_enemy', 'late_enemy']
+    );
+});
+
 test('EnemyWorkspace validates skill, asset, body part, and level references', async () => {
     const { EnemyWorkspace } = await importSourceModule(workspaceModulePath);
     const workspace = new EnemyWorkspace(buildFixtureEnemies(), {

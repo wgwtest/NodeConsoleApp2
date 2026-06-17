@@ -31,7 +31,9 @@
     },
     "enemies": {
       "kind": "enemies",
-      "path": "/assets/enemy_packs/current/enemies.json"
+      "path": "/assets/enemy_packs/current/enemies.json",
+      "schemaVersion": "enemies_v2_1",
+      "rootKey": "enemies"
     },
     "levels": {
       "kind": "levels",

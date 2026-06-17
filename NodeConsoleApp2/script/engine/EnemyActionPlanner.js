@@ -23,7 +23,8 @@ export default class EnemyActionPlanner {
 
         if (candidates.length === 0) return null;
 
-        const intentPlan = this._selectIntentCandidates(candidates, enemy, { turnNumber, turnIndex });
+        const intentPlan = this._selectDecisionModelCandidates(candidates, enemy, { player, playerBodyParts, turnNumber, turnIndex })
+            || this._selectIntentCandidates(candidates, enemy, { turnNumber, turnIndex });
         const ranked = intentPlan.candidates.length > 0 ? intentPlan.candidates : candidates;
         ranked.sort((a, b) => b.score - a.score);
         const best = ranked[0];
@@ -46,8 +47,54 @@ export default class EnemyActionPlanner {
             out.intentSource = intentPlan.source;
             out.intentIndex = intentPlan.intent.index;
             out.intentPatternLength = intentPlan.intent.patternLength;
+            if (intentPlan.decisionAction) {
+                out.decisionPriority = Number(intentPlan.decisionAction.priority ?? 0) || 0;
+                out.decisionTargetRule = intentPlan.decisionAction.targetRule || null;
+                out.telegraph = Boolean(intentPlan.decisionAction.telegraph);
+            }
         }
         return out;
+    }
+
+    _selectDecisionModelCandidates(candidates, enemy, context = {}) {
+        const model = enemy?.decisionModel;
+        const actions = Array.isArray(model?.actions) ? model.actions : [];
+        if (model?.mode !== 'intent_priority_table' || actions.length === 0) return null;
+
+        const sortedActions = [...actions]
+            .filter(action => action && typeof action === 'object')
+            .sort((a, b) => (Number(b.priority ?? 0) || 0) - (Number(a.priority ?? 0) || 0));
+
+        for (const action of sortedActions) {
+            if (!this._decisionConditionMatches(action.when, enemy, context)) continue;
+
+            const direct = this._findDecisionActionCandidate(candidates, action, enemy);
+            if (direct) {
+                return {
+                    intent: this._buildDecisionIntent(action, model, context),
+                    candidates: [direct],
+                    selectedToken: this._normalizeIntentToken(action.intent || model.fallbackIntent || model.intent),
+                    source: 'decisionModel',
+                    decisionAction: action
+                };
+            }
+
+            const fallbackToken = this._normalizeIntentToken(action.fallbackIntent || model.fallbackIntent);
+            if (fallbackToken) {
+                const fallback = this._filterCandidatesByIntent(candidates, fallbackToken, enemy);
+                if (fallback.length > 0) {
+                    return {
+                        intent: this._buildDecisionIntent({ ...action, intent: fallbackToken }, model, context),
+                        candidates: fallback,
+                        selectedToken: fallbackToken,
+                        source: 'decisionFallback',
+                        decisionAction: action
+                    };
+                }
+            }
+        }
+
+        return null;
     }
 
     _selectIntentCandidates(candidates, enemy, { turnNumber, turnIndex } = {}) {
@@ -70,6 +117,62 @@ export default class EnemyActionPlanner {
         }
 
         return { intent, candidates: [], selectedToken: null, source: 'score' };
+    }
+
+    _buildDecisionIntent(action, model, { turnNumber, turnIndex } = {}) {
+        const timeline = Array.isArray(model?.intentTimeline)
+            ? model.intentTimeline.map(token => this._normalizeIntentToken(token)).filter(Boolean)
+            : [];
+        const providedIndex = Number.isFinite(Number(turnIndex))
+            ? Number(turnIndex)
+            : (Number.isFinite(Number(turnNumber)) ? Number(turnNumber) - 1 : 0);
+        const index = timeline.length > 0
+            ? ((Math.trunc(providedIndex) % timeline.length) + timeline.length) % timeline.length
+            : 0;
+        return {
+            token: this._normalizeIntentToken(action.intent || timeline[index] || model?.fallbackIntent || 'attack'),
+            fallback: action.fallbackIntent || model?.fallbackIntent,
+            index,
+            patternLength: timeline.length || 1
+        };
+    }
+
+    _findDecisionActionCandidate(candidates, action, enemy) {
+        const skillId = String(action?.skillId || '').trim();
+        if (!skillId) return null;
+        const candidate = candidates.find(entry => entry.skill?.id === skillId);
+        if (!candidate || !this._canPaySkill(candidate.skill, enemy)) return null;
+        const intent = this._normalizeIntentToken(action.intent);
+        if (intent && !this._skillMatchesIntent(candidate.skill, intent, candidate.summary)) return null;
+        return candidate;
+    }
+
+    _decisionConditionMatches(condition, enemy, { turnNumber, turnIndex } = {}) {
+        const source = condition && typeof condition === 'object' ? condition : { always: true };
+        if (source.always === true) return true;
+
+        const hp = Number(enemy?.hp ?? enemy?.stats?.hp ?? 0) || 0;
+        const maxHp = Number(enemy?.maxHp ?? enemy?.stats?.maxHp ?? hp) || hp || 1;
+        const hpRatio = maxHp > 0 ? hp / maxHp : 1;
+        if (source.selfHpRatioLte !== undefined && hpRatio > Number(source.selfHpRatioLte)) return false;
+        if (source.selfHpRatioGte !== undefined && hpRatio < Number(source.selfHpRatioGte)) return false;
+
+        const turnValue = Number.isFinite(Number(turnNumber))
+            ? Number(turnNumber)
+            : (Number.isFinite(Number(turnIndex)) ? Number(turnIndex) + 1 : 1);
+        if (source.turnNumberModulo && typeof source.turnNumberModulo === 'object') {
+            const mod = Number(source.turnNumberModulo.mod ?? 0) || 0;
+            const equals = Number(source.turnNumberModulo.equals ?? 0) || 0;
+            if (mod > 0 && (Math.trunc(turnValue) % mod) !== equals) return false;
+        }
+
+        const previousIntent = this._normalizeIntentToken(source.previousIntent);
+        if (previousIntent) {
+            const previous = this._resolveIntent(enemy, { turnNumber: Math.max(1, turnValue - 1) });
+            if (!previous || previous.token !== previousIntent) return false;
+        }
+
+        return true;
     }
 
     _resolveIntent(enemy, { turnNumber, turnIndex } = {}) {
