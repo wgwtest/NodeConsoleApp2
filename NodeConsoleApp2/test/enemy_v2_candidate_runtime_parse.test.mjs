@@ -6,6 +6,7 @@ import { Buffer } from 'node:buffer';
 import { test } from 'node:test';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
+const decisionModelModulePath = path.join(projectRoot, 'script', 'editor', 'enemy', 'decision', 'EnemyDecisionGraphModel.js');
 
 const expectedStoryLevelIds = Array.from({ length: 3 }, (_, chapterIndex) => {
   const chapter = chapterIndex + 1;
@@ -20,6 +21,11 @@ async function importSourceModule(relativePath) {
   const filePath = path.join(projectRoot, relativePath);
   assert.equal(fs.existsSync(filePath), true, `Missing source file ${filePath}`);
   let source = await fsp.readFile(filePath, 'utf8');
+  if (source.includes('./decision/EnemyDecisionGraphModel.js')) {
+    const modelSource = await fsp.readFile(decisionModelModulePath, 'utf8');
+    const modelEncoded = Buffer.from(modelSource, 'utf8').toString('base64');
+    source = source.replace("'./decision/EnemyDecisionGraphModel.js'", `'data:text/javascript;base64,${modelEncoded}'`);
+  }
   source = source.replace(
     /^import\s+\{\s*buildContentPackOverrideKey,\s*getContentPackOverride\s*\}\s+from\s+'..\/tooling\/ContentPackOverrideStore\.js';\s*/u,
     'const buildContentPackOverrideKey = (contentKey, scopeId = null) => scopeId ? `${contentKey}:${scopeId}` : contentKey;\nconst getContentPackOverride = () => null;\n'
@@ -98,7 +104,9 @@ test('EnemyWorkspace parses the V2 candidate pack and preserves design-only fiel
   assert.equal(exported.enemies && typeof exported.enemies === 'object', true);
   for (const [enemyId, sourceEnemy] of Object.entries(candidateEnemies)) {
     assert.deepEqual(exported.enemies[enemyId].capabilities, sourceEnemy.capabilities, `${enemyId} capabilities lost`);
-    assert.deepEqual(exported.enemies[enemyId].intentModel, sourceEnemy.intentModel, `${enemyId} intentModel lost`);
+    assert.equal(exported.enemies[enemyId].enemyDecision?.schemaVersion, 'enemy_decision_graph_v1', `${enemyId} enemyDecision lost`);
+    assert.equal('intentModel' in exported.enemies[enemyId], false, `${enemyId} should not export intentModel`);
+    assert.equal('decisionModel' in exported.enemies[enemyId], false, `${enemyId} should not export decisionModel`);
     assert.equal('runPressure' in exported.enemies[enemyId], false, `${enemyId} should not export runPressure`);
     assert.equal('statePersistence' in exported.enemies[enemyId], false, `${enemyId} should not export statePersistence`);
   }
@@ -133,7 +141,9 @@ test('DataManagerV2 instantiates all story levels against the V2 candidate pack'
     assert.equal(enemy.maxHp, template.stats.maxHp, `${levelId} should initialize maxHp`);
     assert.equal(enemy.stats.maxAp, template.stats.ap, `${levelId} should derive maxAp from ap`);
     assert.deepEqual(enemy.capabilities, template.capabilities, `${levelId} should preserve capabilities`);
-    assert.deepEqual(enemy.intentModel, template.intentModel, `${levelId} should preserve intentModel`);
+    assert.deepEqual(enemy.enemyDecision, template.enemyDecision, `${levelId} should preserve enemyDecision`);
+    assert.equal('intentModel' in enemy, false, `${levelId} should not instantiate intentModel`);
+    assert.equal('decisionModel' in enemy, false, `${levelId} should not instantiate decisionModel`);
 
     for (const [partId, part] of Object.entries(enemy.bodyParts || {})) {
       assert.equal(typeof part.max, 'number', `${levelId}.${partId} should have runtime max armor`);

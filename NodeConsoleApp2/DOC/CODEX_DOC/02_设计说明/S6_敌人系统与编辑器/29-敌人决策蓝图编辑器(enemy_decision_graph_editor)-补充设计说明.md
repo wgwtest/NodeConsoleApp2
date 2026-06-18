@@ -51,7 +51,7 @@
 5. 后续扩展方向不清晰
    - 如果继续给 `decisionModel.actions[].when` 加条件，最终会变成一套隐藏的脚本语言，但编辑器仍然是表格。
 
-因此，旧模型应被视为待移除数据，只允许作为一次性迁移输入，不再作为敌人编辑器的设计语言，也不允许继续作为发布包兼容输出。
+因此，旧模型应被视为历史背景和待删除数据，不再作为敌人编辑器的设计语言、数据输入或发布包兼容输出。
 
 ## 3. 目标用户和使用场景
 
@@ -684,9 +684,9 @@ Branch 出边需要声明分支：
 | 模板图无 Entry | error |
 | 模板 revision 不是数字 | error |
 
-## 11. 旧数据迁移策略
+## 11. 旧行为模型退役策略
 
-### 11.1 编辑器表层迁移
+### 11.1 编辑器表层退役
 
 敌人编辑器不再显示：
 
@@ -700,17 +700,18 @@ Branch 出边需要声明分支：
 3. 蓝图画布。
 4. 路径预览。
 
-### 11.2 数据迁移
+### 11.2 缺失图模型的处理
 
-打开旧敌人包时，如果敌人缺少 `enemyDecision`，编辑器应提供迁移：
+打开敌人包时，如果敌人缺少 `enemyDecision`，编辑器只允许生成保守默认图：
 
-1. 根据 `intentModel.pattern[]` 创建一条线性状态图。
-2. 根据 `decisionModel.actions[]` 创建 Action 节点。
-3. 根据 `decisionModel.actions[].when` 创建 Branch 节点。
-4. 根据 `decisionModel.actions[].skillId` 绑定具体技能。
-5. 将无法表达的字段写入迁移警告。
+1. 从当前敌人的 `skills[]` 生成 Action 节点。
+2. 创建唯一 Entry 和默认 State。
+3. 默认 State 连接到这些 Action 节点。
+4. 不读取 `intentModel`。
+5. 不读取 `decisionModel`。
+6. 不按旧字段创建 Branch 节点。
 
-迁移结果应让用户确认后再写回。
+这不是向下兼容迁移，只是“缺少新字段时给作者一个可编辑起点”。旧字段即使存在，也只能被删除或忽略。
 
 ### 11.3 无向下兼容策略
 
@@ -719,8 +720,8 @@ Branch 出边需要声明分支：
 硬性规则：
 
 1. `enemyDecision` 是唯一作者模型。
-2. `intentModel` / `decisionModel` 只允许作为旧包迁移输入。
-3. 迁移确认写回后，enemy pack 中必须移除 `intentModel` / `decisionModel`。
+2. `intentModel` / `decisionModel` 不作为任何运行时、编辑器或发布输入。
+3. enemy pack 中必须移除 `intentModel` / `decisionModel`。
 4. 编辑器不得生成 `intentModel` / `decisionModel`。
 5. 发布 runtime pack 时不得生成旧字段。
 6. 如果真实战斗运行时尚未支持 `enemyDecision`，编辑器必须禁止发布 runtime pack。
@@ -927,14 +928,14 @@ script/editor/enemy/decision/
 
 ### 16.2 硬切换发布风险
 
-第一阶段如果不接运行时，而旧运行时仍依赖 `intentModel` / `decisionModel`，直接发布 runtime pack 会导致战斗行为不可用。
+敌人包硬切到 `enemyDecision` 后，如果运行时规划器没有同步消费决策图，直接发布 runtime pack 会导致战斗行为不可用。
 
 处理：
 
-1. 编辑器隐藏并迁移旧概念。
+1. 编辑器隐藏旧概念。
 2. 不生成任何旧字段。
-3. 如果运行时尚未支持 `enemyDecision`，禁止发布 runtime pack。
-4. 若必须保证当前战斗页面可玩，则把 `EnemyDecisionGraphPlanner` 提前到同一发布批次。
+3. `EnemyActionPlanner` 必须消费 `enemyDecision.graph`。
+4. 发布测试必须覆盖当前敌人包首回合规划。
 
 ### 16.3 模板误改风险
 
@@ -958,23 +959,23 @@ script/editor/enemy/decision/
 
 ## 17. 后续阶段
 
-### 17.1 第二阶段：运行时接入
+### 17.1 第二阶段：战斗 trace 对照
 
 目标：
 
-1. 新增 `EnemyDecisionGraphPlanner`。
-2. 每个敌人实例保存当前 state。
-3. 每回合先推进状态机，再选择动作。
-4. 用蓝图 Action 节点输出真实 skill plan。
-5. 确认发布包不再包含旧 `intentModel` / `decisionModel`。
+1. 每个敌人实例保存当前 state。
+2. 战斗日志记录每回合访问的决策图节点。
+3. 编辑器路径预览和真实战斗 trace 可对照。
+4. 支持导入一段真实战斗日志复盘。
+5. 继续确认发布包不包含旧 `intentModel` / `decisionModel`。
 
-### 17.2 第三阶段：调试和实战对照
+### 17.2 第三阶段：高级调试
 
 目标：
 
-1. 战斗日志显示状态机路径。
-2. 编辑器路径预览和真实战斗 trace 可对照。
-3. 支持导入一段真实战斗日志复盘。
+1. 显示条件分支命中原因。
+2. 显示非法动作 fallback 原因。
+3. 显示 AP、目标和部位合法性检查结果。
 
 ### 17.3 第四阶段：高级模板
 

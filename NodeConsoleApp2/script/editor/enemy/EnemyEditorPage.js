@@ -1,4 +1,5 @@
 import EnemyWorkspace from './EnemyWorkspace.js';
+import { EnemyDecisionGraphEditor } from './decision/EnemyDecisionGraphEditor.js';
 
 const runtimeEnemyPath = 'assets/enemy_packs/current/enemies.json';
 const legacyRuntimeEnemyPath = 'assets/data/enemies.json';
@@ -117,12 +118,6 @@ function createLabeledControl(doc, label, control) {
     return wrapper;
 }
 
-function createDecisionCell(doc, label, control, modifier) {
-    const cell = createLabeledControl(doc, label, control);
-    cell.className = `${cell.className} decision-cell decision-cell--${modifier}`;
-    return cell;
-}
-
 function renderSelectOptions(doc, select, values, selectedValues = [], options = {}) {
     if (!select) return;
     const selected = new Set(uniqueTextList(selectedValues));
@@ -192,6 +187,7 @@ export class EnemyEditorPage {
         this.selectedEnemyId = null;
         this.context = {};
         this.elements = {};
+        this.decisionGraphEditor = null;
         this.statusVersion = 0;
     }
 
@@ -223,26 +219,29 @@ export class EnemyEditorPage {
             'identityTab',
             'statsTab',
             'capabilitiesTab',
-            'intentTab',
-            'decisionTab',
+            'enemyDecisionTab',
             'assetsTab',
             'identityPanel',
             'statsPanel',
             'capabilitiesPanel',
-            'intentPanel',
-            'decisionPanel',
+            'enemyDecisionPanel',
             'assetsPanel',
             'capabilitiesJsonInput',
-            'intentModelJsonInput',
-            'decisionModelJsonInput',
             'capabilityList',
             'addCapabilityBtn',
-            'intentPatternList',
-            'addIntentTokenBtn',
-            'intentFallbackInput',
-            'decisionModeInput',
-            'decisionActionList',
-            'addDecisionActionBtn',
+            'decisionTemplateList',
+            'decisionSkillList',
+            'decisionGraphCanvas',
+            'decisionNodeInspector',
+            'decisionGraphIssues',
+            'decisionPreviewTrace',
+            'addDecisionStateBtn',
+            'addDecisionBranchBtn',
+            'addDecisionGraphActionBtn',
+            'duplicateDecisionTemplateBtn',
+            'deleteDecisionTemplateBtn',
+            'validateDecisionGraphBtn',
+            'previewDecisionGraphBtn',
             'portraitRefInput',
             'mapPortraitRefInput',
             'battleSpriteSelect',
@@ -263,6 +262,26 @@ export class EnemyEditorPage {
             this.elements[id] = this.document.getElementById(id);
         });
 
+        this.decisionGraphEditor = new EnemyDecisionGraphEditor({
+            document: this.document,
+            root: this.elements.enemyDecisionPanel,
+            templateList: this.elements.decisionTemplateList,
+            skillList: this.elements.decisionSkillList,
+            canvas: this.elements.decisionGraphCanvas,
+            inspector: this.elements.decisionNodeInspector,
+            issueList: this.elements.decisionGraphIssues,
+            previewTrace: this.elements.decisionPreviewTrace,
+            actions: {
+                addState: this.elements.addDecisionStateBtn,
+                addBranch: this.elements.addDecisionBranchBtn,
+                addAction: this.elements.addDecisionGraphActionBtn,
+                duplicateTemplate: this.elements.duplicateDecisionTemplateBtn,
+                deleteTemplate: this.elements.deleteDecisionTemplateBtn,
+                validate: this.elements.validateDecisionGraphBtn,
+                preview: this.elements.previewDecisionGraphBtn
+            }
+        });
+
         this.bindClick('loadEnemyBtn', () => this.loadDefault());
         this.bindClick('refreshEnemyLibraryBtn', () => this.refreshEnemyLibraryFiles({ quiet: false }));
         this.bindClick('openSelectedEnemyLibraryBtn', () => this.loadSelectedEnemyLibrary());
@@ -271,12 +290,10 @@ export class EnemyEditorPage {
         this.bindClick('createEnemyBtn', () => this.createEnemy());
         this.bindClick('duplicateEnemyBtn', () => this.duplicateEnemy());
         this.bindClick('deleteEnemyBtn', () => this.deleteEnemy());
-        ['identity', 'stats', 'capabilities', 'intent', 'decision', 'assets'].forEach((tabId) => {
+        ['identity', 'stats', 'capabilities', 'enemyDecision', 'assets'].forEach((tabId) => {
             this.elements[`${tabId}Tab`]?.addEventListener('click', () => this.activateEditorTab(tabId));
         });
         this.bindClick('addCapabilityBtn', () => this.addCapabilityRow());
-        this.bindClick('addIntentTokenBtn', () => this.addIntentRow());
-        this.bindClick('addDecisionActionBtn', () => this.addDecisionActionRow());
         this.elements.battleSpriteSelect?.addEventListener('change', () => {
             if (this.elements.battleSpriteRefInput) {
                 this.elements.battleSpriteRefInput.value = this.elements.battleSpriteSelect.value || '';
@@ -325,7 +342,7 @@ export class EnemyEditorPage {
     }
 
     activateEditorTab(tabId = 'identity') {
-        ['identity', 'stats', 'capabilities', 'intent', 'decision', 'assets'].forEach((id) => {
+        ['identity', 'stats', 'capabilities', 'enemyDecision', 'assets'].forEach((id) => {
             const tab = this.elements[`${id}Tab`];
             const panel = this.elements[`${id}Panel`];
             const active = id === tabId;
@@ -499,11 +516,11 @@ export class EnemyEditorPage {
         setValue('enemyApInput', enemy.stats.ap);
         setValue('enemySpeedInput', enemy.stats.speed);
         setValue('capabilitiesJsonInput', formatJson(enemy.capabilities, []));
-        setValue('intentModelJsonInput', formatJson(enemy.intentModel, {}));
-        setValue('decisionModelJsonInput', formatJson(enemy.decisionModel, {}));
         this.renderCapabilityList(enemy.capabilities);
-        this.renderIntentControls(enemy.intentModel);
-        this.renderDecisionControls(enemy.decisionModel, enemy);
+        this.decisionGraphEditor?.setEnemy(enemy, {
+            workspace: this.workspace,
+            templates: this.workspace?.getDecisionGraphTemplates?.() || {}
+        });
         setValue('portraitRefInput', enemy.presentation.portraitRef || '');
         setValue('mapPortraitRefInput', enemy.presentation.mapPortraitRef || '');
         setValue('battleSpriteRefInput', enemy.presentation.battleSpriteRef || '');
@@ -736,248 +753,6 @@ export class EnemyEditorPage {
             .filter(item => item.type || item.cadence || item.pressure || item.counterplay.length);
     }
 
-    renderIntentControls(intentModel = {}) {
-        const source = asObject(intentModel);
-        const pattern = asArray(source.pattern);
-        const host = this.elements.intentPatternList;
-        if (host) {
-            clearElement(host);
-            pattern.forEach((token) => this.addIntentRow(token));
-        }
-        renderSelectOptions(this.document, this.elements.intentFallbackInput, this.getEnemyEnumValues('intentTokens'), [source.fallback || 'attack'], {
-            includeEmpty: true
-        });
-    }
-
-    addIntentRow(token = 'attack') {
-        const host = this.elements.intentPatternList;
-        if (!host) return null;
-        const row = createElement(this.document, 'div', 'intent-row');
-        const index = createElement(this.document, 'div', 'row-index');
-        index.textContent = String((host.children?.length || 0) + 1);
-
-        const select = createElement(this.document, 'select');
-        select.dataset.intentField = 'token';
-        renderSelectOptions(this.document, select, this.getEnemyEnumValues('intentTokens'), [token || 'attack'], { includeEmpty: true });
-
-        const help = createElement(this.document, 'div', 'token-help');
-        help.dataset.intentField = 'description';
-        help.textContent = this.describeToken(select.value);
-        select.addEventListener('change', () => {
-            help.textContent = this.describeToken(select.value);
-        });
-
-        const remove = createElement(this.document, 'button', 'secondary');
-        remove.type = 'button';
-        remove.textContent = 'Remove';
-        remove.addEventListener('click', () => {
-            row.remove?.();
-            if (!row.parentNode && host.children.includes?.(row)) {
-                host.children = host.children.filter(child => child !== row);
-            }
-            Array.from(host.children || []).forEach((child, position) => {
-                const indexNode = child.children?.[0];
-                if (indexNode) indexNode.textContent = String(position + 1);
-            });
-        });
-
-        row.appendChild(index);
-        row.appendChild(select);
-        row.appendChild(help);
-        row.appendChild(remove);
-        host.appendChild(row);
-        return row;
-    }
-
-    readIntentPatternList() {
-        return Array.from(this.elements.intentPatternList?.children || [])
-            .map(row => getChildByDataset(row, 'intentField', 'token')?.value || '')
-            .filter(Boolean);
-    }
-
-    decisionWhenToEditor(condition = {}) {
-        const source = asObject(condition);
-        if (source.selfHpRatioLte !== undefined) {
-            return { type: 'self_hp_lte', value: String(source.selfHpRatioLte) };
-        }
-        if (source.selfHpRatioGte !== undefined) {
-            return { type: 'self_hp_gte', value: String(source.selfHpRatioGte) };
-        }
-        if (source.previousIntent) {
-            return { type: 'previous_intent', value: source.previousIntent };
-        }
-        if (source.turnNumberModulo && typeof source.turnNumberModulo === 'object') {
-            const mod = source.turnNumberModulo.mod ?? '';
-            const equals = source.turnNumberModulo.equals ?? '';
-            return { type: 'turn_modulo', value: `${mod}:${equals}` };
-        }
-        return { type: 'always', value: '' };
-    }
-
-    readDecisionWhen(row) {
-        const type = getChildByDataset(row, 'decisionField', 'whenType')?.value || 'always';
-        const value = String(getChildByDataset(row, 'decisionField', 'whenValue')?.value || '').trim();
-        if (type === 'self_hp_lte') return { selfHpRatioLte: toNumber(value, 1) };
-        if (type === 'self_hp_gte') return { selfHpRatioGte: toNumber(value, 0) };
-        if (type === 'previous_intent') return value ? { previousIntent: value } : { always: true };
-        if (type === 'turn_modulo') {
-            const [mod, equals] = value.split(':');
-            return { turnNumberModulo: { mod: toNumber(mod, 1), equals: toNumber(equals, 0) } };
-        }
-        return { always: true };
-    }
-
-    describeDecisionWhen(row) {
-        const type = getChildByDataset(row, 'decisionField', 'whenType')?.value || 'always';
-        const value = String(getChildByDataset(row, 'decisionField', 'whenValue')?.value || '').trim();
-        const descriptions = {
-            always: 'always：每次检查到该行都允许进入合法性检查。',
-            self_hp_lte: `self_hp_lte：自身 HP 比例 <= ${value || '阈值'} 时允许。`,
-            self_hp_gte: `self_hp_gte：自身 HP 比例 >= ${value || '阈值'} 时允许。`,
-            previous_intent: `previous_intent：上一回合意图为 ${value || '指定 token'} 时允许。`,
-            turn_modulo: `turn_modulo：回合数满足 mod:equals = ${value || 'N:R'} 时允许。`
-        };
-        return descriptions[type] || `${type}：未实现的条件类型。`;
-    }
-
-    renderDecisionControls(decisionModel = {}, enemy = {}) {
-        const source = asObject(decisionModel);
-        renderSelectOptions(this.document, this.elements.decisionModeInput, this.getEnemyEnumValues('decisionModelModes'), [source.mode || 'intent_priority_table'], {
-            includeEmpty: true
-        });
-        const host = this.elements.decisionActionList;
-        if (host) {
-            clearElement(host);
-            asArray(source.actions).forEach(action => this.addDecisionActionRow(action, enemy));
-        }
-    }
-
-    getDecisionSkillValues(enemy = {}) {
-        return uniqueTextList([
-            ...asArray(enemy.skills),
-            ...this.getEnemyEnumValues('enemySkillIds')
-        ]);
-    }
-
-    addDecisionActionRow(action = {}, enemy = this.getCurrentEnemy() || {}) {
-        const host = this.elements.decisionActionList;
-        if (!host) return null;
-        const row = createElement(this.document, 'div', 'decision-row');
-        const when = this.decisionWhenToEditor(action.when);
-
-        const priority = createElement(this.document, 'input');
-        priority.type = 'number';
-        priority.dataset.decisionField = 'priority';
-        priority.value = String(action.priority ?? 100);
-
-        const whenType = createElement(this.document, 'select');
-        whenType.dataset.decisionField = 'whenType';
-        renderSelectOptions(this.document, whenType, this.getEnemyEnumValues('decisionWhenTypes'), [when.type || 'always'], {
-            includeEmpty: true
-        });
-
-        const whenValue = createElement(this.document, 'input');
-        whenValue.dataset.decisionField = 'whenValue';
-        whenValue.value = when.value || '';
-
-        const intent = createElement(this.document, 'select');
-        intent.dataset.decisionField = 'intent';
-        renderSelectOptions(this.document, intent, this.getEnemyEnumValues('intentTokens'), [action.intent || 'attack'], {
-            includeEmpty: true
-        });
-
-        const skillId = createElement(this.document, 'select');
-        skillId.dataset.decisionField = 'skillId';
-        renderSelectOptions(this.document, skillId, this.getDecisionSkillValues(enemy), [action.skillId || ''], {
-            includeEmpty: true
-        });
-
-        const targetRule = createElement(this.document, 'select');
-        targetRule.dataset.decisionField = 'targetRule';
-        renderSelectOptions(this.document, targetRule, this.getEnemyEnumValues('decisionTargetRules'), [action.targetRule || 'player_weak_part'], {
-            includeEmpty: true
-        });
-
-        const fallbackIntent = createElement(this.document, 'select');
-        fallbackIntent.dataset.decisionField = 'fallbackIntent';
-        renderSelectOptions(this.document, fallbackIntent, this.getEnemyEnumValues('intentTokens'), [action.fallbackIntent || 'attack'], {
-            includeEmpty: true
-        });
-
-        const telegraphLabel = createElement(this.document, 'label', 'check-chip decision-telegraph');
-        const telegraph = createElement(this.document, 'input');
-        telegraph.type = 'checkbox';
-        telegraph.dataset.decisionField = 'telegraph';
-        telegraph.checked = Boolean(action.telegraph);
-        const telegraphText = createElement(this.document, 'span');
-        telegraphText.textContent = 'telegraph';
-        telegraphLabel.appendChild(telegraph);
-        telegraphLabel.appendChild(telegraphText);
-
-        const help = createElement(this.document, 'div', 'capability-help');
-        help.dataset.decisionField = 'description';
-
-        const remove = createElement(this.document, 'button', 'secondary');
-        remove.type = 'button';
-        remove.textContent = 'Remove';
-        remove.addEventListener('click', () => {
-            row.remove?.();
-            if (!row.parentNode && host.children.includes?.(row)) {
-                host.children = host.children.filter(child => child !== row);
-            }
-        });
-
-        row.appendChild(createDecisionCell(this.document, 'priority', priority, 'priority'));
-        row.appendChild(createDecisionCell(this.document, 'when type', whenType, 'when-type'));
-        row.appendChild(createDecisionCell(this.document, 'when value', whenValue, 'when-value'));
-        row.appendChild(createDecisionCell(this.document, 'intent', intent, 'intent'));
-        row.appendChild(createDecisionCell(this.document, 'skillId', skillId, 'skill'));
-        row.appendChild(createDecisionCell(this.document, 'targetRule', targetRule, 'target'));
-        row.appendChild(createDecisionCell(this.document, 'fallback', fallbackIntent, 'fallback'));
-        row.appendChild(telegraphLabel);
-        remove.className = `${remove.className} decision-remove`;
-        row.appendChild(remove);
-        row.appendChild(help);
-
-        [priority, whenType, whenValue, intent, skillId, targetRule, fallbackIntent, telegraph].forEach((input) => {
-            input.addEventListener('input', () => this.updateDecisionHelp(row));
-            input.addEventListener('change', () => this.updateDecisionHelp(row));
-        });
-        host.appendChild(row);
-        this.updateDecisionHelp(row);
-        return row;
-    }
-
-    updateDecisionHelp(row) {
-        const help = getChildByDataset(row, 'decisionField', 'description');
-        if (!help) return;
-        const priority = getChildByDataset(row, 'decisionField', 'priority')?.value || '0';
-        const intent = getChildByDataset(row, 'decisionField', 'intent')?.value || '-';
-        const skillId = getChildByDataset(row, 'decisionField', 'skillId')?.value || '-';
-        const targetRule = getChildByDataset(row, 'decisionField', 'targetRule')?.value || '-';
-        help.textContent = `ActionPriorityTable priority ${priority}. when: ${getChildByDataset(row, 'decisionField', 'whenType')?.value || 'always'}. ${this.describeDecisionWhen(row)} intent=${intent}; skill=${skillId}; target=${targetRule}.`;
-        if (!row.nodeType) {
-            row.textContent = Array.from(row.children || []).map(child => child.textContent || '').join('\n');
-        }
-        if (row.parentNode && !row.parentNode.nodeType) {
-            row.parentNode.textContent = Array.from(row.parentNode.children || []).map(child => child.textContent || '').join('\n');
-        }
-    }
-
-    readDecisionActionList() {
-        return Array.from(this.elements.decisionActionList?.children || [])
-            .map(row => ({
-                priority: toNumber(getChildByDataset(row, 'decisionField', 'priority')?.value, 0),
-                when: this.readDecisionWhen(row),
-                intent: getChildByDataset(row, 'decisionField', 'intent')?.value || '',
-                skillId: getChildByDataset(row, 'decisionField', 'skillId')?.value || '',
-                targetRule: getChildByDataset(row, 'decisionField', 'targetRule')?.value || '',
-                telegraph: Boolean(getChildByDataset(row, 'decisionField', 'telegraph')?.checked),
-                fallbackIntent: getChildByDataset(row, 'decisionField', 'fallbackIntent')?.value || ''
-            }))
-            .filter(item => item.skillId || item.intent || item.targetRule);
-    }
-
     renderBattleSpriteOptions(selectedRef = '') {
         const select = this.elements.battleSpriteSelect;
         if (!select) return;
@@ -1058,44 +833,19 @@ export class EnemyEditorPage {
     }
 
     buildCurrentEnemyFromForm(enemy) {
-        const {
-            runPressure: _obsoleteRunPressure,
-            statePersistence: _obsoleteStatePersistence,
-            ...baseEnemy
-        } = asObject(enemy);
+        const baseEnemy = asObject(enemy);
         let capabilities = enemy.capabilities;
-        let intentModel = enemy.intentModel;
-        let decisionModel = enemy.decisionModel;
         try {
             const capabilityJsonChanged = String(this.elements.capabilitiesJsonInput?.value || '').trim()
                 !== formatJson(enemy.capabilities, []).trim();
-            const intentJsonChanged = String(this.elements.intentModelJsonInput?.value || '').trim()
-                !== formatJson(enemy.intentModel, {}).trim();
             capabilities = capabilityJsonChanged
                 ? parseJsonField(this.elements.capabilitiesJsonInput?.value, [])
                 : this.readCapabilityList();
-            intentModel = intentJsonChanged
-                ? parseJsonField(this.elements.intentModelJsonInput?.value, {})
-                : {
-                    ...asObject(enemy.intentModel),
-                    pattern: this.readIntentPatternList(),
-                    fallback: this.elements.intentFallbackInput?.value || asObject(enemy.intentModel).fallback || 'attack'
-                };
-            const decisionJsonChanged = String(this.elements.decisionModelJsonInput?.value || '').trim()
-                !== formatJson(enemy.decisionModel, {}).trim();
-            decisionModel = decisionJsonChanged
-                ? parseJsonField(this.elements.decisionModelJsonInput?.value, {})
-                : {
-                    ...asObject(enemy.decisionModel),
-                    mode: this.elements.decisionModeInput?.value || asObject(enemy.decisionModel).mode || 'intent_priority_table',
-                    intentTimeline: asArray(intentModel.pattern),
-                    fallbackIntent: asObject(intentModel).fallback || asObject(enemy.decisionModel).fallbackIntent || 'attack',
-                    actions: this.readDecisionActionList()
-                };
         } catch (error) {
             this.setStatus(`设计 JSON 解析失败：${error.message}`);
         }
 
+        const skills = splitTextList(this.elements.skillListInput?.value || '');
         return {
             ...baseEnemy,
             name: this.elements.enemyNameInput?.value || enemy.name,
@@ -1118,10 +868,9 @@ export class EnemyEditorPage {
                 battleSpriteRef: this.elements.battleSpriteSelect?.value || this.elements.battleSpriteRefInput?.value || '',
                 iconRef: this.elements.iconRefInput?.value || ''
             },
-            skills: splitTextList(this.elements.skillListInput?.value || ''),
+            skills,
             capabilities: asArray(capabilities),
-            intentModel: asObject(intentModel),
-            decisionModel: asObject(decisionModel)
+            enemyDecision: this.decisionGraphEditor?.getDecision() || enemy.enemyDecision
         };
     }
 
@@ -1221,7 +970,7 @@ export class EnemyEditorPage {
     async publishRuntime() {
         const content = this.buildExportContent();
         const result = await this.writeProjectJson(runtimeEnemyPath, content);
-        this.setStatus(`已发布到主流程：${result.path}`);
+        this.setStatus(`已发布敌人包：${result.path}`);
         return result;
     }
 }

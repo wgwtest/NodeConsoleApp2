@@ -23,9 +23,8 @@ export default class EnemyActionPlanner {
 
         if (candidates.length === 0) return null;
 
-        const intentPlan = this._selectDecisionModelCandidates(candidates, enemy, { player, playerBodyParts, turnNumber, turnIndex })
-            || this._selectIntentCandidates(candidates, enemy, { turnNumber, turnIndex });
-        const ranked = intentPlan.candidates.length > 0 ? intentPlan.candidates : candidates;
+        const decisionPlan = this._selectEnemyDecisionCandidate(candidates, enemy, { enemy, player, playerBodyParts, turnNumber, turnIndex });
+        const ranked = decisionPlan?.candidates?.length > 0 ? decisionPlan.candidates : candidates;
         ranked.sort((a, b) => b.score - a.score);
         const best = ranked[0];
         const cost = Number(best.skill?.costs?.ap ?? 0) || 0;
@@ -42,169 +41,117 @@ export default class EnemyActionPlanner {
             cost,
             speed: baseSpeed + skillSpeed
         };
-        if (intentPlan.intent) {
-            out.intentToken = intentPlan.selectedToken || intentPlan.intent.token;
-            out.intentSource = intentPlan.source;
-            out.intentIndex = intentPlan.intent.index;
-            out.intentPatternLength = intentPlan.intent.patternLength;
-            if (intentPlan.decisionAction) {
-                out.decisionPriority = Number(intentPlan.decisionAction.priority ?? 0) || 0;
-                out.decisionTargetRule = intentPlan.decisionAction.targetRule || null;
-                out.telegraph = Boolean(intentPlan.decisionAction.telegraph);
-            }
+        if (decisionPlan?.actionNode) {
+            out.decisionSource = 'enemyDecision';
+            out.decisionNodeId = decisionPlan.actionNode.id;
+            out.decisionTargetRule = decisionPlan.actionNode.targetRule || null;
+            out.telegraph = Boolean(decisionPlan.actionNode.telegraph);
         }
         return out;
     }
 
-    _selectDecisionModelCandidates(candidates, enemy, context = {}) {
-        const model = enemy?.decisionModel;
-        const actions = Array.isArray(model?.actions) ? model.actions : [];
-        if (model?.mode !== 'intent_priority_table' || actions.length === 0) return null;
+    _selectEnemyDecisionCandidate(candidates, enemy, context = {}) {
+        const decision = enemy?.enemyDecision;
+        const graph = decision?.graph;
+        const nodes = Array.isArray(graph?.nodes) ? graph.nodes : [];
+        const edges = Array.isArray(graph?.edges) ? graph.edges : [];
+        if (nodes.length === 0) return null;
 
-        const sortedActions = [...actions]
-            .filter(action => action && typeof action === 'object')
-            .sort((a, b) => (Number(b.priority ?? 0) || 0) - (Number(a.priority ?? 0) || 0));
+        const nodeById = new Map(nodes.filter(node => node?.id).map(node => [node.id, node]));
+        const edgesByFrom = new Map();
+        edges.forEach((edge) => {
+            if (!edge?.from || !edge?.to) return;
+            if (!edgesByFrom.has(edge.from)) edgesByFrom.set(edge.from, []);
+            edgesByFrom.get(edge.from).push(edge);
+        });
+        edgesByFrom.forEach(list => {
+            list.sort((left, right) => (Number(right.priority ?? 0) || 0) - (Number(left.priority ?? 0) || 0));
+        });
 
-        for (const action of sortedActions) {
-            if (!this._decisionConditionMatches(action.when, enemy, context)) continue;
+        let nodeId = graph.initialStateId || graph.entryNodeId || nodes[0]?.id;
+        for (let step = 0; step < 32; step += 1) {
+            const node = nodeById.get(nodeId);
+            if (!node) return null;
 
-            const direct = this._findDecisionActionCandidate(candidates, action, enemy);
-            if (direct) {
+            if (node.type === 'action') {
+                const skillId = this._resolveDecisionSkillId(node, decision);
+                const candidate = candidates.find(entry => entry.skill?.id === skillId);
+                if (!candidate || !this._canPaySkill(candidate.skill, enemy)) return null;
                 return {
-                    intent: this._buildDecisionIntent(action, model, context),
-                    candidates: [direct],
-                    selectedToken: this._normalizeIntentToken(action.intent || model.fallbackIntent || model.intent),
-                    source: 'decisionModel',
-                    decisionAction: action
+                    candidates: [this._withDecisionTarget(candidate, node, context)],
+                    actionNode: node
                 };
             }
 
-            const fallbackToken = this._normalizeIntentToken(action.fallbackIntent || model.fallbackIntent);
-            if (fallbackToken) {
-                const fallback = this._filterCandidatesByIntent(candidates, fallbackToken, enemy);
-                if (fallback.length > 0) {
-                    return {
-                        intent: this._buildDecisionIntent({ ...action, intent: fallbackToken }, model, context),
-                        candidates: fallback,
-                        selectedToken: fallbackToken,
-                        source: 'decisionFallback',
-                        decisionAction: action
-                    };
-                }
+            const outgoing = edgesByFrom.get(node.id) || [];
+            let edge = null;
+            if (node.type === 'branch') {
+                const branch = this._decisionConditionMatches(node.condition, enemy, context) ? 'true' : 'false';
+                edge = outgoing.find(item => item.branch === branch) || null;
+            } else {
+                edge = outgoing[0] || null;
             }
-        }
 
+            if (edge) {
+                nodeId = edge.to;
+                continue;
+            }
+            if (node.fallbackNodeId) {
+                nodeId = node.fallbackNodeId;
+                continue;
+            }
+            return null;
+        }
         return null;
     }
 
-    _selectIntentCandidates(candidates, enemy, { turnNumber, turnIndex } = {}) {
-        const intent = this._resolveIntent(enemy, { turnNumber, turnIndex });
-        if (!intent) {
-            return { intent: null, candidates: [], selectedToken: null, source: null };
-        }
-
-        const preferred = this._filterCandidatesByIntent(candidates, intent.token, enemy);
-        if (preferred.length > 0) {
-            return { intent, candidates: preferred, selectedToken: intent.token, source: 'pattern' };
-        }
-
-        const fallbackToken = this._normalizeIntentToken(intent.fallback);
-        if (fallbackToken && fallbackToken !== intent.token) {
-            const fallback = this._filterCandidatesByIntent(candidates, fallbackToken, enemy);
-            if (fallback.length > 0) {
-                return { intent, candidates: fallback, selectedToken: fallbackToken, source: 'fallback' };
-            }
-        }
-
-        return { intent, candidates: [], selectedToken: null, source: 'score' };
+    _resolveDecisionSkillId(actionNode, decision) {
+        const direct = String(actionNode?.skillId || '').trim();
+        if (direct) return direct;
+        const slotId = String(actionNode?.skillSlotId || '').trim();
+        return slotId ? String(decision?.slotBindings?.[slotId] || '').trim() : '';
     }
 
-    _buildDecisionIntent(action, model, { turnNumber, turnIndex } = {}) {
-        const timeline = Array.isArray(model?.intentTimeline)
-            ? model.intentTimeline.map(token => this._normalizeIntentToken(token)).filter(Boolean)
-            : [];
-        const providedIndex = Number.isFinite(Number(turnIndex))
-            ? Number(turnIndex)
-            : (Number.isFinite(Number(turnNumber)) ? Number(turnNumber) - 1 : 0);
-        const index = timeline.length > 0
-            ? ((Math.trunc(providedIndex) % timeline.length) + timeline.length) % timeline.length
-            : 0;
-        return {
-            token: this._normalizeIntentToken(action.intent || timeline[index] || model?.fallbackIntent || 'attack'),
-            fallback: action.fallbackIntent || model?.fallbackIntent,
-            index,
-            patternLength: timeline.length || 1
-        };
-    }
-
-    _findDecisionActionCandidate(candidates, action, enemy) {
-        const skillId = String(action?.skillId || '').trim();
-        if (!skillId) return null;
-        const candidate = candidates.find(entry => entry.skill?.id === skillId);
-        if (!candidate || !this._canPaySkill(candidate.skill, enemy)) return null;
-        const intent = this._normalizeIntentToken(action.intent);
-        if (intent && !this._skillMatchesIntent(candidate.skill, intent, candidate.summary)) return null;
-        return candidate;
-    }
-
-    _decisionConditionMatches(condition, enemy, { turnNumber, turnIndex } = {}) {
-        const source = condition && typeof condition === 'object' ? condition : { always: true };
-        if (source.always === true) return true;
+    _decisionConditionMatches(condition, enemy, { turnNumber, turnIndex, previousActionId } = {}) {
+        const source = condition && typeof condition === 'object' ? condition : { type: 'always' };
+        if (!source.type || source.type === 'always') return true;
 
         const hp = Number(enemy?.hp ?? enemy?.stats?.hp ?? 0) || 0;
         const maxHp = Number(enemy?.maxHp ?? enemy?.stats?.maxHp ?? hp) || hp || 1;
         const hpRatio = maxHp > 0 ? hp / maxHp : 1;
-        if (source.selfHpRatioLte !== undefined && hpRatio > Number(source.selfHpRatioLte)) return false;
-        if (source.selfHpRatioGte !== undefined && hpRatio < Number(source.selfHpRatioGte)) return false;
+        if (source.type === 'self_hp_ratio_lte') return hpRatio <= (Number(source.value) || 0);
+        if (source.type === 'self_hp_ratio_gte') return hpRatio >= (Number(source.value) || 0);
 
         const turnValue = Number.isFinite(Number(turnNumber))
             ? Number(turnNumber)
             : (Number.isFinite(Number(turnIndex)) ? Number(turnIndex) + 1 : 1);
-        if (source.turnNumberModulo && typeof source.turnNumberModulo === 'object') {
-            const mod = Number(source.turnNumberModulo.mod ?? 0) || 0;
-            const equals = Number(source.turnNumberModulo.equals ?? 0) || 0;
-            if (mod > 0 && (Math.trunc(turnValue) % mod) !== equals) return false;
+        if (source.type === 'turn_number_modulo') {
+            const mod = Math.max(1, Math.trunc(Number(source.mod ?? 1) || 1));
+            const equals = Math.trunc(Number(source.equals ?? 0) || 0);
+            return (Math.trunc(turnValue) % mod) === equals;
         }
-
-        const previousIntent = this._normalizeIntentToken(source.previousIntent);
-        if (previousIntent) {
-            const previous = this._resolveIntent(enemy, { turnNumber: Math.max(1, turnValue - 1) });
-            if (!previous || previous.token !== previousIntent) return false;
+        if (source.type === 'previous_action_is') {
+            return String(previousActionId || '').trim() === String(source.actionId || '').trim();
         }
-
-        return true;
+        return false;
     }
 
-    _resolveIntent(enemy, { turnNumber, turnIndex } = {}) {
-        const model = enemy?.intentModel;
-        const pattern = Array.isArray(model?.pattern)
-            ? model.pattern.map(token => this._normalizeIntentToken(token)).filter(Boolean)
-            : [];
-        if (pattern.length === 0) return null;
+    _withDecisionTarget(candidate, actionNode, context) {
+        const targetRule = String(actionNode?.targetRule || '').trim();
+        if (!targetRule || targetRule === 'player_weak_part') return candidate;
 
-        const providedIndex = Number.isFinite(Number(turnIndex))
-            ? Number(turnIndex)
-            : (Number.isFinite(Number(turnNumber)) ? Number(turnNumber) - 1 : 0);
-        const index = ((Math.trunc(providedIndex) % pattern.length) + pattern.length) % pattern.length;
-        return {
-            token: pattern[index],
-            fallback: model?.fallback,
-            index,
-            patternLength: pattern.length
-        };
-    }
-
-    _filterCandidatesByIntent(candidates, token, enemy) {
-        const normalized = this._normalizeIntentToken(token);
-        if (!normalized) return [];
-
-        const affordable = candidates.filter(entry => this._canPaySkill(entry.skill, enemy));
-        const pool = affordable.length > 0 ? affordable : candidates;
-        return pool.filter(entry => this._skillMatchesIntent(entry.skill, normalized, entry.summary));
-    }
-
-    _normalizeIntentToken(token) {
-        return String(token || '').trim().toLowerCase();
+        const next = { ...candidate, target: { ...candidate.target } };
+        if (targetRule === 'self') {
+            next.target = { targetId: context.enemy?.id, bodyPart: null };
+        } else if (targetRule === 'player') {
+            next.target = { targetId: context.player?.id, bodyPart: null };
+        } else if (targetRule.startsWith('fixed_part:')) {
+            next.target = {
+                targetId: context.player?.id,
+                bodyPart: targetRule.slice('fixed_part:'.length) || null
+            };
+        }
+        return next;
     }
 
     _canPaySkill(skill, enemy) {

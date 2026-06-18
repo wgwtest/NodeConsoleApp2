@@ -2,7 +2,7 @@
 
 创建时间：2026-05-22
 
-状态：`设计基线 / 待实现`
+状态：`当前有效 / 已实现基线`
 
 归属子系统：`S6_敌人系统与编辑器`
 
@@ -13,26 +13,19 @@
 3. `DOC/CODEX_DOC/02_设计说明/S3_关卡地图与编辑器/26-关卡地图选择与地图包(level_map_selection)-设计说明.md`
 4. `DOC/CODEX_DOC/02_设计说明/S4_技能系统与编辑器/04-技能编辑器(skill_editor_design)-设计说明.md`
 
-## 1. 当前目录结论
+## 1. 当前结论
 
-当前 `DOC/CODEX_DOC/02_设计说明/` 中没有独立的 `enemy editor` 章节规划。
+敌人编辑器已经作为 `S6_敌人系统与编辑器` 的稳定作者工具存在。
 
-已有内容如下：
+当前主链路：
 
-1. `S6_敌人系统与编辑器/11-敌人系统(enemy_design)-设计说明.md`
-   - 负责敌人种族、职业、属性、部位、技能组和 AI 行为目标。
-2. `S3_关卡地图与编辑器/24-关卡管理与关卡编辑器(level_management_editor)-设计说明.md`
-   - 负责关卡编辑器、波次和敌人池绑定。
-3. `S3_关卡地图与编辑器/26-关卡地图选择与地图包(level_map_selection)-设计说明.md`
-   - 负责地图节点、地图包、地图资源和 `levelId` 绑定。
+1. 打开 `assets/enemy_packs/current/enemies.json` 或 authoring 快照。
+2. 编辑敌人身份、数值部位、自身能力、敌人决策和资产引用。
+3. 保存工作稿到 `assets/enemy_packs/authoring/enemies_YYYYMMDD_HHMMSS.json`。
+4. 发布当前包到 `assets/enemy_packs/current/enemies.json`。
+5. 下游关卡、地图和运行时通过 enemy pack 消费敌人模板。
 
-缺口是：
-
-1. 当前没有一个正式作者工具负责维护 `assets/data/enemies.json`。
-2. 关卡编辑器和地图编辑器只能选择或引用敌人模板，不能安全生产敌人模板。
-3. 敌人模板的字段、技能引用、部位护甲和地图编辑器展示摘要之间还没有统一校验入口。
-
-因此本文件新增 `敌人编辑器` 作为 `S6_敌人系统与编辑器` 的稳定专题设计。
+当前敌人行为只通过 `enemyDecision` 决策图表达；旧行为页签不再是编辑入口，也不再进入发布包。
 
 ## 2. 文档定位
 
@@ -46,7 +39,7 @@
 
 1. `敌人编辑器`
    - 维护敌人模板真值。
-   - 输出 `assets/data/enemies.json` 或后续等价 enemy pack。
+   - 输出 `assets/enemy_packs/current/enemies.json`。
    - 校验敌人模板字段、技能引用、部位护甲和地图展示摘要。
 2. `关卡编辑器`
    - 维护 `levels.json`。
@@ -106,33 +99,36 @@
 当前敌人模板真值文件为：
 
 ```text
-assets/data/enemies.json
+assets/enemy_packs/current/enemies.json
 ```
 
-当前结构是 `Record<enemyId, EnemyTemplate>`：
+当前结构是 `enemies_v2_1` enemy pack：
 
 ```json
 {
-  "goblin_story_headhunter": {
-    "id": "goblin_story_headhunter",
-    "name": "哥布林追猎手",
-    "race": "goblin",
-    "class": "hunter",
-    "stats": {
-      "hp": 65,
-      "maxHp": 65,
-      "speed": 11,
-      "ap": 4
-    },
-    "bodyParts": {
-      "head": { "current": 4, "max": 4, "weakness": 1.2 }
-    },
-    "skills": ["skill_bite", "skill_throw_stone"]
+  "$schemaVersion": "enemies_v2_1",
+  "meta": {
+    "contentDomain": "enemy",
+    "enums": {},
+    "enumDescriptions": {},
+    "decisionGraphTemplates": {}
+  },
+  "enemies": {
+    "enemy_id": {
+      "id": "enemy_id",
+      "name": "敌人名称",
+      "stats": { "hp": 65, "maxHp": 65, "speed": 11, "ap": 4 },
+      "bodyParts": {},
+      "skills": [],
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1"
+      }
+    }
   }
 }
 ```
 
-敌人编辑器第一阶段应继续以该文件为标准输入输出，不在同一轮强行改成 pack 结构。
+`assets/data/enemies.json` 只保留为旧路径概念，不是当前编辑器发布目标。
 
 ### 5.2 推荐内部工作区模型
 
@@ -141,7 +137,7 @@ assets/data/enemies.json
 ```text
 EnemyWorkspaceDocument
 - sourcePath
-- enemies: Record<enemyId, EnemyTemplate>
+  - enemies: Record<enemyId, EnemyTemplate>
 - meta
   - defaultBodyParts
   - knownRaces
@@ -152,7 +148,7 @@ EnemyWorkspaceDocument
 - dirty
 ```
 
-其中 `meta` 可以由现有数据、技能包、关卡包和编辑器默认值派生。第一阶段不要求把 `meta` 写回 `enemies.json`。
+其中 `meta` 来自 enemy pack，并在导出时保留。编辑器控件优先由 `meta.enums` 和 `meta.enumDescriptions` 驱动。
 
 ### 5.3 EnemyTemplate 主字段
 
@@ -281,7 +277,7 @@ EnemyWorkspaceDocument
 3. `刷新`
    - 重新扫描最近版本列表。
 4. `指定路径`
-   - 默认值为 `assets/data/enemies.json`。
+   - 默认值为 `assets/enemy_packs/current/enemies.json`。
 5. `打开路径`
    - 从项目路径读取敌人库。
 6. `从本地导入`
@@ -340,10 +336,10 @@ EnemyWorkspaceDocument
 
 1. `保存工作稿`
    - 保存到 authoring 路径或当前工作稿路径。
-   - 推荐后续路径：`assets/enemy_packs/authoring/enemies.json`。
-   - 第一阶段如果暂未建立 authoring 目录，也必须保持“保存工作稿”和“发布到主流程”的语义分离。
+   - 当前路径：`assets/enemy_packs/authoring/enemies_YYYYMMDD_HHMMSS.json`。
+   - 必须保持“保存工作稿”和“发布到主流程”的语义分离。
 2. `发布到主流程`
-   - 写入运行时消费文件：`assets/data/enemies.json`。
+   - 写入运行时消费文件：`assets/enemy_packs/current/enemies.json`。
    - 发布前必须阻止结构 error 和引用 error。
 3. `另存到指定路径`
    - 保存为指定项目路径。
@@ -687,7 +683,7 @@ EnemyCatalogEntry
   - mapNodeCount
 ```
 
-这不是必须落盘的新文件，而是 `assets/data/enemies.json`、技能包、关卡包和地图包的派生结果。
+这不是必须落盘的新文件，而是 `assets/enemy_packs/current/enemies.json`、技能包、关卡包和地图包的派生结果。
 
 地图编辑器只需要：
 
@@ -709,7 +705,7 @@ EnemyCatalogEntry
 
 ### 14.1 新建敌人并交给地图编辑器使用
 
-1. 打开 `assets/data/enemies.json`。
+1. 打开 `assets/enemy_packs/current/enemies.json`。
 2. 自动加载技能包和关卡包。
 3. 点击 `新建敌人`。
 4. 填写 `id / name / race / class`。
@@ -718,7 +714,7 @@ EnemyCatalogEntry
 7. 查看右侧地图服务预览，确认敌人立绘、数值摘要和技能 chips 都可被地图编辑器消费。
 8. 修复底部 error。
 9. 保存工作稿。
-10. 发布到 `assets/data/enemies.json`。
+10. 发布到 `assets/enemy_packs/current/enemies.json`。
 11. 打开或刷新地图编辑器。
 12. 在“本关敌人”面板选择新 `templateId`。
 13. 保存并发布关卡或地图相关工作稿。
@@ -790,7 +786,7 @@ EnemyCatalogEntry
 运行时消费链固定为：
 
 ```text
-assets/data/enemies.json
+assets/enemy_packs/current/enemies.json
   -> DataManagerV2
   -> levels.json enemyPools 展开
   -> CoreEngine battle enemies
@@ -813,7 +809,7 @@ assets/data/enemies.json
 
 目标：
 
-1. 打开、编辑、保存、发布 `assets/data/enemies.json`。
+1. 打开、编辑、保存、发布 `assets/enemy_packs/current/enemies.json`。
 2. 完成敌人列表、基础字段、属性、部位、技能组编辑。
 3. 完成原画资产引用编辑，至少能展示地图面板立绘。
 4. 完成结构、数值、资产、技能引用和关卡引用校验。
@@ -832,7 +828,7 @@ MVP 必须达成：
 
 目标：
 
-1. 支持 authoring 快照，例如 `assets/enemy_packs/authoring/enemies.json`。
+1. 支持 authoring 快照，例如 `assets/enemy_packs/authoring/enemies_YYYYMMDD_HHMMSS.json`。
 2. 支持引用迁移建议。
 3. 支持从地图编辑器和关卡编辑器互跳定位。
 4. 支持批量标记 `race / class / tags`。
@@ -854,7 +850,7 @@ MVP 必须达成：
 2. `enemy_editor_page` 页面测试
    - 列表、表单、保存、校验、问题定位。
 3. `enemy_editor_io` 测试
-   - 打开 `assets/data/enemies.json`、保存工作稿、发布、重新加载。
+   - 打开 `assets/enemy_packs/current/enemies.json`、保存工作稿、发布、重新加载。
 4. 地图编辑器联动测试
    - 新敌人模板进入地图编辑器下拉。
    - 切换当前节点首个敌人模板后写回 `levels.json.enemyPools`。
@@ -874,40 +870,40 @@ MVP 必须达成：
 2. 敌人编辑器应归属 `S6_敌人系统与编辑器`，因为敌人和技能、Buff 一样，是独立的内容系统与编辑器域。
 3. 敌人编辑器的第一服务对象是地图编辑器和关卡编辑器。
 4. 地图编辑器只消费敌人模板摘要和 `templateId`，不编辑敌人模板本体。
-5. 第一阶段不改动现有敌人文件结构，继续以 `assets/data/enemies.json` 为标准输入输出。
+5. 当前编辑器以 `assets/enemy_packs/current/enemies.json` 为标准发布目标。
 6. 后续如需 authoring 快照和发布链，可以在不破坏当前文件结构的前提下增量加入。
 
 ## 12. Data-Driven Enemy Editing
 
-The enemy editor must treat the enemy pack contract as its UI model. It should open both legacy bare records and wrapped `enemies_v2_1` packs, but when the source is wrapped it must preserve `$schemaVersion`, `meta`, and unknown top-level pack fields on export.
+The enemy editor must treat the enemy pack contract as its UI model. Wrapped `enemies_v2_1` packs are the standard current authoring and publishing format; the editor must preserve `$schemaVersion`, `meta`, and unknown top-level pack fields on export.
 
 Editor control rules:
 
 1. Race and class are enum selections from `meta.enums.races` and `meta.enums.classes`, not arbitrary text when those enums exist.
 2. Tags are multi-select values from `meta.enums.tags`; free-form tag entry is only a fallback for legacy packs without enum metadata.
-3. Capability type, capability cadence, capability pressure, counterplay, intent pattern token, fallback token, run pressure type, run pressure carry-over impact, carry-over state, clear-after-battle state, and body part IDs must be generated from `meta.enums`.
+3. Capability type, capability cadence, capability pressure, counterplay, decision condition type, decision target rule, decision graph template id, enemy skill id, and body part IDs must be generated from `meta.enums`.
 4. Text inputs are for display names, descriptions, failure signals, free-form design explanations, and asset refs.
 5. The editor must never derive domain rules from current visible rows alone when `meta.enums` is present; the pack metadata is the authority.
 
-The main editor surface should show enum-backed controls first. Advanced JSON is a fallback inspection/edit surface and must have enough height to inspect object structure; it is not the primary authoring UI for capability rows, intent loops, executable decision actions, or run-pressure rules.
+The main editor surface should show enum-backed controls first. Advanced JSON is a fallback inspection/edit surface and must have enough height to inspect object structure; it is not the primary authoring UI for capability rows or enemy decision graph authoring.
 
-Capability rows must not label `capabilities[].cadence` as a runtime trigger. The editor should show it as `设计节奏（非运行时触发）`, because runtime behavior is driven by `intentModel.pattern[]`, `decisionModel.actions[]`, and `EnemyActionPlanner`, not by `capabilities[].cadence`.
+Capability rows must not label `capabilities[].cadence` as a runtime trigger. The editor should show it as `设计节奏（非运行时触发）`, because runtime behavior is driven by `enemyDecision.graph` and `EnemyActionPlanner`, not by `capabilities[].cadence`.
 
 
-Decision table controls are now a first-class tab:
+Enemy decision graph controls are now a first-class tab:
 
-1. `decisionModel.mode` is selected from `meta.enums.decisionModelModes`.
-2. `decisionModel.actions[].when` is edited through `meta.enums.decisionWhenTypes`; the editor may only expose condition types already parsed by `EnemyActionPlanner`.
-3. `decisionModel.actions[].skillId` is selected from `meta.enums.enemySkillIds` and should also exist in the current enemy `skills[]`.
-4. `decisionModel.actions[].intent` and `fallbackIntent` are selected from `meta.enums.intentTokens`.
-5. `decisionModel.actions[].targetRule` is selected from `meta.enums.decisionTargetRules`.
-6. `intentModel.pattern[]` remains the visible fixed timeline; `decisionModel.actions[]` is the executable skill selection table.
+1. `enemyDecision.schemaVersion` is fixed to `enemy_decision_graph_v1`.
+2. `enemyDecision.graph.nodes[]` is edited as entry / state / branch / action blueprint nodes.
+3. Branch node condition types are selected from `meta.enums.decisionConditionTypes`; the editor may only expose condition types already parsed by `EnemyActionPlanner`.
+4. Action node `skillId` is selected from `meta.enums.enemySkillIds` and should also exist in the current enemy `skills[]`.
+5. Action node `targetRule` is selected from `meta.enums.decisionTargetRules`.
+6. `enemyDecision.layout.nodes` stores editor coordinates only; it is not a combat rule.
 The editor must read enum explanations from meta.enumDescriptions when present:
 
 1. `meta.enumDescriptions.capabilityCadences`
 2. `meta.enumDescriptions.capabilityPressures`
 3. `meta.enumDescriptions.counterplay`
 
-This prevents UI labels such as `after_counter`, `phase_2`, or `hp_50_percent` from appearing as if they were implemented if-else triggers. If those meanings are needed later, they must be added to `decisionModel.actions[].when` and implemented in `EnemyActionPlanner` before the editor exposes them.
+This prevents UI labels such as `after_counter`, `phase_2`, or `hp_50_percent` from appearing as if they were implemented if-else triggers. If those meanings are needed later, they must be added as explicit `enemyDecision` branch condition types and implemented in `EnemyActionPlanner` before the editor exposes them.
 
 This means layout work comes after the data contract. A clean UI is useful only if it is bound to the same schema that runtime, tests, and publishing consume.

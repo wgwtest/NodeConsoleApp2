@@ -43,14 +43,13 @@ test('enemy V2 candidate pack declares a standard data contract for editors', as
     'classes',
     'tags',
     'capabilityTypes',
-    'intentTokens',
     'bodyParts',
     'capabilityCadences',
     'capabilityPressures',
     'counterplay',
-    'decisionModelModes',
+    'decisionConditionTypes',
     'decisionTargetRules',
-    'decisionWhenTypes',
+    'decisionGraphTemplateIds',
     'enemySkillIds'
   ]) {
     assert.equal(Array.isArray(enums[enumKey]), true, `meta.enums.${enumKey} must be an array`);
@@ -61,7 +60,7 @@ test('enemy V2 candidate pack declares a standard data contract for editors', as
   assert.equal(enums.classes.includes('scout'), true);
   assert.equal(enums.tags.includes('v2_candidate'), true);
   assert.equal(enums.capabilityTypes.includes('telegraph_countdown'), true);
-  assert.equal(enums.capabilityCadences.includes('intent_loop_slot'), true);
+  assert.equal(enums.capabilityCadences.includes('intent_loop_slot'), false, 'capability cadence should not mention removed intent loop slots');
   for (const unsupportedTrigger of [
     'after_counter',
     'after_mark',
@@ -78,20 +77,15 @@ test('enemy V2 candidate pack declares a standard data contract for editors', as
       `meta.enums.capabilityCadences must not expose unsupported runtime trigger ${unsupportedTrigger}`
     );
   }
-  assert.equal(enums.intentTokens.includes('attack'), true);
+  assert.equal('intentTokens' in enums, false, 'enemy pack should not declare removed intentTokens');
+  assert.equal('decisionModelModes' in enums, false, 'enemy pack should not declare removed decisionModelModes');
+  assert.equal('decisionWhenTypes' in enums, false, 'enemy pack should not declare removed decisionWhenTypes');
+  assert.equal(enums.decisionConditionTypes.includes('always'), true);
+  assert.equal(enums.decisionConditionTypes.includes('self_hp_ratio_lte'), true);
   assert.equal('runPressureTypes' in enums, false, 'enemy pack should not declare enemy-level runPressureTypes');
   assert.equal('carryoverImpact' in enums, false, 'enemy pack should not declare enemy-level carryoverImpact');
   assert.equal('carryOver' in enums, false, 'enemy pack should not declare enemy-level carryOver');
   assert.equal('clearAfterBattle' in enums, false, 'enemy pack should not declare enemy-level clearAfterBattle');
-  assert.deepEqual(enums.decisionModelModes, ['intent_priority_table']);
-  assert.deepEqual(enums.decisionWhenTypes, [
-    'always',
-    'self_hp_lte',
-    'self_hp_gte',
-    'previous_intent',
-    'turn_modulo'
-  ]);
-
   const fieldNotes = candidatePack.meta?.fieldNotes || {};
   for (const fieldKey of [
     'enemies.*.race',
@@ -101,17 +95,21 @@ test('enemy V2 candidate pack declares a standard data contract for editors', as
     'enemies.*.capabilities[].cadence',
     'enemies.*.capabilities[].pressure',
     'enemies.*.capabilities[].counterplay[]',
+    'enemies.*.enemyDecision.schemaVersion',
+    'enemies.*.enemyDecision.graph.nodes[]',
+    'enemies.*.enemyDecision.graph.edges[]',
+    'enemies.*.enemyDecision.slotBindings',
+    'enemies.*.enemyDecision.layout.nodes'
+  ]) {
+    assert.equal(typeof fieldNotes[fieldKey], 'string', `meta.fieldNotes.${fieldKey} must explain edit rules`);
+  }
+  for (const fieldKey of [
+    'enemies.*.intentModel.pattern[]',
     'enemies.*.decisionModel.mode',
     'enemies.*.decisionModel.intentTimeline[]',
     'enemies.*.decisionModel.actions[].when',
     'enemies.*.decisionModel.actions[].intent',
     'enemies.*.decisionModel.actions[].skillId',
-    'enemies.*.intentModel.pattern[]'
-  ]) {
-    assert.equal(typeof fieldNotes[fieldKey], 'string', `meta.fieldNotes.${fieldKey} must explain edit rules`);
-    assert.match(fieldNotes[fieldKey], /meta\.enums/u, `${fieldKey} should reference meta.enums as the data source`);
-  }
-  for (const fieldKey of [
     'enemies.*.runPressure.type',
     'enemies.*.runPressure.carryoverImpact[]',
     'enemies.*.runPressure.counterplay[]',
@@ -169,20 +167,21 @@ test('enemy V2 候选包为 30 个正式关卡生成机制化主敌', async () =
       }
     }
 
-    assert.equal(Array.isArray(enemy.intentModel?.pattern), true, `${enemy.id} 应声明意图循环`);
-    assert.equal(enemy.intentModel.pattern.length >= 2, true, `${enemy.id} 意图循环不能为空`);
-    assert.equal(enemy.decisionModel?.mode, 'intent_priority_table', `${enemy.id} 应声明可执行 decisionModel`);
-    assert.deepEqual(enemy.decisionModel.intentTimeline, enemy.intentModel.pattern, `${enemy.id} decisionModel 应复用当前意图时间线`);
-    assert.equal(Array.isArray(enemy.decisionModel.actions), true, `${enemy.id} decisionModel.actions 应为数组`);
-    assert.equal(enemy.decisionModel.actions.length >= enemy.skills.length, true, `${enemy.id} decisionModel.actions 应覆盖敌人技能`);
-    for (const action of enemy.decisionModel.actions) {
-      assert.equal(typeof action.priority, 'number', `${enemy.id} decision action 应有 priority`);
-      assert.equal(typeof action.intent, 'string', `${enemy.id} decision action 应有 intent`);
-      assert.equal(skillIds.has(action.skillId), true, `${enemy.id} decision action 引用不存在技能 ${action.skillId}`);
-      assert.equal(candidatePack.meta.enums.enemySkillIds.includes(action.skillId), true, `${enemy.id} decision action skillId must come from meta.enums.enemySkillIds`);
-      assert.equal(enemy.skills.includes(action.skillId), true, `${enemy.id} decision action 必须引用该敌人 skills[] 内技能 ${action.skillId}`);
-      assert.equal(typeof action.targetRule, 'string', `${enemy.id} decision action 应有 targetRule`);
-      assert.equal(candidatePack.meta.enums.decisionTargetRules.includes(action.targetRule), true, `${enemy.id} decision action targetRule must come from meta.enums.decisionTargetRules`);
+    assert.equal('intentModel' in enemy, false, `${enemy.id} should not declare removed intentModel`);
+    assert.equal('decisionModel' in enemy, false, `${enemy.id} should not declare removed decisionModel`);
+    assert.equal(enemy.enemyDecision?.schemaVersion, 'enemy_decision_graph_v1', `${enemy.id} should declare enemyDecision`);
+    assert.equal(Array.isArray(enemy.enemyDecision.graph?.nodes), true, `${enemy.id} enemyDecision nodes should be an array`);
+    assert.equal(Array.isArray(enemy.enemyDecision.graph?.edges), true, `${enemy.id} enemyDecision edges should be an array`);
+    assert.equal(enemy.enemyDecision.graph.nodes.some(node => node.type === 'entry'), true, `${enemy.id} enemyDecision needs entry node`);
+    assert.equal(enemy.enemyDecision.graph.nodes.some(node => node.type === 'state'), true, `${enemy.id} enemyDecision needs state node`);
+    const actionNodes = enemy.enemyDecision.graph.nodes.filter(node => node.type === 'action');
+    assert.equal(actionNodes.length >= enemy.skills.length, true, `${enemy.id} enemyDecision action nodes should cover enemy skills`);
+    for (const action of actionNodes) {
+      assert.equal(skillIds.has(action.skillId), true, `${enemy.id} action node references missing skill ${action.skillId}`);
+      assert.equal(candidatePack.meta.enums.enemySkillIds.includes(action.skillId), true, `${enemy.id} action node skillId must come from meta.enums.enemySkillIds`);
+      assert.equal(enemy.skills.includes(action.skillId), true, `${enemy.id} action node must reference this enemy skills[] ${action.skillId}`);
+      assert.equal(typeof action.targetRule, 'string', `${enemy.id} action node should have targetRule`);
+      assert.equal(candidatePack.meta.enums.decisionTargetRules.includes(action.targetRule), true, `${enemy.id} action node targetRule must come from meta.enums.decisionTargetRules`);
     }
     assert.equal('runPressure' in enemy, false, `${enemy.id} should not declare enemy-level runPressure`);
     assert.equal('statePersistence' in enemy, false, `${enemy.id} should not declare enemy-level statePersistence`);

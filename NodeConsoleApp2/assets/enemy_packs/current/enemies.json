@@ -28,22 +28,16 @@
       "enemies.*.skills[]": "Enemy skill ids. Values must resolve in the enemy skill pack.",
       "enemies.*.mechanicProfile": "Design-only mechanic slot, role, target turn, budget, and failure explanation.",
       "enemies.*.capabilities[].type": "Enemy-owned mechanism capability. Select from meta.enums.capabilityTypes.",
-      "enemies.*.capabilities[].cadence": "Design pacing hint only. Select from meta.enums.capabilityCadences. Current runtime does not trigger abilities from this field; executable turn order comes from enemies.*.intentModel.pattern[].",
+      "enemies.*.capabilities[].cadence": "Design pacing hint only. Select from meta.enums.capabilityCadences. Runtime behavior is described by enemies.*.enemyDecision graph action and branch nodes.",
       "enemies.*.capabilities[].pressure": "Design/diagnostic pressure category only. Select from meta.enums.capabilityPressures; it groups pressure types and is not a runtime trigger.",
       "enemies.*.capabilities[].counterplay[]": "Player response tags for this capability. Select from meta.enums.counterplay; multiple values are allowed and they describe intended player answers, not enemy AI branches.",
-      "enemies.*.intentModel.pattern[]": "Fixed runtime intent-loop token sequence. Tokens come from meta.enums.intentTokens and are consumed by EnemyActionPlanner.",
-      "enemies.*.intentModel.fallback": "Fallback intent token. Value comes from meta.enums.intentTokens.",
       "enemies.*.buildCheck": "Design diagnostics describing what player build weakness this enemy verifies.",
       "enemies.*.presentation": "Presentation and asset references for editor, map, and battle UI.",
-      "enemies.*.decisionModel.mode": "Runtime decision model mode. Select from meta.enums.decisionModelModes; current supported value is intent_priority_table.",
-      "enemies.*.decisionModel.intentTimeline[]": "Visible runtime intent timeline. Values come from meta.enums.intentTokens and mirror intentModel.pattern during migration.",
-      "enemies.*.decisionModel.fallbackIntent": "Fallback intent token. Value comes from meta.enums.intentTokens.",
-      "enemies.*.decisionModel.actions[].priority": "Numeric action priority. Higher values are checked first in ActionPriorityTable.",
-      "enemies.*.decisionModel.actions[].when": "Explicit condition object for the action. Select the condition type from meta.enums.decisionWhenTypes; current runtime supports always, selfHpRatioLte/Gte, previousIntent, and turnNumberModulo.",
-      "enemies.*.decisionModel.actions[].intent": "Action intent token. Select from meta.enums.intentTokens.",
-      "enemies.*.decisionModel.actions[].skillId": "Enemy skill id. Select from meta.enums.enemySkillIds; it must also be listed in this enemy skills[] and resolve in the enemy skill pack.",
-      "enemies.*.decisionModel.actions[].targetRule": "Target rule token. Select from meta.enums.decisionTargetRules when possible.",
-      "enemies.*.decisionModel.actions[].telegraph": "Boolean warning marker. Use for high-threat or visible telegraph actions; not an enum field."
+      "enemies.*.enemyDecision.schemaVersion": "Enemy decision graph schema. Fixed to enemy_decision_graph_v1.",
+      "enemies.*.enemyDecision.graph.nodes[]": "Decision graph nodes: entry/state/branch/action. Action nodes bind skills from enemy skills[].",
+      "enemies.*.enemyDecision.graph.edges[]": "Decision graph edges connecting states, branches, and action nodes.",
+      "enemies.*.enemyDecision.slotBindings": "Template slot bindings to concrete enemy skills.",
+      "enemies.*.enemyDecision.layout.nodes": "Editor-only node coordinates. Not combat rules."
     },
     "enums": {
       "races": [
@@ -122,35 +116,6 @@
         "support_aura",
         "telegraph_countdown"
       ],
-      "intentTokens": [
-        "armor_attack",
-        "armor_phase",
-        "attack",
-        "bind",
-        "bleed",
-        "burst",
-        "cash_out",
-        "control",
-        "control_phase",
-        "counter",
-        "exposed",
-        "guard",
-        "heal",
-        "heavy_attack",
-        "lifesteal",
-        "mark",
-        "poison",
-        "pressure",
-        "punish",
-        "recover",
-        "repair",
-        "setup",
-        "slow",
-        "stance",
-        "telegraph",
-        "terminal",
-        "vulnerable"
-      ],
       "bodyParts": [
         "head",
         "chest",
@@ -165,8 +130,7 @@
         "cooldown_3_turns",
         "cooldown_4_turns",
         "windup_1_turn",
-        "windup_2_turns",
-        "intent_loop_slot"
+        "windup_2_turns"
       ],
       "capabilityPressures": [
         "hp_attrition",
@@ -196,9 +160,6 @@
         "target_priority",
         "stable_output"
       ],
-      "decisionModelModes": [
-        "intent_priority_table"
-      ],
       "decisionTargetRules": [
         "self",
         "player",
@@ -208,13 +169,6 @@
         "fixed_part:abdomen",
         "fixed_part:arm",
         "fixed_part:leg"
-      ],
-      "decisionWhenTypes": [
-        "always",
-        "self_hp_lte",
-        "self_hp_gte",
-        "previous_intent",
-        "turn_modulo"
       ],
       "enemySkillIds": [
         "enemy_skill_ankle_pebble",
@@ -249,22 +203,35 @@
         "skill_heal",
         "skill_shield_bash",
         "skill_throw_stone"
+      ],
+      "decisionConditionTypes": [
+        "always",
+        "self_hp_ratio_lte",
+        "self_hp_ratio_gte",
+        "turn_number_modulo",
+        "skill_available",
+        "has_self_buff",
+        "player_part_armor_lte",
+        "previous_state_is",
+        "previous_action_is"
+      ],
+      "decisionGraphTemplateIds": [
+        "tpl_basic_aggressor"
       ]
     },
     "enumDescriptions": {
       "capabilityCadences": {
-        "every_turn": "设计节奏：可持续出现；实际是否使用仍由意图循环、AP 和技能合法性决定。",
+        "every_turn": "Design cadence: can appear continuously; real execution is driven by enemyDecision.",
         "alternating_turns": "设计节奏：隔回合压力；不是运行时固定 if-else。",
         "cooldown_2_turns": "设计节奏：约两回合一次的压力密度；具体冷却必须由技能字段或 planner 支持。",
         "cooldown_3_turns": "设计节奏：约三回合一次的压力密度；不是手写冷却字符串。",
         "cooldown_4_turns": "设计节奏：低频高压能力；不是必定触发器。",
         "windup_1_turn": "设计节奏：先预兆或铺垫一回合，再兑现压力。",
-        "windup_2_turns": "设计节奏：两步铺垫后兑现，适合高伤害或组合技。",
-        "intent_loop_slot": "设计节奏：由 intentModel.pattern 中的位置表达；当前运行时不读取 capability.cadence 触发。"
+        "windup_2_turns": "设计节奏：两步铺垫后兑现，适合高伤害或组合技。"
       },
       "capabilityPressures": {
-        "hp_attrition": "?????????????? HP ??????????????????",
-        "armor_attrition": "?????????????????????????????????",
+        "hp_attrition": "Creates HP loss in the current battle; carryover belongs to level rules.",
+        "armor_attrition": "Creates armor loss in the current battle; carryover belongs to level rules.",
         "burst_damage": "单关压力：高伤害窗口，要求预判、防御、打断或爆发处理。",
         "status_dot": "单关压力：流血/中毒/易伤等战斗内状态，不跨关保留。",
         "control_tempo": "节奏压力：减速、束缚、行动税或顺序扰动。",
@@ -283,7 +250,7 @@
         "fast_kill": "快速击杀，缩短磨血或爆发窗口。",
         "burst_window": "在暴露/净化后/预兆后窗口集中爆发。",
         "weakpoint_focus": "选择弱点或关键部位进行输出。",
-        "read_telegraph": "读懂预兆、阶段或意图循环。",
+        "read_telegraph": "Read the telegraph and adjust the next action.",
         "stop_attack": "暂停攻击，避免触发反击或惩罚窗口。",
         "speed_management": "速度管理，避免被减速和控制拖垮。",
         "resource_save": "保留 AP、护甲、爆发或治疗资源。",
@@ -386,16 +353,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "attack",
-          "bleed",
-          "attack"
-        ],
-        "telegraphText": "Intent pattern: attack -> bleed -> attack.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "slow_opening",
@@ -409,41 +366,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-001-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-001-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "attack",
-          "bleed",
-          "attack"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "attack",
-            "skillId": "skill_throw_stone",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_skill_throw_stone"
+            },
+            {
+              "id": "action_skill_throw_stone",
+              "type": "action",
+              "label": "attack",
+              "skillId": "skill_throw_stone",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_rusty_shiv",
+              "type": "action",
+              "label": "bleed",
+              "skillId": "enemy_skill_rusty_shiv",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_throw_stone",
+              "from": "state_normal",
+              "to": "action_skill_throw_stone",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_rusty_shiv",
+              "from": "state_normal",
+              "to": "action_enemy_skill_rusty_shiv",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "bleed",
-            "skillId": "enemy_skill_rusty_shiv",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_skill_throw_stone": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_rusty_shiv": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c1_02_path_cutthroat": {
@@ -538,16 +547,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "attack",
-          "attack",
-          "recover"
-        ],
-        "telegraphText": "Intent pattern: attack -> attack -> recover.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "low_damage"
@@ -560,41 +559,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-002-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-002-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "attack",
-          "attack",
-          "recover"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "attack",
-            "skillId": "skill_bite",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_skill_bite"
+            },
+            {
+              "id": "action_skill_bite",
+              "type": "action",
+              "label": "attack",
+              "skillId": "skill_bite",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_orc_club",
+              "type": "action",
+              "label": "attack",
+              "skillId": "enemy_skill_orc_club",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_bite",
+              "from": "state_normal",
+              "to": "action_skill_bite",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_orc_club",
+              "from": "state_normal",
+              "to": "action_enemy_skill_orc_club",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "attack",
-            "skillId": "enemy_skill_orc_club",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_skill_bite": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_orc_club": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c1_03_canopy_bleeder": {
@@ -690,16 +741,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "bleed",
-          "attack",
-          "slow"
-        ],
-        "telegraphText": "Intent pattern: bleed -> attack -> slow.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_healing",
@@ -714,41 +755,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-003-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-003-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "bleed",
-          "attack",
-          "slow"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "bleed",
-            "skillId": "enemy_skill_rusty_shiv",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_rusty_shiv"
+            },
+            {
+              "id": "action_enemy_skill_rusty_shiv",
+              "type": "action",
+              "label": "bleed",
+              "skillId": "enemy_skill_rusty_shiv",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_ankle_pebble",
+              "type": "action",
+              "label": "attack",
+              "skillId": "enemy_skill_ankle_pebble",
+              "targetRule": "fixed_part:leg",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_rusty_shiv",
+              "from": "state_normal",
+              "to": "action_enemy_skill_rusty_shiv",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_ankle_pebble",
+              "from": "state_normal",
+              "to": "action_enemy_skill_ankle_pebble",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "attack",
-            "skillId": "enemy_skill_ankle_pebble",
-            "targetRule": "fixed_part:leg",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_rusty_shiv": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_ankle_pebble": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c1_04_telegraph_bruiser": {
@@ -844,16 +937,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "telegraph",
-          "heavy_attack",
-          "recover"
-        ],
-        "telegraphText": "Intent pattern: telegraph -> heavy_attack -> recover.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "ignores_telegraph"
@@ -867,41 +950,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-004-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-004-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "telegraph",
-          "heavy_attack",
-          "recover"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "telegraph",
-            "skillId": "enemy_skill_orc_club",
-            "targetRule": "player_weak_part",
-            "telegraph": true,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_orc_club"
+            },
+            {
+              "id": "action_enemy_skill_orc_club",
+              "type": "action",
+              "label": "telegraph",
+              "skillId": "enemy_skill_orc_club",
+              "targetRule": "player_weak_part",
+              "telegraph": true
+            },
+            {
+              "id": "action_enemy_skill_wrecking_swing",
+              "type": "action",
+              "label": "heavy_attack",
+              "skillId": "enemy_skill_wrecking_swing",
+              "targetRule": "player_weak_part",
+              "telegraph": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_orc_club",
+              "from": "state_normal",
+              "to": "action_enemy_skill_orc_club",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_wrecking_swing",
+              "from": "state_normal",
+              "to": "action_enemy_skill_wrecking_swing",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "heavy_attack",
-            "skillId": "enemy_skill_wrecking_swing",
-            "targetRule": "player_weak_part",
-            "telegraph": true,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_orc_club": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_wrecking_swing": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c1_05_thorn_mender": {
@@ -998,16 +1133,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "attack",
-          "repair",
-          "poison"
-        ],
-        "telegraphText": "Intent pattern: attack -> repair -> poison.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "low_burst",
@@ -1022,41 +1147,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-005-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-005-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "attack",
-          "repair",
-          "poison"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "attack",
-            "skillId": "enemy_skill_dirty_bandage",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_dirty_bandage"
+            },
+            {
+              "id": "action_enemy_skill_dirty_bandage",
+              "type": "action",
+              "label": "attack",
+              "skillId": "enemy_skill_dirty_bandage",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_bad_lunchbox",
+              "type": "action",
+              "label": "repair",
+              "skillId": "enemy_skill_bad_lunchbox",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_dirty_bandage",
+              "from": "state_normal",
+              "to": "action_enemy_skill_dirty_bandage",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_bad_lunchbox",
+              "from": "state_normal",
+              "to": "action_enemy_skill_bad_lunchbox",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "repair",
-            "skillId": "enemy_skill_bad_lunchbox",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_dirty_bandage": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_bad_lunchbox": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c1_06_barkshield_guard": {
@@ -1151,16 +1328,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "guard",
-          "attack",
-          "guard"
-        ],
-        "telegraphText": "Intent pattern: guard -> attack -> guard.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "random_targeting"
@@ -1173,41 +1340,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-006-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-006-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "guard",
-          "attack",
-          "guard"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "guard",
-            "skillId": "skill_block",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_skill_block"
+            },
+            {
+              "id": "action_skill_block",
+              "type": "action",
+              "label": "guard",
+              "skillId": "skill_block",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_skill_shield_bash",
+              "type": "action",
+              "label": "attack",
+              "skillId": "skill_shield_bash",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_block",
+              "from": "state_normal",
+              "to": "action_skill_block",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_shield_bash",
+              "from": "state_normal",
+              "to": "action_skill_shield_bash",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "attack",
-            "skillId": "skill_shield_bash",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_skill_block": {
+              "x": 620,
+              "y": 48
+            },
+            "action_skill_shield_bash": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c1_07_field_medic": {
@@ -1302,16 +1521,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "slow",
-          "attack",
-          "heal"
-        ],
-        "telegraphText": "Intent pattern: slow -> attack -> heal.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_burst",
@@ -1325,41 +1534,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-007-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-007-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "slow",
-          "attack",
-          "heal"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "slow",
-            "skillId": "enemy_skill_ankle_pebble",
-            "targetRule": "fixed_part:leg",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_ankle_pebble"
+            },
+            {
+              "id": "action_enemy_skill_ankle_pebble",
+              "type": "action",
+              "label": "slow",
+              "skillId": "enemy_skill_ankle_pebble",
+              "targetRule": "fixed_part:leg",
+              "telegraph": false
+            },
+            {
+              "id": "action_skill_heal",
+              "type": "action",
+              "label": "attack",
+              "skillId": "skill_heal",
+              "targetRule": "self",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_ankle_pebble",
+              "from": "state_normal",
+              "to": "action_enemy_skill_ankle_pebble",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_heal",
+              "from": "state_normal",
+              "to": "action_skill_heal",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "attack",
-            "skillId": "skill_heal",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_ankle_pebble": {
+              "x": 620,
+              "y": 48
+            },
+            "action_skill_heal": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c1_08_bramble_counter": {
@@ -1448,7 +1709,7 @@
         },
         {
           "type": "bleed_apply",
-          "cadence": "intent_loop_slot",
+          "cadence": "cooldown_2_turns",
           "pressure": "status_dot",
           "counterplay": [
             "healing",
@@ -1456,16 +1717,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "stance",
-          "counter",
-          "recover"
-        ],
-        "telegraphText": "Intent pattern: stance -> counter -> recover.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "blind_attack"
@@ -1479,41 +1730,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-008-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-008-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "stance",
-          "counter",
-          "recover"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "stance",
-            "skillId": "skill_block",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_skill_block"
+            },
+            {
+              "id": "action_skill_block",
+              "type": "action",
+              "label": "stance",
+              "skillId": "skill_block",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_bone_splinter_jab",
+              "type": "action",
+              "label": "counter",
+              "skillId": "enemy_skill_bone_splinter_jab",
+              "targetRule": "fixed_part:arm",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_block",
+              "from": "state_normal",
+              "to": "action_skill_block",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_bone_splinter_jab",
+              "from": "state_normal",
+              "to": "action_enemy_skill_bone_splinter_jab",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "counter",
-            "skillId": "enemy_skill_bone_splinter_jab",
-            "targetRule": "fixed_part:arm",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_skill_block": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_bone_splinter_jab": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c1_09_bark_gate_elite": {
@@ -1610,17 +1913,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "guard",
-          "telegraph",
-          "heavy_attack",
-          "repair"
-        ],
-        "telegraphText": "Intent pattern: guard -> telegraph -> heavy_attack -> repair.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_armor_break",
@@ -1635,53 +1927,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-009-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-009-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "guard",
-          "telegraph",
-          "heavy_attack",
-          "repair"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "guard",
-            "skillId": "skill_block",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_skill_block"
+            },
+            {
+              "id": "action_skill_block",
+              "type": "action",
+              "label": "guard",
+              "skillId": "skill_block",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_wrecking_swing",
+              "type": "action",
+              "label": "telegraph",
+              "skillId": "enemy_skill_wrecking_swing",
+              "targetRule": "player_weak_part",
+              "telegraph": true
+            },
+            {
+              "id": "action_skill_shield_bash",
+              "type": "action",
+              "label": "heavy_attack",
+              "skillId": "skill_shield_bash",
+              "targetRule": "fixed_part:head",
+              "telegraph": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_block",
+              "from": "state_normal",
+              "to": "action_skill_block",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_wrecking_swing",
+              "from": "state_normal",
+              "to": "action_enemy_skill_wrecking_swing",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_skill_shield_bash",
+              "from": "state_normal",
+              "to": "action_skill_shield_bash",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "telegraph",
-            "skillId": "enemy_skill_wrecking_swing",
-            "targetRule": "player_weak_part",
-            "telegraph": true,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "heavy_attack",
-            "skillId": "skill_shield_bash",
-            "targetRule": "fixed_part:head",
-            "telegraph": true,
-            "fallbackIntent": "attack"
+            "action_skill_block": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_wrecking_swing": {
+              "x": 620,
+              "y": 180
+            },
+            "action_skill_shield_bash": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "boss_v2_c1_10_ruin_bruiser": {
@@ -1764,7 +2114,7 @@
       "capabilities": [
         {
           "type": "phase_shift",
-          "cadence": "intent_loop_slot",
+          "cadence": "windup_2_turns",
           "pressure": "progression_exam",
           "counterplay": [
             "resource_save"
@@ -1788,17 +2138,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "pressure",
-          "guard",
-          "exposed",
-          "heavy_attack"
-        ],
-        "telegraphText": "Intent pattern: pressure -> guard -> exposed -> heavy_attack.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_resource_save",
@@ -1813,64 +2152,129 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-010-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-010-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "pressure",
-          "guard",
-          "exposed",
-          "heavy_attack"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "pressure",
-            "skillId": "enemy_skill_wrecking_swing",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_wrecking_swing"
+            },
+            {
+              "id": "action_enemy_skill_wrecking_swing",
+              "type": "action",
+              "label": "pressure",
+              "skillId": "enemy_skill_wrecking_swing",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_skill_block",
+              "type": "action",
+              "label": "guard",
+              "skillId": "skill_block",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_orc_headbutt",
+              "type": "action",
+              "label": "exposed",
+              "skillId": "enemy_skill_orc_headbutt",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_dirty_bandage",
+              "type": "action",
+              "label": "heavy_attack",
+              "skillId": "enemy_skill_dirty_bandage",
+              "targetRule": "self",
+              "telegraph": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_wrecking_swing",
+              "from": "state_normal",
+              "to": "action_enemy_skill_wrecking_swing",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_block",
+              "from": "state_normal",
+              "to": "action_skill_block",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_orc_headbutt",
+              "from": "state_normal",
+              "to": "action_enemy_skill_orc_headbutt",
+              "priority": 80
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_dirty_bandage",
+              "from": "state_normal",
+              "to": "action_enemy_skill_dirty_bandage",
+              "priority": 70
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "guard",
-            "skillId": "skill_block",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "exposed",
-            "skillId": "enemy_skill_orc_headbutt",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 70,
-            "when": {
-              "always": true
+            "action_enemy_skill_wrecking_swing": {
+              "x": 620,
+              "y": 48
             },
-            "intent": "heavy_attack",
-            "skillId": "enemy_skill_dirty_bandage",
-            "targetRule": "self",
-            "telegraph": true,
-            "fallbackIntent": "attack"
+            "action_skill_block": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_orc_headbutt": {
+              "x": 620,
+              "y": 312
+            },
+            "action_enemy_skill_dirty_bandage": {
+              "x": 620,
+              "y": 444
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c2_01_frost_skirmisher": {
@@ -1964,16 +2368,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "slow",
-          "attack",
-          "attack"
-        ],
-        "telegraphText": "Intent pattern: slow -> attack -> attack.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "slow_build"
@@ -1986,41 +2380,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-011-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-011-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "slow",
-          "attack",
-          "attack"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "slow",
-            "skillId": "enemy_skill_ankle_pebble",
-            "targetRule": "fixed_part:leg",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_ankle_pebble"
+            },
+            {
+              "id": "action_enemy_skill_ankle_pebble",
+              "type": "action",
+              "label": "slow",
+              "skillId": "enemy_skill_ankle_pebble",
+              "targetRule": "fixed_part:leg",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_orc_club",
+              "type": "action",
+              "label": "attack",
+              "skillId": "enemy_skill_orc_club",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_ankle_pebble",
+              "from": "state_normal",
+              "to": "action_enemy_skill_ankle_pebble",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_orc_club",
+              "from": "state_normal",
+              "to": "action_enemy_skill_orc_club",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "attack",
-            "skillId": "enemy_skill_orc_club",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_ankle_pebble": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_orc_club": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c2_02_frost_blood_raider": {
@@ -2113,16 +2559,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "attack",
-          "attack",
-          "heavy_attack"
-        ],
-        "telegraphText": "Intent pattern: attack -> attack -> heavy_attack.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "low_output"
@@ -2135,41 +2571,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-012-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-012-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "attack",
-          "attack",
-          "heavy_attack"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "attack",
-            "skillId": "enemy_skill_orc_club",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_orc_club"
+            },
+            {
+              "id": "action_enemy_skill_orc_club",
+              "type": "action",
+              "label": "attack",
+              "skillId": "enemy_skill_orc_club",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_skill_cleave",
+              "type": "action",
+              "label": "attack",
+              "skillId": "skill_cleave",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_orc_club",
+              "from": "state_normal",
+              "to": "action_enemy_skill_orc_club",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_cleave",
+              "from": "state_normal",
+              "to": "action_skill_cleave",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "attack",
-            "skillId": "skill_cleave",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_orc_club": {
+              "x": 620,
+              "y": 48
+            },
+            "action_skill_cleave": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c2_03_iceplate_guard": {
@@ -2262,16 +2750,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "guard",
-          "armor_attack",
-          "attack"
-        ],
-        "telegraphText": "Intent pattern: guard -> armor_attack -> attack.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_armor_break"
@@ -2284,41 +2762,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-001-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-001-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "guard",
-          "armor_attack",
-          "attack"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "guard",
-            "skillId": "enemy_skill_iceplate_head_crush",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_iceplate_head_crush"
+            },
+            {
+              "id": "action_enemy_skill_iceplate_head_crush",
+              "type": "action",
+              "label": "guard",
+              "skillId": "enemy_skill_iceplate_head_crush",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            },
+            {
+              "id": "action_skill_block",
+              "type": "action",
+              "label": "armor_attack",
+              "skillId": "skill_block",
+              "targetRule": "self",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_iceplate_head_crush",
+              "from": "state_normal",
+              "to": "action_enemy_skill_iceplate_head_crush",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_block",
+              "from": "state_normal",
+              "to": "action_skill_block",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "armor_attack",
-            "skillId": "skill_block",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_iceplate_head_crush": {
+              "x": 620,
+              "y": 48
+            },
+            "action_skill_block": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c2_04_canyon_breaker": {
@@ -2414,16 +2944,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "telegraph",
-          "heavy_attack",
-          "recover"
-        ],
-        "telegraphText": "Intent pattern: telegraph -> heavy_attack -> recover.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "ignores_telegraph"
@@ -2437,41 +2957,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-002-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-002-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "telegraph",
-          "heavy_attack",
-          "recover"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "telegraph",
-            "skillId": "enemy_skill_wrecking_swing",
-            "targetRule": "player_weak_part",
-            "telegraph": true,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_wrecking_swing"
+            },
+            {
+              "id": "action_enemy_skill_wrecking_swing",
+              "type": "action",
+              "label": "telegraph",
+              "skillId": "enemy_skill_wrecking_swing",
+              "targetRule": "player_weak_part",
+              "telegraph": true
+            },
+            {
+              "id": "action_enemy_skill_orc_headbutt",
+              "type": "action",
+              "label": "heavy_attack",
+              "skillId": "enemy_skill_orc_headbutt",
+              "targetRule": "fixed_part:head",
+              "telegraph": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_wrecking_swing",
+              "from": "state_normal",
+              "to": "action_enemy_skill_wrecking_swing",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_orc_headbutt",
+              "from": "state_normal",
+              "to": "action_enemy_skill_orc_headbutt",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "heavy_attack",
-            "skillId": "enemy_skill_orc_headbutt",
-            "targetRule": "fixed_part:head",
-            "telegraph": true,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_wrecking_swing": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_orc_headbutt": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c2_05_frostbone_mender": {
@@ -2568,16 +3140,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "attack",
-          "repair",
-          "guard"
-        ],
-        "telegraphText": "Intent pattern: attack -> repair -> guard.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "low_burst"
@@ -2591,52 +3153,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-003-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-003-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "attack",
-          "repair",
-          "guard"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "attack",
-            "skillId": "enemy_skill_bone_patch",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_bone_patch"
+            },
+            {
+              "id": "action_enemy_skill_bone_patch",
+              "type": "action",
+              "label": "attack",
+              "skillId": "enemy_skill_bone_patch",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_dead_air",
+              "type": "action",
+              "label": "repair",
+              "skillId": "enemy_skill_dead_air",
+              "targetRule": "fixed_part:leg",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_shield_tap",
+              "type": "action",
+              "label": "guard",
+              "skillId": "enemy_skill_shield_tap",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_bone_patch",
+              "from": "state_normal",
+              "to": "action_enemy_skill_bone_patch",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_dead_air",
+              "from": "state_normal",
+              "to": "action_enemy_skill_dead_air",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_shield_tap",
+              "from": "state_normal",
+              "to": "action_enemy_skill_shield_tap",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "repair",
-            "skillId": "enemy_skill_dead_air",
-            "targetRule": "fixed_part:leg",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "guard",
-            "skillId": "enemy_skill_shield_tap",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_bone_patch": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_dead_air": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_shield_tap": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c2_06_chill_hexer": {
@@ -2732,16 +3353,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "slow",
-          "poison",
-          "attack"
-        ],
-        "telegraphText": "Intent pattern: slow -> poison -> attack.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "slow_build",
@@ -2756,41 +3367,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-004-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-004-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "slow",
-          "poison",
-          "attack"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "slow",
-            "skillId": "enemy_skill_dead_air",
-            "targetRule": "fixed_part:leg",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_dead_air"
+            },
+            {
+              "id": "action_enemy_skill_dead_air",
+              "type": "action",
+              "label": "slow",
+              "skillId": "enemy_skill_dead_air",
+              "targetRule": "fixed_part:leg",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_bad_lunchbox",
+              "type": "action",
+              "label": "poison",
+              "skillId": "enemy_skill_bad_lunchbox",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_dead_air",
+              "from": "state_normal",
+              "to": "action_enemy_skill_dead_air",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_bad_lunchbox",
+              "from": "state_normal",
+              "to": "action_enemy_skill_bad_lunchbox",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "poison",
-            "skillId": "enemy_skill_bad_lunchbox",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_dead_air": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_bad_lunchbox": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c2_07_rotplate_guard": {
@@ -2887,16 +3550,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "poison",
-          "armor_attack",
-          "poison"
-        ],
-        "telegraphText": "Intent pattern: poison -> armor_attack -> poison.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_healing"
@@ -2910,52 +3563,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-005-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-005-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "poison",
-          "armor_attack",
-          "poison"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "poison",
-            "skillId": "enemy_skill_bad_lunchbox",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_bad_lunchbox"
+            },
+            {
+              "id": "action_enemy_skill_bad_lunchbox",
+              "type": "action",
+              "label": "poison",
+              "skillId": "enemy_skill_bad_lunchbox",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_shield_tap",
+              "type": "action",
+              "label": "armor_attack",
+              "skillId": "enemy_skill_shield_tap",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_bone_patch",
+              "type": "action",
+              "label": "poison",
+              "skillId": "enemy_skill_bone_patch",
+              "targetRule": "self",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_bad_lunchbox",
+              "from": "state_normal",
+              "to": "action_enemy_skill_bad_lunchbox",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_shield_tap",
+              "from": "state_normal",
+              "to": "action_enemy_skill_shield_tap",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_bone_patch",
+              "from": "state_normal",
+              "to": "action_enemy_skill_bone_patch",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "armor_attack",
-            "skillId": "enemy_skill_shield_tap",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "poison",
-            "skillId": "enemy_skill_bone_patch",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_bad_lunchbox": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_shield_tap": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_bone_patch": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c2_08_ice_counter_sentinel": {
@@ -3045,23 +3757,13 @@
         },
         {
           "type": "slow_or_bind",
-          "cadence": "intent_loop_slot",
+          "cadence": "cooldown_2_turns",
           "pressure": "control_tempo",
           "counterplay": [
             "speed_management"
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "stance",
-          "counter",
-          "slow"
-        ],
-        "telegraphText": "Intent pattern: stance -> counter -> slow.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "blind_attack"
@@ -3075,52 +3777,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-006-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-006-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "stance",
-          "counter",
-          "slow"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "stance",
-            "skillId": "skill_block",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_skill_block"
+            },
+            {
+              "id": "action_skill_block",
+              "type": "action",
+              "label": "stance",
+              "skillId": "skill_block",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_iceplate_head_crush",
+              "type": "action",
+              "label": "counter",
+              "skillId": "enemy_skill_iceplate_head_crush",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_dead_air",
+              "type": "action",
+              "label": "slow",
+              "skillId": "enemy_skill_dead_air",
+              "targetRule": "fixed_part:leg",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_block",
+              "from": "state_normal",
+              "to": "action_skill_block",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_iceplate_head_crush",
+              "from": "state_normal",
+              "to": "action_enemy_skill_iceplate_head_crush",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_dead_air",
+              "from": "state_normal",
+              "to": "action_enemy_skill_dead_air",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "counter",
-            "skillId": "enemy_skill_iceplate_head_crush",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "slow",
-            "skillId": "enemy_skill_dead_air",
-            "targetRule": "fixed_part:leg",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "action_skill_block": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_iceplate_head_crush": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_dead_air": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c2_09_gatebreaker_knight": {
@@ -3225,17 +3986,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "guard",
-          "telegraph",
-          "heavy_attack",
-          "lifesteal"
-        ],
-        "telegraphText": "Intent pattern: guard -> telegraph -> heavy_attack -> lifesteal.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_guard",
@@ -3250,53 +4000,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-007-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-007-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "guard",
-          "telegraph",
-          "heavy_attack",
-          "lifesteal"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "guard",
-            "skillId": "enemy_skill_centurion_wrecking_swing",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_centurion_wrecking_swing"
+            },
+            {
+              "id": "action_enemy_skill_centurion_wrecking_swing",
+              "type": "action",
+              "label": "guard",
+              "skillId": "enemy_skill_centurion_wrecking_swing",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_shield_tap",
+              "type": "action",
+              "label": "telegraph",
+              "skillId": "enemy_skill_shield_tap",
+              "targetRule": "fixed_part:head",
+              "telegraph": true
+            },
+            {
+              "id": "action_enemy_skill_blood_heat",
+              "type": "action",
+              "label": "heavy_attack",
+              "skillId": "enemy_skill_blood_heat",
+              "targetRule": "self",
+              "telegraph": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_centurion_wrecking_swing",
+              "from": "state_normal",
+              "to": "action_enemy_skill_centurion_wrecking_swing",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_shield_tap",
+              "from": "state_normal",
+              "to": "action_enemy_skill_shield_tap",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_blood_heat",
+              "from": "state_normal",
+              "to": "action_enemy_skill_blood_heat",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "telegraph",
-            "skillId": "enemy_skill_shield_tap",
-            "targetRule": "fixed_part:head",
-            "telegraph": true,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "heavy_attack",
-            "skillId": "enemy_skill_blood_heat",
-            "targetRule": "self",
-            "telegraph": true,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_centurion_wrecking_swing": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_shield_tap": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_blood_heat": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "boss_v2_c2_10_frozen_centurion": {
@@ -3379,7 +4187,7 @@
       "capabilities": [
         {
           "type": "phase_shift",
-          "cadence": "intent_loop_slot",
+          "cadence": "windup_2_turns",
           "pressure": "progression_exam",
           "counterplay": [
             "read_telegraph"
@@ -3404,24 +4212,13 @@
         },
         {
           "type": "slow_or_bind",
-          "cadence": "intent_loop_slot",
+          "cadence": "cooldown_2_turns",
           "pressure": "control_tempo",
           "counterplay": [
             "speed_management"
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "armor_phase",
-          "control_phase",
-          "exposed",
-          "burst"
-        ],
-        "telegraphText": "Intent pattern: armor_phase -> control_phase -> exposed -> burst.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_armor_break",
@@ -3436,64 +4233,129 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-008-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-008-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "armor_phase",
-          "control_phase",
-          "exposed",
-          "burst"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "armor_phase",
-            "skillId": "enemy_skill_centurion_wrecking_swing",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_centurion_wrecking_swing"
+            },
+            {
+              "id": "action_enemy_skill_centurion_wrecking_swing",
+              "type": "action",
+              "label": "armor_phase",
+              "skillId": "enemy_skill_centurion_wrecking_swing",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_iceplate_head_crush",
+              "type": "action",
+              "label": "control_phase",
+              "skillId": "enemy_skill_iceplate_head_crush",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_bone_patch",
+              "type": "action",
+              "label": "exposed",
+              "skillId": "enemy_skill_bone_patch",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_dead_air",
+              "type": "action",
+              "label": "burst",
+              "skillId": "enemy_skill_dead_air",
+              "targetRule": "fixed_part:leg",
+              "telegraph": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_centurion_wrecking_swing",
+              "from": "state_normal",
+              "to": "action_enemy_skill_centurion_wrecking_swing",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_iceplate_head_crush",
+              "from": "state_normal",
+              "to": "action_enemy_skill_iceplate_head_crush",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_bone_patch",
+              "from": "state_normal",
+              "to": "action_enemy_skill_bone_patch",
+              "priority": 80
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_dead_air",
+              "from": "state_normal",
+              "to": "action_enemy_skill_dead_air",
+              "priority": 70
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "control_phase",
-            "skillId": "enemy_skill_iceplate_head_crush",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "exposed",
-            "skillId": "enemy_skill_bone_patch",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 70,
-            "when": {
-              "always": true
+            "action_enemy_skill_centurion_wrecking_swing": {
+              "x": 620,
+              "y": 48
             },
-            "intent": "burst",
-            "skillId": "enemy_skill_dead_air",
-            "targetRule": "fixed_part:leg",
-            "telegraph": true,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_iceplate_head_crush": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_bone_patch": {
+              "x": 620,
+              "y": 312
+            },
+            "action_enemy_skill_dead_air": {
+              "x": 620,
+              "y": 444
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c3_01_dusk_runner": {
@@ -3589,16 +4451,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "bleed",
-          "attack",
-          "slow"
-        ],
-        "telegraphText": "Intent pattern: bleed -> attack -> slow.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_healing",
@@ -3613,41 +4465,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-009-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-009-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "bleed",
-          "attack",
-          "slow"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "bleed",
-            "skillId": "enemy_skill_blood_rite_cut",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_blood_rite_cut"
+            },
+            {
+              "id": "action_enemy_skill_blood_rite_cut",
+              "type": "action",
+              "label": "bleed",
+              "skillId": "enemy_skill_blood_rite_cut",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_ankle_pebble",
+              "type": "action",
+              "label": "attack",
+              "skillId": "enemy_skill_ankle_pebble",
+              "targetRule": "fixed_part:leg",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_blood_rite_cut",
+              "from": "state_normal",
+              "to": "action_enemy_skill_blood_rite_cut",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_ankle_pebble",
+              "from": "state_normal",
+              "to": "action_enemy_skill_ankle_pebble",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "attack",
-            "skillId": "enemy_skill_ankle_pebble",
-            "targetRule": "fixed_part:leg",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_blood_rite_cut": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_ankle_pebble": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c3_02_plague_caller": {
@@ -3743,16 +4647,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "poison",
-          "vulnerable",
-          "attack"
-        ],
-        "telegraphText": "Intent pattern: poison -> vulnerable -> attack.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_healing",
@@ -3767,41 +4661,93 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-010-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-010-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "poison",
-          "vulnerable",
-          "attack"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "poison",
-            "skillId": "enemy_skill_plague_mist_burst",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_plague_mist_burst"
+            },
+            {
+              "id": "action_enemy_skill_plague_mist_burst",
+              "type": "action",
+              "label": "poison",
+              "skillId": "enemy_skill_plague_mist_burst",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_plague_standard_wave",
+              "type": "action",
+              "label": "vulnerable",
+              "skillId": "enemy_skill_plague_standard_wave",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_plague_mist_burst",
+              "from": "state_normal",
+              "to": "action_enemy_skill_plague_mist_burst",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_plague_standard_wave",
+              "from": "state_normal",
+              "to": "action_enemy_skill_plague_standard_wave",
+              "priority": 90
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "vulnerable",
-            "skillId": "enemy_skill_plague_standard_wave",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_plague_mist_burst": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_plague_standard_wave": {
+              "x": 620,
+              "y": 180
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c3_03_twilight_reaver": {
@@ -3898,16 +4844,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "attack",
-          "attack",
-          "heavy_attack"
-        ],
-        "telegraphText": "Intent pattern: attack -> attack -> heavy_attack.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "low_output",
@@ -3922,52 +4858,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-011-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-011-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "attack",
-          "attack",
-          "heavy_attack"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "attack",
-            "skillId": "enemy_skill_orc_club",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_orc_club"
+            },
+            {
+              "id": "action_enemy_skill_orc_club",
+              "type": "action",
+              "label": "attack",
+              "skillId": "enemy_skill_orc_club",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_skill_cleave",
+              "type": "action",
+              "label": "attack",
+              "skillId": "skill_cleave",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_wrecking_swing",
+              "type": "action",
+              "label": "heavy_attack",
+              "skillId": "enemy_skill_wrecking_swing",
+              "targetRule": "player_weak_part",
+              "telegraph": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_orc_club",
+              "from": "state_normal",
+              "to": "action_enemy_skill_orc_club",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_skill_cleave",
+              "from": "state_normal",
+              "to": "action_skill_cleave",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_wrecking_swing",
+              "from": "state_normal",
+              "to": "action_enemy_skill_wrecking_swing",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "attack",
-            "skillId": "skill_cleave",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "heavy_attack",
-            "skillId": "enemy_skill_wrecking_swing",
-            "targetRule": "player_weak_part",
-            "telegraph": true,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_orc_club": {
+              "x": 620,
+              "y": 48
+            },
+            "action_skill_cleave": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_wrecking_swing": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c3_04_graveplate_bastion": {
@@ -4071,16 +5066,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "guard",
-          "repair",
-          "exposed"
-        ],
-        "telegraphText": "Intent pattern: guard -> repair -> exposed.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_armor_break"
@@ -4094,52 +5079,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-012-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-012-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "guard",
-          "repair",
-          "exposed"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "guard",
-            "skillId": "enemy_skill_bone_patch",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_bone_patch"
+            },
+            {
+              "id": "action_enemy_skill_bone_patch",
+              "type": "action",
+              "label": "guard",
+              "skillId": "enemy_skill_bone_patch",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_shield_tap",
+              "type": "action",
+              "label": "repair",
+              "skillId": "enemy_skill_shield_tap",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_dead_air",
+              "type": "action",
+              "label": "exposed",
+              "skillId": "enemy_skill_dead_air",
+              "targetRule": "fixed_part:leg",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_bone_patch",
+              "from": "state_normal",
+              "to": "action_enemy_skill_bone_patch",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_shield_tap",
+              "from": "state_normal",
+              "to": "action_enemy_skill_shield_tap",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_dead_air",
+              "from": "state_normal",
+              "to": "action_enemy_skill_dead_air",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "repair",
-            "skillId": "enemy_skill_shield_tap",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "exposed",
-            "skillId": "enemy_skill_dead_air",
-            "targetRule": "fixed_part:leg",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_bone_patch": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_shield_tap": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_dead_air": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c3_05_blood_rite_acolyte": {
@@ -4238,23 +5282,13 @@
         },
         {
           "type": "lifesteal",
-          "cadence": "intent_loop_slot",
+          "cadence": "cooldown_3_turns",
           "pressure": "delay_sustain",
           "counterplay": [
             "fast_kill"
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "mark",
-          "bleed",
-          "cash_out"
-        ],
-        "telegraphText": "Intent pattern: mark -> bleed -> cash_out.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_cleanse",
@@ -4269,52 +5303,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-001-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-001-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "mark",
-          "bleed",
-          "cash_out"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "mark",
-            "skillId": "enemy_skill_blood_rite_cut",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_blood_rite_cut"
+            },
+            {
+              "id": "action_enemy_skill_blood_rite_cut",
+              "type": "action",
+              "label": "mark",
+              "skillId": "enemy_skill_blood_rite_cut",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_rusty_shiv",
+              "type": "action",
+              "label": "bleed",
+              "skillId": "enemy_skill_rusty_shiv",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_blood_heat",
+              "type": "action",
+              "label": "cash_out",
+              "skillId": "enemy_skill_blood_heat",
+              "targetRule": "self",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_blood_rite_cut",
+              "from": "state_normal",
+              "to": "action_enemy_skill_blood_rite_cut",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_rusty_shiv",
+              "from": "state_normal",
+              "to": "action_enemy_skill_rusty_shiv",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_blood_heat",
+              "from": "state_normal",
+              "to": "action_enemy_skill_blood_heat",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "bleed",
-            "skillId": "enemy_skill_rusty_shiv",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "cash_out",
-            "skillId": "enemy_skill_blood_heat",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_blood_rite_cut": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_rusty_shiv": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_blood_heat": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c3_06_mire_chain_jailer": {
@@ -4419,16 +5512,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "slow",
-          "armor_attack",
-          "bind"
-        ],
-        "telegraphText": "Intent pattern: slow -> armor_attack -> bind.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "slow_build",
@@ -4443,52 +5526,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-002-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-002-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "slow",
-          "armor_attack",
-          "bind"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "slow",
-            "skillId": "enemy_skill_mire_chain_drag",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_mire_chain_drag"
+            },
+            {
+              "id": "action_enemy_skill_mire_chain_drag",
+              "type": "action",
+              "label": "slow",
+              "skillId": "enemy_skill_mire_chain_drag",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_shield_tap",
+              "type": "action",
+              "label": "armor_attack",
+              "skillId": "enemy_skill_shield_tap",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_bone_patch",
+              "type": "action",
+              "label": "bind",
+              "skillId": "enemy_skill_bone_patch",
+              "targetRule": "self",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_mire_chain_drag",
+              "from": "state_normal",
+              "to": "action_enemy_skill_mire_chain_drag",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_shield_tap",
+              "from": "state_normal",
+              "to": "action_enemy_skill_shield_tap",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_bone_patch",
+              "from": "state_normal",
+              "to": "action_enemy_skill_bone_patch",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "armor_attack",
-            "skillId": "enemy_skill_shield_tap",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "bind",
-            "skillId": "enemy_skill_bone_patch",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_mire_chain_drag": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_shield_tap": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_bone_patch": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c3_07_twilight_warden": {
@@ -4596,16 +5738,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "guard",
-          "repair",
-          "punish"
-        ],
-        "telegraphText": "Intent pattern: guard -> repair -> punish.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "passive_dot_only",
@@ -4620,52 +5752,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-003-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-003-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "guard",
-          "repair",
-          "punish"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "guard",
-            "skillId": "enemy_skill_twilight_warden_bulwark",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_twilight_warden_bulwark"
+            },
+            {
+              "id": "action_enemy_skill_twilight_warden_bulwark",
+              "type": "action",
+              "label": "guard",
+              "skillId": "enemy_skill_twilight_warden_bulwark",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_shield_tap",
+              "type": "action",
+              "label": "repair",
+              "skillId": "enemy_skill_shield_tap",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_twilight_gate_crush",
+              "type": "action",
+              "label": "punish",
+              "skillId": "enemy_skill_twilight_gate_crush",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_twilight_warden_bulwark",
+              "from": "state_normal",
+              "to": "action_enemy_skill_twilight_warden_bulwark",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_shield_tap",
+              "from": "state_normal",
+              "to": "action_enemy_skill_shield_tap",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_twilight_gate_crush",
+              "from": "state_normal",
+              "to": "action_enemy_skill_twilight_gate_crush",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "repair",
-            "skillId": "enemy_skill_shield_tap",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "punish",
-            "skillId": "enemy_skill_twilight_gate_crush",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_twilight_warden_bulwark": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_shield_tap": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_twilight_gate_crush": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c3_08_plague_standard": {
@@ -4771,16 +5962,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "vulnerable",
-          "poison",
-          "pressure"
-        ],
-        "telegraphText": "Intent pattern: vulnerable -> poison -> pressure.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "ignores_support",
@@ -4795,52 +5976,111 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-004-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-004-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "vulnerable",
-          "poison",
-          "pressure"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "vulnerable",
-            "skillId": "enemy_skill_plague_standard_wave",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_plague_standard_wave"
+            },
+            {
+              "id": "action_enemy_skill_plague_standard_wave",
+              "type": "action",
+              "label": "vulnerable",
+              "skillId": "enemy_skill_plague_standard_wave",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_plague_mist_burst",
+              "type": "action",
+              "label": "poison",
+              "skillId": "enemy_skill_plague_mist_burst",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_dirty_bandage",
+              "type": "action",
+              "label": "pressure",
+              "skillId": "enemy_skill_dirty_bandage",
+              "targetRule": "self",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_plague_standard_wave",
+              "from": "state_normal",
+              "to": "action_enemy_skill_plague_standard_wave",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_plague_mist_burst",
+              "from": "state_normal",
+              "to": "action_enemy_skill_plague_mist_burst",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_dirty_bandage",
+              "from": "state_normal",
+              "to": "action_enemy_skill_dirty_bandage",
+              "priority": 80
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "poison",
-            "skillId": "enemy_skill_plague_mist_burst",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "pressure",
-            "skillId": "enemy_skill_dirty_bandage",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_plague_standard_wave": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_plague_mist_burst": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_dirty_bandage": {
+              "x": 620,
+              "y": 312
+            }
           }
-        ]
+        }
       }
     },
     "enemy_v2_c3_09_twilight_gate_elite": {
@@ -4956,17 +6196,6 @@
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "guard",
-          "repair",
-          "control",
-          "burst"
-        ],
-        "telegraphText": "Intent pattern: guard -> repair -> control -> burst.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_armor_break",
@@ -4982,64 +6211,129 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-005-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-005-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "guard",
-          "repair",
-          "control",
-          "burst"
-        ],
-        "fallbackIntent": "attack",
-        "actions": [
-          {
-            "priority": 100,
-            "when": {
-              "always": true
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
             },
-            "intent": "guard",
-            "skillId": "enemy_skill_twilight_gate_crush",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_twilight_gate_crush"
+            },
+            {
+              "id": "action_enemy_skill_twilight_gate_crush",
+              "type": "action",
+              "label": "guard",
+              "skillId": "enemy_skill_twilight_gate_crush",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_twilight_warden_bulwark",
+              "type": "action",
+              "label": "repair",
+              "skillId": "enemy_skill_twilight_warden_bulwark",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_shield_tap",
+              "type": "action",
+              "label": "control",
+              "skillId": "enemy_skill_shield_tap",
+              "targetRule": "fixed_part:head",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_dead_air",
+              "type": "action",
+              "label": "burst",
+              "skillId": "enemy_skill_dead_air",
+              "targetRule": "fixed_part:leg",
+              "telegraph": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_twilight_gate_crush",
+              "from": "state_normal",
+              "to": "action_enemy_skill_twilight_gate_crush",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_twilight_warden_bulwark",
+              "from": "state_normal",
+              "to": "action_enemy_skill_twilight_warden_bulwark",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_shield_tap",
+              "from": "state_normal",
+              "to": "action_enemy_skill_shield_tap",
+              "priority": 80
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_dead_air",
+              "from": "state_normal",
+              "to": "action_enemy_skill_dead_air",
+              "priority": 70
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
           },
-          {
-            "priority": 90,
-            "when": {
-              "always": true
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
             },
-            "intent": "repair",
-            "skillId": "enemy_skill_twilight_warden_bulwark",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
+            "state_normal": {
+              "x": 260,
+              "y": 80
             },
-            "intent": "control",
-            "skillId": "enemy_skill_shield_tap",
-            "targetRule": "fixed_part:head",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 70,
-            "when": {
-              "always": true
+            "action_enemy_skill_twilight_gate_crush": {
+              "x": 620,
+              "y": 48
             },
-            "intent": "burst",
-            "skillId": "enemy_skill_dead_air",
-            "targetRule": "fixed_part:leg",
-            "telegraph": true,
-            "fallbackIntent": "attack"
+            "action_enemy_skill_twilight_warden_bulwark": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_shield_tap": {
+              "x": 620,
+              "y": 312
+            },
+            "action_enemy_skill_dead_air": {
+              "x": 620,
+              "y": 444
+            }
           }
-        ]
+        }
       }
     },
     "boss_v2_c3_10_twilight_bastion": {
@@ -5124,7 +6418,7 @@
       "capabilities": [
         {
           "type": "phase_shift",
-          "cadence": "intent_loop_slot",
+          "cadence": "windup_2_turns",
           "pressure": "progression_exam",
           "counterplay": [
             "read_telegraph",
@@ -5159,24 +6453,13 @@
         },
         {
           "type": "lifesteal",
-          "cadence": "intent_loop_slot",
+          "cadence": "cooldown_3_turns",
           "pressure": "burst_damage",
           "counterplay": [
             "fast_kill"
           ]
         }
       ],
-      "intentModel": {
-        "visible": true,
-        "pattern": [
-          "setup",
-          "pressure",
-          "exposed",
-          "terminal"
-        ],
-        "telegraphText": "Intent pattern: setup -> pressure -> exposed -> terminal.",
-        "fallback": "attack"
-      },
       "buildCheck": {
         "punishAxis": [
           "no_resource_save",
@@ -5192,62 +6475,185 @@
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
-        "battleSpriteRef": "../source/character/??-006-??001-????.png",
+        "battleSpriteRef": "../source/character/敌人-006-状态001-正常状态.png",
         "iconRef": ""
       },
-      "decisionModel": {
-        "mode": "intent_priority_table",
-        "intentTimeline": [
-          "setup",
-          "pressure",
-          "exposed",
-          "terminal"
+      "enemyDecision": {
+        "schemaVersion": "enemy_decision_graph_v1",
+        "templateId": "",
+        "templateRevision": 0,
+        "slotBindings": {},
+        "graph": {
+          "entryNodeId": "entry",
+          "initialStateId": "state_normal",
+          "nodes": [
+            {
+              "id": "entry",
+              "type": "entry",
+              "label": "Start"
+            },
+            {
+              "id": "state_normal",
+              "type": "state",
+              "label": "Normal",
+              "description": "Migrated default decision state.",
+              "fallbackNodeId": "action_enemy_skill_twilight_bastion_swing"
+            },
+            {
+              "id": "action_enemy_skill_twilight_bastion_swing",
+              "type": "action",
+              "label": "setup",
+              "skillId": "enemy_skill_twilight_bastion_swing",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_twilight_warden_bulwark",
+              "type": "action",
+              "label": "pressure",
+              "skillId": "enemy_skill_twilight_warden_bulwark",
+              "targetRule": "self",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_plague_standard_wave",
+              "type": "action",
+              "label": "exposed",
+              "skillId": "enemy_skill_plague_standard_wave",
+              "targetRule": "player_weak_part",
+              "telegraph": false
+            },
+            {
+              "id": "action_enemy_skill_blood_heat",
+              "type": "action",
+              "label": "terminal",
+              "skillId": "enemy_skill_blood_heat",
+              "targetRule": "self",
+              "telegraph": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_entry_state_normal",
+              "from": "entry",
+              "to": "state_normal",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_twilight_bastion_swing",
+              "from": "state_normal",
+              "to": "action_enemy_skill_twilight_bastion_swing",
+              "priority": 100
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_twilight_warden_bulwark",
+              "from": "state_normal",
+              "to": "action_enemy_skill_twilight_warden_bulwark",
+              "priority": 90
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_plague_standard_wave",
+              "from": "state_normal",
+              "to": "action_enemy_skill_plague_standard_wave",
+              "priority": 80
+            },
+            {
+              "id": "edge_state_normal_action_enemy_skill_blood_heat",
+              "from": "state_normal",
+              "to": "action_enemy_skill_blood_heat",
+              "priority": 70
+            }
+          ]
+        },
+        "layout": {
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
+          },
+          "nodes": {
+            "entry": {
+              "x": 40,
+              "y": 80
+            },
+            "state_normal": {
+              "x": 260,
+              "y": 80
+            },
+            "action_enemy_skill_twilight_bastion_swing": {
+              "x": 620,
+              "y": 48
+            },
+            "action_enemy_skill_twilight_warden_bulwark": {
+              "x": 620,
+              "y": 180
+            },
+            "action_enemy_skill_plague_standard_wave": {
+              "x": 620,
+              "y": 312
+            },
+            "action_enemy_skill_blood_heat": {
+              "x": 620,
+              "y": 444
+            }
+          }
+        }
+      }
+    }
+  },
+  "decisionGraphTemplates": {
+    "tpl_basic_aggressor": {
+      "id": "tpl_basic_aggressor",
+      "name": "Basic Aggressor",
+      "schemaVersion": "enemy_decision_graph_v1",
+      "revision": 1,
+      "slots": [
+        {
+          "id": "slot_basic_attack",
+          "label": "Basic Attack",
+          "required": true,
+          "expectedTags": [
+            "attack"
+          ]
+        }
+      ],
+      "graph": {
+        "entryNodeId": "entry",
+        "initialStateId": "state_normal",
+        "nodes": [
+          {
+            "id": "entry",
+            "type": "entry",
+            "label": "Start"
+          },
+          {
+            "id": "state_normal",
+            "type": "state",
+            "label": "Normal",
+            "description": "Migrated default decision state.",
+            "fallbackNodeId": "action_skill"
+          },
+          {
+            "id": "action_skill",
+            "type": "action",
+            "label": "Action 1",
+            "skillId": "",
+            "targetRule": "player_weak_part",
+            "telegraph": false
+          }
         ],
-        "fallbackIntent": "attack",
-        "actions": [
+        "edges": [
           {
-            "priority": 100,
-            "when": {
-              "always": true
-            },
-            "intent": "setup",
-            "skillId": "enemy_skill_twilight_bastion_swing",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "id": "edge_entry_state_normal",
+            "from": "entry",
+            "to": "state_normal",
+            "priority": 100
           },
           {
-            "priority": 90,
-            "when": {
-              "always": true
-            },
-            "intent": "pressure",
-            "skillId": "enemy_skill_twilight_warden_bulwark",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 80,
-            "when": {
-              "always": true
-            },
-            "intent": "exposed",
-            "skillId": "enemy_skill_plague_standard_wave",
-            "targetRule": "player_weak_part",
-            "telegraph": false,
-            "fallbackIntent": "attack"
-          },
-          {
-            "priority": 70,
-            "when": {
-              "always": true
-            },
-            "intent": "terminal",
-            "skillId": "enemy_skill_blood_heat",
-            "targetRule": "self",
-            "telegraph": false,
-            "fallbackIntent": "attack"
+            "id": "edge_state_normal_action_skill",
+            "from": "state_normal",
+            "to": "action_skill",
+            "priority": 100
           }
         ]
       }

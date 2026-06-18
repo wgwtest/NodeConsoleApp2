@@ -908,7 +908,7 @@
                 <div class="schema-line"><code>class</code><span class="pill enum">枚举</span></div>
                 <div class="schema-line"><code>tags[]</code><span class="pill multi">多选</span></div>
                 <div class="schema-line"><code>capabilities[].type</code><span class="pill enum">枚举</span></div>
-                <div class="schema-line"><code>intentModel.pattern[]</code><span class="pill enum">枚举</span></div>
+                <div class="schema-line"><code>enemyDecision.graph.nodes[]</code><span class="pill enum">蓝图</span></div>
                 <div class="schema-line"><code>skills[]</code><span class="pill ref">引用</span></div>
                 <div class="schema-line"><code>description</code><span class="pill free">文本</span></div>
               </div>
@@ -951,8 +951,8 @@
                 <span class="pill multi">通过</span>
               </div>
               <div class="check">
-                <strong>跨关状态规则</strong>
-                <span>只继承 hp/armor；bleed/poison 等战后清除。</span>
+                <strong>决策图合法性</strong>
+                <span>Entry、State、Branch、Action 节点连接完整，Action 绑定本敌人 skills[]。</span>
                 <span class="pill multi">通过</span>
               </div>
               <div class="check">
@@ -971,7 +971,7 @@
       identity: '\u8eab\u4efd',
       stats: '\u6570\u503c\u90e8\u4f4d',
       capabilities: '\u81ea\u8eab\u80fd\u529b',
-      intent: '\u610f\u56fe\u5faa\u73af',
+      enemyDecision: '\u654c\u4eba\u51b3\u7b56',
       assets: '\u8d44\u4ea7\u5f15\u7528',
       baseIdentity: '\u57fa\u7840\u8eab\u4efd',
       displayName: '\u663e\u793a\u540d',
@@ -1000,11 +1000,11 @@
       counterplay: '\u53cd\u5236',
       tagGroup: '\u6807\u7b7e\u7ec4',
       addCapability: '+ \u6dfb\u52a0\u80fd\u529b\u884c',
-      fixedIntent: '\u56fa\u5b9a\u610f\u56fe\u5faa\u73af',
-      intentTip: '\u610f\u56fe\u63d0\u793a\u6587\u672c',
-      intentTipValue: '\u6b63\u5728\u5bfb\u627e\u62a4\u7532\u8584\u5f31\u5904',
+      enemyDecisionGraph: '\u654c\u4eba\u51b3\u7b56\u56fe',
+      decisionNode: '\u51b3\u7b56\u8282\u70b9',
+      decisionPreview: '\u8def\u5f84\u9884\u89c8',
+      decisionTemplate: '\u51b3\u7b56\u6a21\u677f',
       skillRefs: '\u6280\u80fd\u5f15\u7528',
-      visibleIntent: '\u53ef\u89c1\u610f\u56fe',
       boolText: '\u5e03\u5c14',
       assetAndRefs: '\u8d44\u4ea7\u4e0e\u5f15\u7528',
       assetPreviewTitle: '\u8d44\u4ea7\u9884\u89c8\u4e0d\u5360\u4e3b\u7f16\u8f91\u533a',
@@ -1015,7 +1015,7 @@
       ['identity', cn.identity],
       ['stats', cn.stats],
       ['capabilities', cn.capabilities],
-      ['intent', cn.intent],
+      ['enemyDecision', cn.enemyDecision],
       ['assets', cn.assets]
     ].map(([key, label], index) => `<button class="tab-button${index === 0 ? ' active' : ''}" data-tab="${key}">${label}</button>`).join('');
 
@@ -1046,13 +1046,13 @@
         <div class="section-title"><h3>${cn.enemyCapability}</h3><span class="pill enum">capabilities[].type ${cn.enumText}</span></div>
         <div class="section-body"><div class="capability-list">
           <div class="capability"><div class="field"><div class="field-head"><span class="label">${cn.capabilityType}</span><span class="pill enum">${cn.enumText}</span></div><select><option>basic_attack</option></select></div><div class="field"><div class="field-head"><span class="label">${cn.cadence}</span><span class="pill free">${cn.freeText}</span></div><input value="every_turn"></div><div class="field"><div class="field-head"><span class="label">${cn.pressureMade}</span><span class="pill free">${cn.freeText}</span></div><input value="early_hp_pressure"></div><div class="field"><div class="field-head"><span class="label">${cn.counterplay}</span><span class="pill multi">${cn.tagGroup}</span></div><input value="guard, fast_kill"></div></div>
-          <div class="capability"><div class="field"><div class="field-head"><span class="label">${cn.capabilityType}</span><span class="pill enum">${cn.enumText}</span></div><select><option>bleed_apply</option></select></div><div class="field"><div class="field-head"><span class="label">${cn.cadence}</span><span class="pill free">${cn.freeText}</span></div><input value="turn_2_pressure"></div><div class="field"><div class="field-head"><span class="label">${cn.pressureMade}</span><span class="pill free">${cn.freeText}</span></div><input value="battle_local_hp_attrition"></div><div class="field"><div class="field-head"><span class="label">${cn.counterplay}</span><span class="pill multi">${cn.tagGroup}</span></div><input value="cleanse, healing, kill_before_tick"></div></div>
+          <div class="capability"><div class="field"><div class="field-head"><span class="label">${cn.capabilityType}</span><span class="pill enum">${cn.enumText}</span></div><select><option>bleed_apply</option></select></div><div class="field"><div class="field-head"><span class="label">${cn.cadence}</span><span class="pill free">${cn.freeText}</span></div><input value="cooldown_2_turns"></div><div class="field"><div class="field-head"><span class="label">${cn.pressureMade}</span><span class="pill free">${cn.freeText}</span></div><input value="battle_local_hp_attrition"></div><div class="field"><div class="field-head"><span class="label">${cn.counterplay}</span><span class="pill multi">${cn.tagGroup}</span></div><input value="cleanse, healing, kill_before_tick"></div></div>
           <button class="secondary">${cn.addCapability}</button>
         </div></div>
       </section>
-      <section class="section tab-panel" data-panel="intent">
-        <div class="section-title"><h3>${cn.fixedIntent}</h3><span class="pill enum">intent tokens \u6765\u81ea meta.enums</span></div>
-        <div class="section-body"><div class="intent-track"><span class="token">attack</span><span class="arrow">\u2192</span><span class="token">bleed</span><span class="arrow">\u2192</span><span class="token">attack</span><span class="arrow">\u2192</span><span class="token">fallback: attack</span></div><div class="form-grid"><div class="field wide"><div class="field-head"><span class="label">${cn.intentTip}</span><span class="pill free">${cn.freeText}</span></div><input value="${cn.intentTipValue}"></div><div class="field wide"><div class="field-head"><span class="label">${cn.skillRefs}</span><span class="pill ref">enemy skill pack</span></div><input value="enemy_skill_rusty_shiv, skill_throw_stone"></div><div class="field"><div class="field-head"><span class="label">${cn.visibleIntent}</span><span class="pill enum">${cn.boolText}</span></div><select><option>true</option><option>false</option></select></div><div class="field"><div class="field-head"><span class="label">fallback</span><span class="pill enum">${cn.enumText}</span></div><select><option>attack</option><option>recover</option></select></div></div></div>
+      <section class="section tab-panel" data-panel="enemyDecision">
+        <div class="section-title"><h3>${cn.enemyDecisionGraph}</h3><span class="pill enum">enemyDecision graph</span></div>
+        <div class="section-body"><div class="intent-track"><span class="token">Entry</span><span class="arrow">\u2192</span><span class="token">Normal State</span><span class="arrow">\u2192</span><span class="token">Low HP Branch</span><span class="arrow">\u2192</span><span class="token">Action: rusty_shiv</span></div><div class="form-grid"><div class="field wide"><div class="field-head"><span class="label">${cn.decisionTemplate}</span><span class="pill enum">${cn.enumText}</span></div><select><option>tpl_basic_aggressor</option></select></div><div class="field wide"><div class="field-head"><span class="label">${cn.skillRefs}</span><span class="pill ref">enemy skill pack</span></div><input value="enemy_skill_rusty_shiv, skill_throw_stone"></div><div class="field"><div class="field-head"><span class="label">${cn.decisionNode}</span><span class="pill enum">Action</span></div><select><option>skill_throw_stone</option><option>enemy_skill_rusty_shiv</option></select></div><div class="field"><div class="field-head"><span class="label">${cn.decisionPreview}</span><span class="pill enum">Turn 1</span></div><input value="state_normal -> action_skill_throw_stone"></div></div></div>
       </section>
       <section class="section tab-panel" data-panel="assets">
         <div class="section-title"><h3>${cn.assetAndRefs}</h3><span class="pill ref">asset refs / skill refs</span></div>

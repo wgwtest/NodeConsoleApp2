@@ -8,15 +8,44 @@ import { Buffer } from 'node:buffer';
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const pageModulePath = path.join(projectRoot, 'script', 'editor', 'enemy', 'EnemyEditorPage.js');
 const workspaceModulePath = path.join(projectRoot, 'script', 'editor', 'enemy', 'EnemyWorkspace.js');
+const decisionModelModulePath = path.join(projectRoot, 'script', 'editor', 'enemy', 'decision', 'EnemyDecisionGraphModel.js');
+const decisionEditorModulePath = path.join(projectRoot, 'script', 'editor', 'enemy', 'decision', 'EnemyDecisionGraphEditor.js');
 const pageHtmlPath = path.join(projectRoot, 'test', 'enemy_editor_v1.html');
+
+async function encodeSourceModule(filePath) {
+    let source = await fsp.readFile(filePath, 'utf8');
+    if (source.includes('./decision/EnemyDecisionGraphModel.js')) {
+        const modelEncoded = await encodeSourceModule(decisionModelModulePath);
+        source = source.replaceAll("'./decision/EnemyDecisionGraphModel.js'", `'data:text/javascript;base64,${modelEncoded}'`);
+        source = source.replaceAll('"./decision/EnemyDecisionGraphModel.js"', `"data:text/javascript;base64,${modelEncoded}"`);
+    }
+    if (source.includes('./EnemyDecisionGraphModel.js')) {
+        const modelEncoded = await encodeSourceModule(decisionModelModulePath);
+        source = source.replaceAll("'./EnemyDecisionGraphModel.js'", `'data:text/javascript;base64,${modelEncoded}'`);
+        source = source.replaceAll('"./EnemyDecisionGraphModel.js"', `"data:text/javascript;base64,${modelEncoded}"`);
+    }
+    if (source.includes('./decision/EnemyDecisionGraphEditor.js') && fs.existsSync(decisionEditorModulePath)) {
+        const editorEncoded = await encodeSourceModule(decisionEditorModulePath);
+        source = source.replaceAll("'./decision/EnemyDecisionGraphEditor.js'", `'data:text/javascript;base64,${editorEncoded}'`);
+        source = source.replaceAll('"./decision/EnemyDecisionGraphEditor.js"', `"data:text/javascript;base64,${editorEncoded}"`);
+    }
+    return Buffer.from(source, 'utf8').toString('base64');
+}
 
 async function importSourceModule(filePath) {
     assert.equal(fs.existsSync(filePath), true, `缺少源文件: ${filePath}`);
     let source = await fsp.readFile(filePath, 'utf8');
     if (source.includes('./EnemyWorkspace.js')) {
-        const workspaceSource = await fsp.readFile(workspaceModulePath, 'utf8');
-        const workspaceEncoded = Buffer.from(workspaceSource, 'utf8').toString('base64');
+        const workspaceEncoded = await encodeSourceModule(workspaceModulePath);
         source = source.replace("'./EnemyWorkspace.js'", `'data:text/javascript;base64,${workspaceEncoded}'`);
+    }
+    if (source.includes('./decision/EnemyDecisionGraphModel.js')) {
+        const modelEncoded = await encodeSourceModule(decisionModelModulePath);
+        source = source.replace("'./decision/EnemyDecisionGraphModel.js'", `'data:text/javascript;base64,${modelEncoded}'`);
+    }
+    if (source.includes('./decision/EnemyDecisionGraphEditor.js') && fs.existsSync(decisionEditorModulePath)) {
+        const editorEncoded = await encodeSourceModule(decisionEditorModulePath);
+        source = source.replace("'./decision/EnemyDecisionGraphEditor.js'", `'data:text/javascript;base64,${editorEncoded}'`);
     }
     const encoded = Buffer.from(source, 'utf8').toString('base64');
     return import(`data:text/javascript;base64,${encoded}`);
@@ -321,48 +350,60 @@ test('enemy editor page fixture contains required authoring controls', async () 
     ]) {
         assert.match(html, new RegExp(`id=["']${id}["']`), `页面缺少 #${id}`);
     }
-    for (const tabId of ['identity', 'stats', 'capabilities', 'intent', 'decision', 'assets']) {
+    for (const tabId of ['identity', 'stats', 'capabilities', 'enemyDecision', 'assets']) {
         assert.match(html, new RegExp(`data-editor-tab=["']${tabId}["']`), `page missing ${tabId} tab`);
         assert.match(html, new RegExp(`data-editor-panel=["']${tabId}["']`), `page missing ${tabId} panel`);
     }
+    for (const tabId of ['intent', 'decision', 'pressure']) {
+        assert.doesNotMatch(html, new RegExp(`data-editor-tab=["']${tabId}["']`), `page should not expose ${tabId} tab`);
+        assert.doesNotMatch(html, new RegExp(`data-editor-panel=["']${tabId}["']`), `page should not expose ${tabId} panel`);
+    }
     assert.doesNotMatch(html, /data-editor-tab=["']pressure["']/u, 'page should not expose pressure tab');
     assert.doesNotMatch(html, /data-editor-panel=["']pressure["']/u, 'page should not expose pressure panel');
-    for (const id of ['capabilitiesJsonInput', 'intentModelJsonInput', 'decisionModelJsonInput']) {
+    for (const id of ['capabilitiesJsonInput', 'decisionTemplateList', 'decisionSkillList', 'decisionGraphCanvas', 'decisionNodeInspector', 'decisionGraphIssues', 'decisionPreviewTrace']) {
         assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
     }
-    for (const id of ['runPressureJsonInput', 'statePersistenceJsonInput']) {
+    for (const id of ['intentModelJsonInput', 'decisionModelJsonInput', 'runPressureJsonInput', 'statePersistenceJsonInput']) {
         assert.doesNotMatch(html, new RegExp(`id=["']${id}["']`), `page should not expose #${id}`);
     }
     assert.doesNotMatch(html, /id=["']saveEnemyBtn["']/u, '页面不应再暴露“保存当前敌人”按钮');
-    for (const id of ['capabilityList', 'addCapabilityBtn', 'intentPatternList', 'addIntentTokenBtn', 'intentFallbackInput']) {
+    for (const id of ['capabilityList', 'addCapabilityBtn']) {
         assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
     }
-    for (const id of ['decisionModeInput', 'decisionActionList', 'addDecisionActionBtn']) {
-        assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
-    }
-    for (const id of ['runPressureTypeInput', 'runPressureDamageBudgetInput', 'runPressureCarryoverImpactInput', 'runPressureCounterplayInput', 'stateCarryOverInput', 'stateClearAfterBattleInput']) {
+    for (const id of ['intentPatternList', 'addIntentTokenBtn', 'intentFallbackInput', 'decisionModeInput', 'decisionActionList', 'addDecisionActionBtn', 'runPressureTypeInput', 'runPressureDamageBudgetInput', 'runPressureCarryoverImpactInput', 'runPressureCounterplayInput', 'stateCarryOverInput', 'stateClearAfterBattleInput']) {
         assert.doesNotMatch(html, new RegExp(`id=["']${id}["']`), `page should not expose #${id}`);
     }
 });
 
-test('EnemyEditorPage switches design tabs and keeps V2 design JSON editable', async () => {
+test('EnemyEditorPage switches design tabs and exports enemyDecision instead of legacy behavior fields', async () => {
     const { page, dom } = await createPageContext();
     page.loadDocument(buildEnemies());
 
     const identityPanel = dom.window.document.getElementById('identityPanel');
     const capabilitiesPanel = dom.window.document.getElementById('capabilitiesPanel');
+    const decisionPanel = dom.window.document.getElementById('enemyDecisionPanel');
     const capabilitiesTab = dom.window.document.getElementById('capabilitiesTab');
+    const decisionTab = dom.window.document.getElementById('enemyDecisionTab');
 
     assert.equal(identityPanel.hidden, false);
     assert.equal(capabilitiesPanel.hidden, true);
+    assert.equal(decisionPanel.hidden, true);
     assert.match(dom.window.document.getElementById('capabilitiesJsonInput').value, /basic_attack/);
-    assert.match(dom.window.document.getElementById('intentModelJsonInput').value, /bleed/);
+    assert.equal(dom.window.document.getElementById('intentModelJsonInput'), null);
+    assert.equal(dom.window.document.getElementById('decisionModelJsonInput'), null);
 
     capabilitiesTab.dispatchEvent(new Event('click'));
 
     assert.equal(identityPanel.hidden, true);
     assert.equal(capabilitiesPanel.hidden, false);
     assert.equal(capabilitiesTab.getAttribute('aria-selected'), 'true');
+
+    decisionTab.dispatchEvent(new Event('click'));
+    assert.equal(capabilitiesPanel.hidden, true);
+    assert.equal(decisionPanel.hidden, false);
+    assert.equal(decisionTab.getAttribute('aria-selected'), 'true');
+    assert.match(dom.window.document.getElementById('decisionGraphCanvas').textContent, /Normal|Action/u);
+    assert.match(dom.window.document.getElementById('decisionPreviewTrace').textContent, /Turn 1/u);
 
     dom.window.document.getElementById('capabilitiesJsonInput').value = JSON.stringify([
         {
@@ -372,18 +413,15 @@ test('EnemyEditorPage switches design tabs and keeps V2 design JSON editable', a
             counterplay: ['guard']
         }
     ], null, 2);
-    dom.window.document.getElementById('intentModelJsonInput').value = JSON.stringify({
-        visible: true,
-        pattern: ['telegraph', 'heavy_attack', 'recover'],
-        fallback: 'attack'
-    }, null, 2);
 
     page.syncCurrentEnemyFromForm();
     const exported = page.workspace.exportDocument();
     const enemy = exported.goblin_story_headhunter || exported.enemies?.goblin_story_headhunter;
 
     assert.equal(enemy.capabilities[0].type, 'telegraph_countdown');
-    assert.deepEqual(enemy.intentModel.pattern, ['telegraph', 'heavy_attack', 'recover']);
+    assert.equal(enemy.enemyDecision.schemaVersion, 'enemy_decision_graph_v1');
+    assert.equal('intentModel' in enemy, false);
+    assert.equal('decisionModel' in enemy, false);
     assert.equal('runPressure' in enemy, false);
     assert.equal('statePersistence' in enemy, false);
 });
@@ -420,7 +458,7 @@ test('EnemyEditorPage drives identity controls from enemy pack enums', async () 
     assert.deepEqual(enemy.tags, ['pressure_bleed', 'role_fast']);
 });
 
-test('EnemyEditorPage renders capabilities and intent loop as editable lists', async () => {
+test('EnemyEditorPage renders capabilities as editable lists and keeps enemyDecision separate', async () => {
     const { page, dom } = await createPageContext();
     const wrapped = buildWrappedEnemiesWithEnums();
     page.loadDocument({
@@ -436,8 +474,6 @@ test('EnemyEditorPage renders capabilities and intent loop as editable lists', a
     });
 
     const capabilityList = dom.window.document.getElementById('capabilityList');
-    const intentPatternList = dom.window.document.getElementById('intentPatternList');
-    const fallbackSelect = dom.window.document.getElementById('intentFallbackInput');
 
     assert.equal(capabilityList.children.length, 1);
     assert.equal(findChildByDataset(capabilityList.children[0], 'capabilityField', 'type').value, 'basic_attack');
@@ -461,12 +497,8 @@ test('EnemyEditorPage renders capabilities and intent loop as editable lists', a
     assert.equal(counterplayGroup.children.some(child => child.textContent.includes('fast_kill')), true);
     assert.match(capabilityList.textContent, /basic_attack/);
     assert.match(capabilityList.textContent, /快速击杀以缩短磨血/);
-    assert.equal(intentPatternList.children.length, 3);
-    assert.deepEqual(
-        intentPatternList.children.map(row => row.children.find(child => child.dataset.intentField === 'token').value),
-        ['attack', 'bleed', 'attack']
-    );
-    assert.equal(fallbackSelect.value, 'attack');
+    assert.equal(dom.window.document.getElementById('intentPatternList'), null);
+    assert.equal(dom.window.document.getElementById('intentFallbackInput'), null);
 
     findChildByDataset(capabilityList.children[0], 'capabilityField', 'type').value = 'telegraph_countdown';
     findChildByDataset(capabilityList.children[0], 'capabilityField', 'cadence').value = 'windup_1_turn';
@@ -475,8 +507,6 @@ test('EnemyEditorPage renders capabilities and intent loop as editable lists', a
         const checkbox = chip.children.find(child => child.tagName === 'INPUT');
         checkbox.checked = checkbox.value === 'guard' || checkbox.value === 'interrupt';
     });
-    findChildByDataset(intentPatternList.children[1], 'intentField', 'token').value = 'heavy_attack';
-    fallbackSelect.value = 'recover';
 
     page.syncCurrentEnemyFromForm();
     const enemy = page.workspace.exportDocument().enemies.goblin_story_headhunter;
@@ -487,80 +517,51 @@ test('EnemyEditorPage renders capabilities and intent loop as editable lists', a
         pressure: 'readable_burst',
         counterplay: ['guard', 'interrupt']
     });
-    assert.deepEqual(enemy.intentModel.pattern, ['attack', 'heavy_attack', 'attack']);
-    assert.equal(enemy.intentModel.fallback, 'recover');
+    assert.equal(enemy.enemyDecision.schemaVersion, 'enemy_decision_graph_v1');
+    assert.equal('intentModel' in enemy, false);
 });
 
-test('EnemyEditorPage renders decisionModel as an executable priority table', async () => {
+test('EnemyEditorPage renders enemyDecision as a graph editor with preview', async () => {
     const { page, dom } = await createPageContext();
     page.loadDocument(buildWrappedEnemiesWithEnums());
 
-    const decisionTab = dom.window.document.getElementById('decisionTab');
-    const decisionPanel = dom.window.document.getElementById('decisionPanel');
-    const modeSelect = dom.window.document.getElementById('decisionModeInput');
-    const actionList = dom.window.document.getElementById('decisionActionList');
+    const decisionTab = dom.window.document.getElementById('enemyDecisionTab');
+    const decisionPanel = dom.window.document.getElementById('enemyDecisionPanel');
+    const canvas = dom.window.document.getElementById('decisionGraphCanvas');
+    const preview = dom.window.document.getElementById('decisionPreviewTrace');
+    const skillList = dom.window.document.getElementById('decisionSkillList');
 
     decisionTab.dispatchEvent(new Event('click'));
 
     assert.equal(decisionPanel.hidden, false);
-    assert.equal(modeSelect.tagName, 'SELECT');
-    assert.equal(modeSelect.value, 'intent_priority_table');
-    assert.equal(actionList.children.length, 1);
-
-    const row = actionList.children[0];
-    assert.equal(findChildByDataset(row, 'decisionField', 'priority').value, '100');
-    assert.equal(findChildByDataset(row, 'decisionField', 'whenType').value, 'always');
-    assert.equal(findChildByDataset(row, 'decisionField', 'intent').value, 'attack');
-    assert.equal(findChildByDataset(row, 'decisionField', 'skillId').tagName, 'SELECT');
-    assert.equal(findChildByDataset(row, 'decisionField', 'skillId').value, 'skill_throw_stone');
-    assert.equal(findChildByDataset(row, 'decisionField', 'targetRule').value, 'player_weak_part');
-    assert.equal(findChildByDataset(row, 'decisionField', 'telegraph').checked, false);
-    assert.match(row.textContent, /ActionPriorityTable/);
-    assert.match(row.textContent, /when: always/);
-
-    findChildByDataset(row, 'decisionField', 'priority').value = '80';
-    findChildByDataset(row, 'decisionField', 'whenType').value = 'self_hp_lte';
-    findChildByDataset(row, 'decisionField', 'whenValue').value = '0.5';
-    findChildByDataset(row, 'decisionField', 'intent').value = 'bleed';
-    findChildByDataset(row, 'decisionField', 'skillId').value = 'enemy_skill_rusty_shiv';
-    findChildByDataset(row, 'decisionField', 'targetRule').value = 'fixed_part:head';
-    findChildByDataset(row, 'decisionField', 'telegraph').checked = true;
+    assert.match(canvas.textContent, /Normal/u);
+    assert.match(canvas.textContent, /skill_throw_stone/u);
+    assert.match(preview.textContent, /Turn 1/u);
+    assert.match(skillList.textContent, /skill_throw_stone/u);
 
     page.syncCurrentEnemyFromForm();
     const enemy = page.workspace.exportDocument().enemies.goblin_story_headhunter;
 
-    assert.equal(enemy.decisionModel.mode, 'intent_priority_table');
-    assert.deepEqual(enemy.decisionModel.intentTimeline, ['attack', 'bleed', 'attack']);
-    assert.equal(enemy.decisionModel.actions[0].priority, 80);
-    assert.deepEqual(enemy.decisionModel.actions[0].when, { selfHpRatioLte: 0.5 });
-    assert.equal(enemy.decisionModel.actions[0].intent, 'bleed');
-    assert.equal(enemy.decisionModel.actions[0].skillId, 'enemy_skill_rusty_shiv');
-    assert.equal(enemy.decisionModel.actions[0].targetRule, 'fixed_part:head');
-    assert.equal(enemy.decisionModel.actions[0].telegraph, true);
+    assert.equal(enemy.enemyDecision.schemaVersion, 'enemy_decision_graph_v1');
+    assert.equal('decisionModel' in enemy, false);
 });
 
-test('enemy decision action rows use a two-line responsive grid for readable controls', async () => {
+test('enemy decision graph editor uses a three-column blueprint layout', async () => {
     const html = await fsp.readFile(pageHtmlPath, 'utf8');
 
-    assert.match(html, /\.decision-row\s*\{[\s\S]*grid-template-columns:\s*72px minmax\(150px, 1fr\) minmax\(140px, 0\.85fr\) minmax\(150px, 1fr\) minmax\(190px, 1\.1fr\) auto;/u);
-    assert.match(html, /\.decision-cell--skill\s*\{[\s\S]*grid-column:\s*5 \/ 7;[\s\S]*grid-row:\s*1;/u);
-    assert.match(html, /\.decision-cell--target\s*\{[\s\S]*grid-column:\s*1 \/ 3;[\s\S]*grid-row:\s*2;/u);
-    assert.match(html, /\.decision-row input:not\(\[type="checkbox"\]\),\s*\.decision-row select\s*\{[\s\S]*width:\s*100%;/u);
+    assert.match(html, /\.decision-graph-editor\s*\{[\s\S]*grid-template-columns:\s*220px minmax\(420px, 1fr\) 280px;/u);
+    assert.match(html, /\.decision-graph-canvas/u);
+    assert.match(html, /\.decision-node-card/u);
+    assert.match(html, /\.decision-preview-trace/u);
     assert.match(html, /\.editor-body\s*\{[\s\S]*container-type:\s*inline-size;/u);
-    assert.match(html, /@container \(max-width: 980px\)[\s\S]*\.decision-row\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/u);
-    assert.match(html, /@media \(max-width: 980px\)[\s\S]*\.decision-row\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/u);
 
     const { page, dom } = await createPageContext();
     page.loadDocument(buildWrappedEnemiesWithEnums());
-    dom.window.document.getElementById('decisionTab').dispatchEvent(new Event('click'));
+    dom.window.document.getElementById('enemyDecisionTab').dispatchEvent(new Event('click'));
 
-    const row = dom.window.document.getElementById('decisionActionList').children[0];
-    assert.match(row.children[0].className, /\bdecision-cell--priority\b/u);
-    assert.match(row.children[1].className, /\bdecision-cell--when-type\b/u);
-    assert.match(row.children[4].className, /\bdecision-cell--skill\b/u);
-    assert.match(row.children[5].className, /\bdecision-cell--target\b/u);
-    assert.match(row.children[6].className, /\bdecision-cell--fallback\b/u);
-    assert.match(row.children[8].className, /\bdecision-remove\b/u);
+    const canvas = dom.window.document.getElementById('decisionGraphCanvas');
+    assert.equal(canvas.children.length > 0, true);
+    assert.match(canvas.children[0].className, /\bdecision-node-card\b/u);
 });
 
 test('EnemyEditorPage omits enemy-level run pressure and cross-level persistence controls', async () => {
@@ -704,7 +705,7 @@ test('EnemyEditorPage loads enemy skill pack as the default skill reference sour
     );
 });
 
-test('EnemyEditorPage saves draft and publishes runtime enemy JSON through project file API', async () => {
+test('EnemyEditorPage saves authoring drafts and publishes enemyDecision runtime packs', async () => {
     const writes = [];
     const fetchImpl = async (url, options = {}) => {
         if (String(url).includes('/__skill_editor_file') && options.method === 'POST') {
@@ -724,12 +725,17 @@ test('EnemyEditorPage saves draft and publishes runtime enemy JSON through proje
 
     assert.equal(writes.length, 2);
     assert.match(writes[0].path, /^assets\/enemy_packs\/authoring\/enemies_\d{8}_\d{6}\.json$/);
-    assert.equal(writes[1].path, 'assets/enemy_packs/current/enemies.json');
     assert.equal(JSON.parse(writes[0].content).goblin_story_headhunter.name, '保存工作稿自动写入');
     assert.equal(
-        JSON.parse(writes[1].content).goblin_story_headhunter.presentation.battleSpriteRef,
+        JSON.parse(writes[0].content).goblin_story_headhunter.presentation.battleSpriteRef,
         '../source/character/敌人-005-状态001-正常状态.png'
     );
+    assert.equal('intentModel' in JSON.parse(writes[0].content).goblin_story_headhunter, false);
+    assert.equal('decisionModel' in JSON.parse(writes[0].content).goblin_story_headhunter, false);
+    assert.equal(writes[1].path, 'assets/enemy_packs/current/enemies.json');
+    assert.equal('intentModel' in JSON.parse(writes[1].content).goblin_story_headhunter, false);
+    assert.equal('decisionModel' in JSON.parse(writes[1].content).goblin_story_headhunter, false);
+    assert.equal(JSON.parse(writes[1].content).goblin_story_headhunter.enemyDecision.schemaVersion, 'enemy_decision_graph_v1');
 });
 
 test('EnemyEditorPage refreshes and loads enemy libraries from the toolbar dropdown', async () => {

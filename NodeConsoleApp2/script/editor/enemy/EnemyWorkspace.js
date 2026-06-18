@@ -1,3 +1,9 @@
+import {
+    createDefaultDecisionTemplate,
+    normalizeEnemyDecision,
+    validateEnemyDecision
+} from './decision/EnemyDecisionGraphModel.js';
+
 const STANDARD_BODY_PARTS = ['head', 'chest', 'abdomen', 'arm', 'leg'];
 const BUILT_IN_CHARACTER_SPRITES = [
     {
@@ -177,6 +183,9 @@ function normalizePresentation(value) {
 function normalizeEnemy(enemyId, enemy) {
     const source = asObject(enemy);
     const normalized = clone(source);
+    normalized.enemyDecision = normalizeEnemyDecision({ enemy: source });
+    delete normalized.intentModel;
+    delete normalized.decisionModel;
     delete normalized.runPressure;
     delete normalized.statePersistence;
     normalized.id = normalizeString(source.id, enemyId);
@@ -343,6 +352,11 @@ export class EnemyWorkspace {
         const packDocument = normalizeEnemyPackDocument(rawDocument);
         this.isWrappedPack = packDocument.isWrapped;
         this.packTopLevel = packDocument.topLevel;
+        const decisionGraphTemplates = asObject(this.packTopLevel.decisionGraphTemplates);
+        if (!decisionGraphTemplates.tpl_basic_aggressor) {
+            decisionGraphTemplates.tpl_basic_aggressor = createDefaultDecisionTemplate();
+        }
+        this.packTopLevel.decisionGraphTemplates = decisionGraphTemplates;
         this.meta = packDocument.meta;
         this.skillCatalog = normalizeSkillCatalog(context.skillCatalog);
         this.skillAliases = { ...DEFAULT_ENEMY_SKILL_ALIASES, ...asObject(context.skillAliases) };
@@ -389,6 +403,10 @@ export class EnemyWorkspace {
     getEnumDescription(enumKey, enumValue) {
         const description = this.meta?.enumDescriptions?.[enumKey]?.[enumValue];
         return typeof description === 'string' ? description.trim() : '';
+    }
+
+    getDecisionGraphTemplates() {
+        return clone(asObject(this.packTopLevel.decisionGraphTemplates));
     }
 
     updateEnemy(enemyId, updater) {
@@ -596,6 +614,18 @@ export class EnemyWorkspace {
         if (enemy.skills.length === 0) {
             issues.push({ severity: 'error', code: 'missing_enemy_skills', enemyId, fieldPath: 'skills' });
         }
+
+        validateEnemyDecision({
+            decision: enemy.enemyDecision,
+            enemy,
+            resolveSkill: skillId => this.resolveSkill(skillId)
+        }).forEach((issue) => {
+            issues.push({
+                ...issue,
+                enemyId,
+                fieldPath: issue.fieldPath ? `enemyDecision.${issue.fieldPath}` : 'enemyDecision'
+            });
+        });
 
         const presentation = asObject(enemy.presentation);
         const defaultPortraitRef = inferDefaultPortraitRef(enemy);

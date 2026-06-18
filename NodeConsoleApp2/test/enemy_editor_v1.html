@@ -318,7 +318,7 @@
 
         .tabs {
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 6px;
             margin-top: 10px;
             padding: 6px;
@@ -356,6 +356,105 @@
 
         .editor-panel[hidden] {
             display: none;
+        }
+
+        .decision-graph-editor {
+            display: grid;
+            grid-template-columns: 220px minmax(420px, 1fr) 280px;
+            gap: 10px;
+            min-height: 520px;
+        }
+
+        .decision-graph-sidebar,
+        .decision-graph-inspector {
+            min-width: 0;
+            display: grid;
+            gap: 10px;
+            align-content: start;
+        }
+
+        .decision-graph-canvas {
+            position: relative;
+            min-height: 520px;
+            overflow: auto;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background:
+                linear-gradient(90deg, rgba(28, 33, 30, 0.05) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(28, 33, 30, 0.05) 1px, transparent 1px),
+                #f7faf8;
+            background-size: 32px 32px;
+        }
+
+        .decision-node-card {
+            position: absolute;
+            width: 178px;
+            min-height: 72px;
+            padding: 9px;
+            white-space: pre-line;
+            text-align: left;
+            color: var(--ink);
+            background: #fff;
+            border: 1px solid var(--line-strong);
+            border-radius: 8px;
+            box-shadow: 0 12px 28px rgba(27, 36, 31, 0.12);
+        }
+
+        .decision-node-card--entry {
+            background: #17211d;
+            color: #fff;
+        }
+
+        .decision-node-card--branch {
+            background: #fff7e8;
+        }
+
+        .decision-node-card--action {
+            background: #edf7f1;
+        }
+
+        .decision-template-list,
+        .decision-skill-list,
+        .decision-node-inspector,
+        .decision-graph-issues,
+        .decision-preview-trace {
+            min-width: 0;
+            display: grid;
+            gap: 6px;
+            padding: 8px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel-soft);
+            font-size: 12px;
+        }
+
+        .decision-preview-trace,
+        .decision-graph-issues,
+        .decision-node-inspector {
+            white-space: pre-line;
+            line-height: 1.45;
+        }
+
+        .decision-skill-list {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .decision-skill-chip {
+            display: inline-flex;
+            min-height: 24px;
+            align-items: center;
+            padding: 3px 7px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: #fff;
+            font-weight: 800;
+        }
+
+        .decision-graph-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .section {
@@ -791,7 +890,7 @@
                     <div class="tool-row">
                         <label class="inline-field">
                             <span>指定路径</span>
-                            <input id="enemyPathInput" value="assets/data/enemies.json">
+                            <input id="enemyPathInput" value="assets/enemy_packs/current/enemies.json">
                         </label>
                         <button id="loadEnemyBtn" type="button">打开路径</button>
                     </div>
@@ -841,7 +940,7 @@
             <aside class="status-block">
                 <div id="status">尚未加载敌人库。</div>
                 <div>
-                    <span class="pill ok">assets/data/enemies.json</span>
+                    <span class="pill ok">assets/enemy_packs/current/enemies.json</span>
                     <span class="pill warn">draft</span>
                 </div>
             </aside>
@@ -861,44 +960,43 @@
 
             <section class="editor">
                 <div class="editor-head">
-                    <h2>????</h2>
-                    <div class="note">???? schema ?????????? enemy pack ? meta.enums / meta.fieldNotes ???</div>
-                    <div class="tabs" role="tablist" aria-label="??????">
-                        <button id="identityTab" class="tab active" type="button" role="tab" aria-selected="true" data-editor-tab="identity">??</button>
-                        <button id="statsTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="stats">????</button>
-                        <button id="capabilitiesTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="capabilities">????</button>
-                        <button id="intentTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="intent">????</button>
-                        <button id="decisionTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="decision">????</button>
-                        <button id="assetsTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="assets">????</button>
+                    <h2>敌人设计</h2>
+                    <div class="note">主表单按 schema 分区编辑，字段来源由 enemy pack 的 meta.enums / meta.fieldNotes 决定。</div>
+                    <div class="tabs" role="tablist" aria-label="敌人编辑分区">
+                        <button id="identityTab" class="tab active" type="button" role="tab" aria-selected="true" data-editor-tab="identity">身份</button>
+                        <button id="statsTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="stats">数值部位</button>
+                        <button id="capabilitiesTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="capabilities">自身能力</button>
+                        <button id="enemyDecisionTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="enemyDecision">敌人决策</button>
+                        <button id="assetsTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="assets">资产引用</button>
                     </div>
                 </div>
 
                 <div class="editor-body">
                     <section id="identityPanel" class="section editor-panel" role="tabpanel" data-editor-panel="identity">
-                        <h3>????</h3>
+                        <h3>身份</h3>
                         <div class="field-grid">
-                            <label class="field"><span>ID ?????</span><input id="enemyIdInput" readonly></label>
-                            <label class="field"><span>??</span><input id="enemyNameInput"></label>
-                            <label class="field"><span>????? meta.enums.races?</span><select id="enemyRaceInput"></select></label>
-                            <label class="field"><span>????? meta.enums.classes?</span><select id="enemyClassInput"></select></label>
-                            <label class="field"><span>????? meta.enums.tags???????????</span><select id="enemyTagsInput" multiple></select></label>
+                            <label class="field"><span>ID（创建后只读）</span><input id="enemyIdInput" readonly></label>
+                            <label class="field"><span>名称</span><input id="enemyNameInput"></label>
+                            <label class="field"><span>种族（来自 meta.enums.races）</span><select id="enemyRaceInput"></select></label>
+                            <label class="field"><span>职业（来自 meta.enums.classes）</span><select id="enemyClassInput"></select></label>
+                            <label class="field"><span>标签（来自 meta.enums.tags，可多选）</span><select id="enemyTagsInput" multiple></select></label>
                         </div>
-                        <div class="field-grid single"><label class="field"><span>????</span><textarea id="enemyDescriptionInput"></textarea></label></div>
+                        <div class="field-grid single"><label class="field"><span>描述</span><textarea id="enemyDescriptionInput"></textarea></label></div>
                     </section>
 
                     <section id="statsPanel" class="section editor-panel" role="tabpanel" data-editor-panel="stats" hidden>
-                        <h3>???????</h3>
+                        <h3>数值与部位</h3>
                         <div class="field-grid">
                             <label class="field"><span>stats.hp</span><input id="enemyHpInput" type="number"></label>
                             <label class="field"><span>stats.maxHp</span><input id="enemyMaxHpInput" type="number"></label>
                             <label class="field"><span>stats.ap</span><input id="enemyApInput" type="number"></label>
                             <label class="field"><span>stats.speed</span><input id="enemySpeedInput" type="number"></label>
                         </div>
-                        <div class="note">???????????????????? bodyParts ?????</div>
+                        <div class="note">这里编辑战斗基础数值；标准部位由 bodyParts 字段维护。</div>
                     </section>
 
                     <section id="capabilitiesPanel" class="section editor-panel" role="tabpanel" data-editor-panel="capabilities" hidden>
-                        <h3>??????</h3>
+                        <h3>自身能力</h3>
                         <div class="list-toolbar">
                             <div class="note" id="capabilityListNote">Capability rows are the main editor. Advanced JSON is only a fallback.</div>
                             <button id="addCapabilityBtn" type="button" class="secondary">Add capability</button>
@@ -906,54 +1004,59 @@
                         <div id="capabilityList" class="editable-list"></div>
                         <details class="advanced-block">
                             <summary>Advanced JSON</summary>
-                            <label class="field"><span>capabilities JSON?type ??? meta.enums.capabilityTypes</span><textarea id="capabilitiesJsonInput"></textarea></label>
+                            <label class="field"><span>capabilities JSON（type 来自 meta.enums.capabilityTypes）</span><textarea id="capabilitiesJsonInput"></textarea></label>
                         </details>
                     </section>
 
-                    <section id="intentPanel" class="section editor-panel" role="tabpanel" data-editor-panel="intent" hidden>
-                        <h3>??????</h3>
+                    <section id="enemyDecisionPanel" class="section editor-panel" role="tabpanel" data-editor-panel="enemyDecision" hidden>
+                        <h3>敌人决策</h3>
                         <div class="list-toolbar">
-                            <div class="note" id="intentListNote">Intent rows show the fixed turn loop in order.</div>
-                            <button id="addIntentTokenBtn" type="button" class="secondary">Add intent</button>
+                            <div class="note" id="decisionGraphNote">Blueprint graph for enemy state, branch, and action selection.</div>
+                            <div class="decision-graph-toolbar">
+                                <button id="addDecisionStateBtn" type="button" class="secondary">Add state</button>
+                                <button id="addDecisionBranchBtn" type="button" class="secondary">Add branch</button>
+                                <button id="addDecisionGraphActionBtn" type="button" class="secondary">Add action</button>
+                                <button id="validateDecisionGraphBtn" type="button" class="secondary">Validate</button>
+                                <button id="previewDecisionGraphBtn" type="button" class="secondary">Preview</button>
+                            </div>
                         </div>
-                        <div id="intentPatternList" class="editable-list"></div>
-                        <div class="field-grid">
-                            <label class="field"><span>fallback intent</span><select id="intentFallbackInput"></select></label>
+                        <div class="field-grid single">
+                            <label class="field"><span>skills[] 当前敌人可绑定 skillId</span><textarea id="skillListInput"></textarea></label>
                         </div>
-                        <details class="advanced-block">
-                            <summary>Advanced JSON</summary>
-                            <label class="field"><span>intentModel JSON?pattern / fallback ??? meta.enums.intentTokens</span><textarea id="intentModelJsonInput"></textarea></label>
-                        </details>
-                        <label class="field"><span>skills[] ???? skillId</span><textarea id="skillListInput"></textarea></label>
-                    </section>
-
-                    <section id="decisionPanel" class="section editor-panel" role="tabpanel" data-editor-panel="decision" hidden>
-                        <h3>??????</h3>
-                        <div class="list-toolbar">
-                            <div class="note" id="decisionListNote">Decision rows are executable ActionPriorityTable entries.</div>
-                            <button id="addDecisionActionBtn" type="button" class="secondary">Add action</button>
+                        <div class="decision-graph-editor">
+                            <aside class="decision-graph-sidebar">
+                                <h4>Templates</h4>
+                                <div id="decisionTemplateList" class="decision-template-list"></div>
+                                <div class="decision-graph-toolbar">
+                                    <button id="duplicateDecisionTemplateBtn" type="button" class="secondary">Duplicate</button>
+                                    <button id="deleteDecisionTemplateBtn" type="button" class="secondary">Delete</button>
+                                </div>
+                                <h4>Enemy skills</h4>
+                                <div id="decisionSkillList" class="decision-skill-list"></div>
+                                <h4>Graph issues</h4>
+                                <div id="decisionGraphIssues" class="decision-graph-issues"></div>
+                            </aside>
+                            <div id="decisionGraphCanvas" class="decision-graph-canvas"></div>
+                            <aside class="decision-graph-inspector">
+                                <h4>Inspector</h4>
+                                <div id="decisionNodeInspector" class="decision-node-inspector"></div>
+                                <h4>Path preview</h4>
+                                <div id="decisionPreviewTrace" class="decision-preview-trace"></div>
+                            </aside>
                         </div>
-                        <div class="field-grid">
-                            <label class="field"><span>decisionModel.mode</span><select id="decisionModeInput"></select></label>
-                        </div>
-                        <div id="decisionActionList" class="editable-list"></div>
-                        <details class="advanced-block">
-                            <summary>Advanced JSON</summary>
-                            <label class="field"><span>decisionModel JSON?actions ??? meta.enums</span><textarea id="decisionModelJsonInput"></textarea></label>
-                        </details>
                     </section>
 
                     <section id="assetsPanel" class="section editor-panel" role="tabpanel" data-editor-panel="assets" hidden>
-                        <h3>????</h3>
+                        <h3>资产引用</h3>
                         <div class="art-block">
-                            <div class="art-frame"><img id="artPreviewPortrait" alt="????"></div>
+                            <div class="art-frame"><img id="artPreviewPortrait" alt="敌人资产预览"></div>
                             <div class="field-grid single">
-                                <div id="artPreviewState" class="art-state">???????</div>
-                                <label class="field"><span>???? battleSpriteRef</span><select id="battleSpriteSelect"></select></label>
-                                <div class="note">???????? tab ??????????????????</div>
+                                <div id="artPreviewState" class="art-state">尚未选择资产</div>
+                                <label class="field"><span>敌人原画 battleSpriteRef</span><select id="battleSpriteSelect"></select></label>
+                                <div class="note">可在资产 tab 中选择战斗展示资源，也可以手动填写引用。</div>
                                 <label class="field"><span>portraitRef</span><input id="portraitRefInput"></label>
                                 <label class="field"><span>mapPortraitRef</span><input id="mapPortraitRefInput"></label>
-                                <label class="field"><span>battleSpriteRef ????</span><input id="battleSpriteRefInput"></label>
+                                <label class="field"><span>battleSpriteRef 手动路径</span><input id="battleSpriteRefInput"></label>
                                 <label class="field"><span>iconRef</span><input id="iconRefInput"></label>
                             </div>
                         </div>
@@ -1010,16 +1113,14 @@
                     identity: '\u8eab\u4efd',
                     stats: '\u6570\u503c\u90e8\u4f4d',
                     capabilities: '\u81ea\u8eab\u80fd\u529b',
-                    intent: '\u610f\u56fe\u5faa\u73af',
-                    decision: '\u884c\u4e3a\u51b3\u7b56',
+                    enemyDecision: '\u654c\u4eba\u51b3\u7b56',
                     assets: '\u8d44\u4ea7\u5f15\u7528'
                 },
                 headings: {
                     identity: '\u57fa\u7840\u8eab\u4efd',
                     stats: '\u6218\u6597\u6570\u503c\u4e0e\u90e8\u4f4d',
                     capabilities: '\u654c\u4eba\u81ea\u8eab\u80fd\u529b',
-                    intent: '\u56fa\u5b9a\u610f\u56fe\u5faa\u73af',
-                    decision: '\u884c\u4e3a\u51b3\u7b56\u8868',
+                    enemyDecision: '\u654c\u4eba\u51b3\u7b56',
                     assets: '\u8d44\u4ea7\u5f15\u7528'
                 },
                 labels: {
@@ -1030,8 +1131,6 @@
                     enemyTagsInput: '\u6807\u7b7e\uff08\u6765\u81ea meta.enums.tags\uff0c\u591a\u9009\u4e34\u65f6\u7528\u9017\u53f7\u5206\u9694\uff09',
                     enemyDescriptionInput: '\u8bbe\u8ba1\u8bf4\u660e',
                     capabilitiesJsonInput: 'capabilities JSON\uff1btype \u5e94\u6765\u81ea meta.enums.capabilityTypes',
-                    intentModelJsonInput: 'intentModel JSON\uff1bpattern / fallback \u5e94\u6765\u81ea meta.enums.intentTokens',
-                    decisionModelJsonInput: 'decisionModel JSON\uff1bactions \u5e94\u7531\u7ed3\u6784\u5316\u51b3\u7b56\u8868\u751f\u6210',
                     skillListInput: 'skills[] \u6bcf\u884c\u4e00\u4e2a skillId',
                     battleSpriteSelect: '\u654c\u4eba\u539f\u753b battleSpriteRef',
                     portraitRefInput: 'portraitRef',
@@ -1040,9 +1139,8 @@
                     iconRefInput: 'iconRef'
                 },
                 statsNote: '\u90e8\u4f4d\u62a4\u7532\u4ecd\u5728\u53f3\u4fa7\u6458\u8981\u4e2d\u9884\u89c8\uff1b\u540e\u7eed\u53ef\u6269\u5c55\u4e3a bodyParts \u884c\u7f16\u8f91\u5668\u3002',
-                capabilityNote: '\u81ea\u8eab\u80fd\u529b\u662f\u80fd\u529b\u58f0\u660e\u548c\u8bca\u65ad\u6807\u7b7e\uff1bcadence \u662f\u8bbe\u8ba1\u8282\u594f\uff0c\u4e0d\u662f\u8fd0\u884c\u65f6\u89e6\u53d1\u5668\uff1b\u5b9e\u9645\u56de\u5408\u987a\u5e8f\u770b\u610f\u56fe\u5faa\u73af\u3002',
-                intentNote: '\u6309\u56de\u5408\u987a\u5e8f\u5c55\u793a\u56fa\u5b9a\u610f\u56fe\u5faa\u73af\uff0c\u6bcf\u4e2a token \u90fd\u663e\u793a\u4e2d\u6587\u542b\u4e49\u3002',
-                decisionNote: '\u8fd9\u91cc\u624d\u662f\u8fd0\u884c\u65f6\u53ef\u6267\u884c\u7684 ActionPriorityTable\uff1bwhen \u7c7b\u578b\u6765\u81ea meta.enums.decisionWhenTypes\uff0cskillId \u6765\u81ea meta.enums.enemySkillIds \u5e76\u5fc5\u987b\u5728\u672c\u654c\u4eba skills[] \u4e2d\u3002',
+                capabilityNote: '\u81ea\u8eab\u80fd\u529b\u662f\u80fd\u529b\u58f0\u660e\u548c\u8bca\u65ad\u6807\u7b7e\uff1bcadence \u662f\u8bbe\u8ba1\u8282\u594f\uff0c\u4e0d\u662f\u8fd0\u884c\u65f6\u89e6\u53d1\u5668\uff1b\u5b9e\u9645\u56de\u5408\u7531\u654c\u4eba\u51b3\u7b56\u56fe\u63cf\u8ff0\u3002',
+                decisionGraphNote: '\u7528\u72b6\u6001\u3001\u5206\u652f\u3001\u884c\u52a8\u8282\u70b9\u63cf\u8ff0\u654c\u4eba\u56de\u5408\u51b3\u7b56\uff1b\u884c\u52a8\u8282\u70b9\u5fc5\u987b\u7ed1\u5b9a\u672c\u654c\u4eba skills[] \u4e2d\u7684\u6280\u80fd\u3002',
                 assetNote: '\u8d44\u4ea7\u9884\u89c8\u53ea\u653e\u5728\u672c tab \u5185\uff0c\u4e0d\u5360\u7528\u8eab\u4efd\u3001\u80fd\u529b\u3001\u610f\u56fe\u7f16\u8f91\u7a7a\u95f4\u3002',
                 artState: '\u672a\u7ed1\u5b9a\u539f\u753b\u8d44\u6e90',
                 previewTitle: '\u89c4\u5219\u4e0e\u68c0\u67e5',
@@ -1063,8 +1161,7 @@
             });
             setText('#statsPanel .note', text.statsNote);
             setText('#capabilityListNote', text.capabilityNote);
-            setText('#intentListNote', text.intentNote);
-            setText('#decisionListNote', text.decisionNote);
+            setText('#decisionGraphNote', text.decisionGraphNote);
             setText('#assetsPanel .note', text.assetNote);
             setText('#artPreviewState', text.artState);
             setText('.preview .panel-head h2', text.previewTitle);

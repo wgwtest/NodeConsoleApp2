@@ -1,0 +1,108 @@
+.decision-graph-editor {
+    display: grid;
+    grid-template-columns: 220px minmax(420px, 1fr) 280px;
+    gap: 10px;
+    min-height: 520px;
+}
+
+.decision-graph-sidebar,
+.decision-graph-inspector {
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+}
+
+.decision-graph-canvas {
+    position: relative;
+    min-height: 520px;
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background:
+        linear-gradient(90deg, rgba(28, 33, 30, 0.05) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(28, 33, 30, 0.05) 1px, transparent 1px),
+        #f7faf8;
+    background-size: 32px 32px;
+}
+
+.decision-node-card {
+    position: absolute;
+    width: 178px;
+    min-height: 72px;
+    padding: 9px;
+    white-space: pre-line;
+    text-align: left;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(27, 36, 31, 0.12);
+}
+
+.decision-node-card.is-selected {
+    border-color: var(--red);
+    box-shadow: inset 4px 0 0 var(--red), 0 12px 28px rgba(27, 36, 31, 0.12);
+}
+
+.decision-node-card--entry {
+    background: #17211d;
+    color: #fff;
+}
+
+.decision-node-card--branch {
+    background: #fff7e8;
+}
+
+.decision-node-card--action {
+    background: #edf7f1;
+}
+
+.decision-template-list,
+.decision-skill-list,
+.decision-node-inspector,
+.decision-graph-issues,
+.decision-preview-trace {
+    min-width: 0;
+    display: grid;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel-soft);
+    font-size: 12px;
+}
+
+.decision-template-item {
+    color: var(--ink);
+    text-align: left;
+}
+
+.decision-skill-list {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.decision-skill-chip {
+    display: inline-flex;
+    min-height: 24px;
+    align-items: center;
+    padding: 3px 7px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    font-weight: 800;
+}
+
+.decision-preview-trace,
+.decision-graph-issues,
+.decision-inspector-body {
+    white-space: pre-line;
+    line-height: 1.45;
+}
+
+.decision-graph-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
