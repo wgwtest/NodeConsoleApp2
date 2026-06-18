@@ -117,6 +117,12 @@ function createLabeledControl(doc, label, control) {
     return wrapper;
 }
 
+function createDecisionCell(doc, label, control, modifier) {
+    const cell = createLabeledControl(doc, label, control);
+    cell.className = `${cell.className} decision-cell decision-cell--${modifier}`;
+    return cell;
+}
+
 function renderSelectOptions(doc, select, values, selectedValues = [], options = {}) {
     if (!select) return;
     const selected = new Set(uniqueTextList(selectedValues));
@@ -934,14 +940,15 @@ export class EnemyEditorPage {
             }
         });
 
-        row.appendChild(createLabeledControl(this.document, 'priority', priority));
-        row.appendChild(createLabeledControl(this.document, 'when type', whenType));
-        row.appendChild(createLabeledControl(this.document, 'when value', whenValue));
-        row.appendChild(createLabeledControl(this.document, 'intent', intent));
-        row.appendChild(createLabeledControl(this.document, 'skillId', skillId));
-        row.appendChild(createLabeledControl(this.document, 'targetRule', targetRule));
-        row.appendChild(createLabeledControl(this.document, 'fallback', fallbackIntent));
+        row.appendChild(createDecisionCell(this.document, 'priority', priority, 'priority'));
+        row.appendChild(createDecisionCell(this.document, 'when type', whenType, 'when-type'));
+        row.appendChild(createDecisionCell(this.document, 'when value', whenValue, 'when-value'));
+        row.appendChild(createDecisionCell(this.document, 'intent', intent, 'intent'));
+        row.appendChild(createDecisionCell(this.document, 'skillId', skillId, 'skill'));
+        row.appendChild(createDecisionCell(this.document, 'targetRule', targetRule, 'target'));
+        row.appendChild(createDecisionCell(this.document, 'fallback', fallbackIntent, 'fallback'));
         row.appendChild(telegraphLabel);
+        remove.className = `${remove.className} decision-remove`;
         row.appendChild(remove);
         row.appendChild(help);
 

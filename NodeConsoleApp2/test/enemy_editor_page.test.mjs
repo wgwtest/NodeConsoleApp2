@@ -556,6 +556,30 @@ test('EnemyEditorPage renders decisionModel as an executable priority table', as
     assert.equal(enemy.decisionModel.actions[0].telegraph, true);
 });
 
+test('enemy decision action rows use a two-line responsive grid for readable controls', async () => {
+    const html = await fsp.readFile(pageHtmlPath, 'utf8');
+
+    assert.match(html, /\.decision-row\s*\{[\s\S]*grid-template-columns:\s*72px minmax\(150px, 1fr\) minmax\(140px, 0\.85fr\) minmax\(150px, 1fr\) minmax\(190px, 1\.1fr\) auto;/u);
+    assert.match(html, /\.decision-cell--skill\s*\{[\s\S]*grid-column:\s*5 \/ 7;[\s\S]*grid-row:\s*1;/u);
+    assert.match(html, /\.decision-cell--target\s*\{[\s\S]*grid-column:\s*1 \/ 3;[\s\S]*grid-row:\s*2;/u);
+    assert.match(html, /\.decision-row input:not\(\[type="checkbox"\]\),\s*\.decision-row select\s*\{[\s\S]*width:\s*100%;/u);
+    assert.match(html, /\.editor-body\s*\{[\s\S]*container-type:\s*inline-size;/u);
+    assert.match(html, /@container \(max-width: 980px\)[\s\S]*\.decision-row\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/u);
+    assert.match(html, /@media \(max-width: 980px\)[\s\S]*\.decision-row\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/u);
+
+    const { page, dom } = await createPageContext();
+    page.loadDocument(buildWrappedEnemiesWithEnums());
+    dom.window.document.getElementById('decisionTab').dispatchEvent(new Event('click'));
+
+    const row = dom.window.document.getElementById('decisionActionList').children[0];
+    assert.match(row.children[0].className, /\bdecision-cell--priority\b/u);
+    assert.match(row.children[1].className, /\bdecision-cell--when-type\b/u);
+    assert.match(row.children[4].className, /\bdecision-cell--skill\b/u);
+    assert.match(row.children[5].className, /\bdecision-cell--target\b/u);
+    assert.match(row.children[6].className, /\bdecision-cell--fallback\b/u);
+    assert.match(row.children[8].className, /\bdecision-remove\b/u);
+});
+
 test('EnemyEditorPage renders run pressure and persistence as enum controls', async () => {
     const { page, dom } = await createPageContext();
     page.loadDocument(buildWrappedEnemiesWithEnums());
