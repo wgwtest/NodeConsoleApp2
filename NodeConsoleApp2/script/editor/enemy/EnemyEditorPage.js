@@ -235,6 +235,7 @@ export class EnemyEditorPage {
             'decisionNodeInspector',
             'decisionGraphIssues',
             'decisionPreviewTrace',
+            'toggleDecisionFullscreenBtn',
             'addDecisionStateBtn',
             'addDecisionBranchBtn',
             'addDecisionGraphActionBtn',
@@ -271,6 +272,7 @@ export class EnemyEditorPage {
             inspector: this.elements.decisionNodeInspector,
             issueList: this.elements.decisionGraphIssues,
             previewTrace: this.elements.decisionPreviewTrace,
+            fullscreenToggle: this.elements.toggleDecisionFullscreenBtn,
             actions: {
                 addState: this.elements.addDecisionStateBtn,
                 addBranch: this.elements.addDecisionBranchBtn,

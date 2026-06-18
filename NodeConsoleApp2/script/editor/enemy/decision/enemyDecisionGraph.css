@@ -1,8 +1,78 @@
+.section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.decision-fullscreen-toggle {
+    min-width: 104px;
+    color: #fff;
+    background: linear-gradient(135deg, #1f7b58 0%, #2d956d 58%, #b16f16 100%);
+    border-color: rgba(255, 255, 255, 0.58);
+    box-shadow: 0 10px 22px rgba(31, 123, 88, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.decision-fullscreen-toggle:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 12px 28px rgba(31, 123, 88, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.decision-fullscreen-toggle[aria-pressed="true"] {
+    background: linear-gradient(135deg, #a13a2b 0%, #b16f16 100%);
+    box-shadow: 0 10px 22px rgba(161, 58, 43, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+body.enemy-decision-fullscreen-active {
+    overflow: hidden;
+}
+
+.editor-panel.is-decision-fullscreen {
+    position: fixed;
+    inset: 10px;
+    z-index: 1000;
+    display: grid;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    gap: 10px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+}
+
+.editor-panel.is-decision-fullscreen .list-toolbar,
+.editor-panel.is-decision-fullscreen .field-grid {
+    margin-top: 0;
+}
+
 .decision-graph-editor {
     display: grid;
     grid-template-columns: 220px minmax(420px, 1fr) 280px;
     gap: 10px;
     min-height: 520px;
+}
+
+.editor-panel.is-decision-fullscreen .decision-graph-editor {
+    min-height: 0;
+    height: 100%;
+    grid-template-columns: 260px minmax(560px, 1fr) 320px;
+}
+
+.editor-panel.is-decision-fullscreen .decision-graph-sidebar,
+.editor-panel.is-decision-fullscreen .decision-graph-inspector {
+    min-height: 0;
+    overflow: auto;
+}
+
+.editor-panel.is-decision-fullscreen .decision-graph-canvas {
+    min-height: 0;
+    height: 100%;
+}
+
+@media (max-width: 1180px) {
+    .editor-panel.is-decision-fullscreen .decision-graph-editor {
+        grid-template-columns: 220px minmax(360px, 1fr) 280px;
+    }
 }
 
 .decision-graph-sidebar,

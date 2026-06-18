@@ -76,12 +76,16 @@ export class EnemyDecisionGraphEditor {
         this.inspector = options.inspector || null;
         this.issueList = options.issueList || null;
         this.previewTrace = options.previewTrace || null;
+        this.fullscreenToggle = options.fullscreenToggle || null;
         this.actions = options.actions || {};
         this.enemy = null;
         this.context = {};
         this.decision = null;
         this.selectedNodeId = '';
+        this.fullscreen = false;
+        this.boundFullscreenKeydown = event => this.handleFullscreenKeydown(event);
         this.bindActions();
+        this.syncFullscreenState();
     }
 
     bindActions() {
@@ -97,6 +101,47 @@ export class EnemyDecisionGraphEditor {
         bindings.forEach(([key, handler]) => {
             this.actions[key]?.addEventListener?.('click', handler);
         });
+        this.fullscreenToggle?.addEventListener?.('click', () => this.toggleFullscreen());
+    }
+
+    handleFullscreenKeydown(event = {}) {
+        if (event.key === 'Escape' && this.fullscreen) {
+            this.setFullscreen(false);
+        }
+    }
+
+    toggleFullscreen() {
+        return this.setFullscreen(!this.fullscreen);
+    }
+
+    setFullscreen(enabled) {
+        const next = Boolean(enabled);
+        if (this.fullscreen === next) {
+            this.syncFullscreenState();
+            return this.fullscreen;
+        }
+
+        this.fullscreen = next;
+        if (this.fullscreen) {
+            this.document?.addEventListener?.('keydown', this.boundFullscreenKeydown);
+        } else {
+            this.document?.removeEventListener?.('keydown', this.boundFullscreenKeydown);
+        }
+        this.syncFullscreenState();
+        return this.fullscreen;
+    }
+
+    isFullscreen() {
+        return this.fullscreen;
+    }
+
+    syncFullscreenState() {
+        this.root?.classList?.toggle?.('is-decision-fullscreen', this.fullscreen);
+        this.document?.body?.classList?.toggle?.('enemy-decision-fullscreen-active', this.fullscreen);
+        if (!this.fullscreenToggle) return;
+        this.fullscreenToggle.textContent = this.fullscreen ? '退出全屏' : '全屏编辑';
+        this.fullscreenToggle.setAttribute?.('aria-pressed', this.fullscreen ? 'true' : 'false');
+        this.fullscreenToggle.title = this.fullscreen ? '退出敌人决策全屏编辑' : '进入敌人决策全屏编辑';
     }
 
     setEnemy(enemy = {}, context = {}) {
@@ -121,6 +166,7 @@ export class EnemyDecisionGraphEditor {
     }
 
     destroy() {
+        this.setFullscreen(false);
         this.enemy = null;
         this.context = {};
         this.decision = null;

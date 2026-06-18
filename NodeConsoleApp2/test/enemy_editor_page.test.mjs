@@ -138,6 +138,11 @@ class FakeElement {
         this.listeners.get(type).push(handler);
     }
 
+    removeEventListener(type, handler) {
+        const handlers = this.listeners.get(type) || [];
+        this.listeners.set(type, handlers.filter(item => item !== handler));
+    }
+
     dispatchEvent(event) {
         const handlers = this.listeners.get(event.type) || [];
         handlers.forEach(handler => handler.call(this, event));
@@ -148,6 +153,8 @@ class FakeElement {
 class FakeDocument {
     constructor(fixtures) {
         this.elements = new Map();
+        this.body = new FakeElement('body', this);
+        this.listeners = new Map();
         fixtures.forEach(fixture => {
             const id = typeof fixture === 'string' ? fixture : fixture.id;
             const tagName = typeof fixture === 'string' ? 'div' : fixture.tagName;
@@ -164,6 +171,22 @@ class FakeDocument {
 
     createElement(tagName) {
         return new FakeElement(tagName, this);
+    }
+
+    addEventListener(type, handler) {
+        if (!this.listeners.has(type)) this.listeners.set(type, []);
+        this.listeners.get(type).push(handler);
+    }
+
+    removeEventListener(type, handler) {
+        const handlers = this.listeners.get(type) || [];
+        this.listeners.set(type, handlers.filter(item => item !== handler));
+    }
+
+    dispatchEvent(event) {
+        const handlers = this.listeners.get(event.type) || [];
+        handlers.forEach(handler => handler.call(this, event));
+        return true;
     }
 }
 
@@ -363,6 +386,7 @@ test('enemy editor page fixture contains required authoring controls', async () 
     for (const id of ['capabilitiesJsonInput', 'decisionTemplateList', 'decisionSkillList', 'decisionGraphCanvas', 'decisionNodeInspector', 'decisionGraphIssues', 'decisionPreviewTrace']) {
         assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
     }
+    assert.match(html, /id=["']toggleDecisionFullscreenBtn["']/u, 'page missing enemy decision fullscreen toggle');
     for (const id of ['intentModelJsonInput', 'decisionModelJsonInput', 'runPressureJsonInput', 'statePersistenceJsonInput']) {
         assert.doesNotMatch(html, new RegExp(`id=["']${id}["']`), `page should not expose #${id}`);
     }
@@ -546,10 +570,45 @@ test('EnemyEditorPage renders enemyDecision as a graph editor with preview', asy
     assert.equal('decisionModel' in enemy, false);
 });
 
+test('EnemyEditorPage toggles enemyDecision into an immersive fullscreen editor', async () => {
+    const { page, dom } = await createPageContext();
+    page.loadDocument(buildWrappedEnemiesWithEnums());
+
+    dom.window.document.getElementById('enemyDecisionTab').dispatchEvent(new Event('click'));
+
+    const decisionPanel = dom.window.document.getElementById('enemyDecisionPanel');
+    const fullscreenToggle = dom.window.document.getElementById('toggleDecisionFullscreenBtn');
+    const canvas = dom.window.document.getElementById('decisionGraphCanvas');
+
+    assert.equal(decisionPanel.classList.contains('is-decision-fullscreen'), false);
+    assert.equal(fullscreenToggle.textContent, '全屏编辑');
+    assert.equal(fullscreenToggle.getAttribute('aria-pressed'), 'false');
+
+    fullscreenToggle.dispatchEvent(new Event('click'));
+
+    assert.equal(decisionPanel.classList.contains('is-decision-fullscreen'), true);
+    assert.equal(dom.window.document.body.classList.contains('enemy-decision-fullscreen-active'), true);
+    assert.equal(fullscreenToggle.textContent, '退出全屏');
+    assert.equal(fullscreenToggle.getAttribute('aria-pressed'), 'true');
+    assert.match(canvas.textContent, /skill_throw_stone/u);
+
+    page.syncCurrentEnemyFromForm();
+    assert.equal(page.workspace.exportDocument().enemies.goblin_story_headhunter.enemyDecision.schemaVersion, 'enemy_decision_graph_v1');
+
+    dom.window.document.dispatchEvent({ type: 'keydown', key: 'Escape' });
+
+    assert.equal(decisionPanel.classList.contains('is-decision-fullscreen'), false);
+    assert.equal(dom.window.document.body.classList.contains('enemy-decision-fullscreen-active'), false);
+    assert.equal(fullscreenToggle.textContent, '全屏编辑');
+    assert.equal(fullscreenToggle.getAttribute('aria-pressed'), 'false');
+});
+
 test('enemy decision graph editor uses a three-column blueprint layout', async () => {
     const html = await fsp.readFile(pageHtmlPath, 'utf8');
 
     assert.match(html, /\.decision-graph-editor\s*\{[\s\S]*grid-template-columns:\s*220px minmax\(420px, 1fr\) 280px;/u);
+    assert.match(html, /\.editor-panel\.is-decision-fullscreen\s*\{[\s\S]*position:\s*fixed;/u);
+    assert.match(html, /\.enemy-decision-fullscreen-active\s*\{[\s\S]*overflow:\s*hidden;/u);
     assert.match(html, /\.decision-graph-canvas/u);
     assert.match(html, /\.decision-node-card/u);
     assert.match(html, /\.decision-preview-trace/u);
