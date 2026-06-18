@@ -225,20 +225,16 @@ export class EnemyEditorPage {
             'capabilitiesTab',
             'intentTab',
             'decisionTab',
-            'pressureTab',
             'assetsTab',
             'identityPanel',
             'statsPanel',
             'capabilitiesPanel',
             'intentPanel',
             'decisionPanel',
-            'pressurePanel',
             'assetsPanel',
             'capabilitiesJsonInput',
             'intentModelJsonInput',
             'decisionModelJsonInput',
-            'runPressureJsonInput',
-            'statePersistenceJsonInput',
             'capabilityList',
             'addCapabilityBtn',
             'intentPatternList',
@@ -247,12 +243,6 @@ export class EnemyEditorPage {
             'decisionModeInput',
             'decisionActionList',
             'addDecisionActionBtn',
-            'runPressureTypeInput',
-            'runPressureDamageBudgetInput',
-            'runPressureCarryoverImpactInput',
-            'runPressureCounterplayInput',
-            'stateCarryOverInput',
-            'stateClearAfterBattleInput',
             'portraitRefInput',
             'mapPortraitRefInput',
             'battleSpriteSelect',
@@ -281,7 +271,7 @@ export class EnemyEditorPage {
         this.bindClick('createEnemyBtn', () => this.createEnemy());
         this.bindClick('duplicateEnemyBtn', () => this.duplicateEnemy());
         this.bindClick('deleteEnemyBtn', () => this.deleteEnemy());
-        ['identity', 'stats', 'capabilities', 'intent', 'decision', 'pressure', 'assets'].forEach((tabId) => {
+        ['identity', 'stats', 'capabilities', 'intent', 'decision', 'assets'].forEach((tabId) => {
             this.elements[`${tabId}Tab`]?.addEventListener('click', () => this.activateEditorTab(tabId));
         });
         this.bindClick('addCapabilityBtn', () => this.addCapabilityRow());
@@ -335,7 +325,7 @@ export class EnemyEditorPage {
     }
 
     activateEditorTab(tabId = 'identity') {
-        ['identity', 'stats', 'capabilities', 'intent', 'decision', 'pressure', 'assets'].forEach((id) => {
+        ['identity', 'stats', 'capabilities', 'intent', 'decision', 'assets'].forEach((id) => {
             const tab = this.elements[`${id}Tab`];
             const panel = this.elements[`${id}Panel`];
             const active = id === tabId;
@@ -511,12 +501,9 @@ export class EnemyEditorPage {
         setValue('capabilitiesJsonInput', formatJson(enemy.capabilities, []));
         setValue('intentModelJsonInput', formatJson(enemy.intentModel, {}));
         setValue('decisionModelJsonInput', formatJson(enemy.decisionModel, {}));
-        setValue('runPressureJsonInput', formatJson(enemy.runPressure, {}));
-        setValue('statePersistenceJsonInput', formatJson(enemy.statePersistence, {}));
         this.renderCapabilityList(enemy.capabilities);
         this.renderIntentControls(enemy.intentModel);
         this.renderDecisionControls(enemy.decisionModel, enemy);
-        this.renderRunPressureControls(enemy.runPressure, enemy.statePersistence);
         setValue('portraitRefInput', enemy.presentation.portraitRef || '');
         setValue('mapPortraitRefInput', enemy.presentation.mapPortraitRef || '');
         setValue('battleSpriteRefInput', enemy.presentation.battleSpriteRef || '');
@@ -991,21 +978,6 @@ export class EnemyEditorPage {
             .filter(item => item.skillId || item.intent || item.targetRule);
     }
 
-    renderRunPressureControls(runPressure = {}, statePersistence = {}) {
-        const run = asObject(runPressure);
-        const persistence = asObject(statePersistence);
-        renderSelectOptions(this.document, this.elements.runPressureTypeInput, this.getEnemyEnumValues('runPressureTypes'), [run.type || ''], {
-            includeEmpty: true
-        });
-        if (this.elements.runPressureDamageBudgetInput) {
-            this.elements.runPressureDamageBudgetInput.value = run.expectedDamageBudget ?? '';
-        }
-        renderSelectOptions(this.document, this.elements.runPressureCarryoverImpactInput, this.getEnemyEnumValues('carryoverImpact'), asArray(run.carryoverImpact));
-        renderSelectOptions(this.document, this.elements.runPressureCounterplayInput, this.getEnemyEnumValues('counterplay'), asArray(run.counterplay));
-        renderSelectOptions(this.document, this.elements.stateCarryOverInput, this.getEnemyEnumValues('carryOver'), asArray(persistence.carryOver));
-        renderSelectOptions(this.document, this.elements.stateClearAfterBattleInput, this.getEnemyEnumValues('clearAfterBattle'), asArray(persistence.clearAfterBattle));
-    }
-
     renderBattleSpriteOptions(selectedRef = '') {
         const select = this.elements.battleSpriteSelect;
         if (!select) return;
@@ -1086,11 +1058,14 @@ export class EnemyEditorPage {
     }
 
     buildCurrentEnemyFromForm(enemy) {
+        const {
+            runPressure: _obsoleteRunPressure,
+            statePersistence: _obsoleteStatePersistence,
+            ...baseEnemy
+        } = asObject(enemy);
         let capabilities = enemy.capabilities;
         let intentModel = enemy.intentModel;
         let decisionModel = enemy.decisionModel;
-        let runPressure = enemy.runPressure;
-        let statePersistence = enemy.statePersistence;
         try {
             const capabilityJsonChanged = String(this.elements.capabilitiesJsonInput?.value || '').trim()
                 !== formatJson(enemy.capabilities, []).trim();
@@ -1117,30 +1092,12 @@ export class EnemyEditorPage {
                     fallbackIntent: asObject(intentModel).fallback || asObject(enemy.decisionModel).fallbackIntent || 'attack',
                     actions: this.readDecisionActionList()
                 };
-            const runPressureJsonChanged = String(this.elements.runPressureJsonInput?.value || '').trim()
-                !== formatJson(enemy.runPressure, {}).trim();
-            const statePersistenceJsonChanged = String(this.elements.statePersistenceJsonInput?.value || '').trim()
-                !== formatJson(enemy.statePersistence, {}).trim();
-            runPressure = runPressureJsonChanged
-                ? parseJsonField(this.elements.runPressureJsonInput?.value, {})
-                : {
-                    type: this.elements.runPressureTypeInput?.value || '',
-                    carryoverImpact: readSelectValues(this.elements.runPressureCarryoverImpactInput),
-                    expectedDamageBudget: toNumber(this.elements.runPressureDamageBudgetInput?.value, 0),
-                    counterplay: readSelectValues(this.elements.runPressureCounterplayInput)
-                };
-            statePersistence = statePersistenceJsonChanged
-                ? parseJsonField(this.elements.statePersistenceJsonInput?.value, {})
-                : {
-                    carryOver: readSelectValues(this.elements.stateCarryOverInput),
-                    clearAfterBattle: readSelectValues(this.elements.stateClearAfterBattleInput)
-                };
         } catch (error) {
             this.setStatus(`设计 JSON 解析失败：${error.message}`);
         }
 
         return {
-            ...enemy,
+            ...baseEnemy,
             name: this.elements.enemyNameInput?.value || enemy.name,
             race: readSelectValues(this.elements.enemyRaceInput)[0] || '',
             class: readSelectValues(this.elements.enemyClassInput)[0] || '',
@@ -1164,9 +1121,7 @@ export class EnemyEditorPage {
             skills: splitTextList(this.elements.skillListInput?.value || ''),
             capabilities: asArray(capabilities),
             intentModel: asObject(intentModel),
-            decisionModel: asObject(decisionModel),
-            runPressure: asObject(runPressure),
-            statePersistence: asObject(statePersistence)
+            decisionModel: asObject(decisionModel)
         };
     }
 

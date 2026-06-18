@@ -177,6 +177,8 @@ function normalizePresentation(value) {
 function normalizeEnemy(enemyId, enemy) {
     const source = asObject(enemy);
     const normalized = clone(source);
+    delete normalized.runPressure;
+    delete normalized.statePersistence;
     normalized.id = normalizeString(source.id, enemyId);
     normalized.name = normalizeString(source.name, normalized.id);
     normalized.race = normalizeString(source.race, '');

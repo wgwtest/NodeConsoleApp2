@@ -99,8 +99,8 @@ test('EnemyWorkspace parses the V2 candidate pack and preserves design-only fiel
   for (const [enemyId, sourceEnemy] of Object.entries(candidateEnemies)) {
     assert.deepEqual(exported.enemies[enemyId].capabilities, sourceEnemy.capabilities, `${enemyId} capabilities lost`);
     assert.deepEqual(exported.enemies[enemyId].intentModel, sourceEnemy.intentModel, `${enemyId} intentModel lost`);
-    assert.deepEqual(exported.enemies[enemyId].runPressure, sourceEnemy.runPressure, `${enemyId} runPressure lost`);
-    assert.deepEqual(exported.enemies[enemyId].statePersistence, sourceEnemy.statePersistence, `${enemyId} statePersistence lost`);
+    assert.equal('runPressure' in exported.enemies[enemyId], false, `${enemyId} should not export runPressure`);
+    assert.equal('statePersistence' in exported.enemies[enemyId], false, `${enemyId} should not export statePersistence`);
   }
 });
 

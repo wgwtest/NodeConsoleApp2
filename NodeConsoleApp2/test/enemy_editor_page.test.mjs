@@ -224,15 +224,6 @@ function buildEnemies() {
                     }
                 ]
             },
-            runPressure: {
-                type: 'hp_attrition',
-                expectedDamageBudget: 12,
-                counterplay: ['healing', 'fast_kill']
-            },
-            statePersistence: {
-                carryOver: ['hp', 'armor'],
-                clearAfterBattle: ['bleed', 'poison', 'slow', 'vulnerable', 'stun', 'temporary_buff']
-            }
         },
         goblin_story_medic: {
             id: 'goblin_story_medic',
@@ -260,10 +251,6 @@ function buildWrappedEnemiesWithEnums() {
                 capabilityPressures: ['early_hp_pressure', 'readable_burst'],
                 counterplay: ['fast_kill', 'guard', 'interrupt'],
                 intentTokens: ['attack', 'bleed', 'heavy_attack', 'recover', 'telegraph'],
-                runPressureTypes: ['hp_attrition', 'armor_attrition'],
-                carryoverImpact: ['hp_loss', 'armor_loss'],
-                carryOver: ['hp', 'armor'],
-                clearAfterBattle: ['bleed', 'poison'],
                 decisionModelModes: ['intent_priority_table'],
                 decisionTargetRules: ['self', 'player', 'player_weak_part', 'fixed_part:head'],
                 decisionWhenTypes: ['always', 'self_hp_lte', 'self_hp_gte', 'previous_intent', 'turn_modulo'],
@@ -275,7 +262,7 @@ function buildWrappedEnemiesWithEnums() {
                     windup_1_turn: '设计节奏：先预兆一回合。'
                 },
                 capabilityPressures: {
-                    early_hp_pressure: '流程压力：稳定磨血。',
+                    early_hp_pressure: '战斗压力：稳定磨血。',
                     readable_burst: '单关压力：可读爆发。'
                 },
                 counterplay: {
@@ -334,12 +321,17 @@ test('enemy editor page fixture contains required authoring controls', async () 
     ]) {
         assert.match(html, new RegExp(`id=["']${id}["']`), `页面缺少 #${id}`);
     }
-    for (const tabId of ['identity', 'stats', 'capabilities', 'intent', 'decision', 'pressure', 'assets']) {
+    for (const tabId of ['identity', 'stats', 'capabilities', 'intent', 'decision', 'assets']) {
         assert.match(html, new RegExp(`data-editor-tab=["']${tabId}["']`), `page missing ${tabId} tab`);
         assert.match(html, new RegExp(`data-editor-panel=["']${tabId}["']`), `page missing ${tabId} panel`);
     }
-    for (const id of ['capabilitiesJsonInput', 'intentModelJsonInput', 'decisionModelJsonInput', 'runPressureJsonInput', 'statePersistenceJsonInput']) {
+    assert.doesNotMatch(html, /data-editor-tab=["']pressure["']/u, 'page should not expose pressure tab');
+    assert.doesNotMatch(html, /data-editor-panel=["']pressure["']/u, 'page should not expose pressure panel');
+    for (const id of ['capabilitiesJsonInput', 'intentModelJsonInput', 'decisionModelJsonInput']) {
         assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
+    }
+    for (const id of ['runPressureJsonInput', 'statePersistenceJsonInput']) {
+        assert.doesNotMatch(html, new RegExp(`id=["']${id}["']`), `page should not expose #${id}`);
     }
     assert.doesNotMatch(html, /id=["']saveEnemyBtn["']/u, '页面不应再暴露“保存当前敌人”按钮');
     for (const id of ['capabilityList', 'addCapabilityBtn', 'intentPatternList', 'addIntentTokenBtn', 'intentFallbackInput']) {
@@ -349,7 +341,7 @@ test('enemy editor page fixture contains required authoring controls', async () 
         assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
     }
     for (const id of ['runPressureTypeInput', 'runPressureDamageBudgetInput', 'runPressureCarryoverImpactInput', 'runPressureCounterplayInput', 'stateCarryOverInput', 'stateClearAfterBattleInput']) {
-        assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
+        assert.doesNotMatch(html, new RegExp(`id=["']${id}["']`), `page should not expose #${id}`);
     }
 });
 
@@ -385,15 +377,6 @@ test('EnemyEditorPage switches design tabs and keeps V2 design JSON editable', a
         pattern: ['telegraph', 'heavy_attack', 'recover'],
         fallback: 'attack'
     }, null, 2);
-    dom.window.document.getElementById('runPressureJsonInput').value = JSON.stringify({
-        type: 'armor_attrition',
-        expectedDamageBudget: 8,
-        counterplay: ['guard']
-    }, null, 2);
-    dom.window.document.getElementById('statePersistenceJsonInput').value = JSON.stringify({
-        carryOver: ['hp', 'armor'],
-        clearAfterBattle: ['bleed', 'poison']
-    }, null, 2);
 
     page.syncCurrentEnemyFromForm();
     const exported = page.workspace.exportDocument();
@@ -401,8 +384,8 @@ test('EnemyEditorPage switches design tabs and keeps V2 design JSON editable', a
 
     assert.equal(enemy.capabilities[0].type, 'telegraph_countdown');
     assert.deepEqual(enemy.intentModel.pattern, ['telegraph', 'heavy_attack', 'recover']);
-    assert.equal(enemy.runPressure.type, 'armor_attrition');
-    assert.deepEqual(enemy.statePersistence.clearAfterBattle, ['bleed', 'poison']);
+    assert.equal('runPressure' in enemy, false);
+    assert.equal('statePersistence' in enemy, false);
 });
 
 test('EnemyEditorPage drives identity controls from enemy pack enums', async () => {
@@ -580,48 +563,39 @@ test('enemy decision action rows use a two-line responsive grid for readable con
     assert.match(row.children[8].className, /\bdecision-remove\b/u);
 });
 
-test('EnemyEditorPage renders run pressure and persistence as enum controls', async () => {
+test('EnemyEditorPage omits enemy-level run pressure and cross-level persistence controls', async () => {
     const { page, dom } = await createPageContext();
-    page.loadDocument(buildWrappedEnemiesWithEnums());
+    const legacyPack = buildWrappedEnemiesWithEnums();
+    legacyPack.enemies.goblin_story_headhunter.runPressure = {
+        type: 'hp_attrition',
+        expectedDamageBudget: 12,
+        counterplay: ['fast_kill']
+    };
+    legacyPack.enemies.goblin_story_headhunter.statePersistence = {
+        carryOver: ['hp', 'armor'],
+        clearAfterBattle: ['bleed', 'poison']
+    };
+    page.loadDocument(legacyPack);
 
-    const typeSelect = dom.window.document.getElementById('runPressureTypeInput');
-    const budgetInput = dom.window.document.getElementById('runPressureDamageBudgetInput');
-    const impactSelect = dom.window.document.getElementById('runPressureCarryoverImpactInput');
-    const counterplaySelect = dom.window.document.getElementById('runPressureCounterplayInput');
-    const carryOverSelect = dom.window.document.getElementById('stateCarryOverInput');
-    const clearSelect = dom.window.document.getElementById('stateClearAfterBattleInput');
-
-    assert.equal(typeSelect.tagName, 'SELECT');
-    assert.equal(impactSelect.multiple, true);
-    assert.equal(counterplaySelect.multiple, true);
-    assert.equal(carryOverSelect.multiple, true);
-    assert.equal(clearSelect.multiple, true);
-    assert.equal(typeSelect.value, 'hp_attrition');
-    assert.equal(String(budgetInput.value), '12');
-    assert.deepEqual(impactSelect.children.filter(option => option.selected).map(option => option.value), []);
-    assert.deepEqual(counterplaySelect.children.filter(option => option.selected).map(option => option.value), ['fast_kill', 'healing']);
-    assert.deepEqual(carryOverSelect.children.filter(option => option.selected).map(option => option.value), ['hp', 'armor']);
-    assert.deepEqual(clearSelect.children.filter(option => option.selected).map(option => option.value), ['bleed', 'poison', 'slow', 'vulnerable', 'stun', 'temporary_buff']);
-
-    typeSelect.value = 'armor_attrition';
-    budgetInput.value = '8';
-    impactSelect.children.forEach(option => { option.selected = option.value === 'armor_loss'; });
-    counterplaySelect.children.forEach(option => { option.selected = option.value === 'guard' || option.value === 'interrupt'; });
-    carryOverSelect.children.forEach(option => { option.selected = option.value === 'armor'; });
-    clearSelect.children.forEach(option => { option.selected = option.value === 'poison'; });
+    for (const id of [
+        'pressureTab',
+        'pressurePanel',
+        'runPressureTypeInput',
+        'runPressureDamageBudgetInput',
+        'runPressureCarryoverImpactInput',
+        'runPressureCounterplayInput',
+        'runPressureJsonInput',
+        'stateCarryOverInput',
+        'stateClearAfterBattleInput',
+        'statePersistenceJsonInput'
+    ]) {
+        assert.equal(dom.window.document.getElementById(id), null, `page should not expose #${id}`);
+    }
 
     page.syncCurrentEnemyFromForm();
     const enemy = page.workspace.exportDocument().enemies.goblin_story_headhunter;
-    assert.deepEqual(enemy.runPressure, {
-        type: 'armor_attrition',
-        carryoverImpact: ['armor_loss'],
-        expectedDamageBudget: 8,
-        counterplay: ['guard', 'interrupt']
-    });
-    assert.deepEqual(enemy.statePersistence, {
-        carryOver: ['armor'],
-        clearAfterBattle: ['poison']
-    });
+    assert.equal('runPressure' in enemy, false);
+    assert.equal('statePersistence' in enemy, false);
 });
 
 test('EnemyEditorPage renders enemies and keeps current form changes in workspace before switching', async () => {

@@ -19,7 +19,7 @@
 
 ## 1. 文档定位
 
-本文是敌人系统的统一设计事实源。后续不要再把敌人机制、敌人平衡、敌人迁移表、流程压力和反制矩阵拆成多份并列设计说明。
+本文是敌人系统的统一设计事实源。后续不要再把敌人机制、敌人平衡、敌人迁移表和反制矩阵拆成多份并列设计说明。
 
 敌人编辑器作为工具边界，仍保留独立文档：[28-敌人编辑器(enemy_editor)-设计说明](./28-敌人编辑器(enemy_editor)-设计说明.md)。
 
@@ -27,14 +27,14 @@
 
 1. 敌人系统服务什么游戏体验。
 2. 敌人怎样从静态属性升级为机制化模板。
-3. 单关压力和整轮流程压力怎样区分。
+3. 敌人单关压力和关卡 / 战役路线压力怎样分工。
 4. 敌人技能和攻击策略怎样设计。
 5. V2-lite 数据字段和运行时使用边界是什么。
 6. 后续如何迁移现有三章 30 关敌人。
 
 ## 2. 核心设计判断
 
-敌人不是单关一次性障碍，而是整轮游戏资源管理的一部分。
+敌人不是单关一次性障碍，但敌人模板只负责定义战斗内威胁。整轮资源管理由关卡、路线和战役结算系统负责。
 
 如果每关结束后玩家自动回满 HP / 护甲，那么敌人之间会变得孤立：上一关造成的损耗不影响下一关，磨血、拖延、路线选择和补给节点的价值都会下降。后续设计改为连续流程口径：
 
@@ -53,7 +53,7 @@
 6. 战斗内临时 Buff / Debuff。
 7. 普通技能铺垫标记。
 
-因此，流血和中毒不是跨关状态。它们只在本关内造成 HP 损失；战斗结束后状态清除，但已经损失的 HP 会带入下一关。
+因此，流血和中毒不是跨关状态。它们只在本关内造成 HP 损失；战斗结束后状态清除。已经损失的 HP 是否带入下一关，由关卡 / 战役规则决定，不写在敌人模板上。
 
 ```text
 本关中毒 -> 多损失 20 HP -> 战斗结束中毒清除 -> 少掉的 20 HP 带入下一关
@@ -68,7 +68,7 @@
 1. 敌人职责清晰：每个正式敌人要能说明它检查玩家什么能力。
 2. 行为可解释：关键高压行为必须能通过意图、倒计时、阶段提示或日志解释。
 3. 反制可推断：玩家失败时能知道缺的是输出、防御、治疗、破甲、控制、净化还是路线资源。
-4. 流程可持续：敌人可以通过 HP / 护甲损耗服务整轮流程，但不能形成无解死亡螺旋。
+4. 流程可持续：敌人可以制造 HP / 护甲损耗，但这些损耗是否进入整轮流程由关卡 / 战役规则控制，不能形成无解死亡螺旋。
 5. 实现轻量：不做复杂智能 AI，优先使用机制标签、固定意图循环、技能用途标签、AP / 冷却 / fallback。
 
 ## 4. 敌人数据分层模型
@@ -89,13 +89,11 @@ EnemyTemplate =
   + SkillProfile
   + IntentModel
   + PresentationProfile
-  + StatePersistence
 
 EnemyAuthoringProfile =
   GrowthBudget
   + ResponsibilityProfile
   + CapabilityProfile
-  + RunPressureProfile
   + MechanicProfile
 
 EnemyDesignDiagnostics =
@@ -104,6 +102,11 @@ EnemyDesignDiagnostics =
   + FailureDiagnosis
   + PressureValidation
   + RouteAndChapterValidation
+
+LevelOrCampaignRules =
+  StateCarryoverPolicy
+  + RouteResourceBudget
+  + RewardAndSupplyPolicy
 ```
 
 运行时核心字段：
@@ -114,7 +117,6 @@ EnemyDesignDiagnostics =
 | `SkillProfile` | 技能组怎样制造压力、窗口或续航 |
 | `IntentModel` | 敌人固定行为节奏和 fallback |
 | `PresentationProfile` | 编辑器、地图和战斗 UI 的展示摘要 |
-| `StatePersistence` | 战后哪些状态清除，哪些资源状态跨关保留 |
 
 作者设计资料：
 
@@ -123,7 +125,6 @@ EnemyDesignDiagnostics =
 | `GrowthBudget` | 当前章节和关卡允许该敌人占用多少战斗预算 | 用于平衡约束，不是主流程实例化必需 |
 | `ResponsibilityProfile` | 敌人在单关中负责检查什么能力 | 用于设计说明和关卡职责矩阵，不是运行时决策条件 |
 | `CapabilityProfile` | 敌人自己拥有哪些机制能力 | 必须能落到敌技和 `intentModel.pattern` 才算已实现 |
-| `RunPressureProfile` | 敌人是否服务整轮路线资源消耗 | 解释 HP / 护甲损耗怎样进入连续流程 |
 | `MechanicProfile` | 机制槽位、目标回合、预算和失败信号 | 用于编辑器和测试定位 |
 
 设计诊断与验证资料：
@@ -133,7 +134,7 @@ EnemyDesignDiagnostics =
 | `PlayerResponseNotes` | 玩家理论上可以怎样应对该敌人 | 不是敌人 AI 输入 |
 | `BuildCheck` | 该敌人检查哪些构筑短板 | 当前不动态读取玩家构筑 |
 | `FailureDiagnosis` | 玩家失败时应解释为哪类问题 | 用于日志、测试和调参，不直接改行为 |
-| `PressureValidation` | 单关压力和流程压力是否合理 | 用于发布验收 |
+| `PressureValidation` | 单关压力是否合理，是否能被关卡资源预算解释 | 用于发布验收 |
 | `RouteAndChapterValidation` | 敌人是否符合路线风险和章节职责 | 用于关卡内容审核 |
 
 ### 4.1 敌人行为决策循环
@@ -175,7 +176,6 @@ TurnContext
 | `capabilities[].pressure` | 描述该能力制造什么压力，方便平衡和诊断 | 不是 planner 分支 |
 | `capabilities[].counterplay[]` | 描述玩家应该怎样应对 | 不是敌人 AI 条件 |
 | `intentModel.pattern[]` | 当前运行时行为节奏的主要输入 | 不是完整智能，只是固定意图循环 |
-| `runPressure` | 解释行动结果怎样转化为跨关 HP / 护甲损耗 | 不是单回合行动选择器 |
 | `buildCheck` | 失败诊断和设计校验 | 当前不动态读取玩家构筑 |
 
 因此，设计顺序必须是：
@@ -186,7 +186,7 @@ TurnContext
   -> 能力对应的敌技
   -> intentModel.pattern 安排行为节奏
   -> EnemyActionPlanner 按循环选择技能
-  -> 行动结果形成单关压力或流程压力
+  -> 行动结果形成单关压力
   -> PlayerResponseNotes / FailureDiagnosis 解释玩家反制和失败原因
 ```
 
@@ -324,27 +324,24 @@ fallback 会不会让敌人行为失真？
 
 因此，文档、编辑器和测试可以要求正式发布内容补齐诊断资料；但运行时不应因为缺少诊断资料而改变行为，也不应让敌人 planner 读取玩家反制标签来做决策。
 
-## 5. 单关压力与流程压力
+## 5. 单关压力与路线压力边界
 
-敌人设计必须区分两层。
+敌人设计只声明当前战斗内能制造什么压力。路线压力是关卡 / 战役层对战斗结果的解释，不是敌人模板字段。
 
-| 层级 | 说明 | 示例 |
-| --- | --- | --- |
-| 单关压力 | 当前战斗内造成威胁，战斗结束后临时状态清除 | 快攻、重击、流血、中毒、减速、反击姿态 |
-| 流程压力 | 战斗结束后仍影响后续路线的资源结果 | HP 损失、护甲损耗、治疗资源消耗、绕路成本 |
+| 层级 | 归属 | 说明 | 示例 |
+| --- | --- | --- | --- |
+| 单关压力 | 敌人模板 | 当前战斗内造成威胁，战斗结束后临时状态清除 | 快攻、重击、流血、中毒、减速、反击姿态 |
+| 路线压力 | 关卡 / 战役 | 战斗结果是否影响后续路线资源 | HP 是否继承、护甲是否继承、治疗资源消耗、绕路成本、Boss 前补给 |
 
-不是每个敌人都必须有流程压力。教学敌、纯机制演示敌可以只服务单关。高压敌、门卫、精英和 Boss 前敌人必须说明是否承担流程压力。
+敌人模板不能声明“我让 HP / 护甲跨关损失”。它只能通过技能、意图循环和能力标签说明自己如何造成战斗内损耗。关卡或战役系统再决定这些损耗是否进入下一关。
 
-流程压力类型：
+因此不再保留敌人字段 `runPressure` 和 `statePersistence`。需要路线风险时，应在关卡 / 战役资料里表达，例如：
 
-| 类型 | 说明 | 设计边界 |
-| --- | --- | --- |
-| `none` | 只服务单关教学或机制展示 | 不强行给每个敌人加长期职责 |
-| `hp_attrition` | 本关稳定消耗 HP，损耗带入下一关 | 不让 DOT 状态跨关继续结算 |
-| `armor_attrition` | 攻击或拖延导致护甲状态恶化 | 不在玩家无选择时无限破甲 |
-| `delay_tax` | 拖长战斗，放大自然受击和治疗消耗 | 不和高修复无限叠加 |
-| `route_tax` | 高收益路线附带可预期损耗 | 不隐藏路线风险 |
-| `pre_boss_drain` | Boss 前削弱玩家状态 | 必须给补给、绕路或构筑调整机会 |
+1. 本关是否继承玩家当前 HP。
+2. 本关是否继承玩家当前护甲 / 部位护甲。
+3. 本关是否提供补给、治疗或修甲机会。
+4. 本关敌人组合的预期资源预算。
+5. Boss 前是否有额外消耗或恢复节点。
 
 ## 6. 敌人自身能力
 
@@ -374,7 +371,7 @@ fallback 会不会让敌人行为失真？
 | `bleed_apply` | 施加流血 | 本关内持续 HP 损耗 | 治疗、净化、速杀 |
 | `poison_apply` | 施加中毒 | 本关内持续 HP 损耗 | 治疗、净化、速杀 |
 | `slow_or_bind` | 减速、束缚或节奏限制 | 打乱行动顺序 | 速度管理、低 AP 行动 |
-| `armor_break` | 破坏玩家护甲 | 护甲状态带入后续关卡 | 补甲、速杀、防御 |
+| `armor_break` | 破坏玩家护甲 | 本场护甲压力，是否跨关由关卡 / 战役规则决定 | 补甲、速杀、防御 |
 | `armor_repair` | 修复自身护甲 | 拖长战斗 | 破甲、爆发、打断 |
 | `self_heal` | 回复自身 HP | 消耗玩家输出窗口 | 爆发、DOT、打断 |
 | `self_cleanse` | 清除自身 Debuff | 抵抗 DOT / 控制锁 | 诱导清除、清除后爆发 |
@@ -388,9 +385,9 @@ fallback 会不会让敌人行为失真？
 
 | 敌人类型 | 能力上限 | 设计要求 |
 | --- | --- | --- |
-| 普通教学敌 | 1 个核心能力 | 机制清晰，不要求流程压力 |
+| 普通教学敌 | 1 个核心能力 | 机制清晰，不要求路线资源职责 |
 | 普通标准敌 | 1 个核心能力 + 1 个辅助能力 | 能说明压力和反制 |
-| 高压普通敌 | 1 个核心能力 + 1 个流程压力 | 不用纯数值压人 |
+| 高压普通敌 | 1 个核心能力 + 明确反制窗口 | 不用纯数值压人 |
 | 精英 | 2 个核心能力组合 | 必须有可读窗口 |
 | Boss | 多个能力按阶段展开 | 每阶段有明确反制 |
 
@@ -476,7 +473,7 @@ fallback 会不会让敌人行为失真？
 | --- | --- | --- | --- | --- |
 | 第一章 | 快攻与弱点追击 | 低血量、高速度、部位弱点、轻状态 | 基础治疗、补甲、低 AP 输出 | 替换旧样本，避免同模板承担教学和门卫 |
 | 第二章 | 护甲与控制 | 中高护甲、减速、修复护甲 | 破甲、速度管理、续航 | 拆分重复护甲敌和旧兽人补位 |
-| 第三章 | 持续压迫与组合敌人 | 毒、DOT、吸血、防御反击、Boss 阶段 | 构筑组合、Buff 处理、爆发窗口 | 第三章 P0 已补，后续复核流程压力 |
+| 第三章 | 持续压迫与组合敌人 | 毒、DOT、吸血、防御反击、Boss 阶段 | 构筑组合、Buff 处理、爆发窗口 | 第三章 P0 已补，后续复核关卡资源预算 |
 
 当前已确认：
 
@@ -494,12 +491,12 @@ fallback 会不会让敌人行为失真？
 2. 它在 `IntentModel.pattern` 里的位置是什么。
 3. 它的 AP 成本和冷却是否支撑敌人节奏。
 4. 玩家用什么方式反制它。
-5. 它是否会转化为流程压力。
+5. 它是否会造成可被关卡 / 战役结算统计的资源消耗。
 
 敌技设计规则：
 
 1. 流血、中毒等 DOT 是本关内磨血工具，不是跨关状态。
-2. 用于流程压力的敌技必须能解释它怎样转化为 HP / 护甲损耗。
+2. 会造成资源消耗的敌技必须能解释它怎样在本场战斗内造成 HP / 护甲损耗。
 3. 用于单关爆发的敌技必须有预告、窗口、冷却或 AP 成本约束。
 4. 用于拖延的敌技必须防止和高护甲、强修复无限叠加。
 5. 新敌技尽量采用确定性节奏，不依赖低概率随机作为主要平衡方式。
@@ -536,16 +533,6 @@ fallback 会不会让敌人行为失真？
   "buildCheck": {
     "punishAxis": ["no_cleanse", "no_burst", "slow_build"],
     "expectedCounter": ["cleanse", "burst_window", "interrupt"]
-  },
-  "runPressure": {
-    "type": "hp_attrition",
-    "carryoverImpact": ["hp_loss"],
-    "expectedDamageBudget": 18,
-    "counterplay": ["healing", "fast_kill", "resource_save"]
-  },
-  "statePersistence": {
-    "carryOver": ["hp", "armor"],
-    "clearAfterBattle": ["bleed", "poison", "slow", "vulnerable", "stun", "temporary_buff"]
   }
 }
 ```
@@ -555,8 +542,7 @@ fallback 会不会让敌人行为失真？
 1. `mechanicProfile` 给设计、编辑器和测试使用。
 2. `intentModel` 后续可被轻量 `EnemyActionPlanner` 消费。
 3. `buildCheck` 第一阶段只做诊断，不在运行时动态分析玩家构筑。
-4. `runPressure` 用于路线、补给、模拟器和高压关卡解释。
-5. `statePersistence` 固定跨关清除规则，避免 DOT 状态被误设计成跨关异常。
+4. 敌人模板不声明 `runPressure` 或 `statePersistence`；跨关 HP / 护甲继承、战后状态清理和补给规则属于关卡 / 战役资料。
 
 ## 12. 运行时使用边界
 
@@ -590,8 +576,8 @@ fallback 会不会让敌人行为失真？
 
 敌人编辑器后续应分区展示：
 
-1. 运行时核心字段：HP、护甲、部位、技能引用、意图循环、展示资源、战后状态规则。
-2. 作者设计资料：机制槽位、敌人自身能力、HP 带、护甲预算、流程压力。
+1. 运行时核心字段：HP、护甲、部位、技能引用、意图循环、展示资源。
+2. 作者设计资料：机制槽位、敌人自身能力、HP 带、护甲预算、战斗内压力。
 3. 设计诊断资料：构筑检查、玩家反制说明、失败诊断、章节职责验证。
 
 编辑器可以用诊断资料提示发布风险，但不应把诊断资料伪装成运行时行为规则。
@@ -599,10 +585,10 @@ fallback 会不会让敌人行为失真？
 测试和模拟器后续应检查：
 
 1. 30 个正式关卡都有机制槽位。
-2. 高压、门卫、精英和 Boss 前敌人声明 `runPressure`。
+2. 高压、门卫、精英和 Boss 前敌人能用技能、能力和意图循环解释战斗内损耗来源。
 3. 每个 V2 敌人声明至少一个 `capabilities` 项。
 4. 普通流血、中毒和临时 Debuff 在战斗结束时清除。
-5. 连续流程验证不得默认关后满血。
+5. 连续流程验证不得默认关后满血；该规则属于关卡 / 战役测试。
 6. 敌技能映射到压力类型和反制方向。
 7. 第一、二章旧样本补位逐步替换或降级为教学样本。
 8. 运行时 smoke 只依赖运行时核心字段。
@@ -616,10 +602,10 @@ fallback 会不会让敌人行为失真？
 
 ### 14.2 数据迁移
 
-1. 先为当前 30 个正式关卡补机制槽位和流程压力标注。
+1. 先为当前 30 个正式关卡补机制槽位和战斗压力标注。
 2. 只处理正式关卡引用链，不先改所有历史样本。
 3. 优先替换第一、二章旧样本补位。
-4. 第三章 P0 已补的敌人先复核 `runPressure` 和 Boss 前铺垫。
+4. 第三章 P0 已补的敌人先复核战斗压力和 Boss 前铺垫。
 
 ### 14.3 敌技调整
 
@@ -630,7 +616,7 @@ fallback 会不会让敌人行为失真？
 ### 14.4 运行时和工具
 
 1. 第一阶段让编辑器和测试先识别 V2-lite 字段。
-2. 第二阶段让模拟器按连续流程验证 HP / 护甲继承。
+2. 第二阶段让关卡 / 战役测试按连续流程验证 HP / 护甲继承。
 3. 第三阶段再让 `EnemyActionPlanner` 消费 `intentModel`。
 
 ## 15. 验收口径
@@ -638,12 +624,12 @@ fallback 会不会让敌人行为失真？
 敌人 V2 设计进入实现前，应满足：
 
 1. 本文是敌人设计唯一事实源。
-2. 跨关继承和状态清除规则没有歧义。
+2. 敌人模板不声明跨关继承和状态清除规则；这些规则归关卡 / 战役系统。
 3. 敌人核心意图没有被流血、毒或任一单状态绑死。
-4. 每个高压敌能说明单关压力和流程压力。
+4. 每个高压敌能说明单关压力、损耗来源和可反制窗口。
 5. 每个新增敌人能说明自身能力、能力节奏、玩家反制说明和失败诊断。
-6. 每个新增敌技能说明用途、反制和是否服务流程损耗。
-7. 自动模拟失败先进入职责 / 构筑 / 敌人能力 / 流程压力诊断，不直接触发数值微调。
+6. 每个新增敌技能说明用途、反制和战斗内资源损耗。
+7. 自动模拟失败先进入职责 / 构筑 / 敌人能力 / 关卡资源预算诊断，不直接触发数值微调。
 
 验收口径分两层：
 
@@ -681,7 +667,7 @@ Enemy authoring data must no longer be a bare inferred record as the primary for
 }
 ```
 
-Design rule: enemy JSON is the source of truth for editable domains. The editor must not guess whether race, class, tags, capability type, intent token, run pressure type, carry-over state, or body part is free text. If a field is constrained, its allowed values must be declared in `meta.enums`, and its edit rule must be described in `meta.fieldNotes`.
+Design rule: enemy JSON is the source of truth for editable domains. The editor must not guess whether race, class, tags, capability type, intent token, or body part is free text. If a field is constrained, its allowed values must be declared in `meta.enums`, and its edit rule must be described in `meta.fieldNotes`.
 
 Current constrained fields:
 
@@ -693,18 +679,13 @@ Current constrained fields:
 6. `enemies.*.capabilities[].pressure` comes from `meta.enums.capabilityPressures`.
 7. `enemies.*.capabilities[].counterplay[]` comes from `meta.enums.counterplay`.
 8. `enemies.*.intentModel.pattern[]` and `fallback` come from `meta.enums.intentTokens`.
-9. `enemies.*.runPressure.type` comes from `meta.enums.runPressureTypes`.
-10. `enemies.*.runPressure.carryoverImpact[]` comes from `meta.enums.carryoverImpact`.
-11. `enemies.*.runPressure.counterplay[]` comes from `meta.enums.counterplay`.
-12. `enemies.*.statePersistence.carryOver[]` comes from `meta.enums.carryOver`.
-13. `enemies.*.statePersistence.clearAfterBattle[]` comes from `meta.enums.clearAfterBattle`.
-14. `enemies.*.bodyParts` keys come from `meta.enums.bodyParts`.
+9. `enemies.*.bodyParts` keys come from `meta.enums.bodyParts`.
 
-Free-text fields are limited to display and design explanation fields such as `name`, `description`, `mechanicProfile.failureSignal`, `buildCheck.punishAxis[]`, and presentation asset refs. Capability timing, capability pressure, counterplay tags, intent tokens, run-pressure type, carry-over impact, and persistence states are enum domains once the pack declares them in `meta.enums`.
+Free-text fields are limited to display and design explanation fields such as `name`, `description`, `mechanicProfile.failureSignal`, `buildCheck.punishAxis[]`, and presentation asset refs. Capability timing, capability pressure, counterplay tags, and intent tokens are enum domains once the pack declares them in `meta.enums`.
 
 Runtime compatibility rule: loaders may accept the legacy bare `Record<enemyId, EnemyTemplate>` shape, but all newly published enemy packs should use the wrapped contract. Runtime must consume only `pack.enemies`; editor UI must drive dropdowns and multi-select controls from `pack.meta.enums`.
 
-Contract boundary: enum-constrained does not mean runtime-driven. `capabilities[].counterplay[]`, `runPressure.counterplay[]`, `buildCheck`, and failure notes belong to authoring / diagnostics. They can be required by publishing tools, but `EnemyActionPlanner` must not treat them as enemy decision inputs.
+Contract boundary: enum-constrained does not mean runtime-driven. `capabilities[].counterplay[]`, `buildCheck`, and failure notes belong to authoring / diagnostics. They can be required by publishing tools, but `EnemyActionPlanner` must not treat them as enemy decision inputs.
 
 ### 17.1 Runtime Fields vs Design Labels
 

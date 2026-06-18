@@ -318,7 +318,7 @@
 
         .tabs {
             display: grid;
-            grid-template-columns: repeat(7, minmax(0, 1fr));
+            grid-template-columns: repeat(6, minmax(0, 1fr));
             gap: 6px;
             margin-top: 10px;
             padding: 6px;
@@ -869,7 +869,6 @@
                         <button id="capabilitiesTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="capabilities">????</button>
                         <button id="intentTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="intent">????</button>
                         <button id="decisionTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="decision">????</button>
-                        <button id="pressureTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="pressure">????</button>
                         <button id="assetsTab" class="tab" type="button" role="tab" aria-selected="false" data-editor-tab="assets">????</button>
                     </div>
                 </div>
@@ -944,25 +943,6 @@
                         </details>
                     </section>
 
-                    <section id="pressurePanel" class="section editor-panel" role="tabpanel" data-editor-panel="pressure" hidden>
-                        <h3>?????????</h3>
-                        <div class="field-grid">
-                            <label class="field"><span>runPressure.type</span><select id="runPressureTypeInput"></select></label>
-                            <label class="field"><span>expectedDamageBudget</span><input id="runPressureDamageBudgetInput" type="number"></label>
-                            <label class="field"><span>carryoverImpact</span><select id="runPressureCarryoverImpactInput" multiple></select></label>
-                            <label class="field"><span>runPressure.counterplay</span><select id="runPressureCounterplayInput" multiple></select></label>
-                            <label class="field"><span>statePersistence.carryOver</span><select id="stateCarryOverInput" multiple></select></label>
-                            <label class="field"><span>statePersistence.clearAfterBattle</span><select id="stateClearAfterBattleInput" multiple></select></label>
-                        </div>
-                        <details class="advanced-block">
-                            <summary>Advanced JSON</summary>
-                            <div class="field-grid">
-                                <label class="field"><span>runPressure JSON?type ??? meta.enums.runPressureTypes</span><textarea id="runPressureJsonInput"></textarea></label>
-                                <label class="field"><span>statePersistence JSON?carryOver / clearAfterBattle ??? meta.enums</span><textarea id="statePersistenceJsonInput"></textarea></label>
-                            </div>
-                        </details>
-                    </section>
-
                     <section id="assetsPanel" class="section editor-panel" role="tabpanel" data-editor-panel="assets" hidden>
                         <h3>????</h3>
                         <div class="art-block">
@@ -1032,7 +1012,6 @@
                     capabilities: '\u81ea\u8eab\u80fd\u529b',
                     intent: '\u610f\u56fe\u5faa\u73af',
                     decision: '\u884c\u4e3a\u51b3\u7b56',
-                    pressure: '\u6d41\u7a0b\u538b\u529b',
                     assets: '\u8d44\u4ea7\u5f15\u7528'
                 },
                 headings: {
@@ -1041,7 +1020,6 @@
                     capabilities: '\u654c\u4eba\u81ea\u8eab\u80fd\u529b',
                     intent: '\u56fa\u5b9a\u610f\u56fe\u5faa\u73af',
                     decision: '\u884c\u4e3a\u51b3\u7b56\u8868',
-                    pressure: '\u6d41\u7a0b\u538b\u529b\u4e0e\u8de8\u5173\u89c4\u5219',
                     assets: '\u8d44\u4ea7\u5f15\u7528'
                 },
                 labels: {
@@ -1055,14 +1033,6 @@
                     intentModelJsonInput: 'intentModel JSON\uff1bpattern / fallback \u5e94\u6765\u81ea meta.enums.intentTokens',
                     decisionModelJsonInput: 'decisionModel JSON\uff1bactions \u5e94\u7531\u7ed3\u6784\u5316\u51b3\u7b56\u8868\u751f\u6210',
                     skillListInput: 'skills[] \u6bcf\u884c\u4e00\u4e2a skillId',
-                    runPressureTypeInput: '\u6d41\u7a0b\u538b\u529b\u7c7b\u578b\uff08\u6765\u81ea meta.enums.runPressureTypes\uff09',
-                    runPressureDamageBudgetInput: '\u9884\u671f\u4f24\u5bb3\u9884\u7b97',
-                    runPressureCarryoverImpactInput: '\u8de8\u5173\u5f71\u54cd\uff08\u6765\u81ea meta.enums.carryoverImpact\uff09',
-                    runPressureCounterplayInput: '\u6d41\u7a0b\u538b\u529b\u53cd\u5236\uff08\u6765\u81ea meta.enums.counterplay\uff09',
-                    stateCarryOverInput: '\u5141\u8bb8\u8de8\u5173\u4fdd\u7559\uff08HP / \u62a4\u7532\uff09',
-                    stateClearAfterBattleInput: '\u6218\u540e\u6e05\u9664\u72b6\u6001',
-                    runPressureJsonInput: 'runPressure JSON\uff1btype \u5e94\u6765\u81ea meta.enums.runPressureTypes',
-                    statePersistenceJsonInput: 'statePersistence JSON\uff1bcarryOver / clearAfterBattle \u5e94\u6765\u81ea meta.enums',
                     battleSpriteSelect: '\u654c\u4eba\u539f\u753b battleSpriteRef',
                     portraitRefInput: 'portraitRef',
                     mapPortraitRefInput: 'mapPortraitRef',

@@ -739,7 +739,6 @@
             <button class="tab-button" data-tab="stats">????</button>
             <button class="tab-button" data-tab="capabilities">????</button>
             <button class="tab-button" data-tab="intent">????</button>
-            <button class="tab-button" data-tab="pressure">????</button>
             <button class="tab-button" data-tab="assets">????</button>
           </nav>
 
@@ -865,22 +864,6 @@
               </div>
             </section>
 
-            <section class="section tab-panel" data-panel="pressure">
-              <div class="section-title">
-                <h3>????????</h3>
-                <span class="pill enum">runPressure / statePersistence</span>
-              </div>
-              <div class="section-body">
-                <div class="form-grid">
-                  <div class="field"><div class="field-head"><span class="label">????</span><span class="pill enum">??</span></div><select><option>hp_attrition</option><option>armor_attrition</option><option>none</option></select></div>
-                  <div class="field"><div class="field-head"><span class="label">????</span><span class="pill free">??</span></div><input value="12"></div>
-                  <div class="field wide"><div class="field-head"><span class="label">carryOver</span><span class="pill multi">????</span></div><input value="hp, armor"></div>
-                  <div class="field full"><div class="field-head"><span class="label">????</span><span class="pill multi">????</span></div><div class="tags"><span class="pill multi">bleed</span><span class="pill multi">poison</span><span class="pill multi">slow</span><span class="pill multi">vulnerable</span><span class="pill multi">stun</span><span class="pill multi">temporary_buff</span></div></div>
-                  <div class="field full"><div class="field-head"><span class="label">????</span><span class="pill free">????</span></div><textarea>??????? AP ????????????????????????????????????? HP ???????</textarea></div>
-                </div>
-              </div>
-            </section>
-
             <section class="section tab-panel" data-panel="assets">
               <div class="section-title">
                 <h3>?????</h3>
@@ -989,7 +972,6 @@
       stats: '\u6570\u503c\u90e8\u4f4d',
       capabilities: '\u81ea\u8eab\u80fd\u529b',
       intent: '\u610f\u56fe\u5faa\u73af',
-      pressure: '\u6d41\u7a0b\u538b\u529b',
       assets: '\u8d44\u4ea7\u5f15\u7528',
       baseIdentity: '\u57fa\u7840\u8eab\u4efd',
       displayName: '\u663e\u793a\u540d',
@@ -1006,7 +988,7 @@
       multiEnum: '\u591a\u9009\u679a\u4e3e',
       addEnumTag: '+ \u6dfb\u52a0\u679a\u4e3e\u6807\u7b7e',
       designNote: '\u8bbe\u8ba1\u8bf4\u660e',
-      noteText: 'level_1_1 \u7684\u5feb\u901f\u5165\u95e8\u654c\u4eba\u3002\u7528\u57fa\u7840\u653b\u51fb\u548c\u8f7b\u6d41\u8840\u68c0\u67e5\u73a9\u5bb6\u662f\u5426\u80fd\u7528\u4f4e AP \u9632\u5fa1\u3001\u8865\u7532\u6216\u5feb\u901f\u51fb\u6740\u964d\u4f4e\u8de8\u5173 HP \u635f\u8017\u3002',
+      noteText: 'level_1_1 \u7684\u5feb\u901f\u5165\u95e8\u654c\u4eba\u3002\u7528\u57fa\u7840\u653b\u51fb\u548c\u8f7b\u6d41\u8840\u68c0\u67e5\u73a9\u5bb6\u662f\u5426\u80fd\u7528\u4f4e AP \u9632\u5fa1\u3001\u8865\u7532\u6216\u5feb\u901f\u51fb\u6740\u964d\u4f4e\u672c\u5173 HP \u635f\u8017\u3002',
       combatBudget: '\u6218\u6597\u9884\u7b97\u4e0e\u90e8\u4f4d',
       numeric: '\u6570\u503c',
       standardParts: '\u6807\u51c6\u90e8\u4f4d',
@@ -1024,12 +1006,6 @@
       skillRefs: '\u6280\u80fd\u5f15\u7528',
       visibleIntent: '\u53ef\u89c1\u610f\u56fe',
       boolText: '\u5e03\u5c14',
-      pressurePersist: '\u6d41\u7a0b\u538b\u529b\u4e0e\u6301\u4e45\u5316',
-      pressureType: '\u538b\u529b\u7c7b\u578b',
-      expectedLoss: '\u9884\u671f\u635f\u8017',
-      afterBattleClear: '\u6218\u540e\u6e05\u9664',
-      failureSignal: '\u5931\u8d25\u4fe1\u53f7',
-      failureText: '\u73a9\u5bb6\u5982\u679c\u6ca1\u6709\u4f4e AP \u9632\u5fa1\u3001\u5feb\u901f\u51fb\u6740\u6216\u57fa\u7840\u6cbb\u7597\uff0c\u4f1a\u5728\u672c\u5173\u5185\u88ab\u6301\u7eed\u78e8\u8840\uff1b\u72b6\u6001\u6e05\u9664\u540e\uff0c\u53ea\u628a\u5df2\u7ecf\u635f\u5931\u7684 HP \u5e26\u5165\u540e\u7eed\u5173\u5361\u3002',
       assetAndRefs: '\u8d44\u4ea7\u4e0e\u5f15\u7528',
       assetPreviewTitle: '\u8d44\u4ea7\u9884\u89c8\u4e0d\u5360\u4e3b\u7f16\u8f91\u533a',
       assetPreviewText: '\u53ea\u6709\u8fdb\u5165\u201c\u8d44\u4ea7\u5f15\u7528\u201d tab \u65f6\u624d\u663e\u793a\u9884\u89c8\u548c\u7ed1\u5b9a\u9879\uff0c\u907f\u514d\u8eab\u4efd/\u80fd\u529b\u7f16\u8f91\u65f6\u88ab\u5927\u7a7a\u767d\u533a\u57df\u6253\u65ad\u3002'
@@ -1040,7 +1016,6 @@
       ['stats', cn.stats],
       ['capabilities', cn.capabilities],
       ['intent', cn.intent],
-      ['pressure', cn.pressure],
       ['assets', cn.assets]
     ].map(([key, label], index) => `<button class="tab-button${index === 0 ? ' active' : ''}" data-tab="${key}">${label}</button>`).join('');
 
@@ -1078,10 +1053,6 @@
       <section class="section tab-panel" data-panel="intent">
         <div class="section-title"><h3>${cn.fixedIntent}</h3><span class="pill enum">intent tokens \u6765\u81ea meta.enums</span></div>
         <div class="section-body"><div class="intent-track"><span class="token">attack</span><span class="arrow">\u2192</span><span class="token">bleed</span><span class="arrow">\u2192</span><span class="token">attack</span><span class="arrow">\u2192</span><span class="token">fallback: attack</span></div><div class="form-grid"><div class="field wide"><div class="field-head"><span class="label">${cn.intentTip}</span><span class="pill free">${cn.freeText}</span></div><input value="${cn.intentTipValue}"></div><div class="field wide"><div class="field-head"><span class="label">${cn.skillRefs}</span><span class="pill ref">enemy skill pack</span></div><input value="enemy_skill_rusty_shiv, skill_throw_stone"></div><div class="field"><div class="field-head"><span class="label">${cn.visibleIntent}</span><span class="pill enum">${cn.boolText}</span></div><select><option>true</option><option>false</option></select></div><div class="field"><div class="field-head"><span class="label">fallback</span><span class="pill enum">${cn.enumText}</span></div><select><option>attack</option><option>recover</option></select></div></div></div>
-      </section>
-      <section class="section tab-panel" data-panel="pressure">
-        <div class="section-title"><h3>${cn.pressurePersist}</h3><span class="pill enum">runPressure / statePersistence</span></div>
-        <div class="section-body"><div class="form-grid"><div class="field"><div class="field-head"><span class="label">${cn.pressureType}</span><span class="pill enum">${cn.enumText}</span></div><select><option>hp_attrition</option><option>armor_attrition</option><option>none</option></select></div><div class="field"><div class="field-head"><span class="label">${cn.expectedLoss}</span><span class="pill free">${cn.numeric}</span></div><input value="12"></div><div class="field wide"><div class="field-head"><span class="label">carryOver</span><span class="pill multi">${cn.multiEnum}</span></div><input value="hp, armor"></div><div class="field full"><div class="field-head"><span class="label">${cn.afterBattleClear}</span><span class="pill multi">${cn.multiEnum}</span></div><div class="tags"><span class="pill multi">bleed</span><span class="pill multi">poison</span><span class="pill multi">slow</span><span class="pill multi">vulnerable</span><span class="pill multi">stun</span><span class="pill multi">temporary_buff</span></div></div><div class="field full"><div class="field-head"><span class="label">${cn.failureSignal}</span><span class="pill free">${cn.freeText}</span></div><textarea>${cn.failureText}</textarea></div></div></div>
       </section>
       <section class="section tab-panel" data-panel="assets">
         <div class="section-title"><h3>${cn.assetAndRefs}</h3><span class="pill ref">asset refs / skill refs</span></div>

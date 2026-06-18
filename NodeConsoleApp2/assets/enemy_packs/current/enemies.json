@@ -8,7 +8,7 @@
     "notes": [
       "Standard wrapped enemy pack. Editors must use meta.enums as the data source for enum controls.",
       "Runtime readers may accept legacy bare enemy records, but published packs should keep this wrapped form.",
-      "Bleed and poison are battle-local pressure states; only resulting hp and armor state carry between levels."
+      "Enemy templates do not declare cross-level HP/armor persistence; route carryover belongs to level or campaign rules."
     ],
     "fieldNotes": {
       "$schemaVersion": "Enemy pack schema version. Current value: enemies_v2_1.",
@@ -34,12 +34,7 @@
       "enemies.*.intentModel.pattern[]": "Fixed runtime intent-loop token sequence. Tokens come from meta.enums.intentTokens and are consumed by EnemyActionPlanner.",
       "enemies.*.intentModel.fallback": "Fallback intent token. Value comes from meta.enums.intentTokens.",
       "enemies.*.buildCheck": "Design diagnostics describing what player build weakness this enemy verifies.",
-      "enemies.*.runPressure.type": "Whole-run pressure role. Select from meta.enums.runPressureTypes.",
-      "enemies.*.runPressure.carryoverImpact[]": "Whole-run impact tags caused by this enemy. Select from meta.enums.carryoverImpact.",
-      "enemies.*.statePersistence.carryOver[]": "States allowed to carry to the next level. Select from meta.enums.carryOver.",
-      "enemies.*.statePersistence.clearAfterBattle[]": "Battle-local states cleared after combat. Select from meta.enums.clearAfterBattle.",
       "enemies.*.presentation": "Presentation and asset references for editor, map, and battle UI.",
-      "enemies.*.runPressure.counterplay[]": "Player response tags for the whole-run pressure. Select from meta.enums.counterplay; multiple values are allowed.",
       "enemies.*.decisionModel.mode": "Runtime decision model mode. Select from meta.enums.decisionModelModes; current supported value is intent_priority_table.",
       "enemies.*.decisionModel.intentTimeline[]": "Visible runtime intent timeline. Values come from meta.enums.intentTokens and mirror intentModel.pattern during migration.",
       "enemies.*.decisionModel.fallbackIntent": "Fallback intent token. Value comes from meta.enums.intentTokens.",
@@ -156,25 +151,6 @@
         "terminal",
         "vulnerable"
       ],
-      "runPressureTypes": [
-        "armor_attrition",
-        "delay_tax",
-        "hp_attrition",
-        "none",
-        "pre_boss_drain"
-      ],
-      "carryOver": [
-        "hp",
-        "armor"
-      ],
-      "clearAfterBattle": [
-        "bleed",
-        "poison",
-        "slow",
-        "vulnerable",
-        "stun",
-        "temporary_buff"
-      ],
       "bodyParts": [
         "head",
         "chest",
@@ -219,10 +195,6 @@
         "resource_save",
         "target_priority",
         "stable_output"
-      ],
-      "carryoverImpact": [
-        "armor_loss",
-        "hp_loss"
       ],
       "decisionModelModes": [
         "intent_priority_table"
@@ -291,8 +263,8 @@
         "intent_loop_slot": "设计节奏：由 intentModel.pattern 中的位置表达；当前运行时不读取 capability.cadence 触发。"
       },
       "capabilityPressures": {
-        "hp_attrition": "流程压力：稳定磨血，最终转化为跨关 HP 损失。",
-        "armor_attrition": "流程压力：消耗护甲或迫使补甲，影响下一关状态。",
+        "hp_attrition": "?????????????? HP ??????????????????",
+        "armor_attrition": "?????????????????????????????????",
         "burst_damage": "单关压力：高伤害窗口，要求预判、防御、打断或爆发处理。",
         "status_dot": "单关压力：流血/中毒/易伤等战斗内状态，不跨关保留。",
         "control_tempo": "节奏压力：减速、束缚、行动税或顺序扰动。",
@@ -432,29 +404,6 @@
         "expectedCounter": [
           "guard",
           "fast_kill"
-        ]
-      },
-      "runPressure": {
-        "type": "none",
-        "carryoverImpact": [],
-        "expectedDamageBudget": 4,
-        "counterplay": [
-          "guard",
-          "fast_kill"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -606,29 +555,6 @@
         "expectedCounter": [
           "stable_output",
           "guard"
-        ]
-      },
-      "runPressure": {
-        "type": "none",
-        "carryoverImpact": [],
-        "expectedDamageBudget": 6,
-        "counterplay": [
-          "stable_output",
-          "guard"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -785,32 +711,6 @@
           "guard"
         ]
       },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 10,
-        "counterplay": [
-          "healing",
-          "fast_kill",
-          "guard"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -962,32 +862,6 @@
           "guard",
           "armor_up",
           "interrupt"
-        ]
-      },
-      "runPressure": {
-        "type": "armor_attrition",
-        "carryoverImpact": [
-          "armor_loss"
-        ],
-        "expectedDamageBudget": 12,
-        "counterplay": [
-          "guard",
-          "armor_up",
-          "interrupt"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -1145,32 +1019,6 @@
           "fast_kill"
         ]
       },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 12,
-        "counterplay": [
-          "burst_window",
-          "healing",
-          "fast_kill"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -1320,31 +1168,6 @@
         "expectedCounter": [
           "armor_break",
           "weakpoint_focus"
-        ]
-      },
-      "runPressure": {
-        "type": "armor_attrition",
-        "carryoverImpact": [
-          "armor_loss"
-        ],
-        "expectedDamageBudget": 8,
-        "counterplay": [
-          "armor_break",
-          "weakpoint_focus"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -1497,31 +1320,6 @@
         "expectedCounter": [
           "resource_save",
           "burst_window"
-        ]
-      },
-      "runPressure": {
-        "type": "delay_tax",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 10,
-        "counterplay": [
-          "resource_save",
-          "burst_window"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -1678,32 +1476,6 @@
           "stop_attack"
         ]
       },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 12,
-        "counterplay": [
-          "read_telegraph",
-          "interrupt",
-          "stop_attack"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -1858,33 +1630,6 @@
           "armor_break",
           "guard",
           "burst_window"
-        ]
-      },
-      "runPressure": {
-        "type": "pre_boss_drain",
-        "carryoverImpact": [
-          "hp_loss",
-          "armor_loss"
-        ],
-        "expectedDamageBudget": 18,
-        "counterplay": [
-          "armor_break",
-          "guard",
-          "burst_window"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -2065,30 +1810,6 @@
           "armor_break"
         ]
       },
-      "runPressure": {
-        "type": "none",
-        "carryoverImpact": [],
-        "expectedDamageBudget": 0,
-        "counterplay": [
-          "guard",
-          "weakpoint_focus",
-          "armor_break"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -2262,31 +1983,6 @@
           "guard"
         ]
       },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 14,
-        "counterplay": [
-          "speed_management",
-          "guard"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -2436,31 +2132,6 @@
           "guard"
         ]
       },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 16,
-        "counterplay": [
-          "stable_output",
-          "guard"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -2608,31 +2279,6 @@
         "expectedCounter": [
           "armor_break",
           "weakpoint_focus"
-        ]
-      },
-      "runPressure": {
-        "type": "armor_attrition",
-        "carryoverImpact": [
-          "armor_loss"
-        ],
-        "expectedDamageBudget": 10,
-        "counterplay": [
-          "armor_break",
-          "weakpoint_focus"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -2788,33 +2434,6 @@
           "armor_up"
         ]
       },
-      "runPressure": {
-        "type": "armor_attrition",
-        "carryoverImpact": [
-          "armor_loss",
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 18,
-        "counterplay": [
-          "guard",
-          "interrupt",
-          "armor_up"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -2967,32 +2586,6 @@
           "burst_window",
           "armor_break",
           "interrupt"
-        ]
-      },
-      "runPressure": {
-        "type": "delay_tax",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 16,
-        "counterplay": [
-          "burst_window",
-          "armor_break",
-          "interrupt"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -3160,32 +2753,6 @@
           "fast_kill"
         ]
       },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 18,
-        "counterplay": [
-          "speed_management",
-          "healing",
-          "fast_kill"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -3338,32 +2905,6 @@
           "healing",
           "cleanse",
           "fast_kill"
-        ]
-      },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 20,
-        "counterplay": [
-          "healing",
-          "cleanse",
-          "fast_kill"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -3529,33 +3070,6 @@
           "read_telegraph",
           "armor_break",
           "stop_attack"
-        ]
-      },
-      "runPressure": {
-        "type": "delay_tax",
-        "carryoverImpact": [
-          "hp_loss",
-          "armor_loss"
-        ],
-        "expectedDamageBudget": 18,
-        "counterplay": [
-          "read_telegraph",
-          "armor_break",
-          "stop_attack"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -3731,33 +3245,6 @@
           "guard",
           "burst_window",
           "armor_break"
-        ]
-      },
-      "runPressure": {
-        "type": "pre_boss_drain",
-        "carryoverImpact": [
-          "hp_loss",
-          "armor_loss"
-        ],
-        "expectedDamageBudget": 24,
-        "counterplay": [
-          "guard",
-          "burst_window",
-          "armor_break"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -3946,30 +3433,6 @@
           "burst_window"
         ]
       },
-      "runPressure": {
-        "type": "none",
-        "carryoverImpact": [],
-        "expectedDamageBudget": 0,
-        "counterplay": [
-          "armor_break",
-          "speed_management",
-          "burst_window"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -4147,32 +3610,6 @@
           "fast_kill"
         ]
       },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 24,
-        "counterplay": [
-          "guard",
-          "healing",
-          "fast_kill"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -4325,32 +3762,6 @@
           "healing",
           "cleanse",
           "fast_kill"
-        ]
-      },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 28,
-        "counterplay": [
-          "healing",
-          "cleanse",
-          "fast_kill"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -4506,32 +3917,6 @@
           "stable_output",
           "guard",
           "fast_kill"
-        ]
-      },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 26,
-        "counterplay": [
-          "stable_output",
-          "guard",
-          "fast_kill"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -4704,32 +4089,6 @@
           "armor_break",
           "weakpoint_focus",
           "speed_management"
-        ]
-      },
-      "runPressure": {
-        "type": "armor_attrition",
-        "carryoverImpact": [
-          "armor_loss"
-        ],
-        "expectedDamageBudget": 20,
-        "counterplay": [
-          "armor_break",
-          "weakpoint_focus",
-          "speed_management"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -4907,32 +4266,6 @@
           "burst_window"
         ]
       },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 30,
-        "counterplay": [
-          "cleanse",
-          "interrupt",
-          "burst_window"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -5105,33 +4438,6 @@
           "speed_management",
           "guard",
           "armor_up"
-        ]
-      },
-      "runPressure": {
-        "type": "armor_attrition",
-        "carryoverImpact": [
-          "armor_loss",
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 24,
-        "counterplay": [
-          "speed_management",
-          "guard",
-          "armor_up"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -5311,32 +4617,6 @@
           "interrupt"
         ]
       },
-      "runPressure": {
-        "type": "delay_tax",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 26,
-        "counterplay": [
-          "fast_kill",
-          "cleanse",
-          "interrupt"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
-        ]
-      },
       "presentation": {
         "portraitRef": "",
         "mapPortraitRef": "",
@@ -5510,32 +4790,6 @@
           "target_priority",
           "healing",
           "fast_kill"
-        ]
-      },
-      "runPressure": {
-        "type": "hp_attrition",
-        "carryoverImpact": [
-          "hp_loss"
-        ],
-        "expectedDamageBudget": 30,
-        "counterplay": [
-          "target_priority",
-          "healing",
-          "fast_kill"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -5723,34 +4977,6 @@
           "burst_window",
           "guard",
           "speed_management"
-        ]
-      },
-      "runPressure": {
-        "type": "pre_boss_drain",
-        "carryoverImpact": [
-          "hp_loss",
-          "armor_loss"
-        ],
-        "expectedDamageBudget": 36,
-        "counterplay": [
-          "armor_break",
-          "burst_window",
-          "guard",
-          "speed_management"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {
@@ -5961,31 +5187,6 @@
           "burst_window",
           "healing",
           "armor_break"
-        ]
-      },
-      "runPressure": {
-        "type": "none",
-        "carryoverImpact": [],
-        "expectedDamageBudget": 0,
-        "counterplay": [
-          "cleanse",
-          "burst_window",
-          "healing",
-          "armor_break"
-        ]
-      },
-      "statePersistence": {
-        "carryOver": [
-          "hp",
-          "armor"
-        ],
-        "clearAfterBattle": [
-          "bleed",
-          "poison",
-          "slow",
-          "vulnerable",
-          "stun",
-          "temporary_buff"
         ]
       },
       "presentation": {

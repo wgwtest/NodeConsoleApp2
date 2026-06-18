@@ -18,8 +18,6 @@ const expectedStoryLevelIds = Array.from({ length: 3 }, (_, chapterIndex) => {
 }).flat();
 
 const standardBodyParts = ['head', 'chest', 'abdomen', 'arm', 'leg'];
-const allowedCarryOver = ['hp', 'armor'];
-const requiredClearAfterBattle = ['bleed', 'poison', 'slow', 'vulnerable', 'stun', 'temporary_buff'];
 
 async function readJson(relativePath) {
   return JSON.parse(await fs.readFile(path.join(projectRoot, relativePath), 'utf8'));
@@ -46,14 +44,10 @@ test('enemy V2 candidate pack declares a standard data contract for editors', as
     'tags',
     'capabilityTypes',
     'intentTokens',
-    'runPressureTypes',
-    'carryOver',
-    'clearAfterBattle',
     'bodyParts',
     'capabilityCadences',
     'capabilityPressures',
     'counterplay',
-    'carryoverImpact',
     'decisionModelModes',
     'decisionTargetRules',
     'decisionWhenTypes',
@@ -85,6 +79,10 @@ test('enemy V2 candidate pack declares a standard data contract for editors', as
     );
   }
   assert.equal(enums.intentTokens.includes('attack'), true);
+  assert.equal('runPressureTypes' in enums, false, 'enemy pack should not declare enemy-level runPressureTypes');
+  assert.equal('carryoverImpact' in enums, false, 'enemy pack should not declare enemy-level carryoverImpact');
+  assert.equal('carryOver' in enums, false, 'enemy pack should not declare enemy-level carryOver');
+  assert.equal('clearAfterBattle' in enums, false, 'enemy pack should not declare enemy-level clearAfterBattle');
   assert.deepEqual(enums.decisionModelModes, ['intent_priority_table']);
   assert.deepEqual(enums.decisionWhenTypes, [
     'always',
@@ -93,7 +91,6 @@ test('enemy V2 candidate pack declares a standard data contract for editors', as
     'previous_intent',
     'turn_modulo'
   ]);
-  assert.deepEqual(enums.carryOver, allowedCarryOver);
 
   const fieldNotes = candidatePack.meta?.fieldNotes || {};
   for (const fieldKey of [
@@ -109,14 +106,19 @@ test('enemy V2 candidate pack declares a standard data contract for editors', as
     'enemies.*.decisionModel.actions[].when',
     'enemies.*.decisionModel.actions[].intent',
     'enemies.*.decisionModel.actions[].skillId',
-    'enemies.*.intentModel.pattern[]',
-    'enemies.*.runPressure.type',
-    'enemies.*.runPressure.carryoverImpact[]',
-    'enemies.*.runPressure.counterplay[]',
-    'enemies.*.statePersistence.carryOver[]'
+    'enemies.*.intentModel.pattern[]'
   ]) {
     assert.equal(typeof fieldNotes[fieldKey], 'string', `meta.fieldNotes.${fieldKey} must explain edit rules`);
     assert.match(fieldNotes[fieldKey], /meta\.enums/u, `${fieldKey} should reference meta.enums as the data source`);
+  }
+  for (const fieldKey of [
+    'enemies.*.runPressure.type',
+    'enemies.*.runPressure.carryoverImpact[]',
+    'enemies.*.runPressure.counterplay[]',
+    'enemies.*.statePersistence.carryOver[]',
+    'enemies.*.statePersistence.clearAfterBattle[]'
+  ]) {
+    assert.equal(fieldKey in fieldNotes, false, `meta.fieldNotes.${fieldKey} should be removed`);
   }
 });
 
@@ -182,15 +184,8 @@ test('enemy V2 候选包为 30 个正式关卡生成机制化主敌', async () =
       assert.equal(typeof action.targetRule, 'string', `${enemy.id} decision action 应有 targetRule`);
       assert.equal(candidatePack.meta.enums.decisionTargetRules.includes(action.targetRule), true, `${enemy.id} decision action targetRule must come from meta.enums.decisionTargetRules`);
     }
-    assert.equal(typeof enemy.runPressure?.type, 'string', `${enemy.id} 应声明流程压力`);
-    assert.deepEqual(enemy.statePersistence?.carryOver, allowedCarryOver, `${enemy.id} 跨关只继承 HP/护甲`);
-    for (const clearedState of requiredClearAfterBattle) {
-      assert.equal(
-        enemy.statePersistence?.clearAfterBattle?.includes(clearedState),
-        true,
-        `${enemy.id} 战后应清除 ${clearedState}`
-      );
-    }
+    assert.equal('runPressure' in enemy, false, `${enemy.id} should not declare enemy-level runPressure`);
+    assert.equal('statePersistence' in enemy, false, `${enemy.id} should not declare enemy-level statePersistence`);
 
     assert.equal(Array.isArray(enemy.skills), true, `${enemy.id} 应引用敌技`);
     assert.equal(enemy.skills.length >= 2, true, `${enemy.id} 至少需要 2 个技能引用`);
