@@ -458,21 +458,70 @@
 
         .decision-node-card {
             position: absolute;
+            z-index: 2;
             width: 178px;
             min-height: 72px;
             padding: 9px;
-            white-space: pre-line;
+            display: grid;
+            gap: 4px;
+            white-space: normal;
             text-align: left;
             color: var(--ink);
             background: #fff;
             border: 1px solid var(--line-strong);
             border-radius: 8px;
             box-shadow: 0 12px 28px rgba(27, 36, 31, 0.12);
+            cursor: grab;
+            user-select: none;
+        }
+
+        .decision-node-card:active {
+            cursor: grabbing;
         }
 
         .decision-node-card--entry {
             background: #17211d;
             color: #fff;
+        }
+
+        .decision-node-card.is-selected {
+            border-color: var(--red);
+            box-shadow: inset 4px 0 0 var(--red), 0 12px 28px rgba(27, 36, 31, 0.12);
+        }
+
+        .decision-node-card.is-connecting {
+            border-color: var(--green);
+            box-shadow: inset 4px 0 0 var(--green), 0 12px 28px rgba(31, 123, 88, 0.18);
+        }
+
+        .decision-node-title {
+            font-weight: 900;
+        }
+
+        .decision-node-meta {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .decision-node-detail {
+            white-space: pre-line;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .decision-connect-handle {
+            min-height: 24px;
+            justify-self: start;
+            padding: 3px 7px;
+            color: var(--green);
+            background: #fff;
+            border-color: rgba(31, 123, 88, 0.35);
+        }
+
+        .decision-node-card--entry .decision-node-meta,
+        .decision-node-card--entry .decision-connect-handle {
+            color: #dfe8e0;
         }
 
         .decision-node-card--branch {
@@ -481,6 +530,41 @@
 
         .decision-node-card--action {
             background: #edf7f1;
+        }
+
+        .decision-edge {
+            position: absolute;
+            z-index: 1;
+            height: 3px;
+            min-height: 0;
+            padding: 0;
+            border: 0;
+            border-radius: 999px;
+            color: transparent;
+            background: rgba(91, 111, 101, 0.78);
+            box-shadow: none;
+            font-size: 0;
+            line-height: 0;
+            overflow: visible;
+            transform-origin: left center;
+        }
+
+        .decision-edge::after {
+            content: "";
+            position: absolute;
+            right: -2px;
+            top: -4px;
+            border-left: 8px solid rgba(91, 111, 101, 0.78);
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+
+        .decision-edge:hover {
+            background: var(--red);
+        }
+
+        .decision-edge:hover::after {
+            border-left-color: var(--red);
         }
 
         .decision-template-list,
@@ -1084,13 +1168,13 @@
                             <button id="toggleDecisionFullscreenBtn" type="button" class="decision-fullscreen-toggle" aria-pressed="false">全屏编辑</button>
                         </div>
                         <div class="list-toolbar">
-                            <div class="note" id="decisionGraphNote">Blueprint graph for enemy state, branch, and action selection.</div>
+                            <div class="note" id="decisionGraphNote">用状态、分支、行动节点描述敌人回合决策；可拖动节点、连线并绑定技能。</div>
                             <div class="decision-graph-toolbar">
-                                <button id="addDecisionStateBtn" type="button" class="secondary">Add state</button>
-                                <button id="addDecisionBranchBtn" type="button" class="secondary">Add branch</button>
-                                <button id="addDecisionGraphActionBtn" type="button" class="secondary">Add action</button>
-                                <button id="validateDecisionGraphBtn" type="button" class="secondary">Validate</button>
-                                <button id="previewDecisionGraphBtn" type="button" class="secondary">Preview</button>
+                                <button id="addDecisionStateBtn" type="button" class="secondary">添加状态</button>
+                                <button id="addDecisionBranchBtn" type="button" class="secondary">添加分支</button>
+                                <button id="addDecisionGraphActionBtn" type="button" class="secondary">添加行动</button>
+                                <button id="validateDecisionGraphBtn" type="button" class="secondary">检查</button>
+                                <button id="previewDecisionGraphBtn" type="button" class="secondary">预览</button>
                             </div>
                         </div>
                         <div class="field-grid single">
@@ -1098,22 +1182,22 @@
                         </div>
                         <div class="decision-graph-editor">
                             <aside class="decision-graph-sidebar">
-                                <h4>Templates</h4>
+                                <h4>决策模板</h4>
                                 <div id="decisionTemplateList" class="decision-template-list"></div>
                                 <div class="decision-graph-toolbar">
-                                    <button id="duplicateDecisionTemplateBtn" type="button" class="secondary">Duplicate</button>
-                                    <button id="deleteDecisionTemplateBtn" type="button" class="secondary">Delete</button>
+                                    <button id="duplicateDecisionTemplateBtn" type="button" class="secondary">复制模板</button>
+                                    <button id="deleteDecisionTemplateBtn" type="button" class="secondary">清空模板</button>
                                 </div>
-                                <h4>Enemy skills</h4>
+                                <h4>敌人技能</h4>
                                 <div id="decisionSkillList" class="decision-skill-list"></div>
-                                <h4>Graph issues</h4>
+                                <h4>图检查</h4>
                                 <div id="decisionGraphIssues" class="decision-graph-issues"></div>
                             </aside>
                             <div id="decisionGraphCanvas" class="decision-graph-canvas"></div>
                             <aside class="decision-graph-inspector">
-                                <h4>Inspector</h4>
+                                <h4>节点属性</h4>
                                 <div id="decisionNodeInspector" class="decision-node-inspector"></div>
-                                <h4>Path preview</h4>
+                                <h4>路径预览</h4>
                                 <div id="decisionPreviewTrace" class="decision-preview-trace"></div>
                             </aside>
                         </div>

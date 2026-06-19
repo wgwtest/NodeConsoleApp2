@@ -387,6 +387,9 @@ test('enemy editor page fixture contains required authoring controls', async () 
         assert.match(html, new RegExp(`id=["']${id}["']`), `page missing #${id}`);
     }
     assert.match(html, /id=["']toggleDecisionFullscreenBtn["']/u, 'page missing enemy decision fullscreen toggle');
+    for (const englishLabel of ['Add state', 'Add branch', 'Add action', 'Templates', 'Enemy skills', 'Graph issues', 'Inspector', 'Path preview']) {
+        assert.doesNotMatch(html, new RegExp(`>${englishLabel}<`, 'u'), `enemy decision editor should not expose English label ${englishLabel}`);
+    }
     for (const id of ['intentModelJsonInput', 'decisionModelJsonInput', 'runPressureJsonInput', 'statePersistenceJsonInput']) {
         assert.doesNotMatch(html, new RegExp(`id=["']${id}["']`), `page should not expose #${id}`);
     }
@@ -426,8 +429,8 @@ test('EnemyEditorPage switches design tabs and exports enemyDecision instead of 
     assert.equal(capabilitiesPanel.hidden, true);
     assert.equal(decisionPanel.hidden, false);
     assert.equal(decisionTab.getAttribute('aria-selected'), 'true');
-    assert.match(dom.window.document.getElementById('decisionGraphCanvas').textContent, /Normal|Action/u);
-    assert.match(dom.window.document.getElementById('decisionPreviewTrace').textContent, /Turn 1/u);
+    assert.match(dom.window.document.getElementById('decisionGraphCanvas').textContent, /默认状态|行动/u);
+    assert.match(dom.window.document.getElementById('decisionPreviewTrace').textContent, /第 1 回合/u);
 
     dom.window.document.getElementById('capabilitiesJsonInput').value = JSON.stringify([
         {
@@ -558,9 +561,9 @@ test('EnemyEditorPage renders enemyDecision as a graph editor with preview', asy
     decisionTab.dispatchEvent(new Event('click'));
 
     assert.equal(decisionPanel.hidden, false);
-    assert.match(canvas.textContent, /Normal/u);
+    assert.match(canvas.textContent, /默认状态/u);
     assert.match(canvas.textContent, /skill_throw_stone/u);
-    assert.match(preview.textContent, /Turn 1/u);
+    assert.match(preview.textContent, /第 1 回合/u);
     assert.match(skillList.textContent, /skill_throw_stone/u);
 
     page.syncCurrentEnemyFromForm();
@@ -603,6 +606,54 @@ test('EnemyEditorPage toggles enemyDecision into an immersive fullscreen editor'
     assert.equal(fullscreenToggle.getAttribute('aria-pressed'), 'false');
 });
 
+test('EnemyEditorPage decision graph supports dragging nodes and editing connections', async () => {
+    const { page, dom } = await createPageContext();
+    page.loadDocument(buildWrappedEnemiesWithEnums());
+    dom.window.document.getElementById('enemyDecisionTab').dispatchEvent(new Event('click'));
+
+    const canvas = dom.window.document.getElementById('decisionGraphCanvas');
+    const stateCard = canvas.children.find(child => child.dataset?.nodeId === 'state_normal');
+
+    assert(stateCard, 'state node card should render');
+    assert.match(stateCard.textContent, /状态|默认/u);
+    assert.equal(canvas.children.some(child => String(child.className || '').includes('decision-edge')), true);
+
+    stateCard.dispatchEvent({
+        type: 'mousedown',
+        clientX: 100,
+        clientY: 120,
+        preventDefault() {}
+    });
+    dom.window.document.dispatchEvent({
+        type: 'mousemove',
+        clientX: 180,
+        clientY: 170,
+        preventDefault() {}
+    });
+    dom.window.document.dispatchEvent({ type: 'mouseup' });
+
+    const movedDecision = page.decisionGraphEditor.getDecision();
+    assert.equal(movedDecision.layout.nodes.state_normal.x, 340);
+    assert.equal(movedDecision.layout.nodes.state_normal.y, 130);
+
+    const branchButton = dom.window.document.getElementById('addDecisionBranchBtn');
+    branchButton.dispatchEvent(new Event('click'));
+    const branchId = page.decisionGraphEditor.selectedNodeId;
+    const connectHandle = canvas.children
+        .find(child => child.dataset?.nodeId === 'state_normal')
+        .children.find(child => child.dataset?.connectFrom === 'state_normal');
+    const branchCard = canvas.children.find(child => child.dataset?.nodeId === branchId);
+
+    assert(connectHandle, 'source node should expose a connect handle');
+    assert(branchCard, 'new branch card should render');
+    connectHandle.dispatchEvent(new Event('click'));
+    branchCard.dispatchEvent(new Event('click'));
+
+    const connectedDecision = page.decisionGraphEditor.getDecision();
+    assert.equal(connectedDecision.graph.edges.some(edge => edge.from === 'state_normal' && edge.to === branchId), true);
+    assert.equal(canvas.children.some(child => child.dataset?.edgeFrom === 'state_normal' && child.dataset?.edgeTo === branchId), true);
+});
+
 test('enemy decision graph editor uses a three-column blueprint layout', async () => {
     const html = await fsp.readFile(pageHtmlPath, 'utf8');
 
@@ -620,7 +671,8 @@ test('enemy decision graph editor uses a three-column blueprint layout', async (
 
     const canvas = dom.window.document.getElementById('decisionGraphCanvas');
     assert.equal(canvas.children.length > 0, true);
-    assert.match(canvas.children[0].className, /\bdecision-node-card\b/u);
+    assert.equal(canvas.children.some(child => String(child.className || '').includes('decision-edge')), true);
+    assert.equal(canvas.children.some(child => String(child.className || '').includes('decision-node-card')), true);
 });
 
 test('EnemyEditorPage omits enemy-level run pressure and cross-level persistence controls', async () => {
