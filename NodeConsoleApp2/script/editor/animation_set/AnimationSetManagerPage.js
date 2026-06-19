@@ -126,6 +126,10 @@ export class AnimationSetManagerPage {
         this.catalogDataPath = options.catalogDataPath || 'assets/data/animation_catalog_v1.json';
         this.currentDataPath = this.defaultDataPath;
         this.workspace = null;
+        this.catalogPublishState = {
+            status: 'idle',
+            message: 'catalog idle'
+        };
         this.selectedOwnerType = '';
         this.selectedOwnerId = '';
         this.selectedSetId = '';
@@ -145,9 +149,12 @@ export class AnimationSetManagerPage {
     bind() {
         [
             'status',
+            'catalogPublishStatus',
             'configFileLabel',
             'animationSetPathInput',
             'buildSelectedBtn',
+            'validateAllBtn',
+            'validationSummary',
             'animationSetSearchInput',
             'ownerTypeFilter',
             'statusFilter',
@@ -190,6 +197,9 @@ export class AnimationSetManagerPage {
         this.elements.buildSelectedBtn?.addEventListener('click', () => {
             this.buildSelectedClip().catch(error => this.setStatus(`重建失败：${error.message}`));
         });
+        this.elements.validateAllBtn?.addEventListener('click', () => {
+            this.runFullValidation();
+        });
         this.elements.importClipBtn?.addEventListener('click', () => {
             this.importClipForSelectedOwner().catch(error => this.setStatus(`导入失败：${error.message}`));
         });
@@ -217,6 +227,7 @@ export class AnimationSetManagerPage {
         this.currentDataPath = body.path || path;
         this.loadDocument(document);
         this.setConfigFileLabel(this.currentDataPath);
+        this.updateCatalogPublishStatus('idle', 'catalog idle');
         this.setStatus('动画资源库已就绪；后续变更会自动保存。');
     }
 
@@ -237,6 +248,17 @@ export class AnimationSetManagerPage {
 
     setConfigFileLabel(path = this.currentDataPath) {
         if (this.elements.configFileLabel) this.elements.configFileLabel.textContent = `配置文件：${path}`;
+    }
+
+    updateCatalogPublishStatus(status, message) {
+        this.catalogPublishState = {
+            status,
+            message: message || status
+        };
+        const element = this.elements.catalogPublishStatus;
+        if (!element) return;
+        element.className = badgeClass(status === 'ready' ? 'ready' : status === 'error' ? 'error' : 'warning');
+        element.textContent = this.catalogPublishState.message;
     }
 
     getFilter() {
@@ -279,6 +301,17 @@ export class AnimationSetManagerPage {
         if (this.elements.metricSetCount) this.elements.metricSetCount.textContent = String(summary.totalSets);
         if (this.elements.metricClipCount) this.elements.metricClipCount.textContent = String(summary.totalClips);
         if (this.elements.metricIssueCount) this.elements.metricIssueCount.textContent = String(issues.length);
+    }
+
+    runFullValidation() {
+        if (!this.workspace) return null;
+        const report = this.workspace.validateAllAnimationSets();
+        if (this.elements.validationSummary) {
+            this.elements.validationSummary.textContent = `sets ${report.totalSets} / clips ${report.totalClips} / ready ${report.readyClipCount} / issues ${report.issueCount}`;
+            this.elements.validationSummary.className = badgeClass(report.status);
+        }
+        this.setStatus(`Full animation validation: ${report.status}, issues ${report.issueCount}.`);
+        return report;
     }
 
     renderOwnerTree() {
@@ -868,10 +901,12 @@ export class AnimationSetManagerPage {
             height: canvas.height
         };
         const dataUrl = canvas.toDataURL('image/png');
+        const pngBase64 = dataUrl.split(',')[1] || '';
         return {
             sheetPath: `${outputBase}.png`,
             manifestPath: `${outputBase}.json`,
-            pngBase64: dataUrl.split(',')[1] || '',
+            pngBase64,
+            pngByteSize: Math.floor((pngBase64.length * 3) / 4),
             manifest
         };
     }
@@ -911,6 +946,14 @@ export class AnimationSetManagerPage {
         target.rows = built.manifest.rows;
         target.frameCount = frameInfo.frameCount;
         target.status = 'ready';
+        target.runtimePackage = {
+            kind: 'spritesheet',
+            imageRef: target.sheetRef,
+            manifestRef: target.manifestRef,
+            imageFormat: 'png',
+            compression: 'png',
+            byteSize: Number(built.pngByteSize || 0)
+        };
         target.buildState = {
             status: 'ready',
             errors: [],
@@ -933,8 +976,14 @@ export class AnimationSetManagerPage {
         if (!response?.ok) throw new Error(`动画配置写回失败：${response?.status || 'unknown'}`);
         const body = await response.json();
         if (body.ok === false) throw new Error(body.error || '动画配置写回失败。');
-        await this.publishCatalog(document);
         this.setConfigFileLabel(body.path || this.currentDataPath);
+        try {
+            this.updateCatalogPublishStatus('publishing', 'catalog publishing');
+            await this.publishCatalog(document);
+            this.updateCatalogPublishStatus('ready', 'catalog ready');
+        } catch (error) {
+            this.updateCatalogPublishStatus('error', `catalog publish failed: ${error.message}`);
+        }
         this.setStatus(`${reason}。`);
         return body;
     }

@@ -347,6 +347,28 @@ export class AnimationSetWorkspace {
         return issues;
     }
 
+    validateAllAnimationSets() {
+        const allClips = this.animationSets.flatMap(animationSet => Object.values(animationSet.clips));
+        const issues = this.animationSets.flatMap(animationSet => (
+            this.validateAnimationSet(animationSet.id)
+                .filter(issue => issue.severity !== 'ok')
+                .map(issue => ({
+                    animationSetId: animationSet.id,
+                    ownerType: animationSet.ownerType,
+                    ownerId: animationSet.ownerId,
+                    ...issue
+                }))
+        ));
+        return {
+            status: issues.some(issue => issue.severity === 'error') ? 'error' : issues.length ? 'warning' : 'ready',
+            totalSets: this.animationSets.length,
+            totalClips: allClips.length,
+            readyClipCount: allClips.filter(clip => clip.status === 'ready').length,
+            issueCount: issues.length,
+            issues
+        };
+    }
+
     getSummary() {
         const allClips = this.animationSets.flatMap(animationSet => Object.values(animationSet.clips));
         const owners = this.listOwners();

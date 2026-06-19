@@ -197,6 +197,21 @@ test('AnimationSetCatalog publishes a clean read-only catalog and registry resol
     assert.equal(catalog.animationSets[0].clips.attack.sourceDir, undefined);
     assert.equal(catalog.animationSets[0].clips.attack.references, undefined);
     assert.equal(catalog.animationSets[0].references, undefined);
+    const attackPackage = catalog.animationSets[0].clips.attack.package;
+    assert.deepEqual(attackPackage, {
+        kind: 'spritesheet',
+        imageRef: catalog.animationSets[0].clips.attack.sheetRef,
+        manifestRef: catalog.animationSets[0].clips.attack.manifestRef,
+        imageFormat: 'png',
+        compression: 'png',
+        frameLayout: {
+            frameWidth: 0,
+            frameHeight: 0,
+            columns: 0,
+            rows: 0,
+            frameCount: 61
+        }
+    });
     assert.equal(catalog.animationSets[1].clips.hit, undefined, 'missing clips must not be published as consumable assets');
 
     const registry = new AnimationSetRegistry(catalog);
@@ -213,6 +228,22 @@ test('AnimationSetCatalog publishes a clean read-only catalog and registry resol
         animationSetRef: 'player_001_default',
         animationKey: 'missing'
     });
+});
+
+test('AnimationSetWorkspace reports full-library validation without depending on consumers', async () => {
+    const { AnimationSetWorkspace } = await importSourceModule(modelPath);
+    const workspace = new AnimationSetWorkspace(buildFixtureDocument());
+
+    const report = workspace.validateAllAnimationSets();
+
+    assert.equal(report.totalSets, 2);
+    assert.equal(report.totalClips, 5);
+    assert.equal(report.issueCount, 1);
+    assert.equal(report.readyClipCount, 4);
+    assert.equal(report.status, 'warning');
+    assert.deepEqual(report.issues.map(issue => `${issue.animationSetId}:${issue.clipKey}:${issue.severity}`), [
+        'enemy_001_default:hit:warning'
+    ]);
 });
 
 test('AnimationSetConsumerWidgets builds reusable picker preview and binding view models', async () => {
@@ -297,7 +328,10 @@ test('animation set manager page exposes object-ledger import and real preview c
         'selectedClipReturnToInput',
         'actionPropertiesPanel',
         'actionOperationPanel',
-        'buildSelectedBtn'
+        'buildSelectedBtn',
+        'validateAllBtn',
+        'validationSummary',
+        'catalogPublishStatus'
     ]) {
         assert.match(html, new RegExp(`id=["']${required}["']`), `page missing #${required}`);
     }
@@ -335,6 +369,7 @@ test('animation set manager page exposes object-ledger import and real preview c
     const staticDom = new JSDOM(html);
     assert.equal(staticDom.window.document.querySelector('.detail-toolbar #buildSelectedBtn'), null);
     assert.ok(staticDom.window.document.querySelector('#actionOperationPanel #buildSelectedBtn'));
+    assert.ok(staticDom.window.document.querySelector('#actionOperationPanel #validateAllBtn'));
     assert.equal(staticDom.window.document.querySelector('.detail #selectedClipFpsInput'), null);
     assert.ok(staticDom.window.document.querySelector('#actionPropertiesPanel #selectedClipFpsInput'));
     assert.equal(staticDom.window.document.querySelector('thead tr th:last-child').textContent, '操作');
@@ -367,6 +402,31 @@ test('AnimationSetManagerPage renders concrete owners and clips instead of a fla
     assert.equal(dom.window.document.querySelectorAll('#clipTableBody .delete-clip-btn').length, 3);
     assert.equal(dom.window.document.getElementById('metricOwnerCount').textContent, '2');
     assert.equal(dom.window.document.getElementById('metricClipCount').textContent, '5');
+});
+
+test('AnimationSetManagerPage shows full-library validation results from the animation workspace only', async () => {
+    const { AnimationSetManagerPage } = await importSourceModule(pagePath);
+    const html = await fsp.readFile(pageHtmlPath, 'utf8');
+    const dom = new JSDOM(html, {
+        url: 'http://127.0.0.1:3106/test/animation_set_manager_v1.html',
+        pretendToBeVisual: true
+    });
+    dom.window.HTMLCanvasElement.prototype.getContext = () => ({ clearRect() {}, drawImage() {} });
+    const page = new AnimationSetManagerPage({
+        document: dom.window.document,
+        fetchImpl: async () => ({
+            ok: true,
+            json: async () => ({ content: JSON.stringify(buildFixtureDocument()), path: 'assets/data/animation_sets_v1.json' })
+        })
+    });
+
+    page.bind();
+    await page.loadDefault();
+    page.runFullValidation();
+
+    assert.match(dom.window.document.getElementById('validationSummary').textContent, /sets 2/u);
+    assert.match(dom.window.document.getElementById('validationSummary').textContent, /clips 5/u);
+    assert.match(dom.window.document.getElementById('validationSummary').textContent, /issues 1/u);
 });
 
 test('AnimationSetManagerPage imports a local frame directory as a new independent clip for the selected owner', async () => {
@@ -462,6 +522,51 @@ test('AnimationSetManagerPage imports a local frame directory as a new independe
     const ledgerWrite = calls.find(call => call.url === '/__skill_editor_file' && call.options.method === 'POST');
     assert.ok(ledgerWrite, 'missing ledger write-back call');
     assert.match(JSON.parse(ledgerWrite.options.body).content, /"dodge"/u);
+});
+
+test('AnimationSetManagerPage records catalog publish failure without hiding the saved ledger', async () => {
+    const { AnimationSetManagerPage } = await importSourceModule(pagePath);
+    const html = await fsp.readFile(pageHtmlPath, 'utf8');
+    const dom = new JSDOM(html, {
+        url: 'http://127.0.0.1:3106/test/animation_set_manager_v1.html',
+        pretendToBeVisual: true
+    });
+    const calls = [];
+    const fetchImpl = async (url, options = {}) => {
+        calls.push({ url: String(url), options });
+        if (String(url).startsWith('/__skill_editor_file') && options.method !== 'POST') {
+            return {
+                ok: true,
+                json: async () => ({ content: JSON.stringify(buildFixtureDocument()), path: 'assets/data/animation_sets_v1.json' })
+            };
+        }
+        if (String(url) === '/__skill_editor_file' && options.method === 'POST') {
+            const payload = JSON.parse(options.body);
+            if (payload.path === 'assets/data/animation_catalog_v1.json') {
+                return { ok: false, status: 503, json: async () => ({ ok: false, error: 'catalog unavailable' }) };
+            }
+            return { ok: true, json: async () => ({ ok: true, path: payload.path }) };
+        }
+        throw new Error(`unexpected fetch ${url}`);
+    };
+    dom.window.HTMLCanvasElement.prototype.getContext = () => ({ clearRect() {}, drawImage() {} });
+    const page = new AnimationSetManagerPage({ document: dom.window.document, fetchImpl });
+
+    page.bind();
+    await page.loadDefault();
+    page.selectedClipKey = 'attack';
+    page.render();
+    dom.window.document.getElementById('selectedClipFpsInput').value = '24';
+    dom.window.document.getElementById('selectedClipFpsInput').dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    const postPayloads = calls
+        .filter(call => call.url === '/__skill_editor_file' && call.options.method === 'POST')
+        .map(call => JSON.parse(call.options.body));
+    assert.ok(postPayloads.some(payload => payload.path === 'assets/data/animation_sets_v1.json'), 'missing saved ledger post');
+    assert.ok(postPayloads.some(payload => payload.path === 'assets/data/animation_catalog_v1.json'), 'missing catalog publish attempt');
+    assert.equal(page.catalogPublishState.status, 'error');
+    assert.match(dom.window.document.getElementById('catalogPublishStatus').textContent, /catalog publish failed/u);
 });
 
 test('AnimationSetManagerPage autosaves selected clip playback properties from the right detail panel', async () => {

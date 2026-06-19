@@ -61,7 +61,7 @@
         .search {
             height: 36px;
             display: grid;
-            grid-template-columns: 24px minmax(220px, 1fr) 260px 260px;
+            grid-template-columns: 24px minmax(220px, 1fr) 260px 220px 160px 180px;
             gap: 8px;
             align-items: center;
             padding: 0 10px;
@@ -101,6 +101,7 @@
             white-space: nowrap;
             font-size: 12px;
         }
+        #catalogPublishStatus { justify-content: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
         .layout {
             min-height: 0;
@@ -330,6 +331,7 @@
             height: 36px;
             text-align: center;
         }
+        #validationSummary { justify-content: center; width: 100%; min-height: 30px; }
         .refs, .issues { overflow: auto; padding: 10px 12px 12px; }
         .ref-row, .issue-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; min-height: 34px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
         .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); }
@@ -369,6 +371,7 @@
                 <input id="animationSetSearchInput" placeholder="搜索 ownerId / animationSetRef / clip key">
                 <input id="animationSetPathInput" class="path-input" value="assets/data/animation_sets_v1.json" aria-label="动画配置路径" readonly>
                 <span id="configFileLabel">配置文件：assets/data/animation_sets_v1.json</span>
+                <span id="catalogPublishStatus" class="badge warn">catalog idle</span>
                 <span id="status">自动保存待命</span>
             </label>
         </header>
@@ -499,6 +502,8 @@
                     </div>
                     <div class="operation-body">
                         <button id="buildSelectedBtn" class="btn" type="button">重建选中动作资源</button>
+                        <button id="validateAllBtn" class="btn" type="button">校验全库动画</button>
+                        <span id="validationSummary" class="badge warn">sets 0 / clips 0 / ready 0 / issues 0</span>
                     </div>
                 </section>
 

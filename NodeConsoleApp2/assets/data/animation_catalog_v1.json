@@ -3,7 +3,7 @@
   "meta": {
     "id": "animation_catalog_v1",
     "name": "Animation Catalog Interface",
-    "generatedAt": "2026-06-06T00:00:00+08:00"
+    "generatedAt": "2026-06-19T18:15:23.015Z"
   },
   "generatedFrom": {
     "id": "animation_sets_v1",
@@ -37,6 +37,20 @@
             "x": 0,
             "y": 0
           },
+          "package": {
+            "kind": "spritesheet",
+            "imageRef": "../source/character/walk/walk_sheet.png",
+            "manifestRef": "../source/character/walk/walk_sheet.json",
+            "imageFormat": "png",
+            "compression": "png",
+            "frameLayout": {
+              "frameWidth": 512,
+              "frameHeight": 512,
+              "columns": 8,
+              "rows": 8,
+              "frameCount": 61
+            }
+          },
           "status": "ready"
         },
         "idle": {
@@ -55,6 +69,20 @@
           "offset": {
             "x": 0,
             "y": 0
+          },
+          "package": {
+            "kind": "spritesheet",
+            "imageRef": "../source/character/主角-001-状态-001-idle/idle_sheet.png",
+            "manifestRef": "../source/character/主角-001-状态-001-idle/idle_sheet.json",
+            "imageFormat": "png",
+            "compression": "png",
+            "frameLayout": {
+              "frameWidth": 512,
+              "frameHeight": 512,
+              "columns": 8,
+              "rows": 8,
+              "frameCount": 61
+            }
           },
           "status": "ready"
         },
@@ -75,6 +103,20 @@
             "x": 0,
             "y": -4
           },
+          "package": {
+            "kind": "spritesheet",
+            "imageRef": "../source/character/主角-001-状态-001-attack/attack_sheet.png",
+            "manifestRef": "../source/character/主角-001-状态-001-attack/attack_sheet.json",
+            "imageFormat": "png",
+            "compression": "png",
+            "frameLayout": {
+              "frameWidth": 512,
+              "frameHeight": 512,
+              "columns": 8,
+              "rows": 8,
+              "frameCount": 61
+            }
+          },
           "status": "ready"
         },
         "hitted": {
@@ -93,6 +135,20 @@
           "offset": {
             "x": 0,
             "y": 0
+          },
+          "package": {
+            "kind": "spritesheet",
+            "imageRef": "../source/character/player_001-hitted/hitted_sheet.png",
+            "manifestRef": "../source/character/player_001-hitted/hitted_sheet.json",
+            "imageFormat": "png",
+            "compression": "png",
+            "frameLayout": {
+              "frameWidth": 512,
+              "frameHeight": 512,
+              "columns": 8,
+              "rows": 8,
+              "frameCount": 61
+            }
           },
           "status": "ready"
         }
@@ -124,6 +180,20 @@
           "offset": {
             "x": 0,
             "y": 0
+          },
+          "package": {
+            "kind": "spritesheet",
+            "imageRef": "../source/character/敌人-001-状态001-正常状态-attack1/attack1_sheet.png",
+            "manifestRef": "../source/character/敌人-001-状态001-正常状态-attack1/attack1_sheet.json",
+            "imageFormat": "png",
+            "compression": "png",
+            "frameLayout": {
+              "frameWidth": 512,
+              "frameHeight": 512,
+              "columns": 8,
+              "rows": 8,
+              "frameCount": 61
+            }
           },
           "status": "ready"
         }

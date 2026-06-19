@@ -31,6 +31,13 @@ function normalizeOffset(value) {
     };
 }
 
+function extensionOf(ref) {
+    const source = normalizeString(ref, '').split('?')[0].split('#')[0];
+    const name = source.split('/').pop() || '';
+    const match = name.match(/\.([a-z0-9]+)$/iu);
+    return match ? match[1].toLowerCase() : '';
+}
+
 function isConsumableClip(clip) {
     return normalizeString(clip?.status, '') === 'ready'
         && Boolean(normalizeString(clip?.sheetRef, ''))
@@ -53,6 +60,20 @@ function buildCatalogClip(key, clip) {
         returnTo: source.returnTo === null ? null : normalizeString(source.returnTo, ''),
         scale: toFiniteNumber(source.scale, 1),
         offset: normalizeOffset(source.offset),
+        package: {
+            kind: normalizeString(source.runtimePackage?.kind, 'spritesheet'),
+            imageRef: normalizeString(source.runtimePackage?.imageRef, normalizeString(source.sheetRef, '')),
+            manifestRef: normalizeString(source.runtimePackage?.manifestRef, normalizeString(source.manifestRef, '')),
+            imageFormat: normalizeString(source.runtimePackage?.imageFormat, extensionOf(source.sheetRef) || 'png'),
+            compression: normalizeString(source.runtimePackage?.compression, extensionOf(source.sheetRef) || 'png'),
+            frameLayout: {
+                frameWidth: toFiniteNumber(source.frameWidth, 0),
+                frameHeight: toFiniteNumber(source.frameHeight, 0),
+                columns: toFiniteNumber(source.columns ?? source.sheetColumns, 0),
+                rows: toFiniteNumber(source.rows ?? source.sheetRows, 0),
+                frameCount: toFiniteNumber(source.frameCount, 0)
+            }
+        },
         status: 'ready'
     };
 }
