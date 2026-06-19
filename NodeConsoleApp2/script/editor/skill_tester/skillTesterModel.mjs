@@ -814,40 +814,76 @@ function triggerEnemyActionPre(enemy, events) {
   });
 }
 
-function settleTurnEnd(enemy, events) {
-  if (getBuffRemaining(enemy, 'buff_bleed') > 0) {
-    const hpDelta = applyHpDelta(enemy, -5);
-    events.push({
-      type: 'buff_tick',
-      buffId: 'buff_bleed',
-      target: 'enemy',
-      hpDamage: Math.abs(hpDelta)
-    });
-    tickBuffRemaining(enemy, 'buff_bleed', 1);
+function normalizeBuffCatalog(buffPack) {
+  const catalog = new Map();
+  const docs = Array.isArray(buffPack) ? buffPack : [buffPack];
+
+  function addBuff(buff) {
+    if (!buff || typeof buff !== 'object' || !buff.id) return;
+    catalog.set(buff.id, buff);
   }
 
-  for (const buffId of Object.keys(enemy.buffs)) {
-    if (buffId === 'buff_bleed') continue;
-    tickBuffRemaining(enemy, buffId, 1);
+  for (const doc of docs) {
+    if (!doc || typeof doc !== 'object') continue;
+    if (Array.isArray(doc)) {
+      doc.forEach(addBuff);
+      continue;
+    }
+    if (Array.isArray(doc.buffs)) {
+      doc.buffs.forEach(addBuff);
+      continue;
+    }
+    if (doc.buffs && typeof doc.buffs === 'object') {
+      Object.values(doc.buffs).forEach(addBuff);
+      continue;
+    }
+    Object.entries(doc).forEach(([key, value]) => {
+      if (key.startsWith('$') || key === 'meta') return;
+      addBuff(value);
+    });
+  }
+
+  return catalog;
+}
+
+function getTurnEndHpDamage(buffId, buffCatalog) {
+  const buff = buffCatalog?.get(buffId);
+  const effect = Array.isArray(buff?.effects)
+    ? buff.effects.find(row => (
+        row?.trigger === 'onTurnEnd'
+        && ['DAMAGE_HP', 'DMG_HP'].includes(row?.action)
+        && (!row?.target || row.target === 'self')
+      ))
+    : null;
+
+  if (effect) {
+    return Math.max(0, toFiniteNumber(effect.payload?.value ?? effect.payload?.amount, 0));
+  }
+  return buffId === 'buff_bleed' ? 5 : 0;
+}
+
+function settleCombatantTurnEnd(entity, events, target, buffCatalog) {
+  for (const buffId of Object.keys(entity.buffs)) {
+    const hpDamage = getTurnEndHpDamage(buffId, buffCatalog);
+    if (hpDamage > 0) {
+      const hpDelta = applyHpDelta(entity, -hpDamage);
+      events.push({
+        type: 'buff_tick',
+        buffId,
+        target,
+        hpDamage: Math.abs(hpDelta)
+      });
+    }
+    tickBuffRemaining(entity, buffId, 1);
   }
 }
 
-function settlePlayerTurnEnd(player, events) {
-  if (getBuffRemaining(player, 'buff_bleed') > 0) {
-    const hpDelta = applyHpDelta(player, -5);
-    events.push({
-      type: 'buff_tick',
-      buffId: 'buff_bleed',
-      target: 'player',
-      hpDamage: Math.abs(hpDelta)
-    });
-    tickBuffRemaining(player, 'buff_bleed', 1);
-  }
+function settleTurnEnd(enemy, events, buffCatalog) {
+  settleCombatantTurnEnd(enemy, events, 'enemy', buffCatalog);
+}
 
-  for (const buffId of Object.keys(player.buffs)) {
-    if (buffId === 'buff_bleed') continue;
-    tickBuffRemaining(player, buffId, 1);
-  }
+function settlePlayerTurnEnd(player, events, buffCatalog) {
+  settleCombatantTurnEnd(player, events, 'player', buffCatalog);
 }
 
 function makeDelta(before, after) {
@@ -918,6 +954,7 @@ function collectSimulationFindings({ turns, killed, final, apBudget }) {
 export function simulateSkillLoop({
   skills,
   enemySkills = [],
+  buffPack = null,
   loopSkillIds,
   enemy,
   player = null,
@@ -927,6 +964,7 @@ export function simulateSkillLoop({
 } = {}) {
   const skillById = new Map((Array.isArray(skills) ? skills : []).map(skill => [skill.id, skill]));
   const enemySkillById = new Map((Array.isArray(enemySkills) ? enemySkills : []).map(skill => [skill.id, skill]));
+  const buffCatalog = normalizeBuffCatalog(buffPack);
   const loopSkills = (Array.isArray(loopSkillIds) ? loopSkillIds : [])
     .map(id => skillById.get(id))
     .filter(Boolean);
@@ -981,10 +1019,10 @@ export function simulateSkillLoop({
 
     if (enemyState.hp > 0) {
       triggerEnemyActionPre(enemyState, events);
-      settleTurnEnd(enemyState, events);
+      settleTurnEnd(enemyState, events, buffCatalog);
     }
     if (playerState.hp > 0) {
-      settlePlayerTurnEnd(playerState, events);
+      settlePlayerTurnEnd(playerState, events, buffCatalog);
     }
 
     const after = snapshotEntity(enemyState);
@@ -1159,6 +1197,7 @@ export function analyzeSkillTestScenario({
   playerDocument = null,
   skillPack,
   enemySkillPack = null,
+  buffPack = null,
   levelIndex = 5,
   enemyIdOverride = null,
   kpMode = 'assumed_per_level',
@@ -1198,6 +1237,7 @@ export function analyzeSkillTestScenario({
         loopSkillIds: combo.skillIds,
         enemy: context.enemy,
         player: playerDocument?.default || playerDocument,
+        buffPack,
         apBudget,
         maxTurns
       });

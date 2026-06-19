@@ -245,6 +245,59 @@ test('simulateSkillLoop applies armor overflow to HP and settles bleed at turn e
   assert.equal(result.turns[0].delta.armor, -5);
 });
 
+test('simulateSkillLoop uses buff pack onTurnEnd damage instead of hard-coded bleed damage', () => {
+  const skills = [
+    {
+      id: 'bleed_cut',
+      name: 'Bleed Cut',
+      costs: { ap: 1 },
+      actions: [],
+      buffRefs: {
+        apply: [
+          {
+            buffId: 'buff_bleed',
+            target: 'enemy',
+            duration: 2,
+            stackStrategy: 'extend',
+            extendBy: 2
+          }
+        ]
+      }
+    }
+  ];
+
+  const result = simulateSkillLoop({
+    skills,
+    buffPack: {
+      buffs: {
+        buff_bleed: {
+          id: 'buff_bleed',
+          effects: [
+            {
+              trigger: 'onTurnEnd',
+              action: 'DAMAGE_HP',
+              target: 'self',
+              payload: { value: 9, valueType: 'flat' }
+            }
+          ]
+        }
+      }
+    },
+    loopSkillIds: ['bleed_cut'],
+    enemy: {
+      id: 'enemy_training',
+      name: 'Training Enemy',
+      stats: { hp: 30, maxHp: 30 },
+      bodyParts: { chest: { current: 0, max: 0, weakness: 1 } }
+    },
+    apBudget: 5,
+    maxTurns: 1
+  });
+
+  assert.equal(result.final.enemy.hp, 21);
+  assert.equal(result.turns[0].events.find(event => event.type === 'buff_tick')?.hpDamage, 9);
+});
+
 test('simulateSkillLoop resolves enemy intent actions and applies pressure to the player', () => {
   const playerSkills = [
     {
