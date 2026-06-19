@@ -2,7 +2,7 @@
 
 最后整理时间：2026-06-19
 
-状态：`当前有效 / 敌人决策图口径`
+状态：`当前有效 / 敌人决策状态机口径`
 
 归属子系统：`S6_敌人系统与编辑器`
 
@@ -14,13 +14,13 @@
 4. `S5_Buff系统与编辑器`
 5. `S7_数据存档与内容契约`
 
-行为编辑器细节以 [29-敌人决策蓝图编辑器(enemy_decision_graph_editor)-补充设计说明](./29-敌人决策蓝图编辑器(enemy_decision_graph_editor)-补充设计说明.md) 为准。
+行为状态机与蓝图编辑器细节以 [29-敌人决策蓝图编辑器(enemy_decision_graph_editor)-补充设计说明](./29-敌人决策蓝图编辑器(enemy_decision_graph_editor)-补充设计说明.md) 为准。
 
 ## 1. 当前结论
 
 敌人模板只负责定义战斗内威胁。跨关 HP、护甲、补给、路线消耗和战后状态清理属于关卡、路线或战役规则，不写在敌人模板里。
 
-当前敌人行为只允许通过 `enemyDecision` 决策图表达：
+当前敌人行为只允许通过 `enemyDecision` 决策状态机表达：
 
 1. 旧行为字段 `intentModel` 已退役。
 2. 旧行为字段 `decisionModel` 已退役。
@@ -37,7 +37,7 @@
 
 1. 这个敌人拥有什么战斗资源：HP、护甲、部位、AP、速度。
 2. 这个敌人能使用哪些敌技：`skills[]` 中列出的技能。
-3. 这个敌人怎样在回合中选择行动：`enemyDecision.graph`。
+3. 这个敌人怎样在回合中选择行动并更新行为状态：`enemyDecision` 状态机。
 4. 这个敌人怎样被编辑器、地图编辑器和战斗 UI 展示：`presentation`。
 
 敌人系统不负责：
@@ -99,15 +99,15 @@
 5. 路线消耗预算。
 6. 敌人池组合预算。
 
-## 4. 敌人决策图
+## 4. 敌人决策状态机
 
-`enemyDecision` 是敌人行为唯一作者模型。
+`enemyDecision` 是敌人行为唯一作者模型。状态机的详细运行时语义、端口规则、模板规则和发布门禁以 29 号补充设计说明为准。
 
 推荐结构：
 
 ```json
 {
-  "schemaVersion": "enemy_decision_graph_v1",
+  "schemaVersion": "enemy_decision_state_machine_v1",
   "templateId": "tpl_basic_aggressor",
   "templateRevision": 1,
   "slotBindings": {},
@@ -128,8 +128,8 @@
 
 | 节点 | 作用 | 运行时含义 |
 | --- | --- | --- |
-| `entry` | 决策图入口 | 每张图必须有一个入口 |
-| `state` | 当前行为状态 | 回合从当前状态开始执行 |
+| `entry` | 状态机入口 | 每张状态机必须有一个入口 |
+| `state` | 当前行为状态 | 战斗实例从运行时 currentStateId 开始执行 |
 | `branch` | 条件分支 | 根据战斗上下文选择 true / false 出边 |
 | `action` | 行动输出 | 绑定一个敌技并输出目标规则 |
 
@@ -143,7 +143,7 @@
 4. `turn_number_modulo`
 5. `previous_action_is`
 
-未实现的阶段、反击后触发、标记后触发、复杂表达式和脚本条件不得出现在下拉框或发布包中。
+未实现的阶段、反击后触发、标记后触发、复杂表达式和脚本条件不得出现在下拉框或发布包中。条件枚举必须和运行时、预览器、校验器共同支持的能力保持一致。
 
 ### 4.3 动作绑定
 
@@ -176,7 +176,7 @@
 
 ## 6. 敌人能力与敌技
 
-`capabilities[]` 描述敌人拥有哪些机制能力；`skills[]` 和 `enemyDecision.graph` 决定这些能力是否真的可执行。
+`capabilities[]` 描述敌人拥有哪些机制能力；`skills[]` 和 `enemyDecision` 状态机决定这些能力是否真的可执行。
 
 能力进入运行时必须经过这条链：
 
@@ -184,6 +184,7 @@
 capabilities[] 说明设计意图
   -> skills[] 提供具体敌技
   -> enemyDecision.action 绑定敌技
+  -> 敌人决策状态机选择行动并更新 currentState
   -> EnemyActionPlanner 做合法性检查
   -> 输出真实行动
 ```
@@ -275,33 +276,35 @@ capabilities[] 说明设计意图
 运行时选择流程：
 
 ```text
-enemyDecision.graph
-  -> 从当前 state 开始
-  -> 执行 branch 条件
+enemyDecision 状态机
+  -> 初始化敌人实例 decisionRuntime.currentStateId
+  -> 每回合从 currentStateId 对应 State 开始
+  -> 使用共享 evaluator 执行 branch 条件
   -> 到达 action 节点
   -> 解析 skillId / skillSlotId
   -> 检查 AP、目标、部位和技能存在性
   -> 合法则执行
-  -> 非法则回退到评分候选
+  -> 动作结束后根据 nextStateId 更新 currentStateId
+  -> 非法则进入状态机 fallback 或输出错误 trace
 ```
 
-`EnemyActionPlanner` 可以在图选择失败时走评分兜底，但兜底只用于保证战斗不断裂，不代表旧行为模型仍然存在。
+`EnemyActionPlanner` 不应另写一套与编辑器不同的隐藏 AI。它可以承担技能合法性、目标选择和防御性兜底，但敌人行为的作者规则必须来自 `enemyDecision` 状态机。若状态机错误导致只能防御性兜底，该敌人不能视为通过发布验收。
 
 ## 11. 测试与验收
 
 进入可提交状态前至少验证：
 
-1. 敌人包中每个敌人都有 `enemyDecision.schemaVersion === "enemy_decision_graph_v1"`。
+1. 敌人包中每个敌人都有符合 29 号补充设计说明的 `enemyDecision` 状态机；目标 schema 为 `enemy_decision_state_machine_v1`。
 2. 敌人包不包含旧行为字段。
 3. 编辑器页面不存在旧行为页签。
 4. 编辑器能保存 authoring draft。
 5. 编辑器能发布当前 enemy pack。
-6. `EnemyActionPlanner` 能从 `enemyDecision.graph` 规划首回合行动。
+6. `EnemyActionPlanner` 能从 `enemyDecision` 状态机规划首回合行动，并能证明预览路径和运行时首回合路径一致。
 7. 主入口、技能编辑器、地图编辑器和关卡编辑器 HTTP 页面不因本改动报 404。
 
 ## 12. 后续方向
 
-后续扩展应沿着决策图增加显式能力：
+后续扩展应沿着敌人决策状态机增加显式能力：
 
 1. Boss 阶段模板。
 2. 反击姿态模板。
@@ -309,4 +312,4 @@ enemyDecision.graph
 4. 支援单位模板。
 5. 战斗日志和编辑器路径预览对照。
 
-禁止通过恢复旧行为字段、塞隐藏脚本或扩展作者标签来绕过决策图模型。
+禁止通过恢复旧行为字段、塞隐藏脚本或扩展作者标签来绕过状态机模型。
