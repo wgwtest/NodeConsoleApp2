@@ -17,6 +17,7 @@
 | [11-敌人系统(enemy_design)-设计说明](./11-敌人系统(enemy_design)-设计说明.md) | 敌人系统唯一主设计文档，包含敌人机制、平衡口径、战斗压力、V2-lite 字段和迁移计划 |
 | [28-敌人编辑器(enemy_editor)-设计说明](./28-敌人编辑器(enemy_editor)-设计说明.md) | 敌人模板作者工具与地图编辑器服务边界设计 |
 | [29-敌人决策蓝图编辑器(enemy_decision_graph_editor)-补充设计说明](./29-敌人决策蓝图编辑器(enemy_decision_graph_editor)-补充设计说明.md) | 敌人决策状态机、蓝图编辑器、模板库、技能绑定、路径预览、运行时求值与旧决策模型退役规则 |
+| [30-敌人决策输入依赖与逻辑节点(enemy_decision_context_contract)-补充设计说明](./30-敌人决策输入依赖与逻辑节点(enemy_decision_context_contract)-补充设计说明.md) | 敌人决策状态机的输入上下文、可接入主语、目标解析、技能合法性、条件目录统一和可运行校验规则 |
 | [29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明](../S4_技能系统与编辑器/29-敌人技能包与技能编辑器模式切换(enemy_skill_pack_editor_mode)-设计说明.md) | 敌人技能包独立真源、敌人技能引用与技能编辑器敌方模式设计 |
 
 ## 3. 文档治理
