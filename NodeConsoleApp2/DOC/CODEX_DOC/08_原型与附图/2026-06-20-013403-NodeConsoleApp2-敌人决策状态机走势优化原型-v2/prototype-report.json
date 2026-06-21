@@ -1,0 +1,80 @@
+{
+  "generatedAt": "2026-06-19T17:41:59.817Z",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "browserPath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "html": "source\\enemy-decision-stateflow-prototype-v2.html",
+  "screenshots": [
+    {
+      "view": "view-overview",
+      "fileName": "01-1920x1080-状态机走势总览态.png",
+      "title": "敌人决策状态机走势优化原型 v2",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      },
+      "nodeCount": 11,
+      "loopEdgeCount": 4,
+      "laneCount": 4,
+      "nodeOverlaps": [],
+      "horizontalOverflow": false,
+      "verticalOverflow": false
+    },
+    {
+      "view": "view-loop",
+      "fileName": "02-1920x1080-回流轨道分析态.png",
+      "title": "敌人决策状态机走势优化原型 v2",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      },
+      "nodeCount": 11,
+      "loopEdgeCount": 4,
+      "laneCount": 4,
+      "nodeOverlaps": [],
+      "horizontalOverflow": false,
+      "verticalOverflow": false
+    },
+    {
+      "view": "view-trace",
+      "fileName": "03-1920x1080-低血恢复路径态.png",
+      "title": "敌人决策状态机走势优化原型 v2",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      },
+      "nodeCount": 11,
+      "loopEdgeCount": 4,
+      "laneCount": 4,
+      "nodeOverlaps": [],
+      "horizontalOverflow": false,
+      "verticalOverflow": false
+    }
+  ]
+}

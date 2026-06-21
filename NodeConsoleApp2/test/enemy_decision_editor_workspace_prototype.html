@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>敌人决策编辑工作台原型</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #e8eeec;
+            --panel: #fbfcfb;
+            --panel-soft: #f3f7f5;
+            --ink: #13221d;
+            --muted: #66736d;
+            --line: #cfdbd6;
+            --line-strong: #97aaa1;
+            --green: #1d7359;
+            --blue: #416d97;
+            --amber: #b8731d;
+            --red: #aa4b3f;
+            --violet: #645b8f;
+            --shadow: 0 16px 36px rgba(30, 42, 36, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            background:
+                linear-gradient(90deg, rgba(19, 34, 29, 0.045) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(19, 34, 29, 0.045) 1px, transparent 1px),
+                var(--bg);
+            background-size: 28px 28px;
+            font-family: "Aptos", "Segoe UI", "Microsoft YaHei", sans-serif;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            min-height: 34px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fff;
+            color: var(--ink);
+            font-weight: 800;
+        }
+
+        .page {
+            width: min(1880px, 100vw);
+            height: 100vh;
+            margin: 0 auto;
+            padding: 14px;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            gap: 12px;
+        }
+
+        .topbar {
+            display: grid;
+            grid-template-columns: minmax(420px, 1fr) auto;
+            gap: 18px;
+            align-items: center;
+            padding: 13px 16px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(251, 252, 251, 0.98);
+            box-shadow: var(--shadow);
+        }
+
+        .title {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 24px;
+            line-height: 1.1;
+        }
+
+        .title span {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .top-actions,
+        .mode-tabs,
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-tabs {
+            justify-content: flex-end;
+        }
+
+        .mode-tabs button {
+            min-width: 96px;
+            padding: 7px 13px;
+        }
+
+        .mode-tabs .active {
+            color: #fff;
+            border-color: #14221d;
+            background: #14221d;
+        }
+
+        .workbench {
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 292px minmax(760px, 1fr) 330px;
+            gap: 12px;
+        }
+
+        .panel {
+            min-height: 0;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(251, 252, 251, 0.98);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .panel-head {
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            background: #f6f9f7;
+        }
+
+        .panel-head h2,
+        .panel-head h3 {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .panel-head small {
+            color: var(--muted);
+            font-weight: 800;
+        }
+
+        .library {
+            display: grid;
+            grid-template-rows: auto auto auto minmax(0, 1fr);
+        }
+
+        .library-body,
+        .inspect-body {
+            min-height: 0;
+            overflow: auto;
+            padding: 12px;
+        }
+
+        .section {
+            padding: 12px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .section-title {
+            margin: 0 0 8px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+        }
+
+        .template-list,
+        .block-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .template-row,
+        .block-row,
+        .skill-row,
+        .field {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .template-row {
+            padding: 9px 10px;
+        }
+
+        .template-row.active {
+            border-color: rgba(29, 115, 89, 0.52);
+            background: #edf7f2;
+        }
+
+        .template-row b,
+        .block-row b,
+        .skill-row b {
+            display: block;
+            font-size: 13px;
+        }
+
+        .template-row span,
+        .block-row span,
+        .skill-row span {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .skill-row {
+            padding: 9px 10px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 22px;
+            padding: 2px 7px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: var(--panel-soft);
+            color: var(--ink);
+            font-size: 11px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .tag.skill {
+            border-color: rgba(65, 109, 151, 0.35);
+            background: #e9f3fa;
+            color: #204c75;
+        }
+
+        .tag.state {
+            border-color: rgba(29, 115, 89, 0.32);
+            background: #e8f4ee;
+            color: #17604a;
+        }
+
+        .tag.warn {
+            border-color: rgba(184, 115, 29, 0.38);
+            background: #fff6e7;
+            color: #805015;
+        }
+
+        .block-row {
+            padding: 9px 10px;
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr);
+            gap: 9px;
+            align-items: center;
+        }
+
+        .glyph {
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+            border: 2px solid var(--line-strong);
+            color: var(--ink);
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .glyph.condition {
+            border-color: var(--amber);
+            transform: rotate(45deg) scale(0.72);
+        }
+
+        .glyph.condition span {
+            transform: rotate(-45deg);
+        }
+
+        .glyph.action {
+            border-color: var(--blue);
+            border-radius: 7px;
+            background: #edf6fb;
+        }
+
+        .glyph.state {
+            border-color: var(--green);
+            border-radius: 999px;
+            background: #eef7f2;
+        }
+
+        .editor {
+            min-height: 0;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+        }
+
+        .toolbar {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            background: #f6f9f7;
+        }
+
+        .toolbar .split {
+            flex: 1;
+        }
+
+        .tool-button {
+            padding: 6px 11px;
+        }
+
+        .tool-button.primary {
+            color: #fff;
+            border-color: var(--green);
+            background: var(--green);
+        }
+
+        .canvas {
+            position: relative;
+            min-height: 0;
+            overflow: hidden;
+            background:
+                linear-gradient(90deg, rgba(19, 34, 29, 0.055) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(19, 34, 29, 0.055) 1px, transparent 1px),
+                #f9fbfa;
+            background-size: 24px 24px;
+        }
+
+        .rete-board {
+            position: absolute;
+            inset: 0;
+        }
+
+        .connection-layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .connection {
+            fill: none;
+            stroke: #66796f;
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        .connection.true {
+            stroke: var(--green);
+        }
+
+        .connection.false {
+            stroke: var(--amber);
+        }
+
+        .connection.loop {
+            stroke: var(--red);
+            stroke-dasharray: 8 7;
+        }
+
+        .node {
+            position: absolute;
+            width: 226px;
+            border: 2px solid var(--blue);
+            border-radius: 8px;
+            background: #edf6fb;
+            box-shadow: 0 10px 18px rgba(30, 42, 36, 0.11);
+            overflow: hidden;
+        }
+
+        .node.state {
+            border-color: var(--green);
+            background: #eaf6f0;
+        }
+
+        .node.condition {
+            border-color: var(--amber);
+            background: #fffaf0;
+        }
+
+        .node.merge {
+            border-color: #6c674f;
+            background: #f7f5ec;
+        }
+
+        .node.selected {
+            outline: 3px solid rgba(29, 115, 89, 0.22);
+            box-shadow: 0 0 0 5px rgba(29, 115, 89, 0.09), 0 16px 26px rgba(30, 42, 36, 0.14);
+        }
+
+        .node-head {
+            min-height: 36px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(19, 34, 29, 0.1);
+            font-weight: 900;
+        }
+
+        .node-body {
+            padding: 9px 12px 11px;
+            display: grid;
+            gap: 7px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .socket {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #fff;
+            border-radius: 999px;
+            background: var(--line-strong);
+            box-shadow: 0 0 0 2px #65756e;
+        }
+
+        .socket.in {
+            left: -7px;
+            top: 47px;
+        }
+
+        .socket.out {
+            right: -7px;
+            top: 47px;
+        }
+
+        .socket.true {
+            right: -7px;
+            top: 44px;
+            background: var(--green);
+            box-shadow: 0 0 0 2px var(--green);
+        }
+
+        .socket.false {
+            right: -7px;
+            top: 80px;
+            background: var(--amber);
+            box-shadow: 0 0 0 2px var(--amber);
+        }
+
+        .node-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .node small {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .floating-note {
+            position: absolute;
+            left: 18px;
+            bottom: 18px;
+            max-width: 450px;
+            padding: 10px 12px;
+            border: 1px solid rgba(29, 115, 89, 0.25);
+            border-radius: 8px;
+            background: rgba(251, 252, 251, 0.93);
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 800;
+            box-shadow: 0 10px 22px rgba(30, 42, 36, 0.1);
+        }
+
+        .bottom-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            padding: 10px 12px;
+            border-top: 1px solid var(--line);
+            background: #f6f9f7;
+        }
+
+        .metric {
+            min-height: 58px;
+            padding: 9px 10px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .metric b {
+            display: block;
+            font-size: 12px;
+        }
+
+        .metric span {
+            display: block;
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .inspect {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+        }
+
+        .inspect-body {
+            display: grid;
+            align-content: start;
+            gap: 12px;
+        }
+
+        .field {
+            padding: 10px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: #fff;
+            color: var(--ink);
+            font-weight: 800;
+        }
+
+        .field input,
+        .field select {
+            height: 32px;
+            padding: 5px 8px;
+        }
+
+        .field textarea {
+            min-height: 62px;
+            resize: none;
+            padding: 7px 8px;
+        }
+
+        .preview {
+            height: 176px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background:
+                linear-gradient(90deg, rgba(19, 34, 29, 0.045) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(19, 34, 29, 0.045) 1px, transparent 1px),
+                #fbfcfb;
+            background-size: 18px 18px;
+        }
+
+        .preview svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .inspect-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .inspect-actions .primary {
+            color: #fff;
+            border-color: #14221d;
+            background: #14221d;
+        }
+
+        .status-row {
+            display: grid;
+            gap: 7px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 9px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            font-size: 12px;
+            font-weight: 850;
+        }
+
+        .ok {
+            color: var(--green);
+        }
+
+        .warning {
+            color: var(--amber);
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="topbar">
+            <div class="title">
+                <h1>敌人决策编辑工作台</h1>
+                <span>Rete 编辑主视图 / LogicFlow 自动排版预览 / 统一敌人决策语义</span>
+            </div>
+            <div class="mode-tabs">
+                <button class="active" type="button">编辑台</button>
+                <button type="button">活动图预览</button>
+                <button type="button">运行检验</button>
+                <button type="button">发布</button>
+            </div>
+        </header>
+
+        <main class="workbench">
+            <aside class="panel library">
+                <div class="panel-head">
+                    <h2>资源与模板</h2>
+                    <small>敌人：腐锈投石兵</small>
+                </div>
+                <section class="section">
+                    <p class="section-title">决策模板</p>
+                    <div class="template-list">
+                        <div class="template-row active">
+                            <b>投石兵：远近优先</b>
+                            <span>状态入口、距离判断、流血补刀、回流。</span>
+                        </div>
+                        <div class="template-row">
+                            <b>近战兵：追击压迫</b>
+                            <span>接近、攻击、脱离、重整。</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <p class="section-title">敌人技能</p>
+                    <div class="template-list">
+                        <div class="skill-row">
+                            <div>
+                                <b>skill_throw_stone</b>
+                                <span>远距投石 / 伤害行动</span>
+                            </div>
+                            <span class="tag skill">技能</span>
+                        </div>
+                        <div class="skill-row">
+                            <div>
+                                <b>enemy_skill_rusty_shiv</b>
+                                <span>锈刀割裂 / 流血行动</span>
+                            </div>
+                            <span class="tag skill">技能</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="library-body">
+                    <p class="section-title">可拖入组件</p>
+                    <div class="block-list">
+                        <div class="block-row">
+                            <div class="glyph state">S</div>
+                            <div><b>状态入口</b><span>本回合从某个 State 开始。</span></div>
+                        </div>
+                        <div class="block-row">
+                            <div class="glyph condition"><span>?</span></div>
+                            <div><b>条件判断</b><span>生成 true / false 出口。</span></div>
+                        </div>
+                        <div class="block-row">
+                            <div class="glyph action">A</div>
+                            <div><b>技能行动</b><span>绑定敌人自身技能库。</span></div>
+                        </div>
+                        <div class="block-row">
+                            <div class="glyph action">M</div>
+                            <div><b>合流节点</b><span>选择本回合行动并结束。</span></div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+
+            <section class="panel editor">
+                <div class="toolbar">
+                    <button class="tool-button primary" type="button">自动整理 Rete 图</button>
+                    <button class="tool-button" type="button">生成活动图预览</button>
+                    <button class="tool-button" type="button">校验断线</button>
+                    <div class="split"></div>
+                    <span class="tag state">当前：编辑台</span>
+                    <span class="tag warn">2 个技能</span>
+                </div>
+
+                <div class="canvas" aria-label="Rete 敌人决策编辑台">
+                    <div class="rete-board">
+                        <svg class="connection-layer" viewBox="0 0 1200 720" preserveAspectRatio="none" aria-hidden="true">
+                            <path class="connection" d="M316 115 C336 115 318 165 340 165"></path>
+                            <path class="connection true" d="M566 162 C620 162 632 96 690 96"></path>
+                            <path class="connection false" d="M566 198 C632 198 626 301 340 301"></path>
+                            <path class="connection true" d="M566 298 C620 298 632 279 690 279"></path>
+                            <path class="connection false" d="M566 334 C632 334 626 445 340 445"></path>
+                            <path class="connection true" d="M566 442 C620 442 632 462 690 462"></path>
+                            <path class="connection" d="M916 96 C1070 96 1068 552 548 552"></path>
+                            <path class="connection" d="M916 279 C1050 279 1050 552 548 552"></path>
+                            <path class="connection" d="M916 462 C1028 462 1028 552 548 552"></path>
+                            <path class="connection loop" d="M322 552 C118 552 118 115 90 115"></path>
+                        </svg>
+
+                        <article class="node state" style="left: 90px; top: 68px;">
+                            <span class="socket out"></span>
+                            <div class="node-head">默认状态 <span class="tag state">State</span></div>
+                            <div class="node-body">
+                                <div>currentState = state_normal</div>
+                                <small>入口节点，决定本轮判断链。</small>
+                            </div>
+                        </article>
+
+                        <article class="node condition" style="left: 340px; top: 118px;">
+                            <span class="socket in"></span>
+                            <span class="socket true"></span>
+                            <span class="socket false"></span>
+                            <div class="node-head">HP &lt;= 35% <span class="tag warn">条件</span></div>
+                            <div class="node-body">
+                                <div>表达式：self_hp_ratio_lte</div>
+                                <div class="node-meta"><span class="tag state">true</span><span>保守投石</span></div>
+                                <div class="node-meta"><span class="tag warn">false</span><span>继续距离判断</span></div>
+                            </div>
+                        </article>
+
+                        <article class="node condition" style="left: 340px; top: 254px;">
+                            <span class="socket in"></span>
+                            <span class="socket true"></span>
+                            <span class="socket false"></span>
+                            <div class="node-head">距离 &gt;= 2 <span class="tag warn">条件</span></div>
+                            <div class="node-body">
+                                <div>表达式：target_distance_gte</div>
+                                <div class="node-meta"><span class="tag state">true</span><span>远距投石</span></div>
+                            </div>
+                        </article>
+
+                        <article class="node condition" style="left: 340px; top: 398px;">
+                            <span class="socket in"></span>
+                            <span class="socket true"></span>
+                            <span class="socket false"></span>
+                            <div class="node-head">目标未流血 <span class="tag warn">条件</span></div>
+                            <div class="node-body">
+                                <div>表达式：target_missing_bleed</div>
+                                <div class="node-meta"><span class="tag state">true</span><span>锈刀划拉</span></div>
+                            </div>
+                        </article>
+
+                        <article class="node" style="left: 690px; top: 49px;">
+                            <span class="socket in"></span>
+                            <span class="socket out"></span>
+                            <div class="node-head">保守投石 <span class="tag skill">Action</span></div>
+                            <div class="node-body">
+                                <div>skill_throw_stone</div>
+                                <small>nextState = state_normal</small>
+                            </div>
+                        </article>
+
+                        <article class="node" style="left: 690px; top: 232px;">
+                            <span class="socket in"></span>
+                            <span class="socket out"></span>
+                            <div class="node-head">远距投石 <span class="tag skill">Action</span></div>
+                            <div class="node-body">
+                                <div>skill_throw_stone</div>
+                                <small>targetRule = player_weak_part</small>
+                            </div>
+                        </article>
+
+                        <article class="node selected" style="left: 690px; top: 415px;">
+                            <span class="socket in"></span>
+                            <span class="socket out"></span>
+                            <div class="node-head">锈刀划拉 <span class="tag skill">Action</span></div>
+                            <div class="node-body">
+                                <div>enemy_skill_rusty_shiv</div>
+                                <small>造成流血，回流 state_normal。</small>
+                            </div>
+                        </article>
+
+                        <article class="node merge" style="left: 322px; top: 505px;">
+                            <span class="socket in"></span>
+                            <span class="socket out"></span>
+                            <div class="node-head">Merge / End Turn</div>
+                            <div class="node-body">
+                                <div>输出本回合 selectedAction</div>
+                                <small>Action.nextState 进入外侧回流。</small>
+                            </div>
+                        </article>
+
+                        <div class="floating-note">
+                            Rete 作为主编辑面：用户拖节点、接 socket、改属性。活动图由同一份语义自动生成，不要求手动维护复杂折线。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-strip">
+                    <div class="metric"><b>语义状态</b><span>State -> Decision -> Action -> Merge -> nextState</span></div>
+                    <div class="metric"><b>自动排版</b><span>LogicFlow 预览使用活动图布局器生成。</span></div>
+                    <div class="metric"><b>校验结果</b><span>无断线；1 条 nextState 回流。</span></div>
+                </div>
+            </section>
+
+            <aside class="panel inspect">
+                <div class="panel-head">
+                    <h2>Inspect</h2>
+                    <small>选中：锈刀划拉</small>
+                </div>
+                <div class="inspect-body">
+                    <div class="field">
+                        <label>节点类型</label>
+                        <select>
+                            <option>技能行动 Action</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>显示名称</label>
+                        <input value="锈刀划拉">
+                    </div>
+                    <div class="field">
+                        <label>绑定技能</label>
+                        <select>
+                            <option>enemy_skill_rusty_shiv / 锈刀割裂</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>目标规则</label>
+                        <select>
+                            <option>player_weak_part</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>回流状态</label>
+                        <input value="state_normal">
+                    </div>
+                    <div class="field">
+                        <label>本节点预览</label>
+                        <div class="preview">
+                            <svg viewBox="0 0 320 176" aria-hidden="true">
+                                <defs>
+                                    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3.5" orient="auto">
+                                        <path d="M0,0 L9,3.5 L0,7 Z" fill="#66796f"></path>
+                                    </marker>
+                                    <marker id="loopArrow" markerWidth="10" markerHeight="10" refX="8" refY="3.5" orient="auto">
+                                        <path d="M0,0 L9,3.5 L0,7 Z" fill="#aa4b3f"></path>
+                                    </marker>
+                                </defs>
+                                <rect x="88" y="20" width="144" height="34" rx="7" fill="#eaf6f0" stroke="#1d7359" stroke-width="2"></rect>
+                                <text x="160" y="42" text-anchor="middle" font-size="12" font-weight="800" fill="#13221d">默认状态</text>
+                                <polygon points="160,76 190,104 160,132 130,104" fill="#fffaf0" stroke="#b8731d" stroke-width="2"></polygon>
+                                <text x="160" y="108" text-anchor="middle" font-size="11" font-weight="800" fill="#13221d">未流血?</text>
+                                <rect x="214" y="87" width="84" height="34" rx="7" fill="#edf6fb" stroke="#416d97" stroke-width="2"></rect>
+                                <text x="256" y="108" text-anchor="middle" font-size="11" font-weight="800" fill="#13221d">锈刀划拉</text>
+                                <rect x="96" y="146" width="128" height="24" rx="8" fill="#20322b"></rect>
+                                <text x="160" y="163" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">End Turn</text>
+                                <path d="M160 54 L160 76" stroke="#66796f" stroke-width="2" marker-end="url(#arrow)"></path>
+                                <path d="M190 104 L214 104" stroke="#1d7359" stroke-width="2" marker-end="url(#arrow)"></path>
+                                <path d="M256 121 C256 150 224 158 224 158" stroke="#66796f" stroke-width="2" fill="none" marker-end="url(#arrow)"></path>
+                                <path d="M96 158 C42 158 42 38 88 38" stroke="#aa4b3f" stroke-width="2" stroke-dasharray="7 6" fill="none" marker-end="url(#loopArrow)"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="status-row">
+                        <div class="status-item"><span>技能绑定</span><span class="ok">有效</span></div>
+                        <div class="status-item"><span>出口连接</span><span class="ok">已连接</span></div>
+                        <div class="status-item"><span>自动排版</span><span class="warning">预览待刷新</span></div>
+                    </div>
+                    <div class="inspect-actions">
+                        <button type="button">删除节点</button>
+                        <button class="primary" type="button">应用修改</button>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+</body>
+</html>

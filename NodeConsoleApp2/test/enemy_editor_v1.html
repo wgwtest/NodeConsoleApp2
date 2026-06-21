@@ -392,7 +392,7 @@
             inset: 10px;
             z-index: 1000;
             display: grid;
-            grid-template-rows: auto auto auto minmax(0, 1fr);
+            grid-template-rows: auto auto minmax(0, 1fr);
             gap: 10px;
             overflow: hidden;
             border-radius: 8px;
@@ -405,9 +405,14 @@
             margin-top: 0;
         }
 
+        .editor-panel.is-decision-fullscreen > .field-grid {
+            display: none;
+        }
+
         .decision-graph-editor {
             display: grid;
             grid-template-columns: 220px minmax(420px, 1fr) 280px;
+            grid-template-areas: "sidebar canvas inspector";
             gap: 10px;
             min-height: 520px;
         }
@@ -416,6 +421,7 @@
             min-height: 0;
             height: 100%;
             grid-template-columns: 260px minmax(560px, 1fr) 320px;
+            grid-template-areas: "sidebar canvas inspector";
         }
 
         .editor-panel.is-decision-fullscreen .decision-graph-sidebar,
@@ -443,9 +449,116 @@
             align-content: start;
         }
 
+        .decision-graph-sidebar {
+            grid-area: sidebar;
+        }
+
+        .decision-graph-inspector {
+            grid-area: inspector;
+        }
+
+        .decision-graph-canvas {
+            grid-area: canvas;
+        }
+
+        .decision-workspace-tabs {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel-soft);
+        }
+
+        .decision-workspace-tabs button {
+            color: var(--ink);
+            background: #fff;
+            border-color: var(--line);
+        }
+
+        .decision-workspace-tabs button[aria-pressed="true"] {
+            color: #fff;
+            background: var(--ink);
+            border-color: var(--ink);
+        }
+
+        .decision-component-list {
+            display: grid;
+            gap: 7px;
+        }
+
+        .decision-component-card,
+        .decision-inspect-field,
+        .decision-inspect-preview,
+        .decision-status-card {
+            min-width: 0;
+            padding: 8px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            font-size: 12px;
+        }
+
+        .decision-component-card {
+            display: grid;
+            grid-template-columns: 30px minmax(0, 1fr);
+            gap: 8px;
+            align-items: center;
+            color: var(--ink);
+            text-align: left;
+        }
+
+        .decision-component-card strong,
+        .decision-component-card > span:not(.decision-component-icon) {
+            grid-column: 2;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .decision-component-card strong {
+            font-weight: 900;
+        }
+
+        .decision-component-card > span:not(.decision-component-icon) {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .decision-component-icon {
+            grid-row: 1 / span 2;
+            width: 28px;
+            height: 28px;
+            display: grid;
+            place-items: center;
+            border: 2px solid var(--green);
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .decision-component-icon--branch {
+            border-color: var(--amber);
+            border-radius: 4px;
+            transform: rotate(45deg) scale(0.74);
+        }
+
+        .decision-component-icon--branch span {
+            transform: rotate(-45deg);
+        }
+
+        .decision-component-icon--action,
+        .decision-component-icon--merge {
+            border-color: #2f6797;
+            border-radius: 6px;
+        }
+
         .decision-graph-canvas {
             position: relative;
             min-height: 520px;
+            min-width: 900px;
             overflow: auto;
             border: 1px solid var(--line);
             border-radius: 8px;
@@ -454,117 +567,302 @@
                 linear-gradient(180deg, rgba(28, 33, 30, 0.05) 1px, transparent 1px),
                 #f7faf8;
             background-size: 32px 32px;
+            --decision-rete-scale: 1;
         }
 
-        .decision-node-card {
+        .decision-rete-workbench {
             position: absolute;
-            z-index: 2;
-            width: 178px;
-            min-height: 72px;
-            padding: 9px;
-            display: grid;
-            gap: 4px;
-            white-space: normal;
-            text-align: left;
-            color: var(--ink);
-            background: #fff;
-            border: 1px solid var(--line-strong);
-            border-radius: 8px;
-            box-shadow: 0 12px 28px rgba(27, 36, 31, 0.12);
+            z-index: 6;
+            inset: 0;
+            min-width: 2400px;
+            min-height: 1400px;
+            pointer-events: auto;
             cursor: grab;
-            user-select: none;
+            touch-action: none;
         }
 
-        .decision-node-card:active {
+        .decision-rete-connection-layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .decision-rete-edge {
+            fill: none;
+            stroke: rgba(83, 101, 93, 0.74);
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        .decision-rete-edge--true {
+            stroke: rgba(31, 123, 88, 0.82);
+        }
+
+        .decision-rete-edge--false {
+            stroke: rgba(177, 111, 22, 0.82);
+        }
+
+        .decision-rete-edge--loop {
+            stroke: rgba(161, 58, 43, 0.82);
+            stroke-dasharray: 8 7;
+        }
+
+        .decision-rete-edge--action-end {
+            stroke: rgba(42, 94, 130, 0.76);
+            stroke-width: 2.6;
+        }
+
+        .decision-rete-edge--pending {
+            stroke: rgba(31, 123, 88, 0.86);
+            stroke-width: 3;
+            stroke-dasharray: 9 7;
+        }
+
+        .decision-rete-node {
+            position: absolute;
+            width: 226px;
+            min-height: 92px;
+            overflow: visible;
+            border: 2px solid #2f6797;
+            border-radius: 8px;
+            background: #edf6fb;
+            color: var(--ink);
+            box-shadow: 0 10px 18px rgba(27, 36, 31, 0.11);
+            cursor: grab;
+        }
+
+        .decision-rete-node:active,
+        .decision-rete-workbench:active {
             cursor: grabbing;
         }
 
-        .decision-node-card--entry {
-            background: #17211d;
+        .decision-rete-node--state {
+            border-color: var(--green);
+            background: #ebf6f1;
+        }
+
+        .decision-rete-node--branch {
+            border-color: var(--amber);
+            background: #fff8ec;
+        }
+
+        .decision-rete-node--action-end {
+            border-color: #6e6b50;
+            background: #f7f4ea;
+        }
+
+        .decision-rete-node--entry {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-color: var(--ink);
+            border-radius: 24px;
+            background: var(--ink);
             color: #fff;
         }
 
-        .decision-node-card.is-selected {
-            border-color: var(--red);
-            box-shadow: inset 4px 0 0 var(--red), 0 12px 28px rgba(27, 36, 31, 0.12);
+        .decision-rete-node--entry .decision-rete-node-head {
+            justify-content: center;
+            border-bottom: 0;
+            padding: 0;
         }
 
-        .decision-node-card.is-connecting {
-            border-color: var(--green);
-            box-shadow: inset 4px 0 0 var(--green), 0 12px 28px rgba(31, 123, 88, 0.18);
+        .decision-rete-node--entry .decision-rete-node-body,
+        .decision-rete-node--entry .decision-rete-tag {
+            display: none;
         }
 
-        .decision-node-title {
+        .decision-rete-node.is-selected {
+            outline: 3px solid rgba(31, 123, 88, 0.2);
+            box-shadow: 0 0 0 5px rgba(31, 123, 88, 0.08), 0 16px 28px rgba(27, 36, 31, 0.14);
+        }
+
+        .decision-rete-node.is-connect-target .decision-rete-socket--in {
+            border-color: #fff;
+            background: var(--green);
+            box-shadow: 0 0 0 3px rgba(31, 123, 88, 0.32), 0 0 0 7px rgba(31, 123, 88, 0.1);
+        }
+
+        .decision-rete-node-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            min-height: 34px;
+            padding: 8px 11px;
+            border-bottom: 1px solid rgba(28, 33, 30, 0.12);
             font-weight: 900;
         }
 
-        .decision-node-meta {
-            color: var(--muted);
+        .decision-rete-tag {
+            flex: 0 0 auto;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: rgba(28, 33, 30, 0.08);
             font-size: 11px;
+            font-weight: 850;
+        }
+
+        .decision-rete-node-body {
+            display: grid;
+            gap: 6px;
+            padding: 8px 11px 10px;
+            font-size: 12px;
             font-weight: 800;
         }
 
-        .decision-node-detail {
-            white-space: pre-line;
-            font-size: 11px;
-            line-height: 1.35;
+        .decision-rete-detail {
+            display: grid;
+            grid-template-columns: 62px minmax(0, 1fr);
+            gap: 8px;
+            align-items: baseline;
         }
 
-        .decision-connect-handle {
-            min-height: 24px;
-            justify-self: start;
-            padding: 3px 7px;
-            color: var(--green);
-            background: #fff;
-            border-color: rgba(31, 123, 88, 0.35);
+        .decision-rete-detail-key {
+            color: var(--muted);
+            font-weight: 850;
         }
 
-        .decision-node-card--entry .decision-node-meta,
-        .decision-node-card--entry .decision-connect-handle {
-            color: #dfe8e0;
+        .decision-rete-detail-value {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--ink);
         }
 
-        .decision-node-card--branch {
-            background: #fff7e8;
-        }
-
-        .decision-node-card--action {
-            background: #edf7f1;
-        }
-
-        .decision-edge {
+        .decision-rete-socket {
             position: absolute;
-            z-index: 1;
-            height: 3px;
+            z-index: 2;
+            width: 18px;
+            height: 18px;
+            padding: 0;
+            border: 2px solid #fff;
+            border-radius: 999px;
+            background: var(--line-strong);
+            box-shadow: 0 0 0 2px #65756e;
+            color: #fff;
+            font-size: 12px;
+            line-height: 12px;
+            text-align: center;
+            font-weight: 900;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .decision-rete-socket--in {
+            left: -9px;
+            top: 24px;
+        }
+
+        .decision-rete-socket--out {
+            right: -9px;
+            top: 48px;
+        }
+
+        .decision-rete-socket--true {
+            right: -9px;
+            top: 36px;
+            background: var(--green);
+            box-shadow: 0 0 0 2px var(--green);
+        }
+
+        .decision-rete-socket--false {
+            right: -9px;
+            top: 80px;
+            background: var(--amber);
+            box-shadow: 0 0 0 2px var(--amber);
+        }
+
+        .decision-graph-canvas[data-workspace-mode="edit"] .decision-canvas-layer {
+            opacity: 0;
+        }
+
+        .decision-graph-canvas[data-workspace-mode="preview"] .decision-rete-workbench {
+            display: none;
+        }
+
+        .editor-panel.is-decision-fullscreen .decision-graph-canvas {
+            min-width: 0;
+        }
+
+        @container (max-width: 980px) {
+            .editor-panel:not(.is-decision-fullscreen) .decision-graph-editor {
+                grid-template-columns: 174px minmax(0, 1fr);
+                grid-template-areas:
+                    "sidebar canvas"
+                    "inspector inspector";
+            }
+
+            .editor-panel:not(.is-decision-fullscreen) .decision-graph-canvas {
+                min-width: 0;
+                min-height: 440px;
+                --decision-rete-scale: 0.72;
+            }
+
+            .editor-panel:not(.is-decision-fullscreen) .decision-rete-workbench {
+                transform-origin: 0 0;
+            }
+
+            .editor-panel:not(.is-decision-fullscreen) .decision-graph-inspector {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .decision-canvas-layer {
+            position: absolute;
+            z-index: 0;
+            left: 0;
+            top: 0;
+            min-width: 100%;
+            min-height: 100%;
+            display: block;
+            pointer-events: none;
+        }
+
+        .decision-interaction-layer {
+            position: absolute;
+            z-index: 4;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+            transform-box: border-box;
+        }
+
+        .decision-node-hotspot,
+        .decision-node-port {
+            position: absolute;
+            min-width: 0;
             min-height: 0;
             padding: 0;
-            border: 0;
-            border-radius: 999px;
             color: transparent;
-            background: rgba(91, 111, 101, 0.78);
+            background: transparent;
+            border: 0;
+            border-radius: 0;
             box-shadow: none;
             font-size: 0;
             line-height: 0;
-            overflow: visible;
-            transform-origin: left center;
+            cursor: grab;
+            user-select: none;
+            pointer-events: auto;
+            touch-action: none;
         }
 
-        .decision-edge::after {
-            content: "";
-            position: absolute;
-            right: -2px;
-            top: -4px;
-            border-left: 8px solid rgba(91, 111, 101, 0.78);
-            border-top: 5px solid transparent;
-            border-bottom: 5px solid transparent;
+        .decision-node-hotspot:active {
+            cursor: grabbing;
         }
 
-        .decision-edge:hover {
-            background: var(--red);
+        .decision-node-port {
+            z-index: 5;
+            cursor: crosshair;
         }
 
-        .decision-edge:hover::after {
-            border-left-color: var(--red);
+        .decision-node-hotspot:focus-visible,
+        .decision-node-port:focus-visible {
+            outline: 2px solid rgba(31, 123, 88, 0.82);
+            outline-offset: 3px;
         }
 
         .decision-template-list,
@@ -609,6 +907,43 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
+        }
+
+        .decision-view-btn {
+            min-width: 48px;
+            border-color: rgba(31, 123, 88, 0.28);
+            color: #1f513f;
+            background: #f6fbf8;
+        }
+
+        .decision-inspect-field {
+            display: grid;
+            gap: 5px;
+        }
+
+        .decision-inspect-label {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+        }
+
+        .decision-inspect-value {
+            min-height: 30px;
+            padding: 6px 8px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: var(--panel);
+            font-weight: 850;
+        }
+
+        .decision-inspect-preview {
+            min-height: 110px;
+            background:
+                linear-gradient(90deg, rgba(28, 33, 30, 0.04) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(28, 33, 30, 0.04) 1px, transparent 1px),
+                #fbfcfa;
+            background-size: 18px 18px;
         }
 
         .section {
@@ -1164,7 +1499,15 @@
 
                     <section id="enemyDecisionPanel" class="section editor-panel" role="tabpanel" data-editor-panel="enemyDecision" hidden>
                         <div class="section-title-row">
-                            <h3>敌人决策</h3>
+                            <div>
+                                <h3>敌人决策</h3>
+                                <div class="decision-workspace-tabs" aria-label="敌人决策工作区模式">
+                                    <button id="decisionWorkspaceModeEditBtn" type="button" class="secondary" aria-pressed="true">编辑台</button>
+                                    <button id="decisionWorkspaceModePreviewBtn" type="button" class="secondary" aria-pressed="false">活动图预览</button>
+                                    <button id="decisionWorkspaceModeValidateBtn" type="button" class="secondary" aria-pressed="false">运行检验</button>
+                                    <button id="decisionWorkspaceModePublishBtn" type="button" class="secondary" aria-pressed="false">发布检查</button>
+                                </div>
+                            </div>
                             <button id="toggleDecisionFullscreenBtn" type="button" class="decision-fullscreen-toggle" aria-pressed="false">全屏编辑</button>
                         </div>
                         <div class="list-toolbar">
@@ -1175,6 +1518,11 @@
                                 <button id="addDecisionGraphActionBtn" type="button" class="secondary">添加行动</button>
                                 <button id="validateDecisionGraphBtn" type="button" class="secondary">检查</button>
                                 <button id="previewDecisionGraphBtn" type="button" class="secondary">预览</button>
+                                <button id="zoomDecisionGraphInBtn" type="button" class="secondary decision-view-btn">放大</button>
+                                <button id="zoomDecisionGraphOutBtn" type="button" class="secondary decision-view-btn">缩小</button>
+                                <button id="fitDecisionGraphViewBtn" type="button" class="secondary decision-view-btn">适配</button>
+                                <button id="resetDecisionGraphViewBtn" type="button" class="secondary decision-view-btn">复位</button>
+                                <button id="rotateDecisionGraphBtn" type="button" class="secondary decision-view-btn">旋转</button>
                             </div>
                         </div>
                         <div class="field-grid single">
@@ -1190,12 +1538,30 @@
                                 </div>
                                 <h4>敌人技能</h4>
                                 <div id="decisionSkillList" class="decision-skill-list"></div>
+                                <h4>节点组件</h4>
+                                <div id="decisionComponentList" class="decision-component-list">
+                                    <button type="button" class="decision-component-card" data-component-type="state">
+                                        <span class="decision-component-icon decision-component-icon--state">S</span>
+                                        <strong>状态节点</strong>
+                                        <span>承接敌人当前状态和回流目标。</span>
+                                    </button>
+                                    <button type="button" class="decision-component-card" data-component-type="branch">
+                                        <span class="decision-component-icon decision-component-icon--branch">D</span>
+                                        <strong>条件判断</strong>
+                                        <span>用 true / false 出口组织分支。</span>
+                                    </button>
+                                    <button type="button" class="decision-component-card" data-component-type="action">
+                                        <span class="decision-component-icon decision-component-icon--action">A</span>
+                                        <strong>行动技能</strong>
+                                        <span>绑定当前敌人的可用 skillId。</span>
+                                    </button>
+                                </div>
                                 <h4>图检查</h4>
                                 <div id="decisionGraphIssues" class="decision-graph-issues"></div>
                             </aside>
                             <div id="decisionGraphCanvas" class="decision-graph-canvas"></div>
                             <aside class="decision-graph-inspector">
-                                <h4>节点属性</h4>
+                                <h4>Inspect</h4>
                                 <div id="decisionNodeInspector" class="decision-node-inspector"></div>
                                 <h4>路径预览</h4>
                                 <div id="decisionPreviewTrace" class="decision-preview-trace"></div>

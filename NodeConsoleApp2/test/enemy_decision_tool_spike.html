@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>敌人决策工具选型原型</title>
+    <link rel="stylesheet" href="../script/editor/enemy/decision/toolSpike/enemyDecisionToolSpike.css">
+</head>
+<body>
+    <div class="spike-page">
+        <header class="spike-header">
+            <div>
+                <h1 id="spikeTitle">敌人决策工具选型原型</h1>
+                <p id="spikeSummary">加载中...</p>
+            </div>
+            <div class="spike-header-actions">
+                <button id="initAllBtn" type="button" class="primary-action">初始化三套方案</button>
+                <a href="./enemy_editor_v1.html"><button type="button">返回敌人编辑器</button></a>
+            </div>
+        </header>
+
+        <main class="spike-workbench">
+            <aside class="spike-sidebar">
+                <h2>同一份敌人样例</h2>
+                <section class="side-section">
+                    <div class="side-label">敌人</div>
+                    <div id="enemyName" class="side-value">-</div>
+                </section>
+                <section class="side-section">
+                    <div class="side-label">初始状态</div>
+                    <div id="enemyState" class="side-value">-</div>
+                </section>
+                <section class="side-section">
+                    <div class="side-label">可用技能</div>
+                    <div id="enemySkills" class="skill-list"></div>
+                </section>
+                <section class="side-section">
+                    <div class="side-label">图形语义</div>
+                    <div class="legend">
+                        <span class="legend-item"><span class="legend-swatch state"></span>状态</span>
+                        <span class="legend-item"><span class="legend-swatch branch"></span>条件判断</span>
+                        <span class="legend-item"><span class="legend-swatch action"></span>行动/技能</span>
+                        <span class="legend-item"><span class="legend-swatch loop"></span>nextState 回流</span>
+                    </div>
+                </section>
+                <section class="side-section">
+                    <div class="side-label">判断标准</div>
+                    <p>优先看：拖拽是否可靠、连线是否自然、回流是否清晰、能否承载后续属性编辑器。</p>
+                </section>
+            </aside>
+
+            <section class="candidate-area">
+                <nav id="candidateTabs" class="candidate-tabs" aria-label="候选图库"></nav>
+
+                <article class="candidate-panel" data-tool-id="logicflow">
+                    <div class="candidate-layout">
+                        <div id="logicflowMount" class="candidate-canvas"></div>
+                        <aside class="candidate-side">
+                            <div class="tool-status-strip">
+                                <div id="logicflowStatus" class="tool-status">等待初始化</div>
+                            </div>
+                            <div id="logicflowMeta" class="tool-meta"></div>
+                        </aside>
+                    </div>
+                </article>
+
+                <article class="candidate-panel" data-tool-id="maxgraph" hidden>
+                    <div class="candidate-layout">
+                        <div id="maxgraphMount" class="candidate-canvas"></div>
+                        <aside class="candidate-side">
+                            <div class="tool-status-strip">
+                                <div id="maxgraphStatus" class="tool-status">等待初始化</div>
+                            </div>
+                            <div id="maxgraphMeta" class="tool-meta"></div>
+                        </aside>
+                    </div>
+                </article>
+
+                <article class="candidate-panel" data-tool-id="rete" hidden>
+                    <div class="candidate-layout">
+                        <div id="reteMount" class="candidate-canvas"></div>
+                        <aside class="candidate-side">
+                            <div class="tool-status-strip">
+                                <div id="reteStatus" class="tool-status">等待初始化</div>
+                            </div>
+                            <div id="reteMeta" class="tool-meta"></div>
+                        </aside>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "rete": "https://esm.sh/rete@2.0.6",
+                "rete-area-plugin": "https://esm.sh/rete-area-plugin@2.1.5?external=rete"
+            }
+        }
+    </script>
+    <script type="module" src="../script/editor/enemy/decision/toolSpike/EnemyDecisionToolSpikePage.js"></script>
+</body>
+</html>

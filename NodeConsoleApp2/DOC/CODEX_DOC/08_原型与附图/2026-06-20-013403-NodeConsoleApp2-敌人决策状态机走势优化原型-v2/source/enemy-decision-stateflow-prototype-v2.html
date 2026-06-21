@@ -1,0 +1,1225 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>敌人决策状态机走势优化原型 v2</title>
+  <style>
+    :root {
+      --bg: #e9eee9;
+      --panel: #fbfcf8;
+      --ink: #17211e;
+      --muted: #63736c;
+      --line: #cbd8d1;
+      --grid: rgba(42, 65, 59, 0.08);
+      --state: #0f766e;
+      --state-soft: #d9f2ec;
+      --branch: #b87908;
+      --branch-soft: #fff1c4;
+      --action: #2e6f9e;
+      --action-soft: #dbeafe;
+      --loop: #315c8a;
+      --loop-soft: #e2edf7;
+      --danger: #ad3f37;
+      --danger-soft: #fde2dc;
+      --violet: #6555a3;
+      --violet-soft: #ece7ff;
+      --shadow: 0 16px 36px rgba(23, 33, 30, 0.15);
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #dce4df;
+      color: var(--ink);
+    }
+
+    .frame {
+      width: 1920px;
+      height: 1080px;
+      display: grid;
+      grid-template-columns: 300px 1fr 360px;
+      grid-template-rows: 64px 1fr 220px;
+      background:
+        linear-gradient(90deg, rgba(23, 33, 30, 0.035) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(23, 33, 30, 0.035) 1px, transparent 1px),
+        var(--bg);
+      background-size: 32px 32px;
+    }
+
+    .topbar {
+      grid-column: 1 / 4;
+      display: grid;
+      grid-template-columns: 300px 1fr 360px;
+      background: rgba(251, 252, 248, 0.97);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 8px 24px rgba(23, 33, 30, 0.08);
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 18px;
+      border-right: 1px solid var(--line);
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border: 2px solid #14211d;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: var(--state);
+      font-weight: 900;
+      background: #f8fbf8;
+      box-shadow: inset 0 -5px 0 rgba(15, 118, 110, 0.14);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.08;
+      font-weight: 900;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 16px;
+      min-width: 0;
+    }
+
+    .status-line,
+    .tool-line,
+    .right-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .pill,
+    .button,
+    .view-tab {
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 10px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .pill {
+      color: var(--muted);
+    }
+
+    .pill strong {
+      color: var(--ink);
+    }
+
+    .button.primary {
+      color: #fff;
+      background: #111d1a;
+      border-color: #111d1a;
+    }
+
+    .button.warn {
+      color: #5d3900;
+      background: var(--branch-soft);
+      border-color: #e6bf5e;
+    }
+
+    .view-tabs {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #eff4f0;
+    }
+
+    .view-tab {
+      height: 27px;
+      border-color: transparent;
+      background: transparent;
+      color: var(--muted);
+      padding: 0 9px;
+      cursor: pointer;
+    }
+
+    .view-overview .view-tab[data-view="overview"],
+    .view-loop .view-tab[data-view="loop"],
+    .view-trace .view-tab[data-view="trace"] {
+      color: #fff;
+      background: var(--state);
+    }
+
+    .right-actions {
+      justify-content: flex-end;
+      padding: 0 18px;
+      border-left: 1px solid var(--line);
+    }
+
+    .save-note {
+      display: grid;
+      gap: 2px;
+      text-align: right;
+    }
+
+    .save-note span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .save-note strong {
+      font-size: 13px;
+    }
+
+    .left-rail {
+      grid-column: 1;
+      grid-row: 2 / 4;
+      padding: 14px;
+      border-right: 1px solid var(--line);
+      background: rgba(251, 252, 248, 0.96);
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .enemy-card,
+    .rail-card,
+    .right-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(23, 33, 30, 0.08);
+      overflow: hidden;
+    }
+
+    .enemy-card {
+      padding: 13px;
+    }
+
+    .enemy-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .enemy-head h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    code {
+      font-family: Consolas, "Microsoft YaHei", monospace;
+      color: #3e4e49;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .tag {
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 7px;
+      border-radius: 7px;
+      border: 1px solid #d4dfd8;
+      color: #52635d;
+      background: #f6f9f7;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tag.state { color: #075c57; background: var(--state-soft); border-color: #90d4c8; }
+    .tag.branch { color: #674000; background: var(--branch-soft); border-color: #e5bd5a; }
+    .tag.action { color: #255378; background: var(--action-soft); border-color: #a5c7ec; }
+    .tag.loop { color: #24486d; background: var(--loop-soft); border-color: #aac5df; }
+    .tag.danger { color: var(--danger); background: var(--danger-soft); border-color: #efb5aa; }
+    .tag.violet { color: #503f8c; background: var(--violet-soft); border-color: #c9bbff; }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .metric {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #dbe5df;
+      background: #f6faf7;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 17px;
+    }
+
+    .rail-card h3,
+    .right-card h3 {
+      margin: 0;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f4f7f4;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .rail-body,
+    .right-body {
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .small-row {
+      display: grid;
+      gap: 4px;
+      padding: 9px;
+      border: 1px solid #dce6df;
+      border-radius: 8px;
+      background: #fbfdfb;
+    }
+
+    .small-row .main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .small-row .sub {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .canvas-shell {
+      grid-column: 2;
+      grid-row: 2;
+      position: relative;
+      overflow: hidden;
+      border-right: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        linear-gradient(0deg, var(--grid) 1px, transparent 1px),
+        #e8efeb;
+      background-size: 24px 24px;
+    }
+
+    .canvas-head {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 14px;
+      height: 46px;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border: 1px solid rgba(145, 161, 154, 0.58);
+      border-radius: 8px;
+      background: rgba(251, 252, 248, 0.9);
+      backdrop-filter: blur(6px);
+    }
+
+    .canvas-head strong {
+      font-size: 14px;
+    }
+
+    .canvas-head span {
+      margin-left: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .canvas-tools {
+      display: flex;
+      gap: 7px;
+    }
+
+    .mini {
+      height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 0 8px;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .stateflow-canvas {
+      position: absolute;
+      inset: 0;
+      width: 1260px;
+      height: 796px;
+    }
+
+    .lane {
+      position: absolute;
+      left: 42px;
+      right: 42px;
+      border: 1px solid rgba(145, 161, 154, 0.42);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.26);
+      z-index: 0;
+    }
+
+    .lane.state-lane { top: 82px; height: 160px; background: rgba(217, 242, 236, 0.34); }
+    .lane.branch-lane { top: 282px; height: 182px; background: rgba(255, 241, 196, 0.26); }
+    .lane.action-lane { top: 506px; height: 174px; background: rgba(219, 234, 254, 0.24); }
+    .lane.loop-lane { left: 28px; right: 28px; top: 706px; height: 62px; background: rgba(226, 237, 247, 0.5); }
+
+    .lane-label {
+      position: absolute;
+      left: 14px;
+      top: -12px;
+      height: 24px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 7px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .edge-layer {
+      position: absolute;
+      inset: 0;
+      width: 1260px;
+      height: 796px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .edge {
+      fill: none;
+      stroke: #7b8c85;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .edge.forward { stroke: var(--state); }
+    .edge.branch-true { stroke: var(--state); }
+    .edge.branch-false { stroke: var(--branch); stroke-dasharray: 8 8; }
+    .edge.action { stroke: var(--action); }
+    .edge.loop { stroke: var(--loop); stroke-width: 5; }
+    .edge.fallback { stroke: var(--danger); stroke-dasharray: 4 8; }
+    .edge.phase { stroke: var(--violet); stroke-width: 4; }
+
+    .view-loop .edge.loop,
+    .view-trace .edge.trace {
+      stroke-width: 8;
+      filter: drop-shadow(0 0 7px rgba(49, 92, 138, 0.36));
+    }
+
+    .edge-label {
+      position: absolute;
+      z-index: 2;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 8px;
+      border: 1px solid #c9d5ce;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.93);
+      color: #4a5a54;
+      font-size: 11px;
+      font-weight: 900;
+      box-shadow: 0 5px 10px rgba(23, 33, 30, 0.09);
+      white-space: nowrap;
+    }
+
+    .edge-label.loop { color: #23496d; background: #f1f7fc; border-color: #afcae2; }
+    .edge-label.true { color: #075c57; }
+    .edge-label.false { color: #6b4200; }
+    .edge-label.fallback { color: var(--danger); }
+
+    .node {
+      position: absolute;
+      z-index: 3;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .node.state { border-color: #69aaa1; }
+    .node.branch { border-color: #d09e45; }
+    .node.action { border-color: #6b9ac4; }
+    .node.recover { border-color: #6f9f72; }
+    .node.phase { border-color: #8c7acc; }
+
+    .node.idle { left: 94px; top: 122px; width: 214px; height: 112px; }
+    .node.pressure { left: 486px; top: 118px; width: 230px; height: 124px; }
+    .node.recover-state { left: 854px; top: 112px; width: 222px; height: 122px; }
+    .node.phase-state { left: 1046px; top: 302px; width: 172px; height: 118px; }
+
+    .node.hp-check { left: 252px; top: 310px; width: 232px; height: 134px; }
+    .node.skill-check { left: 572px; top: 312px; width: 244px; height: 134px; }
+    .node.armor-check { left: 826px; top: 392px; width: 208px; height: 118px; }
+
+    .node.heal-action { left: 824px; top: 526px; width: 224px; height: 132px; }
+    .node.bleed-action { left: 560px; top: 532px; width: 224px; height: 132px; }
+    .node.throw-action { left: 224px; top: 530px; width: 222px; height: 132px; }
+    .node.enrage-action { left: 1058px; top: 536px; width: 160px; height: 126px; }
+
+    .node-head {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 9px;
+      border-bottom: 1px solid #dce6df;
+      background: #f7faf8;
+    }
+
+    .node-head strong {
+      font-size: 13px;
+      line-height: 1.18;
+      max-width: 150px;
+    }
+
+    .node-body {
+      padding: 9px;
+      display: grid;
+      gap: 7px;
+      font-size: 12px;
+      line-height: 1.36;
+    }
+
+    .node-body p {
+      margin: 0;
+      color: #44534e;
+    }
+
+    .ports {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .port {
+      height: 21px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 6px;
+      border-radius: 7px;
+      border: 1px solid #d5dfd9;
+      background: #f8fbf8;
+      color: #53635d;
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .port::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .port.true { color: var(--state); }
+    .port.false { color: var(--branch); }
+    .port.loop { color: var(--loop); }
+    .port.fallback { color: var(--danger); }
+
+    .view-loop .node.idle,
+    .view-loop .node.pressure,
+    .view-loop .node.recover-state,
+    .view-loop .node.throw-action,
+    .view-loop .node.bleed-action,
+    .view-loop .node.heal-action,
+    .view-trace .node.hp-check,
+    .view-trace .node.recover-state,
+    .view-trace .node.heal-action {
+      outline: 4px solid rgba(49, 92, 138, 0.24);
+      box-shadow: 0 0 0 2px rgba(49, 92, 138, 0.38), var(--shadow);
+    }
+
+    .loop-explain {
+      position: absolute;
+      left: 52px;
+      top: 712px;
+      right: 52px;
+      height: 52px;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: 220px 1fr 240px;
+      align-items: center;
+      gap: 14px;
+      padding: 0 14px;
+      border: 1px solid #b0c9df;
+      border-radius: 9px;
+      background: rgba(244, 249, 253, 0.92);
+      color: #24486d;
+      box-shadow: 0 10px 20px rgba(49, 92, 138, 0.12);
+    }
+
+    .loop-explain strong {
+      font-size: 13px;
+    }
+
+    .loop-explain span {
+      color: #4b6380;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .right-rail {
+      grid-column: 3;
+      grid-row: 2;
+      padding: 14px;
+      background: rgba(251, 252, 248, 0.96);
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .right-title {
+      padding: 3px 2px 0;
+    }
+
+    .right-title .eyebrow {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .right-title h2 {
+      margin: 5px 0 0;
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .right-title p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 104px 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .field-grid label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .field {
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 9px;
+      border-radius: 8px;
+      border: 1px solid #d5ded8;
+      background: #fbfdfb;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .field.hot {
+      background: var(--loop-soft);
+      border-color: #b5cce2;
+      color: #24486d;
+    }
+
+    .overview-only,
+    .loop-only,
+    .trace-only { display: none; }
+
+    .view-overview .overview-only,
+    .view-loop .loop-only,
+    .view-trace .trace-only { display: grid; }
+
+    .right-title .overview-only,
+    .right-title .loop-only,
+    .right-title .trace-only { display: none; }
+
+    .view-overview .right-title .overview-only,
+    .view-loop .right-title .loop-only,
+    .view-trace .right-title .trace-only { display: block; }
+
+    .bottom {
+      grid-column: 2 / 4;
+      grid-row: 3;
+      display: grid;
+      grid-template-columns: 390px 1fr 360px;
+      border-top: 1px solid var(--line);
+      background: rgba(251, 252, 248, 0.97);
+    }
+
+    .bottom-panel {
+      padding: 14px;
+      border-right: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .bottom-panel:last-child {
+      border-right: none;
+    }
+
+    .bottom-panel h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .context-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .context {
+      min-height: 43px;
+      padding: 7px 9px;
+      border: 1px solid #dce5df;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .context span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .context strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 13px;
+    }
+
+    .timeline {
+      display: flex;
+      align-items: stretch;
+      gap: 7px;
+      overflow: hidden;
+    }
+
+    .step {
+      min-width: 114px;
+      padding: 9px;
+      border: 1px solid #d5ded8;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .step.state { background: var(--state-soft); border-color: #9bd8ce; }
+    .step.branch { background: var(--branch-soft); border-color: #e5bd5a; }
+    .step.action { background: var(--action-soft); border-color: #a3c7eb; }
+    .step.loop { background: var(--loop-soft); border-color: #aac5df; }
+
+    .step span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .step strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      padding-top: 22px;
+      color: #5d6d67;
+      font-weight: 900;
+    }
+
+    .issue-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .issue {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 8px;
+      border: 1px solid #dce5df;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .issue b {
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .issue.warn b { color: #674000; background: var(--branch-soft); }
+    .issue.info b { color: #24486d; background: var(--loop-soft); }
+    .issue.error b { color: var(--danger); background: var(--danger-soft); }
+
+    .issue span {
+      color: #47584f;
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="view-overview">
+  <main class="frame">
+    <header class="topbar">
+      <section class="brand">
+        <div class="brand-mark">FSM</div>
+        <div>
+          <h1>敌人决策</h1>
+          <p>状态机走势优化 / 全屏工作台</p>
+        </div>
+      </section>
+
+      <section class="toolbar">
+        <div class="status-line">
+          <span class="pill">当前敌人 <strong>腐锈投石兵</strong></span>
+          <span class="pill">布局 <strong>状态轨道 / 判断轨道 / 动作轨道</strong></span>
+          <span class="pill">回流 <strong>外侧轨道</strong></span>
+        </div>
+        <div class="tool-line">
+          <button class="button">撤销</button>
+          <button class="button">重做</button>
+          <button class="button warn">运行校验</button>
+          <button class="button">路径预览</button>
+          <button class="button primary">保存工作稿</button>
+          <div class="view-tabs">
+            <button class="view-tab" data-view="overview">总览</button>
+            <button class="view-tab" data-view="loop">回流</button>
+            <button class="view-tab" data-view="trace">路径</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="right-actions">
+        <div class="save-note">
+          <span>全屏编辑中</span>
+          <strong>未发布，2 个 warning</strong>
+        </div>
+        <button class="button primary">退出全屏</button>
+      </section>
+    </header>
+
+    <aside class="left-rail">
+      <section class="enemy-card">
+        <div class="enemy-head">
+          <div>
+            <h2>腐锈投石兵</h2>
+            <code>enemy_rust_slinger</code>
+          </div>
+          <span class="tag danger">压制型</span>
+        </div>
+        <div class="metric-row">
+          <div class="metric"><span>HP</span><strong>64</strong></div>
+          <div class="metric"><span>AP</span><strong>4</strong></div>
+          <div class="metric"><span>速度</span><strong>11</strong></div>
+        </div>
+      </section>
+
+      <section class="rail-card">
+        <h3>状态机导航 <span class="tag loop">按走势查看</span></h3>
+        <div class="rail-body">
+          <div class="small-row">
+            <div class="main">主循环 <span class="tag state">默认</span></div>
+            <div class="sub">默认状态 -> 检查 -> 动作 -> 回到默认状态</div>
+          </div>
+          <div class="small-row">
+            <div class="main">恢复支路 <span class="tag branch">低血</span></div>
+            <div class="sub">HP 低于阈值时进入恢复状态，动作后回流</div>
+          </div>
+          <div class="small-row">
+            <div class="main">二阶段支路 <span class="tag violet">Phase</span></div>
+            <div class="sub">满足阶段条件时切换持久状态，不是一次性动作</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="rail-card">
+        <h3>敌人技能库 <span class="tag action">绑定 Action</span></h3>
+        <div class="rail-body">
+          <div class="small-row">
+            <div class="main">投石 <span class="tag action">AP 2</span></div>
+            <div class="sub">skill_throw_stone / fallback 主动作</div>
+          </div>
+          <div class="small-row">
+            <div class="main">锈刃割裂 <span class="tag danger">流血</span></div>
+            <div class="sub">enemy_skill_rusty_shiv / 目标玩家弱点部位</div>
+          </div>
+          <div class="small-row">
+            <div class="main">复苏药剂 <span class="tag state">恢复</span></div>
+            <div class="sub">enemy_skill_crude_tonic / 恢复支路动作</div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="canvas-shell">
+      <div class="canvas-head">
+        <div>
+          <strong>状态机走势画布：主循环轨道 + 条件岔路 + 外侧回流</strong>
+          <span>节点 11 / 回流线 4 / 当前缩放 90%</span>
+        </div>
+        <div class="canvas-tools">
+          <button class="mini">框选</button>
+          <button class="mini">连线</button>
+          <button class="mini">显示回流</button>
+          <button class="mini">适配画布</button>
+        </div>
+      </div>
+
+      <div class="stateflow-canvas">
+        <div class="lane state-lane"><span class="lane-label">状态轨道：可跨回合停留</span></div>
+        <div class="lane branch-lane"><span class="lane-label">判断轨道：本回合检查顺序</span></div>
+        <div class="lane action-lane"><span class="lane-label">动作轨道：本回合终点</span></div>
+        <div class="lane loop-lane"><span class="lane-label">回流轨道：后段指回前段</span></div>
+
+        <svg class="edge-layer" viewBox="0 0 1260 796" aria-hidden="true">
+          <defs>
+            <marker id="arrow-state" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#0f766e"></path>
+            </marker>
+            <marker id="arrow-branch" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#b87908"></path>
+            </marker>
+            <marker id="arrow-action" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#2e6f9e"></path>
+            </marker>
+            <marker id="arrow-loop" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,8 L10,4 z" fill="#315c8a"></path>
+            </marker>
+            <marker id="arrow-danger" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#ad3f37"></path>
+            </marker>
+            <marker id="arrow-phase" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#6555a3"></path>
+            </marker>
+          </defs>
+
+          <path class="edge forward trace" d="M308 180 C350 180, 440 180, 486 180" marker-end="url(#arrow-state)"></path>
+          <path class="edge forward trace" d="M600 242 C560 272, 486 302, 420 310" marker-end="url(#arrow-state)"></path>
+          <path class="edge branch-true trace" d="M484 360 C605 346, 735 170, 854 170" marker-end="url(#arrow-state)"></path>
+          <path class="edge branch-false" d="M484 396 C520 394, 542 382, 572 382" marker-end="url(#arrow-branch)"></path>
+          <path class="edge branch-true" d="M816 374 C830 384, 828 410, 826 438" marker-end="url(#arrow-state)"></path>
+          <path class="edge branch-false" d="M650 446 C616 468, 604 505, 616 532" marker-end="url(#arrow-branch)"></path>
+          <path class="edge action trace" d="M966 234 C955 315, 945 450, 936 526" marker-end="url(#arrow-action)"></path>
+          <path class="edge action" d="M670 446 C665 474, 666 504, 674 532" marker-end="url(#arrow-action)"></path>
+          <path class="edge action" d="M360 444 C352 470, 340 500, 335 530" marker-end="url(#arrow-action)"></path>
+          <path class="edge phase" d="M816 390 C910 360, 982 360, 1046 360" marker-end="url(#arrow-phase)"></path>
+          <path class="edge action" d="M1138 420 C1138 460, 1130 504, 1124 534" marker-end="url(#arrow-action)"></path>
+
+          <path class="edge loop trace" d="M936 658 C916 724, 240 724, 218 234" marker-end="url(#arrow-loop)"></path>
+          <path class="edge loop" d="M672 664 C628 746, 258 748, 218 234" marker-end="url(#arrow-loop)"></path>
+          <path class="edge loop" d="M336 662 C306 704, 250 704, 218 234" marker-end="url(#arrow-loop)"></path>
+          <path class="edge loop" d="M1124 662 C1120 760, 600 760, 600 242" marker-end="url(#arrow-loop)"></path>
+          <path class="edge fallback" d="M936 596 C828 608, 766 614, 784 598" marker-end="url(#arrow-danger)"></path>
+        </svg>
+
+        <span class="edge-label true" style="left: 330px; top: 164px;">进入主状态</span>
+        <span class="edge-label" style="left: 472px; top: 274px;">每回合检查</span>
+        <span class="edge-label true" style="left: 618px; top: 228px;">true：低血恢复</span>
+        <span class="edge-label false" style="left: 496px; top: 370px;">false：继续压制</span>
+        <span class="edge-label true" style="left: 792px; top: 416px;">true：弱点可压制</span>
+        <span class="edge-label false" style="left: 596px; top: 474px;">false：投石</span>
+        <span class="edge-label loop" style="left: 412px; top: 726px;">动作完成后回流到默认状态</span>
+        <span class="edge-label loop" style="left: 858px; top: 746px;">二阶段动作回流到压制状态</span>
+        <span class="edge-label fallback" style="left: 780px; top: 594px;">fallback：技能不可用</span>
+
+        <article class="node state idle">
+          <div class="node-head"><strong>入口 / 默认状态</strong><span class="tag state">State</span></div>
+          <div class="node-body">
+            <p>战斗实例初始化后停留的位置。</p>
+            <div class="ports"><span class="port">flow</span><span class="port loop">loop in</span></div>
+          </div>
+        </article>
+
+        <article class="node state pressure">
+          <div class="node-head"><strong>持续压制状态</strong><span class="tag state">State</span></div>
+          <div class="node-body">
+            <p>主循环状态，优先找弱点与流血机会。</p>
+            <div class="ports"><span class="port">flow</span><span class="port loop">loop in</span></div>
+          </div>
+        </article>
+
+        <article class="node state recover recover-state">
+          <div class="node-head"><strong>恢复状态</strong><span class="tag state">State</span></div>
+          <div class="node-body">
+            <p>低血时短暂停留，恢复后回到默认。</p>
+            <div class="ports"><span class="port">flow</span><span class="port loop">return</span></div>
+          </div>
+        </article>
+
+        <article class="node state phase phase-state">
+          <div class="node-head"><strong>二阶段</strong><span class="tag violet">State</span></div>
+          <div class="node-body">
+            <p>阶段状态，不是一次性动作。</p>
+            <div class="ports"><span class="port">flow</span><span class="port loop">loop</span></div>
+          </div>
+        </article>
+
+        <article class="node branch hp-check">
+          <div class="node-head"><strong>HP 是否低于 35%</strong><span class="tag branch">Branch</span></div>
+          <div class="node-body">
+            <p>self_hp_ratio_lte / value: 0.35</p>
+            <div class="ports"><span class="port">in</span><span class="port true">true</span><span class="port false">false</span></div>
+          </div>
+        </article>
+
+        <article class="node branch skill-check">
+          <div class="node-head"><strong>流血技能可用？</strong><span class="tag branch">Branch</span></div>
+          <div class="node-body">
+            <p>skill_available / slot_bleed_attack</p>
+            <div class="ports"><span class="port">in</span><span class="port true">true</span><span class="port false">false</span></div>
+          </div>
+        </article>
+
+        <article class="node branch armor-check">
+          <div class="node-head"><strong>玩家弱点可压制？</strong><span class="tag branch">Branch</span></div>
+          <div class="node-body">
+            <p>player_part_armor_lte / abdomen <= 8</p>
+            <div class="ports"><span class="port">in</span><span class="port true">true</span><span class="port false">false</span></div>
+          </div>
+        </article>
+
+        <article class="node action heal-action">
+          <div class="node-head"><strong>使用复苏药剂</strong><span class="tag action">Action</span></div>
+          <div class="node-body">
+            <p>slot_recover / AP 4 / nextState 默认状态</p>
+            <div class="ports"><span class="port">in</span><span class="port fallback">fallback</span><span class="port loop">nextState</span></div>
+          </div>
+        </article>
+
+        <article class="node action bleed-action">
+          <div class="node-head"><strong>锈刃割裂</strong><span class="tag action">Action</span></div>
+          <div class="node-body">
+            <p>enemy_skill_rusty_shiv / nextState 默认状态</p>
+            <div class="ports"><span class="port">in</span><span class="port fallback">fallback</span><span class="port loop">nextState</span></div>
+          </div>
+        </article>
+
+        <article class="node action throw-action">
+          <div class="node-head"><strong>投石</strong><span class="tag action">Action</span></div>
+          <div class="node-body">
+            <p>fallback 主动作，稳定回到默认状态。</p>
+            <div class="ports"><span class="port">in</span><span class="port loop">nextState</span></div>
+          </div>
+        </article>
+
+        <article class="node action enrage-action">
+          <div class="node-head"><strong>激怒投掷</strong><span class="tag action">Action</span></div>
+          <div class="node-body">
+            <p>二阶段动作，回流到压制状态。</p>
+            <div class="ports"><span class="port">in</span><span class="port loop">nextState</span></div>
+          </div>
+        </article>
+
+        <div class="loop-explain">
+          <strong>回流轨道单独外置</strong>
+          <span>状态机常见的“后段指回前段”不再穿过判断节点；所有 Action.nextState 都沿底部回流轨道回到目标 State。</span>
+          <span>这样能区分“本回合前进判断”和“动作结束后的跨回合状态更新”。</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right-rail">
+      <div class="right-title">
+        <span class="eyebrow overview-only">走势总览</span>
+        <span class="eyebrow loop-only">回流分析</span>
+        <span class="eyebrow trace-only">路径预览</span>
+        <h2 class="overview-only">三轨道状态机读法</h2>
+        <h2 class="loop-only">后段回指前段的专用轨道</h2>
+        <h2 class="trace-only">回合 4：低血恢复路径</h2>
+        <p class="overview-only">状态、判断、动作分层排列，帮助作者先读结构，再读分支，再读回流。</p>
+        <p class="loop-only">回流线不和普通判断线混在一起，专门表达 Action 完成后的 nextState。</p>
+        <p class="trace-only">高亮的路径从当前状态开始，经过低血判断，执行恢复动作，再回到默认状态。</p>
+      </div>
+
+      <section class="right-card overview-only">
+        <h3>轨道统计 <span class="tag state">FSM</span></h3>
+        <div class="right-body">
+          <div class="field-grid">
+            <label>状态节点</label><div class="field">4 个</div>
+            <label>判断节点</label><div class="field">3 个</div>
+            <label>动作节点</label><div class="field">4 个</div>
+            <label>回流线</label><div class="field hot">4 条</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="right-card loop-only">
+        <h3>回流目标 <span class="tag loop">nextState</span></h3>
+        <div class="right-body">
+          <div class="field-grid">
+            <label>复苏药剂</label><div class="field hot">默认状态</div>
+            <label>锈刃割裂</label><div class="field hot">默认状态</div>
+            <label>投石</label><div class="field hot">默认状态</div>
+            <label>激怒投掷</label><div class="field hot">持续压制状态</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="right-card trace-only">
+        <h3>模拟输入 <span class="tag loop">共享 evaluator</span></h3>
+        <div class="right-body">
+          <div class="field-grid">
+            <label>起始状态</label><div class="field">默认状态</div>
+            <label>回合号</label><div class="field">4</div>
+            <label>自身 HP</label><div class="field hot">28%</div>
+            <label>自身 AP</label><div class="field">4 / 4</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="right-card">
+        <h3>端口语义 <span class="tag branch">不可退化</span></h3>
+        <div class="right-body">
+          <div class="small-row">
+            <div class="main">flow <span class="tag state">本回合进入</span></div>
+            <div class="sub">只表示当前回合沿状态机继续求值。</div>
+          </div>
+          <div class="small-row">
+            <div class="main">true / false <span class="tag branch">判断分支</span></div>
+            <div class="sub">只能从 Branch 发出，必须连接到可进入节点。</div>
+          </div>
+          <div class="small-row">
+            <div class="main">nextState <span class="tag loop">跨回合状态更新</span></div>
+            <div class="sub">只从 Action 回流到 State，视觉上走外侧轨道。</div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="bottom">
+      <div class="bottom-panel">
+        <h3>模拟上下文</h3>
+        <div class="context-grid">
+          <div class="context"><span>模拟回合</span><strong>第 4 回合</strong></div>
+          <div class="context"><span>当前状态</span><strong>默认状态</strong></div>
+          <div class="context"><span>自身 HP</span><strong>28% / 64</strong></div>
+          <div class="context"><span>自身 AP</span><strong>4</strong></div>
+          <div class="context"><span>玩家弱点</span><strong>腹部护甲 7</strong></div>
+          <div class="context"><span>上一动作</span><strong>投石</strong></div>
+        </div>
+      </div>
+
+      <div class="bottom-panel">
+        <h3>路径预览轨迹</h3>
+        <div class="timeline">
+          <div class="step state"><span>startState</span><strong>默认状态</strong></div>
+          <div class="arrow">></div>
+          <div class="step branch"><span>branch</span><strong>HP <= 35%: true</strong></div>
+          <div class="arrow">></div>
+          <div class="step state"><span>state</span><strong>恢复状态</strong></div>
+          <div class="arrow">></div>
+          <div class="step action"><span>action</span><strong>使用复苏药剂</strong></div>
+          <div class="arrow">></div>
+          <div class="step loop"><span>nextState</span><strong>回流默认状态</strong></div>
+        </div>
+      </div>
+
+      <div class="bottom-panel">
+        <h3>校验问题</h3>
+        <div class="issue-list">
+          <div class="issue warn"><b>WARN</b><span>激怒投掷没有 telegraph；作为二阶段高威胁动作，发布前需要补预兆。</span></div>
+          <div class="issue info"><b>INFO</b><span>4 条回流线均指向 State，没有发现 Action.nextState 指向 Branch。</span></div>
+          <div class="issue info"><b>INFO</b><span>主循环路径至少包含一个 Action，未发现单回合无动作循环。</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const view = params.get("view") || "overview";
+    document.body.className = `view-${view}`;
+    document.querySelectorAll("[data-view]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const next = button.getAttribute("data-view");
+        const url = new URL(location.href);
+        url.searchParams.set("view", next);
+        location.href = url.href;
+      });
+    });
+  </script>
+</body>
+</html>

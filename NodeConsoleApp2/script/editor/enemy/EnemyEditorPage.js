@@ -235,6 +235,10 @@ export class EnemyEditorPage {
             'decisionNodeInspector',
             'decisionGraphIssues',
             'decisionPreviewTrace',
+            'decisionWorkspaceModeEditBtn',
+            'decisionWorkspaceModePreviewBtn',
+            'decisionWorkspaceModeValidateBtn',
+            'decisionWorkspaceModePublishBtn',
             'toggleDecisionFullscreenBtn',
             'addDecisionStateBtn',
             'addDecisionBranchBtn',
@@ -243,6 +247,11 @@ export class EnemyEditorPage {
             'deleteDecisionTemplateBtn',
             'validateDecisionGraphBtn',
             'previewDecisionGraphBtn',
+            'zoomDecisionGraphInBtn',
+            'zoomDecisionGraphOutBtn',
+            'resetDecisionGraphViewBtn',
+            'fitDecisionGraphViewBtn',
+            'rotateDecisionGraphBtn',
             'portraitRefInput',
             'mapPortraitRefInput',
             'battleSpriteSelect',
@@ -280,7 +289,16 @@ export class EnemyEditorPage {
                 duplicateTemplate: this.elements.duplicateDecisionTemplateBtn,
                 deleteTemplate: this.elements.deleteDecisionTemplateBtn,
                 validate: this.elements.validateDecisionGraphBtn,
-                preview: this.elements.previewDecisionGraphBtn
+                preview: this.elements.previewDecisionGraphBtn,
+                zoomIn: this.elements.zoomDecisionGraphInBtn,
+                zoomOut: this.elements.zoomDecisionGraphOutBtn,
+                resetView: this.elements.resetDecisionGraphViewBtn,
+                fitView: this.elements.fitDecisionGraphViewBtn,
+                rotate: this.elements.rotateDecisionGraphBtn,
+                viewEdit: this.elements.decisionWorkspaceModeEditBtn,
+                viewPreview: this.elements.decisionWorkspaceModePreviewBtn,
+                viewValidate: this.elements.decisionWorkspaceModeValidateBtn,
+                viewPublish: this.elements.decisionWorkspaceModePublishBtn
             }
         });
 

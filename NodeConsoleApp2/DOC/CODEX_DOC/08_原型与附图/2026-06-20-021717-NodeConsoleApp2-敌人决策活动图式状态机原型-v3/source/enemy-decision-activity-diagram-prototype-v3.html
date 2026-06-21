@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>敌人决策活动图式状态机原型 v3</title>
+  <style>
+    :root {
+      --bg: #eef1ef;
+      --panel: #fbfcfa;
+      --ink: #19211e;
+      --muted: #65716b;
+      --line: #d9dfdb;
+      --line-strong: #17211d;
+      --green: #1f7b58;
+      --green-soft: #e4f2eb;
+      --blue: #24486d;
+      --blue-soft: #e6eef7;
+      --amber: #b16f16;
+      --amber-soft: #fff4df;
+      --red: #a13a2b;
+      --red-soft: #f4e3df;
+      --shadow: 0 18px 48px rgba(27, 36, 31, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(25, 33, 30, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(25, 33, 30, 0.035) 1px, transparent 1px),
+        var(--bg);
+      background-size: 28px 28px;
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    }
+
+    .frame {
+      width: 1920px;
+      height: 1080px;
+      padding: 20px;
+      display: grid;
+      grid-template-rows: 72px minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .topbar,
+    .side-panel,
+    .canvas-shell,
+    .bottom-strip {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(251, 252, 250, 0.98);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+    }
+
+    .title h1 {
+      margin: 0 0 5px;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .pill-row,
+    .mode-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .pill,
+    .mode {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: #fff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .mode {
+      border-radius: 7px;
+      min-width: 86px;
+    }
+
+    body.view-overview .mode[data-view="overview"],
+    body.view-trace .mode[data-view="trace"],
+    body.view-loop .mode[data-view="loop"] {
+      color: #fff;
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    .workspace {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr) 350px;
+      gap: 14px;
+    }
+
+    .side-panel {
+      min-width: 0;
+      padding: 14px;
+      display: grid;
+      align-content: start;
+      gap: 14px;
+      overflow: hidden;
+    }
+
+    .panel-section {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .panel-section h2,
+    .panel-section h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .panel-section p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .list-item {
+      display: grid;
+      gap: 3px;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f7faf8;
+      font-size: 12px;
+    }
+
+    .list-item strong {
+      font-size: 13px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      min-height: 22px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tag.state { color: var(--green); background: var(--green-soft); }
+    .tag.branch { color: var(--amber); background: var(--amber-soft); }
+    .tag.action { color: var(--blue); background: var(--blue-soft); }
+    .tag.loop { color: var(--red); background: var(--red-soft); }
+
+    .canvas-shell {
+      min-width: 0;
+      min-height: 0;
+      padding: 12px;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) 146px;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .diagram-board {
+      position: relative;
+      min-height: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(25, 33, 30, 0.05) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(25, 33, 30, 0.05) 1px, transparent 1px),
+        #f8fbf9;
+      background-size: 24px 24px;
+    }
+
+    .diagram-head {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 12px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .diagram-head strong {
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+      font-size: 13px;
+    }
+
+    .diagram-head span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .activity-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .flow-edge {
+      fill: none;
+      stroke: rgba(25, 33, 30, 0.72);
+      stroke-width: 2.6;
+      marker-end: url(#arrow);
+    }
+
+    .flow-edge.guard {
+      stroke: rgba(177, 111, 22, 0.78);
+      marker-end: url(#arrow-guard);
+    }
+
+    .flow-edge.loop {
+      stroke: rgba(161, 58, 43, 0.9);
+      stroke-width: 3.2;
+      stroke-dasharray: 9 8;
+      marker-end: url(#arrow-loop);
+    }
+
+    .flow-edge.trace {
+      stroke: var(--green);
+      stroke-width: 5;
+      marker-end: url(#arrow-trace);
+    }
+
+    body.view-overview .trace-only,
+    body.view-overview .loop-only,
+    body.view-trace .overview-only,
+    body.view-trace .loop-only,
+    body.view-loop .overview-only,
+    body.view-loop .trace-only {
+      display: none;
+    }
+
+    body.view-trace .flow-edge.dim,
+    body.view-trace .node.dim {
+      opacity: 0.35;
+    }
+
+    body.view-trace .trace-target,
+    body.view-loop .loop-target {
+      filter: drop-shadow(0 0 0.75rem rgba(31, 123, 88, 0.34));
+    }
+
+    body.view-loop .loop-target .node-box,
+    body.view-loop .loop-target .node-diamond {
+      stroke: var(--red);
+      stroke-width: 3;
+    }
+
+    body.view-trace .trace-target .node-box,
+    body.view-trace .trace-target .node-diamond {
+      stroke: var(--green);
+      stroke-width: 3;
+    }
+
+    .node-box,
+    .node-diamond {
+      fill: #fff;
+      stroke: var(--line-strong);
+      stroke-width: 2;
+    }
+
+    .node.state .node-box {
+      fill: var(--green-soft);
+      stroke: rgba(31, 123, 88, 0.8);
+    }
+
+    .node.action .node-box {
+      fill: var(--blue-soft);
+      stroke: rgba(36, 72, 109, 0.72);
+    }
+
+    .node.branch .node-diamond,
+    .node.merge .node-diamond {
+      fill: #fff9ef;
+      stroke: rgba(177, 111, 22, 0.86);
+    }
+
+    .node.merge .node-diamond {
+      fill: #fff;
+    }
+
+    .node-label {
+      fill: var(--ink);
+      font-size: 16px;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .node-sub {
+      fill: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .edge-label {
+      fill: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      paint-order: stroke;
+      stroke: #fff;
+      stroke-width: 5px;
+      stroke-linejoin: round;
+    }
+
+    .symbol-card {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .symbol {
+      width: 36px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .symbol.start::before {
+      content: "";
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    .symbol.action {
+      border: 2px solid var(--blue);
+      border-radius: 8px;
+      background: var(--blue-soft);
+    }
+
+    .symbol.branch {
+      width: 26px;
+      height: 26px;
+      transform: rotate(45deg);
+      border: 2px solid var(--amber);
+      background: var(--amber-soft);
+      margin-left: 5px;
+    }
+
+    .symbol.end::before {
+      content: "";
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 3px solid var(--ink);
+      box-shadow: inset 0 0 0 5px #fff, inset 0 0 0 9px var(--ink);
+    }
+
+    .bottom-strip {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      box-shadow: none;
+    }
+
+    .trace-step {
+      min-width: 0;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 4px;
+    }
+
+    .trace-step span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .trace-step strong {
+      font-size: 13px;
+    }
+
+    .right-panel .panel-section {
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .property-grid {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr);
+      gap: 7px 8px;
+      font-size: 12px;
+    }
+
+    .property-grid label {
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .property-grid div {
+      min-width: 0;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #f8faf8;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body class="view-overview">
+  <main class="frame">
+    <header class="topbar">
+      <div class="title">
+        <h1>敌人决策活动图式状态机原型 v3</h1>
+        <p>把敌人决策从自由节点图改成可读的控制流：Start -> State -> Decision -> Action -> Merge -> End Turn -> nextState 回流。</p>
+      </div>
+      <div class="pill-row">
+        <span class="pill">UML Activity 读法</span>
+        <span class="pill">主流程自上而下</span>
+        <span class="pill">回流走外侧</span>
+      </div>
+      <nav class="mode-row" aria-label="原型视图">
+        <a class="mode" href="?view=overview" data-view="overview">总览</a>
+        <a class="mode" href="?view=trace" data-view="trace">路径</a>
+        <a class="mode" href="?view=loop" data-view="loop">回流</a>
+      </nav>
+    </header>
+
+    <section class="workspace">
+      <aside class="side-panel">
+        <section class="panel-section">
+          <h2>腐锈投石兵</h2>
+          <p>示例敌人只保留当前敌人可执行的技能，流程图负责说明“本回合如何检查并选中行动”。</p>
+          <div class="pill-row">
+            <span class="tag state">state_normal</span>
+            <span class="tag action">2 skills</span>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h3>活动图符号</h3>
+          <div class="symbol-card"><span class="symbol start"></span><span>开始节点：进入本回合求值。</span></div>
+          <div class="symbol-card"><span class="symbol action">Action</span><span>行动或状态步骤：圆角矩形。</span></div>
+          <div class="symbol-card"><span class="symbol branch"></span><span>条件判断：菱形，边上写 guard。</span></div>
+          <div class="symbol-card"><span class="symbol end"></span><span>结束节点：本回合求值结束。</span></div>
+        </section>
+
+        <section class="panel-section">
+          <h3>敌人技能</h3>
+          <div class="list">
+            <div class="list-item"><strong>skill_throw_stone</strong><span class="tag action">远距投石</span></div>
+            <div class="list-item"><strong>enemy_skill_rusty_shiv</strong><span class="tag action">锈刃割裂</span></div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="canvas-shell">
+        <div class="diagram-board">
+          <div class="diagram-head">
+            <strong class="overview-only">活动图式敌人状态机：自上而下读主流程</strong>
+            <strong class="trace-only">路径态：高亮本回合实际访问路径</strong>
+            <strong class="loop-only">回流态：Action.nextState 走外侧回到 State</strong>
+            <span>圆点 Start / 菱形 Decision / 圆角 Action / 靶心 End Turn</span>
+          </div>
+
+          <svg class="activity-svg" viewBox="0 0 1180 780" role="img" aria-label="敌人决策活动图式状态机">
+            <defs>
+              <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L10,4 L0,8 Z" fill="rgba(25, 33, 30, 0.72)"></path>
+              </marker>
+              <marker id="arrow-guard" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L10,4 L0,8 Z" fill="rgba(177, 111, 22, 0.78)"></path>
+              </marker>
+              <marker id="arrow-loop" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L10,4 L0,8 Z" fill="rgba(161, 58, 43, 0.9)"></path>
+              </marker>
+              <marker id="arrow-trace" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L10,4 L0,8 Z" fill="#1f7b58"></path>
+              </marker>
+            </defs>
+
+            <path class="flow-edge trace trace-only" d="M590 44 L590 70 M590 128 L590 154 M590 226 L590 276 M590 354 L590 410 M680 448 L770 448 M870 490 L870 632 L640 632 M590 672 L590 704 M590 756 C188 756 170 112 470 100"></path>
+            <path class="flow-edge loop loop-target" d="M590 756 C188 756 170 112 470 100"></path>
+
+            <path class="flow-edge" d="M590 44 L590 70"></path>
+            <path class="flow-edge" d="M590 128 L590 154"></path>
+            <path class="flow-edge guard trace-target" d="M590 226 L590 276"></path>
+            <path class="flow-edge guard dim" d="M680 190 L900 190 L900 632 L640 632"></path>
+            <path class="flow-edge guard trace-target" d="M590 354 L590 410"></path>
+            <path class="flow-edge guard dim" d="M680 318 L870 318 L870 632 L640 632"></path>
+            <path class="flow-edge guard trace-target" d="M680 448 L770 448"></path>
+            <path class="flow-edge guard dim" d="M500 448 L310 448 L310 632 L540 632"></path>
+            <path class="flow-edge trace-target" d="M870 490 L870 632 L640 632"></path>
+            <path class="flow-edge dim" d="M310 490 L310 632 L540 632"></path>
+            <path class="flow-edge" d="M590 672 L590 704"></path>
+
+            <text class="edge-label" x="620" y="252">false</text>
+            <text class="edge-label" x="703" y="177">true: 低血保守</text>
+            <text class="edge-label" x="620" y="382">false</text>
+            <text class="edge-label" x="707" y="305">true: 远距</text>
+            <text class="edge-label" x="700" y="435">true</text>
+            <text class="edge-label" x="398" y="435">false</text>
+            <text class="edge-label loop-target" x="206" y="386">nextState: state_normal</text>
+
+            <g class="node start diagram-node">
+              <circle cx="590" cy="34" r="10" fill="#19211e"></circle>
+              <text class="node-label" x="628" y="34" text-anchor="start">Start</text>
+            </g>
+
+            <g class="node state trace-target loop-target diagram-node">
+              <rect class="node-box" x="470" y="70" width="240" height="58" rx="10"></rect>
+              <text class="node-label" x="590" y="94">默认状态</text>
+              <text class="node-sub" x="590" y="113">currentStateId = state_normal</text>
+            </g>
+
+            <g class="node branch trace-target diagram-node">
+              <polygon class="node-diamond" points="590,154 680,190 590,226 500,190"></polygon>
+              <text class="node-label" x="590" y="184">HP <= 35%?</text>
+              <text class="node-sub" x="590" y="204">self_hp_ratio_lte</text>
+            </g>
+
+            <g class="node action dim diagram-node">
+              <rect class="node-box" x="770" y="160" width="190" height="60" rx="10"></rect>
+              <text class="node-label" x="865" y="184">保守投石</text>
+              <text class="node-sub" x="865" y="204">skill_throw_stone</text>
+            </g>
+
+            <g class="node branch trace-target diagram-node">
+              <polygon class="node-diamond" points="590,276 680,318 590,360 500,318"></polygon>
+              <text class="node-label" x="590" y="311">距离 >= 2?</text>
+              <text class="node-sub" x="590" y="333">target_distance_gte</text>
+            </g>
+
+            <g class="node action dim diagram-node">
+              <rect class="node-box" x="770" y="288" width="190" height="60" rx="10"></rect>
+              <text class="node-label" x="865" y="312">远距投石</text>
+              <text class="node-sub" x="865" y="332">skill_throw_stone</text>
+            </g>
+
+            <g class="node branch trace-target diagram-node">
+              <polygon class="node-diamond" points="590,410 680,448 590,486 500,448"></polygon>
+              <text class="node-label" x="590" y="441">目标未流血?</text>
+              <text class="node-sub" x="590" y="462">target_missing_bleed</text>
+            </g>
+
+            <g class="node action trace-target diagram-node">
+              <rect class="node-box" x="770" y="418" width="200" height="72" rx="10"></rect>
+              <text class="node-label" x="870" y="445">锈刃割裂</text>
+              <text class="node-sub" x="870" y="466">enemy_skill_rusty_shiv</text>
+              <text class="node-sub" x="870" y="481">nextState -> state_normal</text>
+            </g>
+
+            <g class="node action dim diagram-node">
+              <rect class="node-box" x="210" y="418" width="200" height="72" rx="10"></rect>
+              <text class="node-label" x="310" y="445">后备投石</text>
+              <text class="node-sub" x="310" y="466">fallback action</text>
+              <text class="node-sub" x="310" y="481">nextState -> state_normal</text>
+            </g>
+
+            <g class="node merge trace-target diagram-node">
+              <polygon class="node-diamond" points="590,592 640,632 590,672 540,632"></polygon>
+              <text class="node-label" x="590" y="626">Merge</text>
+              <text class="node-sub" x="590" y="646">selectedAction</text>
+            </g>
+
+            <g class="node action trace-target diagram-node">
+              <rect class="node-box" x="470" y="704" width="240" height="48" rx="10"></rect>
+              <text class="node-label" x="590" y="728">End Turn</text>
+              <text class="node-sub" x="590" y="744">输出 trace 与 nextState</text>
+            </g>
+
+            <g class="node end diagram-node">
+              <circle cx="590" cy="770" r="12" fill="#fff" stroke="#19211e" stroke-width="3"></circle>
+              <circle cx="590" cy="770" r="6" fill="#19211e"></circle>
+              <text class="node-label" x="626" y="770" text-anchor="start">End</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="bottom-strip">
+          <div class="trace-step">
+            <span>本回合路径</span>
+            <strong class="overview-only">默认状态 -> 条件检查 -> 选中行动 -> End Turn</strong>
+            <strong class="trace-only">默认状态 -> HP false -> 距离 false -> 未流血 true -> 锈刃割裂</strong>
+            <strong class="loop-only">Action 完成后，不继续在本回合内循环，写入 nextState</strong>
+          </div>
+          <div class="trace-step">
+            <span>回流语义</span>
+            <strong>Action.nextState 只指向 State，走外侧虚线。</strong>
+          </div>
+          <div class="trace-step">
+            <span>实现约束</span>
+            <strong>自动布局应优先维护垂直主流程，再处理侧边回线避让。</strong>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-panel right-panel">
+        <section class="panel-section overview-only">
+          <h2>总览判断</h2>
+          <p>这版不再把节点按“状态/动作轨道”横向摊开，而是把状态机求值画成一条可顺读的活动图。</p>
+          <div class="property-grid">
+            <label>主方向</label><div>自上而下</div>
+            <label>判断节点</label><div>菱形</div>
+            <label>行动节点</label><div>圆角矩形</div>
+            <label>回流</label><div>外侧虚线</div>
+          </div>
+        </section>
+
+        <section class="panel-section trace-only">
+          <h2>路径预览</h2>
+          <p>路径态应该给设计者解释“为什么走到这个技能”，而不是只显示最终 action。</p>
+          <div class="list">
+            <div class="list-item"><strong>1. 默认状态</strong><span>从 currentStateId 开始。</span></div>
+            <div class="list-item"><strong>2. HP 判断 false</strong><span>不进入保守投石。</span></div>
+            <div class="list-item"><strong>3. 距离判断 false</strong><span>不使用远距投石。</span></div>
+            <div class="list-item"><strong>4. 流血判断 true</strong><span>选择 enemy_skill_rusty_shiv。</span></div>
+          </div>
+        </section>
+
+        <section class="panel-section loop-only">
+          <h2>回流目标</h2>
+          <p>后段回指前段的线不要穿过判断节点；所有跨回合回流都走外侧通道。</p>
+          <div class="property-grid">
+            <label>锈刃割裂</label><div>state_normal</div>
+            <label>远距投石</label><div>state_normal</div>
+            <label>保守投石</label><div>state_normal</div>
+            <label>后备投石</label><div>state_normal</div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h3>不可接受偏差</h3>
+          <p>不能再出现斜线穿越整张画布、菱形语义缺失、回流线和普通 flow 混在一起、End Turn 不清楚这些问题。</p>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const view = new URLSearchParams(location.search).get('view') || 'overview';
+    document.body.className = `view-${['overview', 'trace', 'loop'].includes(view) ? view : 'overview'}`;
+  </script>
+</body>
+</html>

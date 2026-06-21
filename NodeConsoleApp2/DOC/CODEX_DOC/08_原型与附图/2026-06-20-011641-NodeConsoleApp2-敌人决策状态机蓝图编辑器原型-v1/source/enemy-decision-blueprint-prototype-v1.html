@@ -1,0 +1,1468 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>敌人决策状态机蓝图编辑器原型 v1</title>
+  <style>
+    :root {
+      --bg: #edf1ee;
+      --panel: #fbfcf8;
+      --panel-2: #f2f6f1;
+      --ink: #17211e;
+      --muted: #66746f;
+      --line: #cbd7d1;
+      --line-strong: #91a19a;
+      --teal: #0f766e;
+      --teal-2: #d7f0ea;
+      --blue: #2d6f9f;
+      --blue-2: #dbeafe;
+      --amber: #b87908;
+      --amber-2: #fff2c8;
+      --red: #ad3f37;
+      --red-2: #fde2dc;
+      --violet: #6957a8;
+      --violet-2: #ece7ff;
+      --shadow: 0 18px 45px rgba(26, 42, 38, 0.16);
+      --radius: 8px;
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #dfe7e2;
+      color: var(--ink);
+    }
+
+    .prototype-frame {
+      width: 1920px;
+      height: 1080px;
+      display: grid;
+      grid-template-columns: 330px 1fr 390px;
+      grid-template-rows: 68px 1fr 224px;
+      background:
+        linear-gradient(90deg, rgba(15, 118, 110, 0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(15, 118, 110, 0.06) 1px, transparent 1px),
+        var(--bg);
+      background-size: 32px 32px;
+    }
+
+    .topbar {
+      grid-column: 1 / 4;
+      grid-row: 1;
+      display: grid;
+      grid-template-columns: 330px 1fr 390px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 252, 248, 0.94);
+      box-shadow: 0 10px 26px rgba(28, 40, 37, 0.08);
+      z-index: 5;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 22px;
+      height: 68px;
+      border-right: 1px solid var(--line);
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border: 2px solid #1c2a26;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: #f7fbf8;
+      font-weight: 900;
+      color: var(--teal);
+      box-shadow: inset 0 -5px 0 rgba(15, 118, 110, 0.14);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      font-weight: 900;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toolbar {
+      height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      min-width: 0;
+    }
+
+    .status-strip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      margin-right: auto;
+    }
+
+    .status-pill,
+    .tool-button,
+    .mode-button,
+    .mini-button {
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .status-pill {
+      padding: 0 10px;
+      color: var(--muted);
+      font-weight: 700;
+      max-width: 260px;
+    }
+
+    .status-pill strong {
+      color: var(--ink);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tool-button {
+      padding: 0 10px;
+      font-size: 12px;
+      box-shadow: 0 5px 12px rgba(28, 40, 37, 0.08);
+    }
+
+    .tool-button.primary {
+      color: #ffffff;
+      background: #111d1a;
+      border-color: #111d1a;
+    }
+
+    .tool-button.accent {
+      background: var(--amber-2);
+      border-color: #efc766;
+      color: #5b3900;
+    }
+
+    .view-switcher {
+      display: inline-flex;
+      padding: 4px;
+      gap: 4px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #eef4f0;
+    }
+
+    .mode-button {
+      height: 28px;
+      padding: 0 10px;
+      border-color: transparent;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .view-overview .mode-button[data-view="overview"],
+    .view-selected .mode-button[data-view="selected"],
+    .view-trace .mode-button[data-view="trace"] {
+      color: #ffffff;
+      background: var(--teal);
+    }
+
+    .right-status {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      height: 68px;
+      padding: 0 20px;
+      border-left: 1px solid var(--line);
+    }
+
+    .save-state {
+      display: grid;
+      gap: 2px;
+      text-align: right;
+    }
+
+    .save-state span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .save-state strong {
+      font-size: 13px;
+    }
+
+    .sidebar,
+    .inspector,
+    .bottom-panel {
+      background: rgba(251, 252, 248, 0.96);
+      border-color: var(--line);
+    }
+
+    .sidebar {
+      grid-column: 1;
+      grid-row: 2 / 4;
+      border-right: 1px solid var(--line);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 0;
+    }
+
+    .enemy-card {
+      margin: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+      box-shadow: 0 10px 20px rgba(28, 40, 37, 0.08);
+    }
+
+    .enemy-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .enemy-title h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+
+    .enemy-title code {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-family: "Consolas", "Microsoft YaHei", monospace;
+      font-size: 11px;
+    }
+
+    .risk-badge {
+      padding: 5px 8px;
+      border-radius: 8px;
+      background: var(--red-2);
+      color: var(--red);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .enemy-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      padding: 9px;
+      border-radius: 8px;
+      background: var(--panel-2);
+      border: 1px solid #dce5df;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 17px;
+    }
+
+    .sidebar-scroll {
+      padding: 0 14px 14px;
+      overflow: hidden;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .rail-section {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .rail-header {
+      height: 38px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      background: #f3f7f4;
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .rail-header span {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .rail-body {
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .template-row,
+    .node-palette-row,
+    .skill-row {
+      min-height: 50px;
+      display: grid;
+      gap: 4px;
+      padding: 9px 10px;
+      border: 1px solid #dce5df;
+      border-radius: 8px;
+      background: #fbfdfb;
+    }
+
+    .template-row.active {
+      border-color: var(--teal);
+      box-shadow: inset 4px 0 0 var(--teal);
+    }
+
+    .row-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .row-line strong {
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .row-line span,
+    .subtext {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 7px;
+      border: 1px solid #d5ded8;
+      background: #f5f8f6;
+      color: #52615b;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tag.teal {
+      color: #075c57;
+      background: var(--teal-2);
+      border-color: #94d4c8;
+    }
+
+    .tag.blue {
+      color: #26547a;
+      background: var(--blue-2);
+      border-color: #a9c9ee;
+    }
+
+    .tag.amber {
+      color: #6f4400;
+      background: var(--amber-2);
+      border-color: #e8c15d;
+    }
+
+    .tag.red {
+      color: var(--red);
+      background: var(--red-2);
+      border-color: #efb4aa;
+    }
+
+    .tag.violet {
+      color: #52408f;
+      background: var(--violet-2);
+      border-color: #c8bbff;
+    }
+
+    .canvas-shell {
+      grid-column: 2;
+      grid-row: 2;
+      position: relative;
+      overflow: hidden;
+      border-right: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 18% 18%, rgba(15, 118, 110, 0.10), transparent 24%),
+        radial-gradient(circle at 82% 14%, rgba(184, 121, 8, 0.09), transparent 20%),
+        linear-gradient(90deg, rgba(42, 65, 59, 0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(42, 65, 59, 0.06) 1px, transparent 1px),
+        #eaf0ec;
+      background-size: auto, auto, 24px 24px, 24px 24px, auto;
+    }
+
+    .canvas-top-strip {
+      position: absolute;
+      top: 16px;
+      left: 18px;
+      right: 18px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border: 1px solid rgba(145, 161, 154, 0.55);
+      border-radius: 8px;
+      background: rgba(251, 252, 248, 0.88);
+      backdrop-filter: blur(6px);
+      z-index: 3;
+    }
+
+    .canvas-top-strip strong {
+      font-size: 14px;
+    }
+
+    .canvas-top-strip span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .canvas-tools {
+      display: flex;
+      gap: 7px;
+    }
+
+    .mini-button {
+      height: 28px;
+      padding: 0 9px;
+      font-size: 12px;
+      border-radius: 7px;
+    }
+
+    .blueprint-canvas {
+      position: absolute;
+      inset: 0;
+      width: 1200px;
+      height: 788px;
+      transform-origin: top left;
+    }
+
+    .edge-layer {
+      position: absolute;
+      inset: 0;
+      width: 1200px;
+      height: 788px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .edge {
+      fill: none;
+      stroke: #80918a;
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+
+    .edge.true {
+      stroke: var(--teal);
+    }
+
+    .edge.false {
+      stroke: var(--amber);
+      stroke-dasharray: 7 7;
+    }
+
+    .edge.fallback {
+      stroke: var(--red);
+      stroke-dasharray: 3 6;
+    }
+
+    .edge.next {
+      stroke: var(--blue);
+    }
+
+    .view-trace .edge.trace-active,
+    .view-selected .edge.to-selected {
+      stroke-width: 6;
+      filter: drop-shadow(0 0 7px rgba(15, 118, 110, 0.35));
+    }
+
+    .edge-label {
+      position: absolute;
+      z-index: 2;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 8px;
+      border-radius: 7px;
+      border: 1px solid #c7d2cc;
+      background: rgba(255, 255, 255, 0.92);
+      color: #4f5d58;
+      font-size: 11px;
+      font-weight: 900;
+      box-shadow: 0 5px 10px rgba(28, 40, 37, 0.09);
+      white-space: nowrap;
+    }
+
+    .node {
+      position: absolute;
+      z-index: 2;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .node.entry {
+      width: 150px;
+      height: 64px;
+      left: 54px;
+      top: 92px;
+      border-color: #9aa7a0;
+    }
+
+    .node.state-normal {
+      width: 230px;
+      height: 138px;
+      left: 265px;
+      top: 80px;
+      border-color: #6aa8a1;
+    }
+
+    .node.branch-low-hp {
+      width: 260px;
+      height: 160px;
+      left: 580px;
+      top: 70px;
+      border-color: #bd9554;
+    }
+
+    .node.state-recover {
+      width: 230px;
+      height: 135px;
+      left: 900px;
+      top: 70px;
+      border-color: #5e93ba;
+    }
+
+    .node.action-heal {
+      width: 230px;
+      height: 150px;
+      left: 900px;
+      top: 252px;
+      border-color: #719d72;
+    }
+
+    .node.branch-bleed {
+      width: 270px;
+      height: 166px;
+      left: 580px;
+      top: 292px;
+      border-color: #a08bc8;
+    }
+
+    .node.action-bleed {
+      width: 235px;
+      height: 150px;
+      left: 900px;
+      top: 486px;
+      border-color: #a95f5a;
+    }
+
+    .node.action-throw {
+      width: 250px;
+      height: 146px;
+      left: 595px;
+      top: 572px;
+      border-color: #658fb7;
+    }
+
+    .node-header {
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: 1px solid #dbe4df;
+      background: #f7faf7;
+    }
+
+    .node-header strong {
+      font-size: 13px;
+      line-height: 1.2;
+      max-width: 168px;
+    }
+
+    .node-type {
+      height: 22px;
+      padding: 0 7px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #ffffff;
+      background: #4f5e59;
+    }
+
+    .node-type.state {
+      background: var(--teal);
+    }
+
+    .node-type.branch {
+      background: var(--amber);
+    }
+
+    .node-type.action {
+      background: var(--blue);
+    }
+
+    .node-type.entry {
+      background: #44514c;
+    }
+
+    .node-body {
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .node-body p {
+      margin: 0;
+      color: #43524d;
+      line-height: 1.45;
+    }
+
+    .port-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .port {
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 7px;
+      border-radius: 7px;
+      border: 1px solid #d4ded8;
+      background: #f7faf8;
+      color: #52615b;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .port::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .port.true {
+      color: var(--teal);
+    }
+
+    .port.false {
+      color: var(--amber);
+    }
+
+    .port.fallback {
+      color: var(--red);
+    }
+
+    .port.next {
+      color: var(--blue);
+    }
+
+    .view-selected .branch-low-hp,
+    .view-trace .branch-low-hp,
+    .view-trace .state-recover,
+    .view-trace .action-heal {
+      outline: 4px solid rgba(15, 118, 110, 0.23);
+      box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.42), var(--shadow);
+    }
+
+    .node-warning {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 7px;
+      background: var(--amber-2);
+      color: #624000;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .inspector {
+      grid-column: 3;
+      grid-row: 2;
+      border-left: 1px solid var(--line);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 0;
+    }
+
+    .panel-title {
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .panel-title .label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .panel-title h2 {
+      margin: 5px 0 0;
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+
+    .panel-title p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .inspector-body {
+      padding: 14px;
+      overflow: hidden;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .inspector-section {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .section-head {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 11px;
+      border-bottom: 1px solid var(--line);
+      background: #f3f7f4;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .section-body {
+      padding: 11px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .field-grid label {
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .field-value,
+    .input-like {
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 9px;
+      border: 1px solid #d5ded8;
+      border-radius: 8px;
+      background: #fbfdfb;
+      font-weight: 800;
+      min-width: 0;
+    }
+
+    .input-like.warning {
+      background: var(--amber-2);
+      border-color: #e7bf5b;
+      color: #654000;
+    }
+
+    .graph-summary {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+
+    .summary-tile {
+      min-height: 68px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #dce5df;
+      background: #fbfdfb;
+    }
+
+    .summary-tile span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .summary-tile strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 18px;
+    }
+
+    .view-selected .overview-only,
+    .view-selected .trace-only,
+    .view-overview .selected-only,
+    .view-overview .trace-only,
+    .view-trace .overview-only,
+    .view-trace .selected-only {
+      display: none;
+    }
+
+    .bottom-panel {
+      grid-column: 2 / 4;
+      grid-row: 3;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 390px 1fr 350px;
+      min-width: 0;
+    }
+
+    .bottom-section {
+      padding: 14px;
+      border-right: 1px solid var(--line);
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .bottom-section:last-child {
+      border-right: none;
+    }
+
+    .bottom-section h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .context-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .context-item {
+      min-height: 42px;
+      padding: 7px 9px;
+      border: 1px solid #dce5df;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .context-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .context-item strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 13px;
+    }
+
+    .trace-lane {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .trace-step {
+      min-width: 118px;
+      max-width: 150px;
+      padding: 9px;
+      border: 1px solid #d5ded8;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .trace-step.active {
+      background: var(--teal-2);
+      border-color: #83cfc3;
+    }
+
+    .trace-step.decision {
+      background: var(--amber-2);
+      border-color: #e8c15d;
+    }
+
+    .trace-step.action {
+      background: var(--blue-2);
+      border-color: #9ec3e7;
+    }
+
+    .trace-step span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .trace-step strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .trace-arrow {
+      display: flex;
+      align-items: center;
+      color: #6e7d77;
+      font-weight: 900;
+      padding-top: 22px;
+    }
+
+    .issue-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .issue {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 8px;
+      align-items: start;
+      min-height: 40px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #dce5df;
+      background: #ffffff;
+    }
+
+    .issue b {
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .issue.warning b {
+      color: #634000;
+      background: var(--amber-2);
+    }
+
+    .issue.error b {
+      color: var(--red);
+      background: var(--red-2);
+    }
+
+    .issue.info b {
+      color: #245474;
+      background: var(--blue-2);
+    }
+
+    .issue span {
+      color: #47564f;
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="view-overview">
+  <main class="prototype-frame">
+    <header class="topbar">
+      <section class="brand">
+        <div class="brand-mark">FSM</div>
+        <div>
+          <h1>敌人决策</h1>
+          <p>状态机蓝图编辑器 / 全屏工作台</p>
+        </div>
+      </section>
+
+      <section class="toolbar">
+        <div class="status-strip">
+          <span class="status-pill">当前敌人 <strong>腐锈投石兵</strong></span>
+          <span class="status-pill">schema <strong>FSM v1</strong></span>
+          <span class="status-pill">模板 <strong>低血恢复 r3</strong></span>
+        </div>
+        <button class="tool-button">撤销</button>
+        <button class="tool-button">重做</button>
+        <button class="tool-button accent">运行校验</button>
+        <button class="tool-button">路径预览</button>
+        <button class="tool-button primary">保存工作稿</button>
+        <div class="view-switcher" aria-label="原型状态切换">
+          <button class="mode-button" data-view="overview">总览</button>
+          <button class="mode-button" data-view="selected">选中</button>
+          <button class="mode-button" data-view="trace">路径</button>
+        </div>
+      </section>
+
+      <section class="right-status">
+        <div class="save-state">
+          <span>全屏编辑中</span>
+          <strong>未发布，2 个 warning</strong>
+        </div>
+        <button class="tool-button primary">退出全屏</button>
+      </section>
+    </header>
+
+    <aside class="sidebar">
+      <section class="enemy-card">
+        <div class="enemy-title">
+          <div>
+            <h2>腐锈投石兵</h2>
+            <code>enemy_rust_slinger</code>
+          </div>
+          <span class="risk-badge">压制型</span>
+        </div>
+        <div class="enemy-metrics">
+          <div class="metric"><span>HP</span><strong>64</strong></div>
+          <div class="metric"><span>AP</span><strong>4</strong></div>
+          <div class="metric"><span>速度</span><strong>11</strong></div>
+        </div>
+      </section>
+
+      <section class="sidebar-scroll">
+        <div class="rail-section">
+          <div class="rail-header">决策模板 <span>可复制到敌人</span></div>
+          <div class="rail-body">
+            <div class="template-row active">
+              <div class="row-line">
+                <strong>低血恢复压制型</strong>
+                <span class="tag teal">已应用</span>
+              </div>
+              <div class="subtext">低血进入恢复状态，常规回合优先割裂</div>
+            </div>
+            <div class="template-row">
+              <div class="row-line">
+                <strong>基础攻击者</strong>
+                <span class="tag">r2</span>
+              </div>
+              <div class="subtext">默认状态 + 技能可用判断 + fallback</div>
+            </div>
+            <div class="template-row">
+              <div class="row-line">
+                <strong>蓄力重击型</strong>
+                <span class="tag amber">需绑定槽位</span>
+              </div>
+              <div class="subtext">蓄力状态、预兆、下一回合重击</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rail-section">
+          <div class="rail-header">节点库 <span>拖到画布</span></div>
+          <div class="rail-body">
+            <div class="node-palette-row">
+              <div class="row-line"><strong>状态节点</strong><span class="tag teal">State</span></div>
+              <div class="subtext">敌人可跨回合停留的行为阶段</div>
+            </div>
+            <div class="node-palette-row">
+              <div class="row-line"><strong>判断节点</strong><span class="tag amber">Branch</span></div>
+              <div class="subtext">只允许正式条件目录，不允许脚本表达式</div>
+            </div>
+            <div class="node-palette-row">
+              <div class="row-line"><strong>动作节点</strong><span class="tag blue">Action</span></div>
+              <div class="subtext">绑定当前敌人技能，输出本回合行动</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rail-section">
+          <div class="rail-header">敌人技能库 <span>绑定到 Action</span></div>
+          <div class="rail-body">
+            <div class="skill-row">
+              <div class="row-line"><strong>投石</strong><span class="tag blue">AP 2</span></div>
+              <div class="subtext">skill_throw_stone / target: player_weak_part</div>
+            </div>
+            <div class="skill-row">
+              <div class="row-line"><strong>锈刃割裂</strong><span class="tag red">流血</span></div>
+              <div class="subtext">enemy_skill_rusty_shiv / AP 3</div>
+            </div>
+            <div class="skill-row">
+              <div class="row-line"><strong>复苏药剂</strong><span class="tag teal">恢复</span></div>
+              <div class="subtext">enemy_skill_crude_tonic / AP 4</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="canvas-shell">
+      <div class="canvas-top-strip">
+        <div>
+          <strong>蓝图画布：腐锈投石兵 / 敌人决策状态机</strong>
+          <span>节点 8 / 连线 9 / 缩放 92% / 中心画布可平移</span>
+        </div>
+        <div class="canvas-tools">
+          <button class="mini-button">框选</button>
+          <button class="mini-button">连线</button>
+          <button class="mini-button">适配画布</button>
+          <button class="mini-button">小地图</button>
+        </div>
+      </div>
+
+      <div class="blueprint-canvas">
+        <svg class="edge-layer" viewBox="0 0 1200 788" aria-hidden="true">
+          <defs>
+            <marker id="arrow-default" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#80918a"></path>
+            </marker>
+            <marker id="arrow-teal" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#0f766e"></path>
+            </marker>
+            <marker id="arrow-amber" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#b87908"></path>
+            </marker>
+            <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#ad3f37"></path>
+            </marker>
+            <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#2d6f9f"></path>
+            </marker>
+          </defs>
+          <path class="edge" d="M204 124 C232 124, 236 149, 265 149" marker-end="url(#arrow-default)"></path>
+          <path class="edge trace-active to-selected" d="M495 149 C526 149, 548 150, 580 150" marker-end="url(#arrow-default)"></path>
+          <path class="edge true trace-active" d="M840 127 C865 124, 873 118, 900 118" marker-end="url(#arrow-teal)"></path>
+          <path class="edge trace-active" d="M1015 205 C1015 220, 1015 234, 1015 252" marker-end="url(#arrow-default)"></path>
+          <path class="edge next trace-active" d="M900 342 C806 344, 760 242, 495 197" marker-end="url(#arrow-blue)"></path>
+          <path class="edge false" d="M710 230 C710 248, 710 267, 710 292" marker-end="url(#arrow-amber)"></path>
+          <path class="edge true" d="M850 376 C874 423, 885 502, 900 552" marker-end="url(#arrow-teal)"></path>
+          <path class="edge false" d="M690 458 C683 489, 698 536, 720 572" marker-end="url(#arrow-amber)"></path>
+          <path class="edge fallback" d="M900 602 C820 640, 760 661, 845 665" marker-end="url(#arrow-red)"></path>
+          <path class="edge next" d="M595 650 C478 650, 420 314, 378 218" marker-end="url(#arrow-blue)"></path>
+        </svg>
+
+        <span class="edge-label" style="left: 218px; top: 110px;">flow</span>
+        <span class="edge-label" style="left: 517px; top: 126px;">flow / priority 100</span>
+        <span class="edge-label" style="left: 846px; top: 92px;">true：低血</span>
+        <span class="edge-label" style="left: 705px; top: 238px;">false：继续压制</span>
+        <span class="edge-label" style="left: 857px; top: 408px;">true：割裂可用</span>
+        <span class="edge-label" style="left: 694px; top: 505px;">false：投石</span>
+        <span class="edge-label" style="left: 742px; top: 646px;">fallback</span>
+        <span class="edge-label" style="left: 714px; top: 326px;">nextState：默认</span>
+
+        <article class="node entry">
+          <div class="node-header">
+            <strong>入口</strong>
+            <span class="node-type entry">Entry</span>
+          </div>
+          <div class="node-body">
+            <div class="port-row"><span class="port">flow</span></div>
+          </div>
+        </article>
+
+        <article class="node state-normal">
+          <div class="node-header">
+            <strong>默认压制状态</strong>
+            <span class="node-type state">State</span>
+          </div>
+          <div class="node-body">
+            <p>每回合先检查自身 HP，再决定恢复或继续攻击。</p>
+            <div class="port-row">
+              <span class="port">in flow</span>
+              <span class="port">flow</span>
+              <span class="port fallback">fallback</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="node branch-low-hp">
+          <div class="node-header">
+            <strong>自身 HP 不高于 35%</strong>
+            <span class="node-type branch">Branch</span>
+          </div>
+          <div class="node-body">
+            <p>condition: self_hp_ratio_lte / value: 0.35</p>
+            <div class="port-row">
+              <span class="port">in flow</span>
+              <span class="port true">true</span>
+              <span class="port false">false</span>
+            </div>
+            <div class="node-warning">路径态下结果为 true，进入恢复状态。</div>
+          </div>
+        </article>
+
+        <article class="node state-recover">
+          <div class="node-header">
+            <strong>恢复状态</strong>
+            <span class="node-type state">State</span>
+          </div>
+          <div class="node-body">
+            <p>短暂停留一回合，优先尝试恢复技能。</p>
+            <div class="port-row">
+              <span class="port">flow</span>
+              <span class="port fallback">fallback</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="node action-heal">
+          <div class="node-header">
+            <strong>使用复苏药剂</strong>
+            <span class="node-type action">Action</span>
+          </div>
+          <div class="node-body">
+            <p>skillSlotId: slot_recover / AP 4 / next: 默认压制状态</p>
+            <div class="port-row">
+              <span class="port">in flow</span>
+              <span class="port fallback">fallback</span>
+              <span class="port next">nextState</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="node branch-bleed">
+          <div class="node-header">
+            <strong>锈刃割裂可用？</strong>
+            <span class="node-type branch">Branch</span>
+          </div>
+          <div class="node-body">
+            <p>condition: skill_available / skillSlotId: slot_bleed_attack</p>
+            <div class="port-row">
+              <span class="port">in flow</span>
+              <span class="port true">true</span>
+              <span class="port false">false</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="node action-bleed">
+          <div class="node-header">
+            <strong>锈刃割裂</strong>
+            <span class="node-type action">Action</span>
+          </div>
+          <div class="node-body">
+            <p>绑定 enemy_skill_rusty_shiv，目标为玩家弱点部位。</p>
+            <div class="port-row">
+              <span class="port">in flow</span>
+              <span class="port fallback">fallback</span>
+              <span class="port next">nextState</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="node action-throw">
+          <div class="node-header">
+            <strong>投石</strong>
+            <span class="node-type action">Action</span>
+          </div>
+          <div class="node-body">
+            <p>保守 fallback 动作，AP 2，保持默认状态。</p>
+            <div class="port-row">
+              <span class="port">in flow</span>
+              <span class="port next">nextState</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <aside class="inspector">
+      <div class="panel-title">
+        <div class="label overview-only">图谱摘要</div>
+        <div class="label selected-only">节点属性</div>
+        <div class="label trace-only">路径预览</div>
+        <h2 class="overview-only">状态机结构可读性</h2>
+        <h2 class="selected-only">判断：自身 HP 不高于 35%</h2>
+        <h2 class="trace-only">回合 4 执行轨迹</h2>
+        <p class="overview-only">这不是意图循环。每条线都有端口语义，Action 才能结束本回合。</p>
+        <p class="selected-only">右侧可以直接编辑条件类型、阈值和 true / false 出口。</p>
+        <p class="trace-only">预览只解释状态机路径，不做战斗胜负或平衡模拟。</p>
+      </div>
+
+      <div class="inspector-body">
+        <section class="inspector-section overview-only">
+          <div class="section-head">当前图统计 <span class="tag teal">可发布草稿</span></div>
+          <div class="section-body">
+            <div class="graph-summary">
+              <div class="summary-tile"><span>Entry</span><strong>1</strong></div>
+              <div class="summary-tile"><span>State</span><strong>2</strong></div>
+              <div class="summary-tile"><span>Branch</span><strong>2</strong></div>
+              <div class="summary-tile"><span>Action</span><strong>3</strong></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="inspector-section selected-only">
+          <div class="section-head">条件编辑 <span class="tag amber">Branch</span></div>
+          <div class="section-body">
+            <div class="field-grid">
+              <label>条件类型</label>
+              <div class="field-value">自身 HP 比例 <= 阈值</div>
+              <label>condition</label>
+              <div class="field-value">self_hp_ratio_lte</div>
+              <label>阈值 value</label>
+              <div class="input-like">0.35 <span class="tag">35%</span></div>
+              <label>true 出口</label>
+              <div class="field-value">恢复状态</div>
+              <label>false 出口</label>
+              <div class="field-value">锈刃割裂可用？</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="inspector-section trace-only">
+          <div class="section-head">模拟输入 <span class="tag teal">共享 evaluator</span></div>
+          <div class="section-body">
+            <div class="field-grid">
+              <label>起始状态</label>
+              <div class="field-value">默认压制状态</div>
+              <label>回合号</label>
+              <div class="field-value">4</div>
+              <label>自身 HP</label>
+              <div class="input-like warning">28%</div>
+              <label>自身 AP</label>
+              <div class="field-value">4 / 4</div>
+              <label>玩家腹部护甲</label>
+              <div class="field-value">7 / 18</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="inspector-section">
+          <div class="section-head">技能槽位绑定 <span class="tag blue">当前敌人 skills[]</span></div>
+          <div class="section-body">
+            <div class="field-grid">
+              <label>slot_basic_attack</label>
+              <div class="field-value">skill_throw_stone</div>
+              <label>slot_bleed_attack</label>
+              <div class="field-value">enemy_skill_rusty_shiv</div>
+              <label>slot_recover</label>
+              <div class="field-value">enemy_skill_crude_tonic</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="inspector-section">
+          <div class="section-head">端口规则 <span class="tag violet">拖线时校验</span></div>
+          <div class="section-body">
+            <div class="issue-list">
+              <div class="issue info"><b>INFO</b><span>Action.nextState 只能连接 State；连接到 Branch 时拖线阶段直接拒绝。</span></div>
+              <div class="issue warning"><b>WARN</b><span>高威胁 Action 缺少 telegraph 时只允许保存工作稿，不允许发布 runtime pack。</span></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <section class="bottom-panel">
+      <div class="bottom-section">
+        <h3>预览上下文</h3>
+        <div class="context-grid">
+          <div class="context-item"><span>模拟回合</span><strong>第 4 回合</strong></div>
+          <div class="context-item"><span>当前状态</span><strong>默认压制状态</strong></div>
+          <div class="context-item"><span>自身 HP</span><strong>28% / 64</strong></div>
+          <div class="context-item"><span>自身 AP</span><strong>4</strong></div>
+          <div class="context-item"><span>玩家弱点</span><strong>腹部护甲 7</strong></div>
+          <div class="context-item"><span>上一动作</span><strong>投石</strong></div>
+        </div>
+      </div>
+
+      <div class="bottom-section">
+        <h3>路径预览轨迹</h3>
+        <div class="trace-lane">
+          <div class="trace-step active"><span>startState</span><strong>默认压制状态</strong></div>
+          <div class="trace-arrow">></div>
+          <div class="trace-step decision"><span>branch</span><strong>HP <= 35%: true</strong></div>
+          <div class="trace-arrow">></div>
+          <div class="trace-step active"><span>state</span><strong>恢复状态</strong></div>
+          <div class="trace-arrow">></div>
+          <div class="trace-step action"><span>action</span><strong>使用复苏药剂</strong></div>
+          <div class="trace-arrow">></div>
+          <div class="trace-step active"><span>nextState</span><strong>默认压制状态</strong></div>
+        </div>
+      </div>
+
+      <div class="bottom-section">
+        <h3>校验问题</h3>
+        <div class="issue-list">
+          <div class="issue warning"><b>WARN</b><span>锈刃割裂 Action 未设置 telegraph；如作为高威胁动作，发布前需要补预兆。</span></div>
+          <div class="issue warning"><b>WARN</b><span>模板来源 r3 已变更，当前敌人图已脱离模板更新链。</span></div>
+          <div class="issue info"><b>INFO</b><span>当前图没有 error，可以保存工作稿；runtime 发布仍需通过首回合规划。</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const view = params.get("view") || "overview";
+    document.body.className = `view-${view}`;
+
+    document.querySelectorAll("[data-view]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const next = button.getAttribute("data-view");
+        const url = new URL(location.href);
+        url.searchParams.set("view", next);
+        location.href = url.href;
+      });
+    });
+  </script>
+</body>
+</html>

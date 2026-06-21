@@ -1,0 +1,74 @@
+{
+  "generatedAt": "2026-06-19T17:23:50.336Z",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "browserPath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "html": "source\\enemy-decision-blueprint-prototype-v1.html",
+  "screenshots": [
+    {
+      "view": "view-overview",
+      "fileName": "01-1920x1080-敌人决策蓝图总览态.png",
+      "title": "敌人决策状态机蓝图编辑器原型 v1",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      },
+      "nodeCount": 8,
+      "nodeOverlaps": [],
+      "horizontalOverflow": false,
+      "verticalOverflow": false
+    },
+    {
+      "view": "view-selected",
+      "fileName": "02-1920x1080-低血判断节点选中态.png",
+      "title": "敌人决策状态机蓝图编辑器原型 v1",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      },
+      "nodeCount": 8,
+      "nodeOverlaps": [],
+      "horizontalOverflow": false,
+      "verticalOverflow": false
+    },
+    {
+      "view": "view-trace",
+      "fileName": "03-1920x1080-路径预览与校验态.png",
+      "title": "敌人决策状态机蓝图编辑器原型 v1",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "body": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "width": 1920,
+        "height": 1080
+      },
+      "nodeCount": 8,
+      "nodeOverlaps": [],
+      "horizontalOverflow": false,
+      "verticalOverflow": false
+    }
+  ]
+}
