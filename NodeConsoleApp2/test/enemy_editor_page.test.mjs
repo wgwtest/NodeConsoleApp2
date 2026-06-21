@@ -816,6 +816,50 @@ test('EnemyEditorPage Rete workspace nodes are draggable from their visible card
     assert.equal(movedDecision.layout.reteNodes[actionCard.dataset.nodeId].y, Number(startLayout.y) + 48);
 });
 
+test('EnemyEditorPage Rete action end is a selectable and draggable system node', async () => {
+    const { page, dom } = await createPageContext();
+    page.loadDocument(buildWrappedEnemiesWithEnums());
+    dom.window.document.getElementById('enemyDecisionTab').dispatchEvent(new Event('click'));
+
+    const canvas = dom.window.document.getElementById('decisionGraphCanvas');
+    const actionEndCard = findCanvasElement(canvas, child => child.dataset?.nodeType === 'actionEnd' && String(child.className || '').includes('decision-rete-node'));
+    const actionEndId = actionEndCard?.dataset?.nodeId;
+    const startDecision = page.decisionGraphEditor.getDecision();
+    const startLayout = startDecision.layout.reteNodes[actionEndId] || {};
+
+    assert(actionEndCard, 'action end should expose a visible Rete system card');
+    assert.equal(actionEndId, '__action_end__');
+    assert.equal(Number.isFinite(Number(startLayout.x)), true, 'action end layout should be persisted before dragging');
+    assert.equal(Number.isFinite(Number(startLayout.y)), true, 'action end layout should be persisted before dragging');
+
+    actionEndCard.dispatchEvent({
+        type: 'mousedown',
+        target: actionEndCard,
+        clientX: 1120,
+        clientY: 300,
+        preventDefault() {}
+    });
+    dom.window.document.dispatchEvent({
+        type: 'mousemove',
+        clientX: 1164,
+        clientY: 332,
+        preventDefault() {}
+    });
+    dom.window.document.dispatchEvent({ type: 'mouseup' });
+
+    const movedDecision = page.decisionGraphEditor.getDecision();
+    assert.equal(movedDecision.layout.reteNodes[actionEndId].x, Number(startLayout.x) + 44);
+    assert.equal(movedDecision.layout.reteNodes[actionEndId].y, Number(startLayout.y) + 32);
+    assert.equal(page.decisionGraphEditor.selectedNodeId, actionEndId);
+
+    const movedCard = findCanvasElement(canvas, child => child.dataset?.nodeId === actionEndId && String(child.className || '').includes('decision-rete-node'));
+    movedCard.dispatchEvent(new Event('click'));
+    const inspector = dom.window.document.getElementById('decisionNodeInspector');
+    assert.match(inspector.textContent, /节点\s*行动结束/u);
+    assert.match(inspector.textContent, /行动结束/u);
+    assert.match(inspector.textContent, /系统/u);
+});
+
 test('EnemyEditorPage Rete workspace uses a left-to-right blueprint world', async () => {
     const { page, dom } = await createPageContext();
     page.loadDocument(buildWrappedEnemiesWithEnums());
@@ -860,6 +904,9 @@ test('EnemyEditorPage Rete workspace shows action start and action end instead o
     assert.match(startNode.textContent, /行动开始/u);
     assert(actionEndNode, 'Rete workspace should expose a virtual action end node');
     assert.match(actionEndNode.textContent, /行动结束/u);
+    assert.equal(String(actionEndNode.className || '').includes('decision-rete-node--action-end'), true);
+    assert.equal(actionEndNode.style.width, startNode.style.width);
+    assert.equal(actionEndNode.style.minHeight, startNode.style.minHeight);
     assert.equal(mergeNode, null);
     assert.equal(loopEdges.length, 0);
     assert.equal(endEdges.length, actionCount);

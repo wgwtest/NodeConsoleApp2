@@ -648,12 +648,8 @@
             background: #fff8ec;
         }
 
+        .decision-rete-node--entry,
         .decision-rete-node--action-end {
-            border-color: #6e6b50;
-            background: #f7f4ea;
-        }
-
-        .decision-rete-node--entry {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -663,14 +659,17 @@
             color: #fff;
         }
 
-        .decision-rete-node--entry .decision-rete-node-head {
+        .decision-rete-node--entry .decision-rete-node-head,
+        .decision-rete-node--action-end .decision-rete-node-head {
             justify-content: center;
             border-bottom: 0;
             padding: 0;
         }
 
         .decision-rete-node--entry .decision-rete-node-body,
-        .decision-rete-node--entry .decision-rete-tag {
+        .decision-rete-node--entry .decision-rete-tag,
+        .decision-rete-node--action-end .decision-rete-node-body,
+        .decision-rete-node--action-end .decision-rete-tag {
             display: none;
         }
 

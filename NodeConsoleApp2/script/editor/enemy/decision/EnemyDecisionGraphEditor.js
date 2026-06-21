@@ -120,6 +120,7 @@ function conditionLabel(condition = {}) {
 
 function nodeTitle(node) {
     if (node.type === 'entry') return '入口';
+    if (node.type === 'actionEnd') return '行动结束';
     if (node.type === 'state') return translateLabel(node.label, '默认状态');
     if (node.type === 'branch') return translateLabel(node.label, '条件判断');
     if (node.type === 'action') return translateLabel(node.displayLabel || node.label || node.skillId, '行动');
@@ -680,9 +681,17 @@ export class EnemyDecisionGraphEditor {
         const workbench = createElement(this.document, 'div', 'decision-rete-workbench');
         const viewport = normalizeReteViewport(this.decision?.layout?.reteViewport);
         const actionEndNode = this.createReteActionEndPreview(nodes, layoutNodes);
+        if (actionEndNode && this.decision?.layout) {
+            if (!this.decision.layout.reteNodes) this.decision.layout.reteNodes = layoutNodes;
+            const savedLayout = asObject(this.decision.layout.reteNodes[actionEndNode.node.id]);
+            const hasSavedLayout = Number.isFinite(Number(savedLayout.x)) && Number.isFinite(Number(savedLayout.y));
+            if (!hasSavedLayout) this.decision.layout.reteNodes[actionEndNode.node.id] = { ...actionEndNode.layout };
+        }
+        const savedActionEndLayout = asObject(this.decision?.layout?.reteNodes?.[actionEndNode?.node?.id]);
+        const hasSavedActionEndLayout = Number.isFinite(Number(savedActionEndLayout.x)) && Number.isFinite(Number(savedActionEndLayout.y));
         const renderNodes = actionEndNode ? [...nodes, actionEndNode.node] : nodes;
         const renderLayoutNodes = actionEndNode
-            ? { ...layoutNodes, [actionEndNode.node.id]: actionEndNode.layout }
+            ? { ...layoutNodes, [actionEndNode.node.id]: hasSavedActionEndLayout ? savedActionEndLayout : actionEndNode.layout }
             : layoutNodes;
         workbench.dataset.primaryEditor = 'rete';
         workbench.dataset.workspaceMode = this.workspaceMode;
@@ -909,7 +918,7 @@ export class EnemyDecisionGraphEditor {
         if (direction === 'in') {
             return {
                 left: '-9px',
-                top: node.type === 'actionEnd' ? '47px' : '24px'
+                top: node.type === 'actionEnd' ? '30px' : '24px'
             };
         }
         if (node.type === 'branch') {
@@ -935,9 +944,8 @@ export class EnemyDecisionGraphEditor {
     }
 
     reteNodeSize(node = {}) {
-        if (node.type === 'entry') return { width: 118, height: 78 };
+        if (node.type === 'entry' || node.type === 'actionEnd') return { width: 118, height: 78 };
         if (node.type === 'branch') return { width: 250, height: 124 };
-        if (node.type === 'actionEnd') return { width: 238, height: 112 };
         return { width: 238, height: 112 };
     }
 
@@ -995,8 +1003,7 @@ export class EnemyDecisionGraphEditor {
     }
 
     reteNodeTypeLabel(node = {}) {
-        if (node.type === 'entry') return '每回合';
-        if (node.type === 'actionEnd') return '回合边界';
+        if (node.type === 'entry' || node.type === 'actionEnd') return '系统';
         return nodeTypeLabel(node.type);
     }
 
@@ -1043,17 +1050,21 @@ export class EnemyDecisionGraphEditor {
             const frame = this.reteNodeFrame(node, asObject(layoutNodes[node.id]));
             return Math.max(current, frame.y + frame.height);
         }, ACTIVITY_LAYOUT.branchStartY);
+        const defaultLayout = {
+            x: Math.min(RETE_WORLD.width - 320, Math.max(maxRight + 220, RETE_WORLD.startX + 1240)),
+            y: Math.min(RETE_WORLD.height - 180, Math.max(90, Math.min(maxY + 60, Math.round(averageY - 56))))
+        };
+        const savedLayout = asObject(layoutNodes[RETE_ACTION_END_NODE_ID]);
+        const hasSavedLayout = Number.isFinite(Number(savedLayout.x)) && Number.isFinite(Number(savedLayout.y));
         return {
             node: {
                 id: RETE_ACTION_END_NODE_ID,
                 type: 'actionEnd',
                 label: '行动结束',
-                virtual: true
+                system: true,
+                terminal: true
             },
-            layout: {
-                x: Math.min(RETE_WORLD.width - 320, Math.max(maxRight + 220, RETE_WORLD.startX + 1240)),
-                y: Math.min(RETE_WORLD.height - 180, Math.max(90, Math.min(maxY + 60, Math.round(averageY - 56))))
-            }
+            layout: hasSavedLayout ? { x: Number(savedLayout.x), y: Number(savedLayout.y) } : defaultLayout
         };
     }
 
@@ -1202,7 +1213,8 @@ export class EnemyDecisionGraphEditor {
     renderInspector() {
         if (!this.inspector) return;
         clearElement(this.inspector);
-        const node = asArray(this.decision?.graph?.nodes).find(item => item.id === this.selectedNodeId);
+        const node = asArray(this.decision?.graph?.nodes).find(item => item.id === this.selectedNodeId)
+            || this.systemNodeForId(this.selectedNodeId);
         if (!node) {
             const empty = createElement(this.document, 'div', 'decision-inspect-preview');
             empty.textContent = 'Inspect\n尚未选择节点。';
@@ -1216,21 +1228,37 @@ export class EnemyDecisionGraphEditor {
         this.inspector.appendChild(title);
         this.appendInspectField('节点', nodeTitle(node));
         this.appendInspectField('id', node.id);
-        this.appendInspectField('类型', nodeTypeLabel(node.type));
+        this.appendInspectField('类型', node.system ? this.reteNodeTypeLabel(node) : nodeTypeLabel(node.type));
+        if (node.system) this.appendInspectField('职责', node.type === 'actionEnd' ? '一次决策流程的结束边界' : '一次决策流程的开始边界');
         if (node.condition) this.appendInspectField('条件', conditionLabel(node.condition));
         if (node.skillId) this.appendInspectField('skillId', node.skillId);
         if (node.targetRule) this.appendInspectField('目标规则', node.targetRule);
-        this.appendInspectField('回流状态', uniqueText(node.nextStateId, this.decision?.graph?.initialStateId || node.id || 'state_normal'));
+        if (!node.system) this.appendInspectField('回流状态', uniqueText(node.nextStateId, this.decision?.graph?.initialStateId || node.id || 'state_normal'));
 
         const preview = createElement(this.document, 'div', 'decision-inspect-preview');
         preview.textContent = [
             `预览: ${nodeTitle(node)}`,
             node.type === 'branch' ? `判断 ${conditionLabel(node.condition)} 后从 true / false 出口继续。` : '',
             node.type === 'action' ? `执行 ${uniqueText(node.skillId, '未绑定技能')} 后回流到 ${uniqueText(node.nextStateId, this.decision?.graph?.initialStateId || 'state_normal')}。` : '',
-            node.type === 'state' ? `作为 ${uniqueText(node.id, 'state_normal')} 的状态入口或回流目标。` : ''
+            node.type === 'state' ? `作为 ${uniqueText(node.id, 'state_normal')} 的状态入口或回流目标。` : '',
+            node.type === 'entry' ? '一次敌人决策从行动开始进入当前状态。' : '',
+            node.type === 'actionEnd' ? '所有本回合可执行路径最终收束到行动结束。' : ''
         ].filter(Boolean).join('\n');
         this.inspector.appendChild(preview);
         refreshFakeText(this.inspector);
+    }
+
+    systemNodeForId(nodeId) {
+        if (nodeId === RETE_ACTION_END_NODE_ID) {
+            return {
+                id: RETE_ACTION_END_NODE_ID,
+                type: 'actionEnd',
+                label: '行动结束',
+                system: true,
+                terminal: true
+            };
+        }
+        return null;
     }
 
     appendInspectField(label, value) {
