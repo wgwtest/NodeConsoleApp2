@@ -1,8 +1,21 @@
 import {
     cloneDecision,
+    conditionReadSummary,
     createDefaultDecisionTemplate,
+    decisionConditionDefinition,
+    decisionConditionOptions,
+    decisionSubjectOptions,
+    decisionTargetQueryOption,
+    decisionTargetQueryOptions,
+    describeActionSemantics,
     normalizeEnemyDecision,
+    normalizeCondition,
+    normalizeSubjectRef,
+    normalizeTargetQuery,
     previewEnemyDecision,
+    skillTargetLabel,
+    subjectRefLabel,
+    targetQueryLabel,
     validateEnemyDecision
 } from './EnemyDecisionGraphModel.js';
 import {
@@ -111,10 +124,16 @@ function translateLabel(value, fallback = '') {
 function conditionLabel(condition = {}) {
     const source = asObject(condition);
     if (!source.type || source.type === 'always') return '始终成立';
-    if (source.type === 'self_hp_ratio_lte') return `自身 HP <= ${source.value}`;
-    if (source.type === 'self_hp_ratio_gte') return `自身 HP >= ${source.value}`;
+    const fallbackSubject = source.type === 'target_distance_gte' || source.type === 'target_missing_status'
+        ? 'target.current'
+        : 'actor.self';
+    const subject = subjectRefLabel(source.subjectRef || { resolverId: fallbackSubject });
+    if (source.type === 'self_hp_ratio_lte') return `${subject} HP <= ${source.value}`;
+    if (source.type === 'self_hp_ratio_gte') return `${subject} HP >= ${source.value}`;
     if (source.type === 'turn_number_modulo') return `回合 % ${source.mod} = ${source.equals}`;
     if (source.type === 'previous_action_is') return `上一行动是 ${source.actionId || '-'}`;
+    if (source.type === 'target_distance_gte') return `${subject} 距离 >= ${source.value}`;
+    if (source.type === 'target_missing_status') return `${subject} 未处于 ${source.status || '-'}`;
     return source.type;
 }
 
@@ -151,6 +170,10 @@ function issueLabel(issue = {}) {
         branch_missing_true_exit: '分支缺少 true 出口',
         branch_missing_false_exit: '分支缺少 false 出口',
         missing_skill_binding: '行动未绑定有效技能',
+        action_missing_actor_ref: '行动缺少行动者主语',
+        action_missing_target_query: '行动缺少目标解析',
+        action_target_query_incompatible_with_skill: '目标解析与技能目标约束不匹配',
+        action_target_part_not_allowed: '目标部位不在技能候选范围内',
         action_missing_next_state: '行动缺少回流状态',
         action_next_state_must_be_state: '行动回流目标必须是状态节点',
         single_turn_loop_detected: '检测到单回合循环风险'
@@ -182,6 +205,19 @@ function skillDisplayName(resolved, fallback = '') {
     const source = asObject(resolved);
     const skill = asObject(source.skill || resolved);
     return uniqueText(skill.name || skill.displayName || source.name || fallback, fallback);
+}
+
+const STANDARD_TARGET_PARTS = ['head', 'chest', 'abdomen', 'arm', 'leg'];
+
+function bodyPartLabel(partId = '') {
+    const labels = {
+        head: '头部',
+        chest: '胸部',
+        abdomen: '腹部',
+        arm: '手臂',
+        leg: '腿部'
+    };
+    return labels[partId] || partId;
 }
 
 const ACTIVITY_LAYOUT = {
@@ -563,8 +599,18 @@ export class EnemyDecisionGraphEditor {
         if (!this.skillList) return;
         clearElement(this.skillList);
         asArray(this.enemy?.skills).forEach((skillId) => {
-            const chip = createElement(this.document, 'span', 'decision-skill-chip');
-            chip.textContent = skillId;
+            const resolved = this.context.resolveSkill?.(skillId);
+            const skill = asObject(asObject(resolved).skill || resolved);
+            const chip = createElement(this.document, 'div', 'decision-skill-chip');
+            const title = createElement(this.document, 'span', 'decision-skill-chip-title');
+            title.textContent = skillDisplayName(resolved, skillId);
+            const meta = createElement(this.document, 'span', 'decision-skill-chip-meta');
+            meta.textContent = [
+                skillId,
+                skill.target ? skillTargetLabel(skill) : '目标约束未解析'
+            ].filter(Boolean).join(' · ');
+            chip.appendChild(title);
+            chip.appendChild(meta);
             this.skillList.appendChild(chip);
         });
         if (asArray(this.enemy?.skills).length === 0) {
@@ -1007,6 +1053,15 @@ export class EnemyDecisionGraphEditor {
         return nodeTypeLabel(node.type);
     }
 
+    actionSemantics(node = {}) {
+        return describeActionSemantics({
+            action: node,
+            decision: this.decision,
+            enemy: this.enemy || {},
+            resolveSkill: skillId => this.context.resolveSkill?.(skillId)
+        });
+    }
+
     reteNodeDetails(node = {}, initialStateId = '') {
         if (node.type === 'entry') {
             return [
@@ -1015,17 +1070,25 @@ export class EnemyDecisionGraphEditor {
             ];
         }
         if (node.type === 'branch') {
+            const condition = asObject(node.condition);
+            const fallbackSubject = condition.type === 'target_distance_gte' || condition.type === 'target_missing_status'
+                ? 'target.current'
+                : 'actor.self';
+            const subject = subjectRefLabel(condition.subjectRef || { resolverId: fallbackSubject });
             return [
+                ['主语', subject],
                 ['条件', conditionLabel(node.condition)],
                 ['true', '进入右侧行动'],
                 ['false', '继续下一判断']
             ];
         }
         if (node.type === 'action') {
+            const semantics = this.actionSemantics(node);
             return [
-                ['skillId', uniqueText(node.skillId, '未绑定技能')],
-                ['目标', uniqueText(node.targetRule, '默认目标')],
-                ['下一回合', uniqueText(node.nextStateId, initialStateId || 'state_normal')]
+                ['行动者', semantics.actorLabel],
+                ['技能', semantics.skillLabel],
+                ['目标解析', semantics.targetLabel],
+                ['合法性', semantics.legalityLabel]
             ];
         }
         if (node.type === 'actionEnd') {
@@ -1210,6 +1273,266 @@ export class EnemyDecisionGraphEditor {
         return true;
     }
 
+    graphNodeById(nodeId = '') {
+        return asArray(this.decision?.graph?.nodes).find(node => node.id === nodeId) || null;
+    }
+
+    updateGraphNode(nodeId = '', updater = () => {}) {
+        const node = this.graphNodeById(nodeId);
+        if (!node) return;
+        updater(node);
+        this.render();
+    }
+
+    createInspectSelect(field, selectedValue, options = [], onChange = () => {}, config = {}) {
+        const select = createElement(this.document, 'select', 'decision-inspect-control');
+        select.dataset.decisionField = field;
+        select.value = String(selectedValue ?? '');
+        if (config.disabled) {
+            select.disabled = true;
+            select.setAttribute?.('disabled', 'disabled');
+        }
+        options.forEach((option) => {
+            const item = asObject(option);
+            const value = String(item.value ?? item.id ?? item.resolverId ?? item.type ?? '');
+            const element = createElement(this.document, 'option');
+            element.value = value;
+            element.textContent = String(item.label ?? value);
+            if (value === select.value) element.selected = true;
+            if (item.disabled) {
+                element.disabled = true;
+                element.setAttribute?.('disabled', 'disabled');
+            }
+            select.appendChild(element);
+        });
+        select.addEventListener('change', () => onChange(select.value));
+        return select;
+    }
+
+    createInspectInput(field, value, onChange = () => {}, attrs = {}) {
+        const input = createElement(this.document, 'input', 'decision-inspect-control');
+        input.dataset.decisionField = field;
+        input.type = attrs.type || 'text';
+        input.value = String(value ?? '');
+        ['min', 'max', 'step', 'placeholder'].forEach((key) => {
+            if (attrs[key] !== undefined) input.setAttribute?.(key, attrs[key]);
+        });
+        input.addEventListener('change', () => onChange(input.value));
+        input.addEventListener('input', () => onChange(input.value));
+        return input;
+    }
+
+    subjectOptionLabel(resolverId = '') {
+        const option = decisionSubjectOptions().find(item => item.resolverId === resolverId);
+        return option?.label || subjectRefLabel({ resolverId });
+    }
+
+    buildConditionDefault(type = 'always') {
+        const definition = decisionConditionDefinition(type);
+        const params = Object.fromEntries(asArray(definition.params).map(param => [param.name, param.defaultValue]));
+        const subjectRef = definition.subjectPolicy?.defaultResolverId
+            && !['system', 'battle', 'memory'].includes(definition.subjectPolicy.defaultResolverId)
+            ? { resolverId: definition.subjectPolicy.defaultResolverId }
+            : undefined;
+        if (type === 'self_hp_ratio_lte' || type === 'self_hp_ratio_gte') {
+            return normalizeCondition({ type, value: Number(params.value ?? 0.5), subjectRef });
+        }
+        if (type === 'turn_number_modulo') {
+            return normalizeCondition({ type, mod: Number(params.mod ?? 2), equals: Number(params.equals ?? 0) });
+        }
+        if (type === 'previous_action_is') {
+            const firstActionId = asArray(this.decision?.graph?.nodes).find(node => node.type === 'action')?.id || '';
+            return normalizeCondition({ type, actionId: params.actionId || firstActionId });
+        }
+        return normalizeCondition({ type: 'always' });
+    }
+
+    conditionSubjectOptions(condition = {}) {
+        const normalized = normalizeCondition(condition);
+        const definition = decisionConditionDefinition(normalized.type);
+        const allowed = asArray(definition.subjectPolicy?.allowedResolverIds);
+        const fallback = normalized.subjectRef?.resolverId || definition.subjectPolicy?.defaultResolverId || '';
+        const ids = allowed.length ? allowed : [fallback].filter(id => !['system', 'battle', 'memory'].includes(id));
+        return ids.map(resolverId => ({
+            value: resolverId,
+            label: this.subjectOptionLabel(resolverId)
+        }));
+    }
+
+    renderBranchInspectorControls(node = {}) {
+        const condition = normalizeCondition(node.condition);
+        const definition = decisionConditionDefinition(condition.type);
+        this.appendInspectField('读取输入', conditionReadSummary(condition));
+        const conditionOptions = decisionConditionOptions()
+            .map(item => ({ value: item.type, label: item.label }));
+        this.appendInspectControl(
+            'Condition（条件）',
+            this.createInspectSelect('conditionType', condition.type, conditionOptions, (value) => {
+                this.updateGraphNode(node.id, (target) => {
+                    target.condition = this.buildConditionDefault(value);
+                    target.label = decisionConditionDefinition(value).label;
+                });
+            })
+        );
+
+        const subjectOptions = this.conditionSubjectOptions(condition);
+        if (subjectOptions.length > 0) {
+            this.appendInspectControl(
+                'SubjectRef（判断主语）',
+                this.createInspectSelect(
+                    'conditionSubject',
+                    condition.subjectRef?.resolverId || subjectOptions[0].value,
+                    subjectOptions,
+                    (value) => {
+                        this.updateGraphNode(node.id, (target) => {
+                            target.condition = normalizeCondition({
+                                ...asObject(target.condition),
+                                subjectRef: normalizeSubjectRef({ resolverId: value }, value)
+                            });
+                        });
+                    },
+                    { disabled: subjectOptions.length <= 1 }
+                )
+            );
+        }
+
+        asArray(definition.params).forEach((param) => {
+            if (param.type === 'number') {
+                const field = param.name === 'value' ? 'conditionValue' : `condition_${param.name}`;
+                this.appendInspectControl(
+                    param.label || param.name,
+                    this.createInspectInput(field, condition[param.name] ?? param.defaultValue, (value) => {
+                        this.updateGraphNode(node.id, (target) => {
+                            target.condition = normalizeCondition({
+                                ...asObject(target.condition),
+                                [param.name]: Number(value)
+                            });
+                        });
+                    }, {
+                        type: 'number',
+                        min: param.min,
+                        max: param.max,
+                        step: param.step
+                    })
+                );
+            }
+            if (param.type === 'actionId') {
+                const actionOptions = asArray(this.decision?.graph?.nodes)
+                    .filter(item => item.type === 'action')
+                    .map(item => ({ value: item.id, label: nodeTitle(item) }));
+                this.appendInspectControl(
+                    param.label || '行动节点',
+                    this.createInspectSelect('conditionActionId', condition.actionId || actionOptions[0]?.value || '', actionOptions, (value) => {
+                        this.updateGraphNode(node.id, (target) => {
+                            target.condition = normalizeCondition({
+                                ...asObject(target.condition),
+                                actionId: value
+                            });
+                        });
+                    })
+                );
+            }
+        });
+    }
+
+    targetQueryFromResolver(resolverId = '', currentQuery = {}) {
+        const option = decisionTargetQueryOption(resolverId) || decisionTargetQueryOptions()[0];
+        const params = {
+            ...asObject(option.params),
+            ...asObject(currentQuery?.params)
+        };
+        if (option.resolverId === 'player.fixedPart') {
+            params.partId = uniqueText(params.partId, 'head');
+        }
+        const legacyTargetRule = option.resolverId === 'player.fixedPart'
+            ? `fixed_part:${params.partId}`
+            : option.legacyTargetRule;
+        return {
+            targetRule: legacyTargetRule,
+            targetQuery: normalizeTargetQuery({
+                resolverId: option.resolverId,
+                subjectRef: { resolverId: option.subjectResolverId },
+                params,
+                expectedSkillTarget: option.expectedSkillTarget,
+                legacyTargetRule
+            }, legacyTargetRule)
+        };
+    }
+
+    renderActionInspectorControls(node = {}) {
+        const currentTargetQuery = normalizeTargetQuery(node.targetQuery, node.targetRule);
+        this.appendInspectField('读取输入', 'actorRef, skillRef, targetQuery, skillLegality');
+        const actorOptions = decisionSubjectOptions()
+            .filter(option => option.resolverId !== 'memory.previousTarget')
+            .map(option => ({ value: option.resolverId, label: option.label }));
+        this.appendInspectControl(
+            'ActorRef（行动者）',
+            this.createInspectSelect('actorRef', node.actorRef?.resolverId || 'actor.self', actorOptions, (value) => {
+                this.updateGraphNode(node.id, (target) => {
+                    target.actorRef = normalizeSubjectRef({ resolverId: value }, value);
+                });
+            })
+        );
+
+        const skillIds = asArray(this.enemy?.skills).map(skillId => uniqueText(skillId)).filter(Boolean);
+        const skillOptions = skillIds.map((skillId) => ({
+            value: skillId,
+            label: skillDisplayName(this.context.resolveSkill?.(skillId), skillId)
+        }));
+        this.appendInspectControl(
+            'SkillRef（技能）',
+            this.createInspectSelect('skillRef', uniqueText(node.skillId || node.skillRef?.skillId), skillOptions, (value) => {
+                this.updateGraphNode(node.id, (target) => {
+                    target.skillId = value;
+                    target.skillRef = { mode: 'skillId', skillId: value };
+                    target.label = skillDisplayName(this.context.resolveSkill?.(value), value);
+                });
+            })
+        );
+
+        const targetOptions = decisionTargetQueryOptions()
+            .map(option => ({ value: option.resolverId, label: option.label }));
+        this.appendInspectControl(
+            'TargetQuery（目标解析）',
+            this.createInspectSelect('targetQuery', currentTargetQuery.resolverId, targetOptions, (value) => {
+                this.updateGraphNode(node.id, (target) => {
+                    const next = this.targetQueryFromResolver(value, target.targetQuery);
+                    target.targetRule = next.targetRule;
+                    target.targetQuery = next.targetQuery;
+                });
+            })
+        );
+
+        if (currentTargetQuery.resolverId === 'player.fixedPart') {
+            const partOptions = STANDARD_TARGET_PARTS.map(partId => ({ value: partId, label: bodyPartLabel(partId) }));
+            this.appendInspectControl(
+                '目标部位',
+                this.createInspectSelect('targetPartId', uniqueText(currentTargetQuery.params?.partId, 'head'), partOptions, (value) => {
+                    this.updateGraphNode(node.id, (target) => {
+                        const next = this.targetQueryFromResolver('player.fixedPart', {
+                            ...asObject(target.targetQuery),
+                            params: { ...asObject(target.targetQuery?.params), partId: value }
+                        });
+                        target.targetRule = next.targetRule;
+                        target.targetQuery = next.targetQuery;
+                    });
+                })
+            );
+        }
+
+        const stateOptions = asArray(this.decision?.graph?.nodes)
+            .filter(item => item.type === 'state')
+            .map(item => ({ value: item.id, label: `${nodeTitle(item)} · ${item.id}` }));
+        this.appendInspectControl(
+            '回流状态',
+            this.createInspectSelect('nextStateId', uniqueText(node.nextStateId, this.decision?.graph?.initialStateId || 'state_normal'), stateOptions, (value) => {
+                this.updateGraphNode(node.id, (target) => {
+                    target.nextStateId = value;
+                });
+            })
+        );
+    }
+
     renderInspector() {
         if (!this.inspector) return;
         clearElement(this.inspector);
@@ -1230,16 +1553,37 @@ export class EnemyDecisionGraphEditor {
         this.appendInspectField('id', node.id);
         this.appendInspectField('类型', node.system ? this.reteNodeTypeLabel(node) : nodeTypeLabel(node.type));
         if (node.system) this.appendInspectField('职责', node.type === 'actionEnd' ? '一次决策流程的结束边界' : '一次决策流程的开始边界');
-        if (node.condition) this.appendInspectField('条件', conditionLabel(node.condition));
-        if (node.skillId) this.appendInspectField('skillId', node.skillId);
-        if (node.targetRule) this.appendInspectField('目标规则', node.targetRule);
+        if (node.condition) {
+            const condition = asObject(node.condition);
+            const fallbackSubject = condition.type === 'target_distance_gte' || condition.type === 'target_missing_status'
+                ? 'target.current'
+                : 'actor.self';
+            this.appendInspectField('主语', subjectRefLabel(condition.subjectRef || { resolverId: fallbackSubject }));
+            this.appendInspectField('条件', conditionLabel(condition));
+            this.renderBranchInspectorControls(node);
+        }
+        let actionSemantics = null;
+        if (node.type === 'action') {
+            actionSemantics = this.actionSemantics(node);
+            this.appendInspectField('行动者', actionSemantics.actorLabel);
+            this.appendInspectField('技能', actionSemantics.skillLabel);
+            this.appendInspectField('skillId', actionSemantics.skillId || uniqueText(node.skillId, '未绑定技能'));
+            this.appendInspectField('目标解析', actionSemantics.targetLabel);
+            this.appendInspectField('技能目标约束', actionSemantics.skillTargetLabel);
+            this.appendInspectField('候选部位', actionSemantics.candidatePartsLabel);
+            this.appendInspectField('合法性', actionSemantics.legalityLabel);
+            this.renderActionInspectorControls(node);
+        } else {
+            if (node.skillId) this.appendInspectField('skillId', node.skillId);
+            if (node.targetRule) this.appendInspectField('目标规则', node.targetRule);
+        }
         if (!node.system) this.appendInspectField('回流状态', uniqueText(node.nextStateId, this.decision?.graph?.initialStateId || node.id || 'state_normal'));
 
         const preview = createElement(this.document, 'div', 'decision-inspect-preview');
         preview.textContent = [
             `预览: ${nodeTitle(node)}`,
             node.type === 'branch' ? `判断 ${conditionLabel(node.condition)} 后从 true / false 出口继续。` : '',
-            node.type === 'action' ? `执行 ${uniqueText(node.skillId, '未绑定技能')} 后回流到 ${uniqueText(node.nextStateId, this.decision?.graph?.initialStateId || 'state_normal')}。` : '',
+            node.type === 'action' ? `由 ${actionSemantics?.actorLabel || '自身'} 执行 ${actionSemantics?.skillLabel || uniqueText(node.skillId, '未绑定技能')}，目标解析为 ${actionSemantics?.targetLabel || targetQueryLabel(node.targetQuery)}，合法性：${actionSemantics?.legalityLabel || '未检查'}，然后回流到 ${uniqueText(node.nextStateId, this.decision?.graph?.initialStateId || 'state_normal')}。` : '',
             node.type === 'state' ? `作为 ${uniqueText(node.id, 'state_normal')} 的状态入口或回流目标。` : '',
             node.type === 'entry' ? '一次敌人决策从行动开始进入当前状态。' : '',
             node.type === 'actionEnd' ? '所有本回合可执行路径最终收束到行动结束。' : ''
@@ -1269,6 +1613,15 @@ export class EnemyDecisionGraphEditor {
         text.textContent = String(value ?? '');
         row.appendChild(key);
         row.appendChild(text);
+        this.inspector.appendChild(row);
+    }
+
+    appendInspectControl(label, control) {
+        const row = createElement(this.document, 'label', 'decision-inspect-field decision-inspect-field--control');
+        const key = createElement(this.document, 'span', 'decision-inspect-label');
+        key.textContent = label;
+        row.appendChild(key);
+        row.appendChild(control);
         this.inspector.appendChild(row);
     }
 
@@ -1320,7 +1673,11 @@ export class EnemyDecisionGraphEditor {
             id,
             type: 'branch',
             label: '条件判断',
-            condition: { type: 'self_hp_ratio_lte', value: 0.35 }
+            condition: {
+                type: 'self_hp_ratio_lte',
+                value: 0.35,
+                subjectRef: { resolverId: 'actor.self' }
+            }
         });
         if (this.fullscreen) {
             this.applyActivityLayout({ force: true });
@@ -1340,8 +1697,17 @@ export class EnemyDecisionGraphEditor {
             id,
             type: 'action',
             label: skillId || '行动',
+            actorRef: { resolverId: 'actor.self' },
+            skillRef: { mode: 'skillId', skillId },
             skillId,
             targetRule: 'player_weak_part',
+            targetQuery: {
+                resolverId: 'player.weakestArmorPart',
+                subjectRef: { resolverId: 'battle.player.main' },
+                params: {},
+                expectedSkillTarget: { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_PART' },
+                legacyTargetRule: 'player_weak_part'
+            },
             nextStateId: uniqueText(graph.initialStateId, 'state_normal')
         });
         if (this.fullscreen) {

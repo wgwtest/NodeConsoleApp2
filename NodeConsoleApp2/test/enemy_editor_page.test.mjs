@@ -913,6 +913,171 @@ test('EnemyEditorPage Rete workspace shows action start and action end instead o
     assert.equal(endEdges.every(edge => edge.dataset?.to === '__action_end__'), true);
 });
 
+test('EnemyEditorPage Rete workspace surfaces behavior decision semantics', async () => {
+    const { page, dom } = await createPageContext();
+    const pack = buildWrappedEnemiesWithEnums();
+    pack.enemies.goblin_story_headhunter.skills = ['skill_throw_stone', 'enemy_skill_rusty_shiv'];
+    page.loadDocument(pack, {
+        skillCatalog: {
+            skill_throw_stone: {
+                id: 'skill_throw_stone',
+                name: '投石',
+                costs: { ap: 2 },
+                target: {
+                    subject: 'SUBJECT_ENEMY',
+                    scope: 'SCOPE_PART',
+                    selection: { mode: 'single', candidateParts: ['head', 'chest'], selectedParts: [], selectCount: 1 }
+                }
+            },
+            enemy_skill_rusty_shiv: {
+                id: 'enemy_skill_rusty_shiv',
+                name: '锈刀划拉',
+                costs: { ap: 1 },
+                target: {
+                    subject: 'SUBJECT_ENEMY',
+                    scope: 'SCOPE_PART',
+                    selection: { mode: 'single', candidateParts: ['head', 'chest', 'arm'], selectedParts: [], selectCount: 1 }
+                }
+            }
+        }
+    });
+    dom.window.document.getElementById('enemyDecisionTab').dispatchEvent(new Event('click'));
+
+    const canvas = dom.window.document.getElementById('decisionGraphCanvas');
+    const actionCard = findCanvasElement(canvas, child => child.dataset?.nodeType === 'action' && /rusty|shiv|锈刀/u.test(child.textContent));
+
+    assert(actionCard, 'Rete workspace should render the rusty shiv action card');
+    assert.match(actionCard.textContent, /行动者/u);
+    assert.match(actionCard.textContent, /自身/u);
+    assert.match(actionCard.textContent, /目标解析/u);
+    assert.match(actionCard.textContent, /玩家弱点部位/u);
+    assert.match(actionCard.textContent, /合法性/u);
+    assert.match(actionCard.textContent, /可释放/u);
+
+    actionCard.dispatchEvent(new Event('click'));
+    const inspector = dom.window.document.getElementById('decisionNodeInspector');
+
+    assert.match(inspector.textContent, /行动者/u);
+    assert.match(inspector.textContent, /技能目标约束/u);
+    assert.match(inspector.textContent, /SUBJECT_ENEMY \/ SCOPE_PART/u);
+    assert.match(inspector.textContent, /候选部位/u);
+    assert.match(inspector.textContent, /head, chest, arm/u);
+});
+
+test('EnemyEditorPage Inspect edits branch conditions from the supported condition catalog', async () => {
+    const { page, dom } = await createPageContext();
+    const pack = buildWrappedEnemiesWithEnums();
+    pack.enemies.goblin_story_headhunter.skills = ['skill_throw_stone', 'enemy_skill_rusty_shiv'];
+    page.loadDocument(pack);
+    dom.window.document.getElementById('enemyDecisionTab').dispatchEvent(new Event('click'));
+
+    const canvas = dom.window.document.getElementById('decisionGraphCanvas');
+    const branchCard = findCanvasElement(canvas, child => child.dataset?.nodeType === 'branch' && /HP/u.test(child.textContent));
+    assert(branchCard, 'Rete workspace should render the low-hp branch card');
+    branchCard.dispatchEvent(new Event('click'));
+
+    const inspector = dom.window.document.getElementById('decisionNodeInspector');
+    const conditionSelect = findChildByDataset(inspector, 'decisionField', 'conditionType');
+    const subjectSelect = findChildByDataset(inspector, 'decisionField', 'conditionSubject');
+
+    assert(conditionSelect, 'branch Inspect should expose a condition type select');
+    assert(subjectSelect, 'branch Inspect should expose the condition subject resolver');
+    assert.equal(subjectSelect.value, 'actor.self');
+    assert.equal(conditionSelect.children.some(option => option.value === 'self_hp_ratio_lte'), true);
+    assert.equal(conditionSelect.children.some(option => option.value === 'target_distance_gte'), false);
+    assert.equal(conditionSelect.children.some(option => option.value === 'target_missing_status'), false);
+    assert.match(inspector.textContent, /读取输入/u);
+    assert.match(inspector.textContent, /resolvedSubject\.stats\.hp/u);
+
+    conditionSelect.value = 'self_hp_ratio_gte';
+    conditionSelect.dispatchEvent(new Event('change'));
+    const nextInspector = dom.window.document.getElementById('decisionNodeInspector');
+    const valueInput = findChildByDataset(nextInspector, 'decisionField', 'conditionValue');
+    assert(valueInput, 'self hp condition should expose a numeric threshold input');
+
+    valueInput.value = '0.5';
+    valueInput.dispatchEvent(new Event('change'));
+    const branch = page.decisionGraphEditor.getDecision().graph.nodes.find(node => node.id === branchCard.dataset.nodeId);
+
+    assert.equal(branch.condition.type, 'self_hp_ratio_gte');
+    assert.equal(branch.condition.value, 0.5);
+    assert.equal(branch.condition.subjectRef.resolverId, 'actor.self');
+    assert.match(
+        findCanvasElement(canvas, child => child.dataset?.nodeId === branch.id && String(child.className || '').includes('decision-rete-node')).textContent,
+        /自身 HP >= 0.5/u
+    );
+});
+
+test('EnemyEditorPage Inspect edits action actor skill and target query fields', async () => {
+    const { page, dom } = await createPageContext();
+    const pack = buildWrappedEnemiesWithEnums();
+    pack.enemies.goblin_story_headhunter.skills = ['skill_throw_stone', 'enemy_skill_rusty_shiv'];
+    page.loadDocument(pack, {
+        skillCatalog: {
+            skill_throw_stone: {
+                id: 'skill_throw_stone',
+                name: '投石',
+                costs: { ap: 2 },
+                target: {
+                    subject: 'SUBJECT_ENEMY',
+                    scope: 'SCOPE_PART',
+                    selection: { mode: 'single', candidateParts: ['head', 'chest'], selectedParts: [], selectCount: 1 }
+                }
+            },
+            enemy_skill_rusty_shiv: {
+                id: 'enemy_skill_rusty_shiv',
+                name: '锈刀划拉',
+                costs: { ap: 1 },
+                target: {
+                    subject: 'SUBJECT_ENEMY',
+                    scope: 'SCOPE_PART',
+                    selection: { mode: 'single', candidateParts: ['head', 'chest', 'arm'], selectedParts: [], selectCount: 1 }
+                }
+            }
+        }
+    });
+    dom.window.document.getElementById('enemyDecisionTab').dispatchEvent(new Event('click'));
+
+    const canvas = dom.window.document.getElementById('decisionGraphCanvas');
+    const actionCard = findCanvasElement(canvas, child => child.dataset?.nodeType === 'action' && /锈刀/u.test(child.textContent));
+    assert(actionCard, 'Rete workspace should render the rusty shiv action card');
+    actionCard.dispatchEvent(new Event('click'));
+
+    const inspector = dom.window.document.getElementById('decisionNodeInspector');
+    const actorSelect = findChildByDataset(inspector, 'decisionField', 'actorRef');
+    const skillSelect = findChildByDataset(inspector, 'decisionField', 'skillRef');
+    const targetSelect = findChildByDataset(inspector, 'decisionField', 'targetQuery');
+
+    assert(actorSelect, 'action Inspect should expose ActorRef');
+    assert(skillSelect, 'action Inspect should expose SkillRef');
+    assert(targetSelect, 'action Inspect should expose TargetQuery');
+    assert.equal(actorSelect.value, 'actor.self');
+    assert.deepEqual(skillSelect.children.map(option => option.value), ['skill_throw_stone', 'enemy_skill_rusty_shiv']);
+    assert.equal(targetSelect.children.some(option => option.value === 'player.weakestArmorPart'), true);
+    assert.equal(targetSelect.children.some(option => option.value === 'player.entity'), true);
+
+    skillSelect.value = 'skill_throw_stone';
+    skillSelect.dispatchEvent(new Event('change'));
+    let action = page.decisionGraphEditor.getDecision().graph.nodes.find(node => node.id === actionCard.dataset.nodeId);
+    assert.equal(action.skillId, 'skill_throw_stone');
+    assert.deepEqual(action.skillRef, { mode: 'skillId', skillId: 'skill_throw_stone' });
+    assert.match(
+        findCanvasElement(canvas, child => child.dataset?.nodeId === action.id && String(child.className || '').includes('decision-rete-node')).textContent,
+        /投石/u
+    );
+
+    const nextInspector = dom.window.document.getElementById('decisionNodeInspector');
+    const nextTargetSelect = findChildByDataset(nextInspector, 'decisionField', 'targetQuery');
+    nextTargetSelect.value = 'player.entity';
+    nextTargetSelect.dispatchEvent(new Event('change'));
+    action = page.decisionGraphEditor.getDecision().graph.nodes.find(node => node.id === actionCard.dataset.nodeId);
+
+    assert.equal(action.targetQuery.resolverId, 'player.entity');
+    assert.equal(action.targetQuery.subjectRef.resolverId, 'battle.player.main');
+    assert.equal(action.targetQuery.expectedSkillTarget.scope, 'SCOPE_ENTITY');
+    assert.match(dom.window.document.getElementById('decisionNodeInspector').textContent, /目标不匹配/u);
+});
+
 test('EnemyEditorPage Rete branch sockets are separate true and false output ports', async () => {
     const { page, dom } = await createPageContext();
     const pack = buildWrappedEnemiesWithEnums();

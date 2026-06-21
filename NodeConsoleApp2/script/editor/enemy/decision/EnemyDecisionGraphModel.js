@@ -23,16 +23,24 @@ function normalizeNumber(value, fallback = 0) {
     return Number.isFinite(next) ? next : fallback;
 }
 
-function normalizeCondition(condition = {}) {
+export function normalizeCondition(condition = {}) {
     const source = asObject(condition);
     if (Object.keys(source).length === 0 || source.type === 'always') {
         return { type: 'always' };
     }
     if (source.type === 'self_hp_ratio_lte') {
-        return { type: 'self_hp_ratio_lte', value: normalizeNumber(source.value, 1) };
+        return {
+            type: 'self_hp_ratio_lte',
+            value: normalizeNumber(source.value, 1),
+            subjectRef: normalizeSubjectRef(source.subjectRef, 'actor.self')
+        };
     }
     if (source.type === 'self_hp_ratio_gte') {
-        return { type: 'self_hp_ratio_gte', value: normalizeNumber(source.value, 0) };
+        return {
+            type: 'self_hp_ratio_gte',
+            value: normalizeNumber(source.value, 0),
+            subjectRef: normalizeSubjectRef(source.subjectRef, 'actor.self')
+        };
     }
     if (source.type === 'turn_number_modulo') {
         return {
@@ -45,10 +53,18 @@ function normalizeCondition(condition = {}) {
         return { type: 'previous_action_is', actionId: uniqueText(source.actionId) };
     }
     if (source.type === 'target_distance_gte') {
-        return { type: 'target_distance_gte', value: normalizeNumber(source.value, 0) };
+        return {
+            type: 'target_distance_gte',
+            value: normalizeNumber(source.value, 0),
+            subjectRef: normalizeSubjectRef(source.subjectRef, 'target.current')
+        };
     }
     if (source.type === 'target_missing_status') {
-        return { type: 'target_missing_status', status: uniqueText(source.status, 'bleed') };
+        return {
+            type: 'target_missing_status',
+            status: uniqueText(source.status, 'bleed'),
+            subjectRef: normalizeSubjectRef(source.subjectRef, 'target.current')
+        };
     }
     return { type: 'always' };
 }
@@ -69,6 +85,393 @@ function safeNodeId(prefix, value, index) {
 function findSkillId(skillIds, patterns = [], fallbackIndex = 0) {
     const matched = skillIds.find(skillId => patterns.some(pattern => pattern.test(skillId)));
     return matched || skillIds[Math.min(fallbackIndex, Math.max(0, skillIds.length - 1))] || '';
+}
+
+export function normalizeSubjectRef(value = {}, fallbackResolverId = 'actor.self') {
+    const source = asObject(value);
+    return {
+        resolverId: uniqueText(source.resolverId, fallbackResolverId),
+        labelOverride: uniqueText(source.labelOverride),
+        params: { ...asObject(source.params) },
+        requiredShape: asArray(source.requiredShape).map(item => uniqueText(item)).filter(Boolean)
+    };
+}
+
+function normalizeSkillRef(action = {}) {
+    const source = asObject(action.skillRef);
+    if (source.mode === 'slot' || source.skillSlotId) {
+        return {
+            mode: 'slot',
+            skillSlotId: uniqueText(source.skillSlotId || action.skillSlotId)
+        };
+    }
+    return {
+        mode: 'skillId',
+        skillId: uniqueText(source.skillId || action.skillId)
+    };
+}
+
+function targetRuleToTargetQuery(targetRule = '') {
+    const rule = uniqueText(targetRule, 'player_weak_part');
+    if (rule === 'self') {
+        return {
+            resolverId: 'actor.self',
+            subjectRef: normalizeSubjectRef({ resolverId: 'actor.self' }, 'actor.self'),
+            params: {},
+            expectedSkillTarget: { subject: 'SUBJECT_SELF', scope: 'SCOPE_ENTITY' },
+            legacyTargetRule: rule
+        };
+    }
+    if (rule === 'player') {
+        return {
+            resolverId: 'player.entity',
+            subjectRef: normalizeSubjectRef({ resolverId: 'battle.player.main' }, 'battle.player.main'),
+            params: {},
+            expectedSkillTarget: { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_ENTITY' },
+            legacyTargetRule: rule
+        };
+    }
+    if (rule.startsWith('fixed_part:')) {
+        const partId = uniqueText(rule.slice('fixed_part:'.length));
+        return {
+            resolverId: 'player.fixedPart',
+            subjectRef: normalizeSubjectRef({ resolverId: 'battle.player.main' }, 'battle.player.main'),
+            params: { partId },
+            expectedSkillTarget: { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_PART' },
+            legacyTargetRule: rule
+        };
+    }
+    if (rule === 'player_weak_part') {
+        return {
+            resolverId: 'player.weakestArmorPart',
+            subjectRef: normalizeSubjectRef({ resolverId: 'battle.player.main' }, 'battle.player.main'),
+            params: {},
+            expectedSkillTarget: { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_PART' },
+            legacyTargetRule: rule
+        };
+    }
+    return {
+        resolverId: rule,
+        subjectRef: normalizeSubjectRef({ resolverId: 'target.current' }, 'target.current'),
+        params: {},
+        expectedSkillTarget: {},
+        legacyTargetRule: rule
+    };
+}
+
+export function normalizeTargetQuery(value = {}, targetRule = '') {
+    const fallback = targetRuleToTargetQuery(targetRule);
+    const source = asObject(value);
+    const expected = asObject(source.expectedSkillTarget);
+    return {
+        resolverId: uniqueText(source.resolverId, fallback.resolverId),
+        subjectRef: normalizeSubjectRef(source.subjectRef || fallback.subjectRef, fallback.subjectRef.resolverId),
+        params: { ...asObject(fallback.params), ...asObject(source.params) },
+        expectedSkillTarget: {
+            ...asObject(fallback.expectedSkillTarget),
+            ...expected
+        },
+        legacyTargetRule: uniqueText(source.legacyTargetRule, fallback.legacyTargetRule)
+    };
+}
+
+function normalizeActionNode(node = {}, initialStateId = 'state_normal') {
+    const next = { ...asObject(node) };
+    next.actorRef = normalizeSubjectRef(next.actorRef, 'actor.self');
+    next.skillRef = normalizeSkillRef(next);
+    next.skillId = uniqueText(next.skillId || next.skillRef.skillId);
+    if (next.skillRef.mode === 'slot') {
+        next.skillSlotId = uniqueText(next.skillSlotId || next.skillRef.skillSlotId);
+    }
+    next.targetRule = uniqueText(next.targetRule, 'player_weak_part');
+    next.targetQuery = normalizeTargetQuery(next.targetQuery, next.targetRule);
+    if (!uniqueText(next.nextStateId)) next.nextStateId = initialStateId;
+    return next;
+}
+
+function normalizeDecisionNode(node = {}, initialStateId = 'state_normal') {
+    const next = { ...asObject(node) };
+    if (next.type === 'action') return normalizeActionNode(next, initialStateId);
+    if (next.type === 'branch') {
+        next.condition = normalizeCondition(next.condition);
+    }
+    return next;
+}
+
+export function subjectRefLabel(ref = {}) {
+    const source = normalizeSubjectRef(ref, 'actor.self');
+    if (source.labelOverride) return source.labelOverride;
+    const labels = {
+        'actor.self': '自身',
+        'battle.player.main': '玩家主体',
+        'target.current': '当前目标',
+        'target.selectedPartOwner': '目标部位所属者',
+        'memory.previousTarget': '上次目标'
+    };
+    return labels[source.resolverId] || source.resolverId;
+}
+
+const SUBJECT_RESOLVER_OPTIONS = Object.freeze([
+    {
+        resolverId: 'actor.self',
+        label: '自身',
+        requiredShape: ['stats.hp', 'stats.maxHp', 'stats.ap', 'skills']
+    },
+    {
+        resolverId: 'battle.player.main',
+        label: '玩家主体',
+        requiredShape: ['stats.hp', 'bodyParts', 'statuses']
+    },
+    {
+        resolverId: 'target.current',
+        label: '当前目标',
+        requiredShape: ['statuses']
+    },
+    {
+        resolverId: 'memory.previousTarget',
+        label: '上次目标',
+        requiredShape: ['decisionRuntime.previousTargetRef']
+    }
+]);
+
+export function decisionSubjectOptions() {
+    return cloneDecision(SUBJECT_RESOLVER_OPTIONS);
+}
+
+export function targetQueryLabel(query = {}) {
+    const source = normalizeTargetQuery(query, query.legacyTargetRule);
+    const partId = uniqueText(source.params?.partId);
+    const labels = {
+        'actor.self': '自身',
+        'player.entity': '玩家主体',
+        'player.weakestArmorPart': '玩家弱点部位',
+        'player.fixedPart': partId ? `玩家固定部位：${partId}` : '玩家固定部位'
+    };
+    return labels[source.resolverId] || source.resolverId;
+}
+
+const TARGET_QUERY_OPTIONS = Object.freeze([
+    {
+        resolverId: 'player.weakestArmorPart',
+        label: '玩家弱点部位',
+        subjectResolverId: 'battle.player.main',
+        expectedSkillTarget: { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_PART' },
+        legacyTargetRule: 'player_weak_part',
+        params: {},
+        reads: ['battle.player.main.bodyParts']
+    },
+    {
+        resolverId: 'player.entity',
+        label: '玩家主体',
+        subjectResolverId: 'battle.player.main',
+        expectedSkillTarget: { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_ENTITY' },
+        legacyTargetRule: 'player',
+        params: {},
+        reads: ['battle.player.main']
+    },
+    {
+        resolverId: 'player.fixedPart',
+        label: '玩家固定部位',
+        subjectResolverId: 'battle.player.main',
+        expectedSkillTarget: { subject: 'SUBJECT_ENEMY', scope: 'SCOPE_PART' },
+        legacyTargetRule: 'fixed_part:head',
+        params: { partId: 'head' },
+        reads: ['battle.player.main.bodyParts[partId]']
+    },
+    {
+        resolverId: 'actor.self',
+        label: '自身',
+        subjectResolverId: 'actor.self',
+        expectedSkillTarget: { subject: 'SUBJECT_SELF', scope: 'SCOPE_ENTITY' },
+        legacyTargetRule: 'self',
+        params: {},
+        reads: ['actor.self']
+    }
+]);
+
+export function decisionTargetQueryOptions() {
+    return cloneDecision(TARGET_QUERY_OPTIONS);
+}
+
+export function decisionTargetQueryOption(resolverId = '') {
+    const id = uniqueText(resolverId);
+    return decisionTargetQueryOptions().find(option => option.resolverId === id) || null;
+}
+
+const CONDITION_CATALOG = Object.freeze([
+    {
+        type: 'always',
+        label: '始终成立',
+        subjectPolicy: { defaultResolverId: 'system', allowedResolverIds: [] },
+        reads: [],
+        params: [],
+        runtimeSupported: true,
+        previewSupported: true,
+        editorSupported: true
+    },
+    {
+        type: 'self_hp_ratio_lte',
+        label: '自身 HP <= 阈值',
+        subjectPolicy: { defaultResolverId: 'actor.self', allowedResolverIds: ['actor.self'], requiredShape: ['stats.hp', 'stats.maxHp'] },
+        reads: ['resolvedSubject.stats.hp', 'resolvedSubject.stats.maxHp'],
+        params: [{ name: 'value', label: '阈值', type: 'number', min: 0, max: 1, step: 0.05, defaultValue: 0.35 }],
+        runtimeSupported: true,
+        previewSupported: true,
+        editorSupported: true
+    },
+    {
+        type: 'self_hp_ratio_gte',
+        label: '自身 HP >= 阈值',
+        subjectPolicy: { defaultResolverId: 'actor.self', allowedResolverIds: ['actor.self'], requiredShape: ['stats.hp', 'stats.maxHp'] },
+        reads: ['resolvedSubject.stats.hp', 'resolvedSubject.stats.maxHp'],
+        params: [{ name: 'value', label: '阈值', type: 'number', min: 0, max: 1, step: 0.05, defaultValue: 0.5 }],
+        runtimeSupported: true,
+        previewSupported: true,
+        editorSupported: true
+    },
+    {
+        type: 'turn_number_modulo',
+        label: '回合数取模',
+        subjectPolicy: { defaultResolverId: 'battle', allowedResolverIds: [] },
+        reads: ['battle.turnNumber'],
+        params: [
+            { name: 'mod', label: '除数', type: 'number', min: 1, step: 1, defaultValue: 2 },
+            { name: 'equals', label: '余数', type: 'number', min: 0, step: 1, defaultValue: 0 }
+        ],
+        runtimeSupported: true,
+        previewSupported: true,
+        editorSupported: true
+    },
+    {
+        type: 'previous_action_is',
+        label: '上一行动是',
+        subjectPolicy: { defaultResolverId: 'memory', allowedResolverIds: [] },
+        reads: ['memory.previousActionNodeId'],
+        params: [{ name: 'actionId', label: '行动节点', type: 'actionId', defaultValue: '' }],
+        runtimeSupported: true,
+        previewSupported: true,
+        editorSupported: true
+    },
+    {
+        type: 'target_distance_gte',
+        label: '目标距离 >= 阈值',
+        subjectPolicy: { defaultResolverId: 'target.current', allowedResolverIds: ['target.current'], requiredShape: ['distance'] },
+        reads: ['target.current.distance'],
+        params: [{ name: 'value', label: '距离', type: 'number', min: 0, step: 1, defaultValue: 2 }],
+        runtimeSupported: false,
+        previewSupported: true,
+        editorSupported: false
+    },
+    {
+        type: 'target_missing_status',
+        label: '目标缺少状态',
+        subjectPolicy: { defaultResolverId: 'target.current', allowedResolverIds: ['target.current'], requiredShape: ['statuses'] },
+        reads: ['target.current.statuses'],
+        params: [{ name: 'status', label: '状态', type: 'text', defaultValue: 'bleed' }],
+        runtimeSupported: false,
+        previewSupported: true,
+        editorSupported: false
+    }
+]);
+
+export function decisionConditionOptions(options = {}) {
+    const includeUnsupported = Boolean(options.includeUnsupported);
+    return cloneDecision(CONDITION_CATALOG)
+        .filter(item => includeUnsupported || (item.editorSupported && item.runtimeSupported));
+}
+
+export function decisionConditionDefinition(type = '') {
+    const id = uniqueText(type, 'always');
+    return decisionConditionOptions({ includeUnsupported: true }).find(item => item.type === id)
+        || decisionConditionOptions({ includeUnsupported: true })[0];
+}
+
+export function conditionReadSummary(condition = {}) {
+    const normalized = normalizeCondition(condition);
+    const definition = decisionConditionDefinition(normalized.type);
+    return asArray(definition.reads).join(', ') || '无';
+}
+
+function skillTargetSummary(skill = {}) {
+    const target = asObject(skill.target);
+    const selection = asObject(target.selection);
+    const candidateParts = asArray(selection.candidateParts).map(item => uniqueText(item)).filter(Boolean);
+    return {
+        subject: uniqueText(target.subject, 'UNKNOWN_SUBJECT'),
+        scope: uniqueText(target.scope, 'UNKNOWN_SCOPE'),
+        mode: uniqueText(selection.mode, 'single'),
+        candidateParts
+    };
+}
+
+export function skillTargetLabel(skill = {}) {
+    const summary = skillTargetSummary(skill);
+    return `${summary.subject} / ${summary.scope}`;
+}
+
+function actionSkillLegalityIssues(action = {}, skill = {}) {
+    const issues = [];
+    const target = skillTargetSummary(skill);
+    const query = normalizeTargetQuery(action.targetQuery, action.targetRule);
+    const expected = asObject(query.expectedSkillTarget);
+    if (expected.subject && target.subject !== 'UNKNOWN_SUBJECT' && expected.subject !== target.subject) {
+        issues.push({
+            code: 'action_target_query_incompatible_with_skill',
+            reason: `目标主体需要 ${expected.subject}，技能是 ${target.subject}`
+        });
+    }
+    if (expected.scope && target.scope !== 'UNKNOWN_SCOPE') {
+        const scopeMatches = expected.scope === target.scope
+            || (expected.scope === 'SCOPE_PART' && target.scope === 'SCOPE_MULTI_PARTS');
+        if (!scopeMatches) {
+            issues.push({
+                code: 'action_target_query_incompatible_with_skill',
+                reason: `目标范围需要 ${expected.scope}，技能是 ${target.scope}`
+            });
+        }
+    }
+    const partId = uniqueText(query.params?.partId);
+    if (partId && target.candidateParts.length > 0 && !target.candidateParts.includes(partId)) {
+        issues.push({
+            code: 'action_target_part_not_allowed',
+            reason: `${partId} 不在技能候选部位中`
+        });
+    }
+    return issues;
+}
+
+export function describeActionSemantics({ action = {}, decision = {}, enemy = {}, resolveSkill = () => null } = {}) {
+    const initialStateId = uniqueText(decision?.graph?.initialStateId, 'state_normal');
+    const normalized = normalizeActionNode(action, initialStateId);
+    const skillId = resolveActionSkill(normalized, decision);
+    const resolved = skillId ? resolveSkill(skillId) : null;
+    const skill = skillConfigFromResolved(resolved);
+    const target = skill ? skillTargetSummary(skill) : null;
+    const cost = normalizeNumber(skill?.costs?.ap ?? skill?.cost, 0);
+    const ap = normalizeNumber(enemy?.stats?.ap ?? enemy?.ap, 0);
+    const targetIssues = skill ? actionSkillLegalityIssues(normalized, skill) : [];
+    let legalityLabel = '可释放';
+    if (!skillId || !resolved) {
+        legalityLabel = '技能缺失';
+    } else if (targetIssues.length > 0) {
+        legalityLabel = '目标不匹配';
+    } else if (cost > ap) {
+        legalityLabel = 'AP 不足';
+    }
+    return {
+        action: normalized,
+        skillId,
+        resolved,
+        skill,
+        actorLabel: subjectRefLabel(normalized.actorRef),
+        skillLabel: uniqueText(skill?.name || skill?.displayName || skillId, skillId || '未绑定技能'),
+        targetLabel: targetQueryLabel(normalized.targetQuery),
+        skillTargetLabel: skill ? skillTargetLabel(skill) : '未解析',
+        candidatePartsLabel: target?.candidateParts?.length ? target.candidateParts.join(', ') : '无',
+        costLabel: skill ? `AP ${cost}` : '未知',
+        legalityLabel,
+        legalityIssues: targetIssues
+    };
 }
 
 function buildActivityDecision(enemy = {}, skillIds = []) {
@@ -170,7 +573,7 @@ function buildActivityDecision(enemy = {}, skillIds = []) {
         graph: {
             entryNodeId: 'entry',
             initialStateId: 'state_normal',
-            nodes,
+            nodes: nodes.map(node => normalizeDecisionNode(node, 'state_normal')),
             edges
         },
         layout: {
@@ -233,7 +636,7 @@ function buildSkillDrivenDecision(enemy = {}) {
         graph: {
             entryNodeId: 'entry',
             initialStateId: 'state_normal',
-            nodes,
+            nodes: nodes.map(node => normalizeDecisionNode(node, 'state_normal')),
             edges
         },
         layout: {
@@ -285,7 +688,10 @@ export function createDefaultDecisionTemplate() {
                 expectedTags: ['attack']
             }
         ],
-        graph
+        graph: {
+            ...graph,
+            nodes: graph.nodes.map(node => normalizeDecisionNode(node, graph.initialStateId))
+        }
     };
 }
 
@@ -293,13 +699,7 @@ function normalizeExistingDecision(decision) {
     const source = asObject(decision);
     const graph = asObject(source.graph);
     const initialStateId = uniqueText(graph.initialStateId, 'state_normal');
-    const nodes = asArray(graph.nodes).map((node) => {
-        const next = { ...asObject(node) };
-        if (next.type === 'action' && !uniqueText(next.nextStateId)) {
-            next.nextStateId = initialStateId;
-        }
-        return next;
-    });
+    const nodes = asArray(graph.nodes).map(node => normalizeDecisionNode(node, initialStateId));
     return {
         schemaVersion: source.schemaVersion || SCHEMA_VERSION,
         templateId: uniqueText(source.templateId),
@@ -414,8 +814,26 @@ export function validateEnemyDecision({ decision, enemy = {}, resolveSkill = () 
         if (node.type === 'action') {
             const skillId = resolveActionSkill(node, source);
             const resolved = skillId ? resolveSkill(skillId) : null;
+            const skill = skillConfigFromResolved(resolved);
             if (!skillId || !enemySkills.has(skillId) || !resolved) {
                 issues.push({ severity: 'error', code: 'missing_skill_binding', fieldPath: `graph.nodes.${node.id}.skillId`, refId: skillId });
+            }
+            if (!uniqueText(node.actorRef?.resolverId)) {
+                issues.push({ severity: 'error', code: 'action_missing_actor_ref', fieldPath: `graph.nodes.${node.id}.actorRef` });
+            }
+            if (!uniqueText(node.targetQuery?.resolverId)) {
+                issues.push({ severity: 'error', code: 'action_missing_target_query', fieldPath: `graph.nodes.${node.id}.targetQuery` });
+            }
+            if (skill) {
+                actionSkillLegalityIssues(node, skill).forEach(issue => {
+                    issues.push({
+                        severity: 'error',
+                        code: issue.code,
+                        fieldPath: `graph.nodes.${node.id}.targetQuery`,
+                        refId: skillId,
+                        message: issue.reason
+                    });
+                });
             }
             const nextState = uniqueText(node.nextStateId);
             if (!nextState) {

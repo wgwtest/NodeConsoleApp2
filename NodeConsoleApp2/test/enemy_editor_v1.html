@@ -706,17 +706,19 @@
 
         .decision-rete-node-body {
             display: grid;
-            gap: 6px;
-            padding: 8px 11px 10px;
+            gap: 5px;
+            padding: 9px 11px 11px;
             font-size: 12px;
-            font-weight: 800;
+            font-weight: 760;
+            line-height: 1.35;
         }
 
         .decision-rete-detail {
             display: grid;
-            grid-template-columns: 62px minmax(0, 1fr);
-            gap: 8px;
+            grid-template-columns: 60px minmax(0, 1fr);
+            gap: 9px;
             align-items: baseline;
+            min-height: 18px;
         }
 
         .decision-rete-detail-key {
@@ -730,6 +732,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             color: var(--ink);
+            font-weight: 880;
         }
 
         .decision-rete-socket {
@@ -887,19 +890,32 @@
         }
 
         .decision-skill-list {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: 1fr;
         }
 
         .decision-skill-chip {
-            display: inline-flex;
-            min-height: 24px;
-            align-items: center;
-            padding: 3px 7px;
+            display: grid;
+            gap: 3px;
+            min-height: 42px;
+            padding: 7px 9px;
             border: 1px solid var(--line);
-            border-radius: 999px;
+            border-radius: 8px;
             background: #fff;
+        }
+
+        .decision-skill-chip-title {
             font-weight: 800;
+        }
+
+        .decision-skill-chip-meta {
+            min-width: 0;
+            overflow: hidden;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 750;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .decision-graph-toolbar {
@@ -934,6 +950,33 @@
             border-radius: 7px;
             background: var(--panel);
             font-weight: 850;
+        }
+
+        .decision-inspect-field--control {
+            margin-top: 2px;
+        }
+
+        .decision-inspect-control {
+            width: 100%;
+            min-width: 0;
+            min-height: 32px;
+            padding: 6px 8px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--ink);
+            font: inherit;
+            font-weight: 800;
+        }
+
+        .decision-inspect-control:disabled {
+            color: var(--muted);
+            background: #eef3ef;
+        }
+
+        .decision-inspect-control:focus-visible {
+            outline: 2px solid rgba(31, 123, 88, 0.48);
+            outline-offset: 2px;
         }
 
         .decision-inspect-preview {

@@ -35,6 +35,24 @@ test('normalizeEnemyDecision creates a graph from enemy skills without legacy be
   assert.equal(decision.layout.nodes.state_normal.y, 132);
 });
 
+test('normalizeEnemyDecision enriches action nodes with behavior decision refs', async () => {
+  const { normalizeEnemyDecision } = await importModel();
+  const decision = normalizeEnemyDecision({
+    enemy: {
+      id: 'enemy_test',
+      skills: ['skill_throw_stone', 'enemy_skill_rusty_shiv']
+    }
+  });
+
+  const action = decision.graph.nodes.find(node => node.type === 'action' && node.skillId === 'enemy_skill_rusty_shiv');
+
+  assert.equal(action.actorRef.resolverId, 'actor.self');
+  assert.deepEqual(action.skillRef, { mode: 'skillId', skillId: 'enemy_skill_rusty_shiv' });
+  assert.equal(action.targetQuery.resolverId, 'player.weakestArmorPart');
+  assert.equal(action.targetQuery.subjectRef.resolverId, 'battle.player.main');
+  assert.equal(action.targetQuery.legacyTargetRule, 'player_weak_part');
+});
+
 test('normalizeEnemyDecision ignores removed legacy intent and decision fields', async () => {
   const { normalizeEnemyDecision } = await importModel();
   const decision = normalizeEnemyDecision({
@@ -90,6 +108,52 @@ test('validateEnemyDecision rejects missing skill bindings and branch exits', as
 
   assert.equal(issues.some(issue => issue.code === 'branch_missing_false_exit'), true);
   assert.equal(issues.some(issue => issue.code === 'missing_skill_binding'), true);
+});
+
+test('validateEnemyDecision rejects targetQuery that conflicts with skill target schema', async () => {
+  const { validateEnemyDecision } = await importModel();
+  const issues = validateEnemyDecision({
+    decision: {
+      schemaVersion: 'enemy_decision_graph_v1',
+      graph: {
+        entryNodeId: 'entry',
+        initialStateId: 'state_normal',
+        nodes: [
+          { id: 'entry', type: 'entry' },
+          { id: 'state_normal', type: 'state' },
+          {
+            id: 'action_self_heal',
+            type: 'action',
+            skillId: 'self_heal',
+            actorRef: { resolverId: 'actor.self' },
+            skillRef: { mode: 'skillId', skillId: 'self_heal' },
+            targetQuery: {
+              resolverId: 'player.weakestArmorPart',
+              subjectRef: { resolverId: 'battle.player.main' },
+              legacyTargetRule: 'player_weak_part'
+            },
+            nextStateId: 'state_normal'
+          }
+        ],
+        edges: [
+          { id: 'edge_entry_state', from: 'entry', to: 'state_normal' },
+          { id: 'edge_state_action', from: 'state_normal', to: 'action_self_heal' }
+        ]
+      }
+    },
+    enemy: { skills: ['self_heal'] },
+    resolveSkill: () => ({
+      id: 'self_heal',
+      costs: { ap: 1 },
+      target: {
+        subject: 'SUBJECT_SELF',
+        scope: 'SCOPE_ENTITY',
+        selection: { mode: 'single', candidateParts: [], selectedParts: [], selectCount: 1 }
+      }
+    })
+  });
+
+  assert.equal(issues.some(issue => issue.code === 'action_target_query_incompatible_with_skill'), true);
 });
 
 test('previewEnemyDecision returns turn traces and fallback reasons', async () => {

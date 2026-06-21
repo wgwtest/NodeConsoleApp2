@@ -7,10 +7,17 @@ import { Buffer } from 'node:buffer';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const workspaceModulePath = path.join(projectRoot, 'script', 'editor', 'enemy', 'EnemyWorkspace.js');
+const decisionModelModulePath = path.join(projectRoot, 'script', 'editor', 'enemy', 'decision', 'EnemyDecisionGraphModel.js');
 
 async function importSourceModule(filePath) {
     assert.equal(fs.existsSync(filePath), true, `缺少源文件: ${filePath}`);
-    const source = await fsp.readFile(filePath, 'utf8');
+    let source = await fsp.readFile(filePath, 'utf8');
+    if (source.includes('./decision/EnemyDecisionGraphModel.js')) {
+        const modelSource = await fsp.readFile(decisionModelModulePath, 'utf8');
+        const modelEncoded = Buffer.from(modelSource, 'utf8').toString('base64');
+        source = source.replaceAll("'./decision/EnemyDecisionGraphModel.js'", `'data:text/javascript;base64,${modelEncoded}'`);
+        source = source.replaceAll('"./decision/EnemyDecisionGraphModel.js"', `"data:text/javascript;base64,${modelEncoded}"`);
+    }
     const encoded = Buffer.from(source, 'utf8').toString('base64');
     return import(`data:text/javascript;base64,${encoded}`);
 }
