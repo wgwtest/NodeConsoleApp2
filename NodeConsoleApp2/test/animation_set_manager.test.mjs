@@ -9,6 +9,7 @@ import { JSDOM } from 'jsdom';
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const modelPath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'AnimationSetWorkspace.js');
 const catalogPath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'AnimationSetCatalog.js');
+const scannerPath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'AnimationReferenceScanner.js');
 const widgetsPath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'AnimationSetConsumerWidgets.js');
 const pagePath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'AnimationSetManagerPage.js');
 const indexPath = path.join(projectRoot, 'script', 'editor', 'animation_set', 'index.js');
@@ -22,10 +23,13 @@ async function importSourceModule(filePath) {
     if (filePath === pagePath) {
         const workspaceSource = await fsp.readFile(modelPath, 'utf8');
         const catalogSource = await fsp.readFile(catalogPath, 'utf8');
+        const scannerSource = await fsp.readFile(scannerPath, 'utf8');
         const workspaceEncoded = Buffer.from(workspaceSource, 'utf8').toString('base64');
         const catalogEncoded = Buffer.from(catalogSource, 'utf8').toString('base64');
+        const scannerEncoded = Buffer.from(scannerSource, 'utf8').toString('base64');
         source = source.replace("'./AnimationSetWorkspace.js'", `'data:text/javascript;base64,${workspaceEncoded}'`);
         source = source.replace("'./AnimationSetCatalog.js'", `'data:text/javascript;base64,${catalogEncoded}'`);
+        source = source.replace("'./AnimationReferenceScanner.js'", `'data:text/javascript;base64,${scannerEncoded}'`);
     }
     const encoded = Buffer.from(source, 'utf8').toString('base64');
     return import(`data:text/javascript;base64,${encoded}`);
@@ -244,6 +248,62 @@ test('AnimationSetWorkspace reports full-library validation without depending on
     assert.deepEqual(report.issues.map(issue => `${issue.animationSetId}:${issue.clipKey}:${issue.severity}`), [
         'enemy_001_default:hit:warning'
     ]);
+});
+
+test('AnimationReferenceScanner finds direct refs and legacy sheet refs without source paths', async () => {
+    const { AnimationSetWorkspace } = await importSourceModule(modelPath);
+    const { scanAnimationReferences } = await importSourceModule(scannerPath);
+    const workspace = new AnimationSetWorkspace(buildFixtureDocument());
+
+    const references = scanAnimationReferences({
+        workspace,
+        sources: [
+            {
+                path: 'assets/data/player.json',
+                kind: 'player',
+                content: {
+                    default: {
+                        id: 'player',
+                        presentation: {
+                            animationSetRef: 'player_001_default',
+                            animationKey: 'attack'
+                        }
+                    }
+                }
+            },
+            {
+                path: 'assets/enemy_packs/current/enemies.json',
+                kind: 'enemy',
+                content: {
+                    enemy_v2_c1_01_razor_initiate: {
+                        id: 'enemy_v2_c1_01_razor_initiate',
+                        presentation: {
+                            defaultAnimation: 'attack1',
+                            frameAnimations: {
+                                attack1: {
+                                    sheetRef: '../source/character/鏁屼汉-001-鐘舵€?01-姝ｅ父鐘舵€?attack1/attack1_sheet.png'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+    });
+
+    assert.ok(references.some(reference => (
+        reference.type === 'animation_ref'
+        && reference.animationSetRef === 'player_001_default'
+        && reference.animationKey === 'attack'
+        && reference.sourcePath === 'assets/data/player.json'
+    )));
+    assert.ok(references.some(reference => (
+        reference.type === 'legacy_sheet'
+        && reference.animationSetRef === 'enemy_001_default'
+        && reference.animationKey === 'attack1'
+        && reference.sourceId === 'enemy_v2_c1_01_razor_initiate'
+    )));
+    assert.equal(references.some(reference => Object.hasOwn(reference, 'sourceDir')), false);
 });
 
 test('AnimationSetConsumerWidgets builds reusable picker preview and binding view models', async () => {
@@ -619,13 +679,15 @@ test('AnimationSetManagerPage deletes a clip row after confirmation and removes 
         url: 'http://127.0.0.1:3106/test/animation_set_manager_v1.html',
         pretendToBeVisual: true
     });
+    const document = buildFixtureDocument();
+    document.animationSets[0].references = [];
     const calls = [];
     const fetchImpl = async (url, options = {}) => {
         calls.push({ url: String(url), options });
         if (String(url).startsWith('/__skill_editor_file') && options.method !== 'POST') {
             return {
                 ok: true,
-                json: async () => ({ content: JSON.stringify(buildFixtureDocument()), path: 'assets/data/animation_sets_v1.json' })
+                json: async () => ({ content: JSON.stringify(document), path: 'assets/data/animation_sets_v1.json' })
             };
         }
         if (String(url) === '/api/animation-assets/delete') {
@@ -673,6 +735,67 @@ test('AnimationSetManagerPage deletes a clip row after confirmation and removes 
     const writtenDocument = JSON.parse(JSON.parse(ledgerWrite.options.body).content);
     const writtenPlayerSet = writtenDocument.animationSets.find(item => item.id === 'player_001_default');
     assert.equal(writtenPlayerSet.clips.attack, undefined);
+});
+
+test('AnimationSetManagerPage blocks clip deletion when a scanned consumer still references it', async () => {
+    const { AnimationSetManagerPage } = await importSourceModule(pagePath);
+    const html = await fsp.readFile(pageHtmlPath, 'utf8');
+    const dom = new JSDOM(html, {
+        url: 'http://127.0.0.1:3106/test/animation_set_manager_v1.html',
+        pretendToBeVisual: true
+    });
+    const document = buildFixtureDocument();
+    document.animationSets[0].references = [];
+    const calls = [];
+    const fetchImpl = async (url, options = {}) => {
+        calls.push({ url: String(url), options });
+        const urlText = String(url);
+        if (urlText.startsWith('/__skill_editor_file') && options.method !== 'POST') {
+            const decodedPath = decodeURIComponent(urlText.split('path=')[1] || '');
+            if (decodedPath === 'assets/data/player.json') {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        content: JSON.stringify({
+                            default: {
+                                id: 'player',
+                                presentation: {
+                                    animationSetRef: 'player_001_default',
+                                    animationKey: 'attack'
+                                }
+                            }
+                        }),
+                        path: decodedPath
+                    })
+                };
+            }
+            return {
+                ok: true,
+                json: async () => ({ content: JSON.stringify(document), path: 'assets/data/animation_sets_v1.json' })
+            };
+        }
+        if (urlText === '/api/animation-assets/delete') {
+            throw new Error('asset delete should not run for a referenced clip');
+        }
+        throw new Error(`unexpected fetch ${url}`);
+    };
+    dom.window.HTMLCanvasElement.prototype.getContext = () => ({ clearRect() {}, drawImage() {} });
+    const page = new AnimationSetManagerPage({
+        document: dom.window.document,
+        fetchImpl,
+        confirmImpl: () => true,
+        referenceSourcePaths: ['assets/data/player.json']
+    });
+
+    page.bind();
+    await page.loadDefault();
+
+    await assert.rejects(
+        () => page.deleteClipWithConfirmation('player_001_default', 'attack'),
+        /仍被引用|referenced/u
+    );
+    assert.equal(calls.some(call => call.url === '/api/animation-assets/delete'), false);
+    assert.match(dom.window.document.getElementById('referenceList').textContent, /assets\/data\/player\.json/u);
 });
 
 test('AnimationSetManagerPage deletes imported source directories only when the clip owns them', async () => {
@@ -945,6 +1068,7 @@ test('animation set editor index exports workspace and page modules', async () =
     assert.match(source, /AnimationSetCatalog/u);
     assert.match(source, /AnimationSetRegistry/u);
     assert.match(source, /AnimationSetConsumerWidgets/u);
+    assert.match(source, /AnimationReferenceScanner/u);
     assert.match(source, /AnimationSetManagerPage/u);
 });
 

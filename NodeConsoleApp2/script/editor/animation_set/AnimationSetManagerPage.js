@@ -1,5 +1,10 @@
 import AnimationSetWorkspace from './AnimationSetWorkspace.js';
 import { buildAnimationCatalog } from './AnimationSetCatalog.js';
+import {
+    filterReferencesForAnimationSet,
+    filterReferencesForClip,
+    scanAnimationReferences
+} from './AnimationReferenceScanner.js';
 
 function createElement(doc, tagName, className = '') {
     const element = doc.createElement(tagName);
@@ -124,11 +129,20 @@ export class AnimationSetManagerPage {
             || clearTimeout;
         this.defaultDataPath = options.defaultDataPath || 'assets/data/animation_sets_v1.json';
         this.catalogDataPath = options.catalogDataPath || 'assets/data/animation_catalog_v1.json';
+        this.referenceSourcePaths = options.referenceSourcePaths || [
+            'assets/data/player.json',
+            'assets/enemy_packs/current/enemies.json'
+        ];
         this.currentDataPath = this.defaultDataPath;
         this.workspace = null;
         this.catalogPublishState = {
             status: 'idle',
             message: 'catalog idle'
+        };
+        this.referenceScanState = {
+            status: 'idle',
+            references: [],
+            errors: []
         };
         this.selectedOwnerType = '';
         this.selectedOwnerId = '';
@@ -228,6 +242,7 @@ export class AnimationSetManagerPage {
         this.loadDocument(document);
         this.setConfigFileLabel(this.currentDataPath);
         this.updateCatalogPublishStatus('idle', 'catalog idle');
+        await this.refreshReferenceScan();
         this.setStatus('动画资源库已就绪；后续变更会自动保存。');
     }
 
@@ -239,7 +254,39 @@ export class AnimationSetManagerPage {
         const firstSet = firstOwner?.animationSets[0] || null;
         this.selectedSetId = firstSet?.id || '';
         this.selectedClipKey = firstSet ? (firstSet.defaultAnimation || Object.keys(firstSet.clips)[0] || '') : '';
+        this.referenceScanState = {
+            status: 'idle',
+            references: [],
+            errors: []
+        };
         this.render();
+    }
+
+    async refreshReferenceScan() {
+        if (!this.workspace || typeof this.fetchImpl !== 'function') return this.referenceScanState;
+        const sources = [];
+        const errors = [];
+        for (const sourcePath of this.referenceSourcePaths) {
+            try {
+                const response = await this.fetchImpl(`/__skill_editor_file?path=${encodeURIComponent(sourcePath)}`, { cache: 'no-store' });
+                if (!response?.ok) throw new Error(`read failed: ${response?.status || 'unknown'}`);
+                const body = await response.json();
+                sources.push({
+                    path: body.path || sourcePath,
+                    kind: sourcePath.includes('enemy') ? 'enemy' : sourcePath.includes('player') ? 'player' : 'data',
+                    content: body.content
+                });
+            } catch (error) {
+                errors.push({ path: sourcePath, message: error.message || String(error) });
+            }
+        }
+        this.referenceScanState = {
+            status: errors.length ? 'warning' : 'ready',
+            references: scanAnimationReferences({ workspace: this.workspace, sources }),
+            errors
+        };
+        this.render();
+        return this.referenceScanState;
     }
 
     setStatus(message) {
@@ -658,14 +705,20 @@ export class AnimationSetManagerPage {
         const list = this.elements.referenceList;
         clearElement(list);
         if (!list) return;
-        const references = this.workspace.listReferences(animationSet.id);
+        const references = [
+            ...this.workspace.listReferences(animationSet.id),
+            ...filterReferencesForAnimationSet(this.referenceScanState.references, animationSet.id)
+        ];
         references.forEach((reference) => {
             const row = createElement(this.document, 'div', 'ref-row');
             const dot = createElement(this.document, 'span', 'dot');
             const label = createElement(this.document, 'strong');
-            label.textContent = reference.id || reference.type || 'unknown';
+            label.textContent = reference.sourceId || reference.id || reference.sourcePath || reference.type || 'unknown';
             const meta = createElement(this.document, 'span', 'muted');
-            meta.textContent = reference.animationKey || reference.field || reference.type || '';
+            meta.textContent = [
+                reference.animationKey || reference.field || reference.type || '',
+                reference.sourcePath || ''
+            ].filter(Boolean).join(' / ');
             row.appendChild(dot);
             row.appendChild(label);
             row.appendChild(meta);
@@ -762,11 +815,24 @@ export class AnimationSetManagerPage {
         return paths;
     }
 
+    getBlockingReferences(animationSetId, clipKey) {
+        return filterReferencesForClip(this.referenceScanState.references, animationSetId, clipKey);
+    }
+
     async deleteClipWithConfirmation(animationSetId, clipKey) {
         const animationSet = this.workspace?.getAnimationSet(animationSetId);
         if (!animationSet) throw new Error('未找到动画集。');
         const clip = animationSet.clips[clipKey];
         if (!clip) throw new Error('未找到动作。');
+        const blockingReferences = this.getBlockingReferences(animationSet.id, clip.key);
+        if (blockingReferences.length) {
+            const sources = blockingReferences
+                .map(reference => reference.sourcePath || reference.sourceId || reference.type)
+                .filter(Boolean);
+            const message = `clip still referenced: ${animationSet.id}/${clip.key}${sources.length ? ` (${sources.join(', ')})` : ''}`;
+            this.setStatus(message);
+            throw new Error(message);
+        }
         const sourceDirNote = clipOwnsSourceDir(clip) ? '，并删除由管理器导入的项目内帧目录' : '';
         const confirmed = this.confirmImpl(`确认删除 ${animationSet.id}/${clip.key}？这会删除构建产物${sourceDirNote}。`);
         if (!confirmed) return null;
